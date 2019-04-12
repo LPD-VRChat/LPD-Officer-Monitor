@@ -18,10 +18,6 @@ async def sendErrorMessage(message, text):
 
 client = discord.Client()
 
-# @client.event
-# async def on_ready():
-#     print('Started up as:',bot.user.name)
-
 @client.event
 async def on_message(message):
     if message.content.find(bot_prefix+"who") != -1 and message.channel.name == admin_channel:
@@ -33,7 +29,6 @@ async def on_message(message):
 
         channel_enumerator = client.get_all_channels()
         channel_found = False
-        # channel = False
         for channel in channel_enumerator:
             if channel.name == argument:
                 channel_found = True
