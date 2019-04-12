@@ -3,9 +3,9 @@ from discord.ext import commands
 
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
-
-
 token_file_name = "token.txt"
+
+
 def saekjaToken():
     token_file = open(token_file_name, "r")
     token = token_file.read()
