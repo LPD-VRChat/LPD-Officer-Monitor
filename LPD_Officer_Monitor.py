@@ -6,7 +6,7 @@ bot_prefix = "?"
 token_file_name = "token.txt"
 
 
-def saekjaToken():
+def getToken():
     token_file = open(token_file_name, "r")
     token = token_file.read()
     token_file.close()
@@ -48,6 +48,6 @@ async def on_message(message):
         else: await sendErrorMessage(message, "This channel does not exist.")
         
 
-token = saekjaToken()
+token = getToken()
 client.run(token)
 
