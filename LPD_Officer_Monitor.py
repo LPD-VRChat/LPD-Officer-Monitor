@@ -3,17 +3,21 @@ from discord.ext import commands
 
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
-all_commands = [bot_prefix + x for x in ["help","who"]]
+all_commands_no_prefix = ["help","who"]
+all_commands = [bot_prefix + x for x in all_commands_no_prefix]
 all_help_text =  [
     "Get info about all commands",
     "Get everyone in a voice channel in a list"
+]
+all_help_text_long = [
+    "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
+    "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
 ]
 help_dict = {}
 for i in range(0, len(all_commands)):
     help_dict[all_commands[i]] = all_help_text[i]
 
 token_file_name = "token.txt"
-print(help_dict)
 
 def getToken():
     token_file = open(token_file_name, "r")
@@ -52,13 +56,14 @@ async def on_message(message):
     if message.content.find(bot_prefix+"who") != -1:
 
         try:
-            message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
-            argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
+            arguments = message.content.split(" ")
+            separator = arguments[1]
+            channel_name = arguments[2]
         except IndexError:
             await sendErrorMessage(message, "There is a missing an argument. Do "+bot_prefix+"help for help")
             return
 
-        channel = await getChannelByName(argument)
+        channel = await getChannelByName(channel_name)
         
         if channel is False:
             await sendErrorMessage(message, "This channel does not exist.")
@@ -68,21 +73,43 @@ async def on_message(message):
             await sendErrorMessage(message, channel.name+" is empty")
             return
 
+        arguments = message.content.split()
+
         everyone_in_channel = ""
+        has_run = False
         for member in channel.members:
-            everyone_in_channel = everyone_in_channel + "\n" + member.name
-        await message.channel.send("Here is everyone in the channel "+channel.name+":"+everyone_in_channel)
+            if has_run is True:
+                everyone_in_channel = everyone_in_channel + separator + member.name
+            else:
+                everyone_in_channel += member.name
+                has_run = True
+
+        # This is to remove double backslashes witch discord adds to disable enter/tab functionality but I want that functunality here so I only want one of the backslashes
+        print("Before:",repr(everyone_in_channel))
+        everyone_in_channel = everyone_in_channel.replace("/t","\t")
+        everyone_in_channel = everyone_in_channel.replace("/n","\n")
+        
+        await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
+        print("After:",repr(everyone_in_channel))
 
     if message.content.find(bot_prefix+"help") != -1:
+
         try:
             message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
             argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
-            all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that"
+            all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
             for command in help_dict:
                 all_text = all_text+"\n"+command+": "+help_dict[command]
 
             await message.channel.send(all_text)
+            return
+
+        if argument not in all_commands_no_prefix:
+            await sendErrorMessage(message, 'Help page not loaded because "'+argument+'" is not a valid command')
+            return
+
+        await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
 token = getToken()
 client.run(token)
