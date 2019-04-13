@@ -38,6 +38,7 @@ async def on_message(message):
             argument = message.content[5::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
             await sendErrorMessage(message, "There is a missing an argument. Do "+bot_prefix+"help for help")
+            return
 
         channel = await getChannelByName(argument)
         
