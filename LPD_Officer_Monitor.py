@@ -3,6 +3,7 @@ from discord.ext import commands
 
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
+all_commands = [bot_prefix + x for x in ["help","who"]]
 token_file_name = "token.txt"
 
 
@@ -27,8 +28,17 @@ client = discord.Client()
 
 @client.event
 async def on_message(message):
+    if message.content.split(" ")[0] not in all_commands:
+        return
+
     if message.channel.name != admin_channel:
-        await message.channel.send("This bot does only work in ")
+        admin_channel_local = await getChannelByName(admin_channel)
+
+        if admin_channel_local is False:
+            await message.channel.send("Please create a channel named "+admin_channel+" for the bot to use")
+            return
+
+        await message.channel.send("This bot does only work in "+admin_channel_local.mention)
         return
 
     if message.content.find(bot_prefix+"who") != -1:
