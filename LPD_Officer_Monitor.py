@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import os
 
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
@@ -111,6 +112,8 @@ async def on_message(message):
 
         await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
-token = getToken()
-client.run(token)
+# token = getToken()
+# client.run(token)
+
+client.run(os.environ["DISCORD_TOKEN"])
 
