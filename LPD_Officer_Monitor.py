@@ -4,8 +4,16 @@ from discord.ext import commands
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
 all_commands = [bot_prefix + x for x in ["help","who"]]
-token_file_name = "token.txt"
+all_help_text =  [
+    "Get info about all commands",
+    "Get everyone in a voice channel in a list"
+]
+help_dict = {}
+for i in range(0, len(all_commands)):
+    help_dict[all_commands[i]] = all_help_text[i]
 
+token_file_name = "token.txt"
+print(help_dict)
 
 def getToken():
     token_file = open(token_file_name, "r")
@@ -44,8 +52,8 @@ async def on_message(message):
     if message.content.find(bot_prefix+"who") != -1:
 
         try:
-            message.content[5]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
-            argument = message.content[5::]# This does not throw an index error if the string is only 4 characters (no idea why)
+            message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
+            argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
             await sendErrorMessage(message, "There is a missing an argument. Do "+bot_prefix+"help for help")
             return
@@ -66,7 +74,15 @@ async def on_message(message):
         await message.channel.send("Here is everyone in the channel "+channel.name+":"+everyone_in_channel)
 
     if message.content.find(bot_prefix+"help") != -1:
-        pass
+        try:
+            message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
+            argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
+        except IndexError:
+            all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that"
+            for command in help_dict:
+                all_text = all_text+"\n"+command+": "+help_dict[command]
+
+            await message.channel.send(all_text)
 
 token = getToken()
 client.run(token)
