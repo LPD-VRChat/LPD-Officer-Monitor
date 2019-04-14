@@ -26,9 +26,9 @@ def getToken():
     token_file.close()
     return token
 
-async def getChannelByName(name):
-    channel_enumerator = client.get_all_channels()
-    for channel in channel_enumerator:
+async def getChannelByName(name, guild):
+    channels = guild.channels
+    for channel in channels:
         if channel.name == name:
             return channel
     return False
