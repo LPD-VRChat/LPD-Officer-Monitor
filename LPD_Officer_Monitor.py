@@ -26,9 +26,11 @@ def getToken():
     token_file.close()
     return token
 
-async def getChannelByName(name):
-    channel_enumerator = client.get_all_channels()
-    for channel in channel_enumerator:
+async def getChannelByName(name, guild, text_channel):
+    if text_channel == True: channels = guild.text_channels
+    else: channels = guild.voice_channels
+
+    for channel in channels:
         if channel.name == name:
             return channel
     return False
@@ -41,7 +43,7 @@ client = discord.Client()
 
 @client.event
 async def on_message(message):
-        
+
     try: message.channel.category_id
     except AttributeError:
         if message.channel.me != message.author:
@@ -52,10 +54,10 @@ async def on_message(message):
         return
 
     if message.channel.name != admin_channel:
-        admin_channel_local = await getChannelByName(admin_channel)
+        admin_channel_local = await getChannelByName(admin_channel, message.guild, True)
 
         if admin_channel_local is False:
-            await message.channel.send("Please create a channel named "+admin_channel+" for the bot to use")
+            await message.channel.send("Please create a text channel named "+admin_channel+" for the bot to use")
             return
 
         await message.channel.send("This bot does only work in "+admin_channel_local.mention)
@@ -66,22 +68,22 @@ async def on_message(message):
         try:
             arguments = message.content.split(" ")
             separator = arguments[1]
-            channel_name = arguments[2]
+            channel_name = arguments[2::]
+            channel_name = "".join([" "+x for x in channel_name])
+            channel_name = channel_name[1::]
         except IndexError:
             await sendErrorMessage(message, "There is a missing an argument. Do "+bot_prefix+"help for help")
             return
 
-        channel = await getChannelByName(channel_name)
+        channel = await getChannelByName(channel_name, message.guild, False)
         
         if channel is False:
-            await sendErrorMessage(message, "This channel does not exist.")
+            await sendErrorMessage(message, "The channel "+channel_name+" does not exist or is not a voice channel.")
             return
 
         if not channel.members:
             await sendErrorMessage(message, channel.name+" is empty")
             return
-
-        arguments = message.content.split()
 
         everyone_in_channel = ""
         has_run = False
