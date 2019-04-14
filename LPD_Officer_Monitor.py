@@ -41,6 +41,13 @@ client = discord.Client()
 
 @client.event
 async def on_message(message):
+        
+    try: message.channel.category_id
+    except AttributeError:
+        if message.channel.me != message.author:
+            await message.channel.send("This bot does not support Direct Messages.")
+            return
+
     if message.content.split(" ")[0] not in all_commands:
         return
 
