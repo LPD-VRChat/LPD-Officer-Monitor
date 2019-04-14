@@ -86,12 +86,10 @@ async def on_message(message):
                 has_run = True
 
         # This is to remove double backslashes witch discord adds to disable enter/tab functionality but I want that functunality here so I only want one of the backslashes
-        print("Before:",repr(everyone_in_channel))
         everyone_in_channel = everyone_in_channel.replace("/t","\t")
         everyone_in_channel = everyone_in_channel.replace("/n","\n")
         
         await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
-        print("After:",repr(everyone_in_channel))
 
     if message.content.find(bot_prefix+"help") != -1:
 
