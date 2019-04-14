@@ -110,8 +110,9 @@ async def on_message(message):
 
         await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
-# token = getToken()
-# client.run(token)
 
-client.run(os.environ["DISCORD_TOKEN"])
-
+# This failes if it is run localy so that then it uses the local token.txt file
+try: client.run(os.environ["DISCORD_TOKEN"])# This is for the heroku server
+except KeyError:
+    token = getToken()
+    client.run(token)
