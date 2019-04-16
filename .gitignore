@@ -108,3 +108,6 @@ token.txt
 
 # VSCode
 .vscode/settings.json
+
+# Local database
+LPD_database.csv
