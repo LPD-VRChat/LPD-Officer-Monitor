@@ -107,7 +107,7 @@ venv.bak/
 token.txt
 
 # VSCode
-.vscode/settings.json
+.vscode/*
 
 # Local database
 LPD_database.csv
