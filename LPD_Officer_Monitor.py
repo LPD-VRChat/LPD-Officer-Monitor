@@ -4,11 +4,14 @@ import os
 import time
 import json
 import asyncio
+import copy
 
+Server_ID = 566315650864381953
+file_fetched = False
 storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group"]
-sleep_beetween_writes = 10
+sleep_time_beetween_writes = 10
 name_of_channel_being_monitored = "on duty"
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
@@ -58,51 +61,132 @@ async def getRoleByName(name, guild):
 async def sendErrorMessage(message, text):
     await message.channel.send(message.author.mention+" "+str(text))
 
-async def checkOfficerHealth():
+async def checkOfficerHealth(Guild_ID):
     await client.wait_until_ready()
     global officer_monitor
+    if client.get_guild(Guild_ID) is not False:
+        guild = client.get_guild(Guild_ID)
+    else:
+        await asyncio.sleep(sleep_time_beetween_writes)
+        return
+
 
     while not client.is_closed():
+        # Logging all info to file
         try:
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-            print("Starting try statement")
+            print("Starting to write to file")
             database_officer_monitor = {}
             print("Extra officer_monitor created:",database_officer_monitor)
+            
+            # Reading all info about users from file
+            openFile = open("LPD_database.csv", "r")
+            # print("File opened")
+            try:
+                for line in openFile:
+                    # print("Splitting line:",line)
 
-            openFile = open("LPD_database.csv", "r")            
-            print("File opened")
+                    variables = line.split(",")
 
-            for line in openFile:
-                print("Splitting line:",line)
+                    # print("All items listed:",variables)
 
-                variables = line.split(",")
+                    user_id = str(variables[0])
+                    last_active_time = float(variables[1])
+                    on_duty_time = int(variables[2])
+                    
+                    # print("------------------------------")
+                    # print("user_id:",user_id)
+                    # print("last_active_time:",last_active_time)
+                    # print("on_duty_time:",on_duty_time)
+                    # print("------------------------------")
 
-                user_id = str(variables[0])
-                last_active_time = float(variables[1])
-                on_duty_time = int(variables[2])
-                
-                print("------------------------------")
-                print("user_id:",user_id)
-                print("last_active_time:",last_active_time)
-                print("on_duty_time:",on_duty_time)
-                print("------------------------------")
+                    database_officer_monitor[user_id] = {}
+                    database_officer_monitor[user_id]["Last active time"] = last_active_time
+                    database_officer_monitor[user_id]["Time"] = on_duty_time
+            except Exception as error: print("Something failed with reading from file:",error)
+            finally:
+                openFile.close()
+                print("database_officer_monitor after read:",database_officer_monitor)
+            
+            # Add missing users to officer_monitor
+            main_role = await getRoleByName(main_role_name, guild)
+            print("main_role name:",main_role.name)
+            members_with_main_role = [member for member in guild.members if main_role in member.roles]
+            print("members_with_main_role:",members_with_main_role)
 
-                database_officer_monitor[user_id] = {}
-                database_officer_monitor[user_id]["Last active time"] = last_active_time
-                database_officer_monitor[user_id]["Time"] = on_duty_time
+            print("1. officer_monitor:",officer_monitor)
+            
+            for member in members_with_main_role:
+                try:
+                    officer_monitor[str(member.id)]
+                    print(member.name,"excists in the dict")
+                except KeyError:
+                    officer_monitor[str(member.id)] = {"Time": 0}
+                    print(member.name,"was reset and has time 0 in the dict")
+            
+            print("Survived loop")
+            print("2. officer_monitor:",officer_monitor)
 
-            openFile.close()
-            print("officer_monitor after read:",database_officer_monitor)
+            # for member in members_with_main_role: officer_monitor[str(member.id)] = {"Time": 0, "Last active time": time.time()}
+            
+            # Making a copy of officer_monitor for logging to file
+            officer_monitor_static = copy.deepcopy(officer_monitor)
+            print("officer_monitor cloned")
 
-            await asyncio.sleep(sleep_beetween_writes)
+            print("3. officer_monitor:",officer_monitor)
+            print("officer_monitor_static 1:",officer_monitor_static)
+
+            # Reset Officer Monitor
+            for ID in list(officer_monitor):
+                officer_monitor[ID]["Time"] = 0
+                if "Last active time" not in list(officer_monitor[ID]):
+                    officer_monitor[ID]["Last active time"] = database_officer_monitor[ID]["Last active time"]
+            
+            print("officer_monitor reset")
+            print("officer_monitor_static 2:",officer_monitor_static)
+
+            try:
+                print("Opening file:",storage_file_name)
+                # Writing info from last file and officer_monitor over previus data
+                openFile = open(storage_file_name,"w")
+                print("File opened")
+
+                print("officer_monitor_static:",officer_monitor_static)
+                print("List of officer_monitor_static:",list(officer_monitor_static))
+
+                for ID in list(officer_monitor_static):
+                    print("Looping through the ID:",ID)
+                    if ID not in list(database_officer_monitor):# The user was not in the read file
+                        # Create the line for the user from the ground up
+                        print("The user",client.get_user(int(ID)),"is not in the database")
+                        print("Time:",officer_monitor_static[ID]["Time"])
+
+                        openFile.write(ID+","+str(officer_monitor_static[ID]["Last active time"])+","+str(officer_monitor_static[ID]["Time"])+"\n")
+
+                    else:# The user was in the read file
+                        # Add the users stats togather and write it to the file
+                        print("The user",client.get_user(int(ID)),"is in the database")
+
+                        all_time = officer_monitor_static[ID]["Time"] + database_officer_monitor[ID]["Time"]
+                        if "Last active time" in list(officer_monitor_static[ID]):
+                            print("Using last active time from dict")
+                            last_active_time = officer_monitor_static[ID]["Last active time"]
+                        else:
+                            print("Using last active time from a file")
+                            last_active_time = database_officer_monitor[ID]["Last active time"]
+                        
+                        openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
+            except Exception as error: print("Something failed with writing to file:",error)
+            finally: openFile.close()
+
+
+            await asyncio.sleep(sleep_time_beetween_writes)
         except Exception as error:
             print("Something failed with logging to file")
             print(error)
-            await asyncio.sleep(sleep_beetween_writes)
+            await asyncio.sleep(sleep_time_beetween_writes)
 
-        officer_monitor_static = officer_monitor.copy()
         
-    
 client = discord.Client()
 
 @client.event
@@ -130,6 +214,7 @@ async def on_message(message):
 
     if message.channel.name in counted_channels:
         officer_monitor[str(message.author.id)]["Last active time"] = time.time()
+        print("Message in",message.channel.name,"written by",message.author.name)
 
     if message.content.find(bot_prefix+"who") != -1:
 
@@ -204,6 +289,8 @@ async def on_message(message):
 
             for member in members_with_main_role: officer_monitor[str(member.id)] = {"Time": 0, "Last active time": time.time()}
 
+            await message.channel.send("Time reset")
+
         if arg2 == "status":
             await message.channel.send(str(officer_monitor))
             return
@@ -229,7 +316,7 @@ async def on_voice_state_update(member, before, after):
         officer_monitor[str(member.id)]["Last active time"] = current_time
         print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s")
 
-client.loop.create_task(checkOfficerHealth())
+client.loop.create_task(checkOfficerHealth(Server_ID))
 
 # This failes if it is run localy so that then it uses the local token.txt file
 try: client.run(os.environ["DISCORD_TOKEN"])# This is for the heroku server
