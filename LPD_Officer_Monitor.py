@@ -5,14 +5,14 @@ import time
 import json
 import asyncio
 import copy
+from datetime import datetime
 
 Server_ID = 566315650864381953
-file_fetched = False
 storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group"]
 sleep_time_beetween_writes = 10
-name_of_channel_being_monitored = "on duty"
+name_of_voice_channel_being_monitored = "on duty"
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
 all_commands_no_prefix = ["help", "who", "time"]
@@ -20,7 +20,7 @@ all_commands = [bot_prefix + x for x in all_commands_no_prefix]
 all_help_text =  [
     "Get info about all commands",
     "Get everyone in a voice channel in a list",
-    "Get how much time each officer has been in the "+name_of_channel_being_monitored+" channel"
+    "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel"
 ]
 all_help_text_long = [
     "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
@@ -61,10 +61,79 @@ async def getRoleByName(name, guild):
 async def sendErrorMessage(message, text):
     await message.channel.send(message.author.mention+" "+str(text))
 
+async def readDBFile(fileName):# Reading all info about users from file
+    database_officer_monitor = {}
+    print("Extra officer_monitor created:",database_officer_monitor)
+
+    # This makes it so that if their is no file it creates the file and then reads from the empty file
+    try: openFile = open(fileName, "r")
+    except IOError:
+        # Creating the file
+        openFile = open(fileName, "w")
+        openFile.write("")
+        openFile.close()
+        # Opening the file again
+        openFile = open(fileName, "r")
+
+    try:
+        for line in openFile:
+            variables = line.split(",")
+
+            user_id = str(variables[0])
+            last_active_time = float(variables[1])
+            on_duty_time = int(variables[2])
+            
+            # print("------------------------------")
+            # print("user_id:",user_id)
+            # print("last_active_time:",last_active_time)
+            # print("on_duty_time:",on_duty_time)
+            # print("------------------------------")
+
+            database_officer_monitor[user_id] = {}
+            database_officer_monitor[user_id]["Last active time"] = last_active_time
+            database_officer_monitor[user_id]["Time"] = on_duty_time
+    except Exception as error: print("Something failed with reading from file:",error)
+    finally:
+        openFile.close()
+        print("database_officer_monitor after read:",database_officer_monitor)
+    
+    return database_officer_monitor
+
+async def writeToDBFile(officer_monitor_local):
+    openFile = open(storage_file_name, "w")
+    try:
+        for ID in list(officer_monitor_local):
+            openFile.write(str(ID)+","+str(officer_monitor_local[ID]["Last active time"])+","+str(officer_monitor_local[ID]["Time"])+"\n")
+    except Exception as error: print("Something failed with writing to file:",error)
+    finally: openFile.close()
+
+async def removeUser(user_id):
+    global officer_monitor
+
+    # Get the contents of the file
+    officer_monitor_local = await readDBFile(storage_file_name)
+
+    # Remove the user from officer_monitor_local
+    try:
+        del officer_monitor_local[user_id]
+    except KeyError:
+        print("Could not delete the user with the user id from officer_monitor_local",user_id,"because the user does not exsist in officer_monitor_local")
+        print("officer_monitor_local:",officer_monitor_local)
+
+    # Remove the user from the global officer_monitor
+    try:
+        del officer_monitor[user_id]
+    except KeyError:
+        print("Could not delete the user with the user id from officer_monitor",user_id,"because the user does not exsist in the officer_monitor")
+        print("officer_monitor:",officer_monitor)
+
+    # Write the changes to the file
+    await writeToDBFile(officer_monitor_local)
+
 async def checkOfficerHealth(Guild_ID):
     await client.wait_until_ready()
     global officer_monitor
-    if client.get_guild(Guild_ID) is not False:
+    if client.get_guild(Guild_ID) is not None:
         guild = client.get_guild(Guild_ID)
     else:
         await asyncio.sleep(sleep_time_beetween_writes)
@@ -75,49 +144,9 @@ async def checkOfficerHealth(Guild_ID):
         # Logging all info to file
         try:
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-            print("Starting to write to file")
-            database_officer_monitor = {}
-            print("Extra officer_monitor created:",database_officer_monitor)
+            print("Starting to log to file\n")
             
-            # Reading all info about users from file
-
-            # This makes it so that if their is no file it creates the file and then reads from the empty file
-            try: openFile = open("LPD_database.csv", "r")
-            except IOError:
-                # Creating the file
-                openFile = open("LPD_database.csv", "w")
-                openFile.write("")
-                openFile.close()
-                # Opening the file again
-                openFile = open("LPD_database.csv", "r")
-
-            print("FILE CREATED")
-            # print("File opened")
-            try:
-                for line in openFile:
-                    # print("Splitting line:",line)
-
-                    variables = line.split(",")
-
-                    # print("All items listed:",variables)
-
-                    user_id = str(variables[0])
-                    last_active_time = float(variables[1])
-                    on_duty_time = int(variables[2])
-                    
-                    # print("------------------------------")
-                    # print("user_id:",user_id)
-                    # print("last_active_time:",last_active_time)
-                    # print("on_duty_time:",on_duty_time)
-                    # print("------------------------------")
-
-                    database_officer_monitor[user_id] = {}
-                    database_officer_monitor[user_id]["Last active time"] = last_active_time
-                    database_officer_monitor[user_id]["Time"] = on_duty_time
-            except Exception as error: print("Something failed with reading from file:",error)
-            finally:
-                openFile.close()
-                print("database_officer_monitor after read:",database_officer_monitor)
+            database_officer_monitor = await readDBFile(storage_file_name)
             
             # Add missing users to officer_monitor
             main_role = await getRoleByName(main_role_name, guild)
@@ -192,12 +221,14 @@ async def checkOfficerHealth(Guild_ID):
             except Exception as error: print("Something failed with writing to file:",error)
             finally: openFile.close()
 
+            # Check if someone has to be removed from the LPD because of inactivity
 
             await asyncio.sleep(sleep_time_beetween_writes)
         except Exception as error:
             print("Something failed with logging to file")
             print(error)
             await asyncio.sleep(sleep_time_beetween_writes)
+        print("||||||||||||||||||||||||||||||||||||||||||||||||||")
 
         
 client = discord.Client()
@@ -294,26 +325,47 @@ async def on_message(message):
             await sendErrorMessage(message, "Their is a missing argument")
             return
         
-        if arg2 == "reset":
-            officer_monitor = {}
+        # This is an outdated command witch has no use anymore
+        # if arg2 == "reset":
+        #     officer_monitor = {}
 
-            main_role = await getRoleByName(main_role_name, message.guild)
-            members_with_main_role = [member for member in message.guild.members if main_role in member.roles]
+        #     main_role = await getRoleByName(main_role_name, message.guild)
+        #     members_with_main_role = [member for member in message.guild.members if main_role in member.roles]
 
-            for member in members_with_main_role: officer_monitor[str(member.id)] = {"Time": 0, "Last active time": time.time()}
+        #     for member in members_with_main_role: officer_monitor[str(member.id)] = {"Time": 0, "Last active time": time.time()}
 
-            await message.channel.send("Time reset")
+        #     await message.channel.send("Time reset")
 
         if arg2 == "status":
             await message.channel.send(str(officer_monitor))
             return
 
+        if arg2 == "user":
+            try: userID = arguments[2]
+            except IndexError:
+                await sendErrorMessage(message, "The userID is missing")
+                return
+            
+            database_officer_monitor = await readDBFile(storage_file_name)
+            try:
+                onDutyTimeFromFile = database_officer_monitor[userID]["Time"]
+            except KeyError:
+                onDutyTimeFromFile = 0
+            
+            if client.get_user(int(userID)) is None:
+                await sendErrorMessage(message, "Their is no user in this server with the ID: "+str(userID))
+                return
+
+            unixTimeOfUserActive = officer_monitor[userID]["Last active time"]
+            onDutyTime = officer_monitor[userID]["Time"] + onDutyTimeFromFile
+            await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for "+str(onDutyTime)+"s")
+
 @client.event
 async def on_voice_state_update(member, before, after):
     global officer_monitor
 
-    try: channel_being_monitored = await getChannelByName(name_of_channel_being_monitored, before.channel.guild, False)
-    except AttributeError: channel_being_monitored = await getChannelByName(name_of_channel_being_monitored, after.channel.guild, False)
+    try: channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, before.channel.guild, False)
+    except AttributeError: channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, after.channel.guild, False)
     
     if after.channel == before.channel: return
     if before.channel != channel_being_monitored and after.channel != channel_being_monitored: return
@@ -328,6 +380,26 @@ async def on_voice_state_update(member, before, after):
         officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
         officer_monitor[str(member.id)]["Last active time"] = current_time
         print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s")
+
+@client.event
+async def on_member_update(before, after):
+    global officer_monitor
+
+    print("Something changed!!!")
+
+    main_role = await getRoleByName(main_role_name,before.guild)
+    print("Main role:",main_role)
+
+    print("main_role in before.roles:",main_role in before.roles)
+
+    if main_role not in before.roles and main_role in after.roles:# Member has joined the LPD
+        officer_monitor[str(before.id)] = {"Time": 0,"Last active time": time.time()}# User added to the officer_monitor
+        print(before.name,"added to the officer_monitor")
+
+    elif main_role in before.roles and main_role not in after.roles:# Member has left the LPD
+        officer_monitor[str(before.id)]
+        print("Removing",before.name,"from the officer_monitor")
+        await removeUser(str(before.id))
 
 client.loop.create_task(checkOfficerHealth(Server_ID))
 
