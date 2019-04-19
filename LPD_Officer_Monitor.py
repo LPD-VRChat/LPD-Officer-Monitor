@@ -80,7 +80,18 @@ async def checkOfficerHealth(Guild_ID):
             print("Extra officer_monitor created:",database_officer_monitor)
             
             # Reading all info about users from file
-            openFile = open("LPD_database.csv", "r")
+
+            # This makes it so that if their is no file it creates the file and then reads from the empty file
+            try: openFile = open("LPD_database.csv", "r")
+            except IOError:
+                # Creating the file
+                openFile = open("LPD_database.csv", "w")
+                openFile.write("")
+                openFile.close()
+                # Opening the file again
+                openFile = open("LPD_database.csv", "r")
+
+            print("FILE CREATED")
             # print("File opened")
             try:
                 for line in openFile:
@@ -122,6 +133,10 @@ async def checkOfficerHealth(Guild_ID):
                     print(member.name,"excists in the dict")
                 except KeyError:
                     officer_monitor[str(member.id)] = {"Time": 0}
+                    try:
+                        officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
+                    except KeyError:
+                        officer_monitor[str(member.id)]["Last active time"] = time.time()
                     print(member.name,"was reset and has time 0 in the dict")
             
             print("Survived loop")
@@ -139,8 +154,6 @@ async def checkOfficerHealth(Guild_ID):
             # Reset Officer Monitor
             for ID in list(officer_monitor):
                 officer_monitor[ID]["Time"] = 0
-                if "Last active time" not in list(officer_monitor[ID]):
-                    officer_monitor[ID]["Last active time"] = database_officer_monitor[ID]["Last active time"]
             
             print("officer_monitor reset")
             print("officer_monitor_static 2:",officer_monitor_static)
@@ -160,7 +173,7 @@ async def checkOfficerHealth(Guild_ID):
                         # Create the line for the user from the ground up
                         print("The user",client.get_user(int(ID)),"is not in the database")
                         print("Time:",officer_monitor_static[ID]["Time"])
-
+                        
                         openFile.write(ID+","+str(officer_monitor_static[ID]["Last active time"])+","+str(officer_monitor_static[ID]["Time"])+"\n")
 
                     else:# The user was in the read file
