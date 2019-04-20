@@ -7,14 +7,14 @@ import asyncio
 import copy
 from datetime import datetime
 
-Server_ID = 566315650864381953
-max_inactive_time_days = 0.0001# In days
+Server_ID = 446345091230072834
+max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
 manager_role = "Moderator"
 storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
-sleep_time_beetween_writes = 15
+sleep_time_beetween_writes = 3600
 name_of_voice_channel_being_monitored = "on duty"
 admin_channel = "admin-bot-channel"
 bot_prefix = "?"
@@ -149,6 +149,68 @@ async def removeUser(user_id):
 
     print("88888888888888888888888888888888888888888888888888")
 
+async def logAllInfoToFile(guild):
+    global officer_monitor
+    print("||||||||||||||||||||||||||||||||||||||||||||||||||")
+    print("Starting to log to file\n")
+    
+    database_officer_monitor = await readDBFile(storage_file_name)
+    
+    # Add missing users to officer_monitor
+    main_role = await getRoleByName(main_role_name, guild)
+    print("main_role name:",main_role.name)
+    members_with_main_role = [member for member in guild.members if main_role in member.roles]
+    print("members_with_main_role:",members_with_main_role)
+    for member in members_with_main_role:
+        try:
+            officer_monitor[str(member.id)]
+            print(member.name,"excists in the dict")
+        except KeyError:
+            officer_monitor[str(member.id)] = {"Time": 0}
+            try:
+                officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
+                print(member.name,"was reset in the dict and got last active time from the file")
+            except KeyError:
+                officer_monitor[str(member.id)]["Last active time"] = time.time()
+                print(member.name,"was reset in the dict and got last active time from the current time")
+
+    # Making a copy of officer_monitor for logging to file
+    officer_monitor_static = copy.deepcopy(officer_monitor)
+    print("officer_monitor cloned")
+
+    # Reset Officer Monitor
+    for ID in list(officer_monitor):
+        officer_monitor[ID]["Time"] = 0
+    print("officer_monitor reset")
+
+    # Writing to file
+    try:
+        print("Opening file:",storage_file_name)
+        # Writing info from last file and officer_monitor over previus data
+        openFile = open(storage_file_name,"w")
+        print("File opened")
+
+        print("officer_monitor_static:",officer_monitor_static)
+        print("List of officer_monitor_static:",list(officer_monitor_static))
+
+        for ID in list(officer_monitor_static):
+            print("Looping through the user",client.get_user(int(ID)))
+            # Add the users stats togather and write it to the file
+            try:# This is so that is a user is only created in the officer_monitor it will be added to the file without an error
+                all_time = officer_monitor_static[ID]["Time"] + database_officer_monitor[ID]["Time"]
+            except KeyError:
+                all_time = officer_monitor_static[ID]["Time"]
+            if "Last active time" in list(officer_monitor_static[ID]):
+                print("Using last active time from dict")
+                last_active_time = officer_monitor_static[ID]["Last active time"]
+            else:
+                print("Using last active time from a file")
+                last_active_time = database_officer_monitor[ID]["Last active time"]
+            
+            openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
+    except Exception as error: print("Something failed with writing to file:",error)
+    finally: openFile.close()
+
 async def checkOfficerHealth(Guild_ID):
     await client.wait_until_ready()
     global officer_monitor
@@ -163,65 +225,7 @@ async def checkOfficerHealth(Guild_ID):
     while not client.is_closed():
         # Logging all info to file
         try:
-            print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-            print("Starting to log to file\n")
-            
-            database_officer_monitor = await readDBFile(storage_file_name)
-            
-            # Add missing users to officer_monitor
-            main_role = await getRoleByName(main_role_name, guild)
-            print("main_role name:",main_role.name)
-            members_with_main_role = [member for member in guild.members if main_role in member.roles]
-            print("members_with_main_role:",members_with_main_role)
-            for member in members_with_main_role:
-                try:
-                    officer_monitor[str(member.id)]
-                    print(member.name,"excists in the dict")
-                except KeyError:
-                    officer_monitor[str(member.id)] = {"Time": 0}
-                    try:
-                        officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
-                        print(member.name,"was reset in the dict and got last active time from the file")
-                    except KeyError:
-                        officer_monitor[str(member.id)]["Last active time"] = time.time()
-                        print(member.name,"was reset in the dict and got last active time from the current time")
-
-            # Making a copy of officer_monitor for logging to file
-            officer_monitor_static = copy.deepcopy(officer_monitor)
-            print("officer_monitor cloned")
-
-            # Reset Officer Monitor
-            for ID in list(officer_monitor):
-                officer_monitor[ID]["Time"] = 0
-            print("officer_monitor reset")
-
-            # Writing to file
-            try:
-                print("Opening file:",storage_file_name)
-                # Writing info from last file and officer_monitor over previus data
-                openFile = open(storage_file_name,"w")
-                print("File opened")
-
-                print("officer_monitor_static:",officer_monitor_static)
-                print("List of officer_monitor_static:",list(officer_monitor_static))
-
-                for ID in list(officer_monitor_static):
-                    print("Looping through the user",client.get_user(int(ID)))
-                    # Add the users stats togather and write it to the file
-                    try:# This is so that is a user is only created in the officer_monitor it will be added to the file without an error
-                        all_time = officer_monitor_static[ID]["Time"] + database_officer_monitor[ID]["Time"]
-                    except KeyError:
-                        all_time = officer_monitor_static[ID]["Time"]
-                    if "Last active time" in list(officer_monitor_static[ID]):
-                        print("Using last active time from dict")
-                        last_active_time = officer_monitor_static[ID]["Last active time"]
-                    else:
-                        print("Using last active time from a file")
-                        last_active_time = database_officer_monitor[ID]["Last active time"]
-                    
-                    openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
-            except Exception as error: print("Something failed with writing to file:",error)
-            finally: openFile.close()
+            await logAllInfoToFile(guild)
 
             # Check if someone has to be removed from the LPD because of inactivity
             for officer in list(officer_monitor):
@@ -254,7 +258,6 @@ async def checkOfficerHealth(Guild_ID):
             print(error)
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(sleep_time_beetween_writes)
-        
 
         
 client = discord.Client()
@@ -326,7 +329,7 @@ async def on_message(message):
         
         await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
 
-    if message.content.find(bot_prefix+"help") != -1:
+    elif message.content.find(bot_prefix+"help") != -1:
 
         try:
             message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
@@ -345,7 +348,7 @@ async def on_message(message):
 
         await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
-    if message.content.find(bot_prefix+"time") != -1:
+    elif message.content.find(bot_prefix+"time") != -1:
         
         try:
             arguments = message.content.split(" ")
@@ -369,7 +372,7 @@ async def on_message(message):
             await message.channel.send(str(officer_monitor))
             return
 
-        if arg2 == "user":
+        elif arg2 == "user":
             try: userID = arguments[2]
             except IndexError:
                 await sendErrorMessage(message, "The userID is missing")
@@ -388,6 +391,9 @@ async def on_message(message):
             unixTimeOfUserActive = officer_monitor[userID]["Last active time"]
             onDutyTime = officer_monitor[userID]["Time"] + onDutyTimeFromFile
             await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for "+str(onDutyTime)+"s")
+        
+        elif arg2 == "write":
+            await logAllInfoToFile(message.guild)
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -414,11 +420,14 @@ async def on_voice_state_update(member, before, after):
 async def on_member_update(before, after):
     global officer_monitor
 
-    print("Something changed!!!")
-
     main_role = await getRoleByName(main_role_name,before.guild)
 
-    if main_role not in before.roles and main_role in after.roles:# Member has joined the LPD
+    if main_role in before.roles and main_role in after.roles:
+        return
+    elif main_role not in before.roles and main_role not in after.roles:
+        return
+
+    elif main_role not in before.roles and main_role in after.roles:# Member has joined the LPD
         officer_monitor[str(before.id)] = {"Time": 0,"Last active time": time.time()}# User added to the officer_monitor
         print(before.name,"added to the officer_monitor")
 
