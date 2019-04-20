@@ -28,7 +28,7 @@ all_help_text =  [
 all_help_text_long = [
     "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
     "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General",
-    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time status gives the entire dictionary called officer_monitor"
+    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time status gives the entire dictionary called officer_monitor\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
 ]
 help_dict = {}
 for i in range(0, len(all_commands)):
