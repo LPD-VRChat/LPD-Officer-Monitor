@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import os
 import time
-import json
 import asyncio
 import copy
 from datetime import datetime
