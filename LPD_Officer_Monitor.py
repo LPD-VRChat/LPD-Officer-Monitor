@@ -10,9 +10,10 @@ from datetime import datetime
 Server_ID = 566315650864381953
 max_inactive_time_days = 0.0001# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
+manager_role = "Moderator"
 storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
-counted_channels = ["lpd-chat", "looking-for-group"]
+counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
 sleep_time_beetween_writes = 15
 name_of_voice_channel_being_monitored = "on duty"
 admin_channel = "admin-bot-channel"
@@ -22,12 +23,12 @@ all_commands = [bot_prefix + x for x in all_commands_no_prefix]
 all_help_text =  [
     "Get info about all commands",
     "Get everyone in a voice channel in a list",
-    "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel"
+    "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive"
 ]
 all_help_text_long = [
     "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
-    "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
-    "time ..."
+    "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General",
+    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time status gives the entire dictionary called officer_monitor"
 ]
 help_dict = {}
 for i in range(0, len(all_commands)):
@@ -225,11 +226,25 @@ async def checkOfficerHealth(Guild_ID):
             # Check if someone has to be removed from the LPD because of inactivity
             for officer in list(officer_monitor):
                 if officer_monitor[officer]["Last active time"] + max_inactive_time_seconds < time.time():
-                    channel = await getChannelByName(admin_channel, guild, True)# Get the channel to send the message to
-                    # Send the message
-                    unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
-                    last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
-                    await channel.send("The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(max_inactive_time_days)+" days and was last active "+last_active_time_human_readable)
+                    # Check if the message has already been sent
+                    try:
+                        if officer_monitor[officer]["Reported"] is True:
+                            print(client.get_user(int(officer)),"already reported")# user already reproted
+                        else:
+                            officer_monitor[officer]["Not a real key"]
+                    except KeyError:# The user has not been reported
+                        channel = await getChannelByName(admin_channel, guild, True)# Get the channel to send the message to
+                        # Send the message
+                        unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
+                        last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
+                        
+                        moderator = await getRoleByName(manager_role, guild)
+                        if moderator.mentionable is True:
+                            await channel.send(moderator.mention+" The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(max_inactive_time_days)+" days and was last active "+last_active_time_human_readable)
+                        else:
+                            await channel.send("ERROR The role "+manager_role+" is not mentionable")
+                            await channel.send("The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(max_inactive_time_days)+" days and was last active "+last_active_time_human_readable)
+                        officer_monitor[officer]["Reported"] = True
 
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
 
@@ -254,6 +269,13 @@ async def on_message(message):
             await message.channel.send("This bot does not support Direct Messages.")
             return
 
+    if message.channel.name in counted_channels:
+        try:
+            officer_monitor[str(message.author.id)]["Last active time"] = time.time()
+            print("Message in",message.channel.name,"written by",message.author.name)
+        except KeyError:
+            print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
+
     if message.content.split(" ")[0] not in all_commands:
         return
 
@@ -266,10 +288,6 @@ async def on_message(message):
 
         await message.channel.send("This bot does only work in "+admin_channel_local.mention)
         return
-
-    if message.channel.name in counted_channels:
-        officer_monitor[str(message.author.id)]["Last active time"] = time.time()
-        print("Message in",message.channel.name,"written by",message.author.name)
 
     if message.content.find(bot_prefix+"who") != -1:
 
