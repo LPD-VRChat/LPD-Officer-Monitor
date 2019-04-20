@@ -393,6 +393,7 @@ async def on_message(message):
         
         elif arg2 == "write":
             await logAllInfoToFile(message.guild)
+            await message.channel.send("Everything has been logged to file")
 
 @client.event
 async def on_voice_state_update(member, before, after):
