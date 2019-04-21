@@ -412,9 +412,12 @@ async def on_voice_state_update(member, before, after):
         officer_monitor[str(member.id)]["Last active time"] = current_time
 
     elif before.channel == channel_being_monitored and after.channel != channel_being_monitored:# Exiting the channel being monitored
-        officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
+        try:
+            officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
+            print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
+        except KeyError:
+            print(member.name,"left the voice channel and was not being monitored")
         officer_monitor[str(member.id)]["Last active time"] = current_time
-        print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s")
 
 @client.event
 async def on_member_update(before, after):
