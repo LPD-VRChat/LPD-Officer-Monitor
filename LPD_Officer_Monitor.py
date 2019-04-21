@@ -27,7 +27,7 @@ all_help_text =  [
 all_help_text_long = [
     "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
     "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General",
-    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time status gives the entire dictionary called officer_monitor\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
 ]
 help_dict = {}
 for i in range(0, len(all_commands)):
@@ -355,23 +355,8 @@ async def on_message(message):
         except IndexError:
             await sendErrorMessage(message, "Their is a missing argument")
             return
-        
-        # This is an outdated command witch has no use anymore
-        # if arg2 == "reset":
-        #     officer_monitor = {}
 
-        #     main_role = await getRoleByName(main_role_name, message.guild)
-        #     members_with_main_role = [member for member in message.guild.members if main_role in member.roles]
-
-        #     for member in members_with_main_role: officer_monitor[str(member.id)] = {"Time": 0, "Last active time": time.time()}
-
-        #     await message.channel.send("Time reset")
-
-        if arg2 == "status":
-            await message.channel.send(str(officer_monitor))
-            return
-
-        elif arg2 == "user":
+        if arg2 == "user":
             try: userID = arguments[2]
             except IndexError:
                 await sendErrorMessage(message, "The userID is missing")
@@ -415,8 +400,7 @@ async def on_voice_state_update(member, before, after):
         try:
             officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
             print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
-        except KeyError:
-            print(member.name,"left the voice channel and was not being monitored")
+        except KeyError: print(member.name,"left the voice channel and was not being monitored")
         officer_monitor[str(member.id)]["Last active time"] = current_time
 
 @client.event
