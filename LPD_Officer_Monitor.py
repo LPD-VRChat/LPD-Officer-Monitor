@@ -269,7 +269,7 @@ async def on_message(message):
     except AttributeError:
         if message.channel.me != message.author:
             await message.channel.send("This bot does not support Direct Messages.")
-            return
+        return
 
     if message.channel.name in counted_channels:
         try:
