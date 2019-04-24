@@ -6,7 +6,14 @@ import asyncio
 import copy
 from datetime import datetime
 
-Server_ID = 446345091230072834
+class Help():
+    def __init__(self, name, short_explanation, long_explanation):
+        self.name = name
+        self.command = bot_prefix + name
+        self.short_explanation = short_explanation
+        self.long_explanation = long_explanation
+
+Server_ID = 566315650864381953
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
 manager_role = "Moderator"
@@ -15,23 +22,27 @@ main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
 sleep_time_beetween_writes = 3600
 name_of_voice_channel_being_monitored = "on duty"
-admin_channel = "admin-bot-channel"
+admin_channel_name = "admin-bot-channel"
 bot_prefix = "?"
-all_commands_no_prefix = ["help", "who", "time"]
-all_commands = [bot_prefix + x for x in all_commands_no_prefix]
-all_help_text =  [
-    "Get info about all commands",
-    "Get everyone in a voice channel in a list",
-    "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive"
+
+commands = [
+    Help("help",
+        "Get info about all commands",
+        "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who"
+    ),
+    Help("who",
+        "Get everyone in a voice channel in a list",
+        "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
+    ),
+    Help("time",
+        "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive",
+        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+    ),
+    Help("now",
+        "Get the current time of the server",
+        "now gives the current time of the server to calculate how far your own time zone is away from the servers time zone."
+    )
 ]
-all_help_text_long = [
-    "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
-    "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General",
-    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
-]
-help_dict = {}
-for i in range(0, len(all_commands)):
-    help_dict[all_commands[i]] = all_help_text[i]
 
 officer_monitor = {}
 
@@ -236,7 +247,7 @@ async def checkOfficerHealth(Guild_ID):
                         else:
                             officer_monitor[officer]["Not a real key"]
                     except KeyError:# The user has not been reported
-                        channel = await getChannelByName(admin_channel, guild, True)# Get the channel to send the message to
+                        channel = await getChannelByName(admin_channel_name, guild, True)# Get the channel to send the message to
                         # Send the message
                         unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
                         last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
@@ -269,7 +280,10 @@ async def on_message(message):
     except AttributeError:
         if message.channel.me != message.author:
             await message.channel.send("This bot does not support Direct Messages.")
-            return
+        return
+
+    if message.author == message.guild.me:
+        return
 
     if message.channel.name in counted_channels:
         try:
@@ -278,17 +292,21 @@ async def on_message(message):
         except KeyError:
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
-    if message.content.split(" ")[0] not in all_commands:
+    for command in commands:
+        if message.content.split(" ")[0] == command.command:
+            break
+    else:
+        print("This command does not exist")
         return
+    
+    if message.channel.name != admin_channel_name:
+        admin_channel = await getChannelByName(admin_channel_name, message.guild, True)
 
-    if message.channel.name != admin_channel:
-        admin_channel_local = await getChannelByName(admin_channel, message.guild, True)
-
-        if admin_channel_local is False:
-            await message.channel.send("Please create a text channel named "+admin_channel+" for the bot to use")
+        if admin_channel is False:
+            await message.channel.send("Please create a text channel named "+admin_channel_name+" for the bot to use")
             return
 
-        await message.channel.send("This bot does only work in "+admin_channel_local.mention)
+        await message.channel.send("This bot does only work in "+admin_channel.mention)
         return
 
     if message.content.find(bot_prefix+"who") != -1:
@@ -335,17 +353,20 @@ async def on_message(message):
             argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
             all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
-            for command, explanation in help_dict.items():
-                all_text = all_text+"\n"+command+": "+explanation
+            for command in commands:
+                all_text = all_text+"\n"+command.command+": "+command.short_explanation
 
             await message.channel.send(all_text)
             return
 
-        if argument not in all_commands_no_prefix:
+        for command in commands:
+            if argument == command.name:
+                # Command found
+                await message.channel.send(command.long_explanation)
+                break
+        else:
             await sendErrorMessage(message, 'Help page not loaded because "'+argument+'" is not a valid command')
             return
-
-        await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
     elif message.content.find(bot_prefix+"time") != -1:
         
@@ -394,10 +415,13 @@ async def on_message(message):
             
 
             await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
-        
+
         elif arg2 == "write":
             await logAllInfoToFile(message.guild)
             await message.channel.send("Everything has been logged to file")
+
+    elif message.content.find(bot_prefix+"now") != -1:
+        await message.channel.send("The current time of the server: "+str(datetime.utcfromtimestamp(time.time()).strftime('%d.%m.%Y %H:%M:%S')))
 
 @client.event
 async def on_voice_state_update(member, before, after):
