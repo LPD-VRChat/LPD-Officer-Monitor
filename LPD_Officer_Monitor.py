@@ -170,7 +170,6 @@ async def logAllInfoToFile(guild):
             officer_monitor[str(member.id)] = {"Time": 0}
             try:
                 officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
-                print(member.name,"was reset in the dict and got last active time from the file")
             except KeyError:
                 officer_monitor[str(member.id)]["Last active time"] = time.time()
                 print(member.name,"was reset in the dict and got last active time from the current time")
