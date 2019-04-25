@@ -78,7 +78,7 @@ async def readDBFile(fileName):# Reading all info about users from file
     print("--------------------------------------------------")
     print("Reading from file\n")
     database_officer_monitor = {}
-    print("Extra officer_monitor created:",database_officer_monitor)
+    print("officer_monitor created for data from file:",database_officer_monitor)
 
     # This makes it so that if their is no file it creates the file and then reads from the empty file
     try: openFile = open(fileName, "r")
@@ -97,12 +97,6 @@ async def readDBFile(fileName):# Reading all info about users from file
             user_id = str(variables[0])
             last_active_time = float(variables[1])
             on_duty_time = int(variables[2])
-            
-            # print("------------------------------")
-            # print("user_id:",user_id)
-            # print("last_active_time:",last_active_time)
-            # print("on_duty_time:",on_duty_time)
-            # print("------------------------------")
 
             database_officer_monitor[user_id] = {}
             database_officer_monitor[user_id]["Last active time"] = last_active_time
@@ -110,7 +104,7 @@ async def readDBFile(fileName):# Reading all info about users from file
     except Exception as error: print("Something failed with reading from file:",error)
     finally:
         openFile.close()
-        print("database_officer_monitor after read:",database_officer_monitor)
+        print("officer_monitor read successfully from file")
     
     print("--------------------------------------------------")
     
@@ -141,10 +135,9 @@ async def removeUser(user_id):
     # Remove the user from officer_monitor_local
     try:
         del officer_monitor_local[user_id]
-        print("User removed from the officer_monitor_local")
+        print("User removed from the officer_monitor file")
     except KeyError:
-        print("Could not delete the user with the user id from officer_monitor_local",user_id,"because the user does not exsist in officer_monitor_local")
-        print("officer_monitor_local:",officer_monitor_local)
+        print("Could not delete the user with the user id from officer_monitor file",user_id,"because the user does not exsist in the officer_monitor file (the officer must have been in the LPD for less than an hour")
 
     # Remove the user from the global officer_monitor
     try:
@@ -168,9 +161,7 @@ async def logAllInfoToFile(guild):
     
     # Add missing users to officer_monitor
     main_role = await getRoleByName(main_role_name, guild)
-    print("main_role name:",main_role.name)
     members_with_main_role = [member for member in guild.members if main_role in member.roles]
-    print("members_with_main_role:",members_with_main_role)
     for member in members_with_main_role:
         try:
             officer_monitor[str(member.id)]
@@ -186,38 +177,33 @@ async def logAllInfoToFile(guild):
 
     # Making a copy of officer_monitor for logging to file
     officer_monitor_static = copy.deepcopy(officer_monitor)
-    print("officer_monitor cloned")
+    print("global officer_monitor cloned into officer_monitor_static")
 
     # Reset Officer Monitor
     for ID in list(officer_monitor):
         officer_monitor[ID]["Time"] = 0
-    print("officer_monitor reset")
+    print("global officer_monitor reset")
 
     # Writing to file
     try:
-        print("Opening file:",storage_file_name)
+        print("Opening file:",str(storage_file_name)+"...")
         # Writing info from last file and officer_monitor over previus data
         openFile = open(storage_file_name,"w")
         print("File opened")
 
-        print("officer_monitor_static:",officer_monitor_static)
-        print("List of officer_monitor_static:",list(officer_monitor_static))
-
         for ID in list(officer_monitor_static):
-            print("Looping through the user",client.get_user(int(ID)))
             # Add the users stats togather and write it to the file
             try:# This is so that is a user is only created in the officer_monitor it will be added to the file without an error
                 all_time = officer_monitor_static[ID]["Time"] + database_officer_monitor[ID]["Time"]
             except KeyError:
                 all_time = officer_monitor_static[ID]["Time"]
             if "Last active time" in list(officer_monitor_static[ID]):
-                print("Using last active time from dict")
                 last_active_time = officer_monitor_static[ID]["Last active time"]
             else:
-                print("Using last active time from a file")
                 last_active_time = database_officer_monitor[ID]["Last active time"]
             
             openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
+        print("Everything written to file successfully")
     except Exception as error: print("Something failed with writing to file:",error)
     finally: openFile.close()
 
@@ -226,7 +212,6 @@ async def checkOfficerHealth(Guild_ID):
     global officer_monitor
     if client.get_guild(Guild_ID) is not None:
         guild = client.get_guild(Guild_ID)
-        print("Guild name:",guild.name)
     else:
         await asyncio.sleep(sleep_time_beetween_writes)
         return
@@ -296,7 +281,7 @@ async def on_message(message):
         if message.content.split(" ")[0] == command.command:
             break
     else:
-        print("This command does not exist")
+        print("The command",message.content.split(" ")[0],"does not exist")
         return
     
     if message.channel.name != admin_channel_name:
@@ -335,9 +320,9 @@ async def on_message(message):
         has_run = False
         for member in channel.members:
             if has_run is True:
-                everyone_in_channel = everyone_in_channel + separator + member.name
+                everyone_in_channel = everyone_in_channel + separator + member.display_name
             else:
-                everyone_in_channel += member.name
+                everyone_in_channel += member.display_name
                 has_run = True
 
         # This is to remove double backslashes witch discord adds to disable enter/tab functionality but I want that functunality here so I only want one of the backslashes
