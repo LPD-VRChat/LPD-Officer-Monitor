@@ -6,7 +6,14 @@ import asyncio
 import copy
 from datetime import datetime
 
-Server_ID = 446345091230072834
+class Help():
+    def __init__(self, name, short_explanation, long_explanation):
+        self.name = name
+        self.command = bot_prefix + name
+        self.short_explanation = short_explanation
+        self.long_explanation = long_explanation
+
+Server_ID = 566315650864381953
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
 manager_role = "Moderator"
@@ -15,23 +22,27 @@ main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
 sleep_time_beetween_writes = 3600
 name_of_voice_channel_being_monitored = "on duty"
-admin_channel = "admin-bot-channel"
+admin_channel_name = "admin-bot-channel"
 bot_prefix = "?"
-all_commands_no_prefix = ["help", "who", "time"]
-all_commands = [bot_prefix + x for x in all_commands_no_prefix]
-all_help_text =  [
-    "Get info about all commands",
-    "Get everyone in a voice channel in a list",
-    "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive"
+
+commands = [
+    Help("help",
+        "Get info about all commands",
+        "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who"
+    ),
+    Help("who",
+        "Get everyone in a voice channel in a list",
+        "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
+    ),
+    Help("time",
+        "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive",
+        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+    ),
+    Help("now",
+        "Get the current time of the server",
+        "now gives the current time of the server to calculate how far your own time zone is away from the servers time zone."
+    )
 ]
-all_help_text_long = [
-    "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who",
-    "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General",
-    "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
-]
-help_dict = {}
-for i in range(0, len(all_commands)):
-    help_dict[all_commands[i]] = all_help_text[i]
 
 officer_monitor = {}
 
@@ -67,7 +78,7 @@ async def readDBFile(fileName):# Reading all info about users from file
     print("--------------------------------------------------")
     print("Reading from file\n")
     database_officer_monitor = {}
-    print("Extra officer_monitor created:",database_officer_monitor)
+    print("officer_monitor created for data from file:",database_officer_monitor)
 
     # This makes it so that if their is no file it creates the file and then reads from the empty file
     try: openFile = open(fileName, "r")
@@ -86,12 +97,6 @@ async def readDBFile(fileName):# Reading all info about users from file
             user_id = str(variables[0])
             last_active_time = float(variables[1])
             on_duty_time = int(variables[2])
-            
-            # print("------------------------------")
-            # print("user_id:",user_id)
-            # print("last_active_time:",last_active_time)
-            # print("on_duty_time:",on_duty_time)
-            # print("------------------------------")
 
             database_officer_monitor[user_id] = {}
             database_officer_monitor[user_id]["Last active time"] = last_active_time
@@ -99,7 +104,7 @@ async def readDBFile(fileName):# Reading all info about users from file
     except Exception as error: print("Something failed with reading from file:",error)
     finally:
         openFile.close()
-        print("database_officer_monitor after read:",database_officer_monitor)
+        print("officer_monitor read successfully from file")
     
     print("--------------------------------------------------")
     
@@ -130,10 +135,9 @@ async def removeUser(user_id):
     # Remove the user from officer_monitor_local
     try:
         del officer_monitor_local[user_id]
-        print("User removed from the officer_monitor_local")
+        print("User removed from the officer_monitor file")
     except KeyError:
-        print("Could not delete the user with the user id from officer_monitor_local",user_id,"because the user does not exsist in officer_monitor_local")
-        print("officer_monitor_local:",officer_monitor_local)
+        print("Could not delete the user with the user id from officer_monitor file",user_id,"because the user does not exsist in the officer_monitor file (the officer must have been in the LPD for less than an hour")
 
     # Remove the user from the global officer_monitor
     try:
@@ -157,9 +161,7 @@ async def logAllInfoToFile(guild):
     
     # Add missing users to officer_monitor
     main_role = await getRoleByName(main_role_name, guild)
-    print("main_role name:",main_role.name)
     members_with_main_role = [member for member in guild.members if main_role in member.roles]
-    print("members_with_main_role:",members_with_main_role)
     for member in members_with_main_role:
         try:
             officer_monitor[str(member.id)]
@@ -168,45 +170,39 @@ async def logAllInfoToFile(guild):
             officer_monitor[str(member.id)] = {"Time": 0}
             try:
                 officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
-                print(member.name,"was reset in the dict and got last active time from the file")
             except KeyError:
                 officer_monitor[str(member.id)]["Last active time"] = time.time()
                 print(member.name,"was reset in the dict and got last active time from the current time")
 
     # Making a copy of officer_monitor for logging to file
     officer_monitor_static = copy.deepcopy(officer_monitor)
-    print("officer_monitor cloned")
+    print("global officer_monitor cloned into officer_monitor_static")
 
     # Reset Officer Monitor
     for ID in list(officer_monitor):
         officer_monitor[ID]["Time"] = 0
-    print("officer_monitor reset")
+    print("global officer_monitor reset")
 
     # Writing to file
     try:
-        print("Opening file:",storage_file_name)
+        print("Opening file:",str(storage_file_name)+"...")
         # Writing info from last file and officer_monitor over previus data
         openFile = open(storage_file_name,"w")
         print("File opened")
 
-        print("officer_monitor_static:",officer_monitor_static)
-        print("List of officer_monitor_static:",list(officer_monitor_static))
-
         for ID in list(officer_monitor_static):
-            print("Looping through the user",client.get_user(int(ID)))
             # Add the users stats togather and write it to the file
             try:# This is so that is a user is only created in the officer_monitor it will be added to the file without an error
                 all_time = officer_monitor_static[ID]["Time"] + database_officer_monitor[ID]["Time"]
             except KeyError:
                 all_time = officer_monitor_static[ID]["Time"]
             if "Last active time" in list(officer_monitor_static[ID]):
-                print("Using last active time from dict")
                 last_active_time = officer_monitor_static[ID]["Last active time"]
             else:
-                print("Using last active time from a file")
                 last_active_time = database_officer_monitor[ID]["Last active time"]
             
             openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
+        print("Everything written to file successfully")
     except Exception as error: print("Something failed with writing to file:",error)
     finally: openFile.close()
 
@@ -215,7 +211,6 @@ async def checkOfficerHealth(Guild_ID):
     global officer_monitor
     if client.get_guild(Guild_ID) is not None:
         guild = client.get_guild(Guild_ID)
-        print("Guild name:",guild.name)
     else:
         await asyncio.sleep(sleep_time_beetween_writes)
         return
@@ -236,7 +231,7 @@ async def checkOfficerHealth(Guild_ID):
                         else:
                             officer_monitor[officer]["Not a real key"]
                     except KeyError:# The user has not been reported
-                        channel = await getChannelByName(admin_channel, guild, True)# Get the channel to send the message to
+                        channel = await getChannelByName(admin_channel_name, guild, True)# Get the channel to send the message to
                         # Send the message
                         unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
                         last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
@@ -271,6 +266,9 @@ async def on_message(message):
             await message.channel.send("This bot does not support Direct Messages.")
         return
 
+    if message.author == message.guild.me:
+        return
+
     if message.channel.name in counted_channels:
         try:
             officer_monitor[str(message.author.id)]["Last active time"] = time.time()
@@ -278,17 +276,21 @@ async def on_message(message):
         except KeyError:
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
-    if message.content.split(" ")[0] not in all_commands:
+    for command in commands:
+        if message.content.split(" ")[0] == command.command:
+            break
+    else:
+        print("The command",message.content.split(" ")[0],"does not exist")
         return
+    
+    if message.channel.name != admin_channel_name:
+        admin_channel = await getChannelByName(admin_channel_name, message.guild, True)
 
-    if message.channel.name != admin_channel:
-        admin_channel_local = await getChannelByName(admin_channel, message.guild, True)
-
-        if admin_channel_local is False:
-            await message.channel.send("Please create a text channel named "+admin_channel+" for the bot to use")
+        if admin_channel is False:
+            await message.channel.send("Please create a text channel named "+admin_channel_name+" for the bot to use")
             return
 
-        await message.channel.send("This bot does only work in "+admin_channel_local.mention)
+        await message.channel.send("This bot does only work in "+admin_channel.mention)
         return
 
     if message.content.find(bot_prefix+"who") != -1:
@@ -317,9 +319,9 @@ async def on_message(message):
         has_run = False
         for member in channel.members:
             if has_run is True:
-                everyone_in_channel = everyone_in_channel + separator + member.name
+                everyone_in_channel = everyone_in_channel + separator + member.display_name
             else:
-                everyone_in_channel += member.name
+                everyone_in_channel += member.display_name
                 has_run = True
 
         # This is to remove double backslashes witch discord adds to disable enter/tab functionality but I want that functunality here so I only want one of the backslashes
@@ -335,17 +337,20 @@ async def on_message(message):
             argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
             all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
-            for command, explanation in help_dict.items():
-                all_text = all_text+"\n"+command+": "+explanation
+            for command in commands:
+                all_text = all_text+"\n"+command.command+": "+command.short_explanation
 
             await message.channel.send(all_text)
             return
 
-        if argument not in all_commands_no_prefix:
+        for command in commands:
+            if argument == command.name:
+                # Command found
+                await message.channel.send(command.long_explanation)
+                break
+        else:
             await sendErrorMessage(message, 'Help page not loaded because "'+argument+'" is not a valid command')
             return
-
-        await message.channel.send(all_help_text_long[all_commands_no_prefix.index(argument)])
 
     elif message.content.find(bot_prefix+"time") != -1:
         
@@ -372,13 +377,35 @@ async def on_message(message):
                 await sendErrorMessage(message, "Their is no user in this server with the ID: "+str(userID))
                 return
 
+            # Get the time
             unixTimeOfUserActive = officer_monitor[userID]["Last active time"]
-            onDutyTime = officer_monitor[userID]["Time"] + onDutyTimeFromFile
-            await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for "+str(onDutyTime)+"s")
-        
+            onDutySeconds = officer_monitor[userID]["Time"] + onDutyTimeFromFile
+            #Calculate days, hours, minutes and seconds
+            onDutyMinutes, onDutySeconds = divmod(onDutySeconds, 60)
+            onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
+            onDutyDays, onDutyHours = divmod(onDutyHours, 24)
+            onDutyweeks, onDutyDays = divmod(onDutyDays, 7)
+
+            onDutyTime = ""
+            if onDutyweeks != 0:
+                onDutyTime += "\nWeeks: "+str(onDutyweeks)
+            if onDutyDays + onDutyweeks != 0:
+                onDutyTime += "\nDays: "+str(onDutyDays)
+            if onDutyHours + onDutyDays + onDutyweeks != 0:
+                onDutyTime += "\nHours: "+str(onDutyHours)
+            if onDutyMinutes + onDutyHours + onDutyDays + onDutyweeks != 0:
+                onDutyTime += "\nMinutes: "+str(onDutyMinutes)
+            onDutyTime += "\nSeconds: "+str(onDutySeconds)
+            
+
+            await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
+
         elif arg2 == "write":
             await logAllInfoToFile(message.guild)
             await message.channel.send("Everything has been logged to file")
+
+    elif message.content.find(bot_prefix+"now") != -1:
+        await message.channel.send("The current time of the server: "+str(datetime.utcfromtimestamp(time.time()).strftime('%d.%m.%Y %H:%M:%S')))
 
 @client.event
 async def on_voice_state_update(member, before, after):
