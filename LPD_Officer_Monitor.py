@@ -212,6 +212,7 @@ async def checkOfficerHealth(Guild_ID):
     if client.get_guild(Guild_ID) is not None:
         guild = client.get_guild(Guild_ID)
     else:
+        print("Wrong Server_ID")
         await asyncio.sleep(sleep_time_beetween_writes)
         return
 
@@ -411,8 +412,17 @@ async def on_message(message):
 async def on_voice_state_update(member, before, after):
     global officer_monitor
 
-    try: channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, before.channel.guild, False)
-    except AttributeError: channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, after.channel.guild, False)
+    # Get teh guild
+    try: guild = before.channel.guild
+    except AttributeError: guild = after.channel.guild
+    
+    # Check if this is just a member and if it is than just return
+    LPD_role = await getRoleByName(main_role_name, guild)
+    if LPD_role not in member.roles:
+        print("A normal member entered or exited a voice channel")
+        return
+
+    channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, guild, False)
     
     if after.channel == before.channel: return
     if before.channel != channel_being_monitored and after.channel != channel_being_monitored: return
