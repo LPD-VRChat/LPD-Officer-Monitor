@@ -261,15 +261,18 @@ client = discord.Client()
 async def on_message(message):
     global officer_monitor
 
+    # Eliminate DM's
     try: message.channel.category_id
     except AttributeError:
         if message.channel.me != message.author:
             await message.channel.send("This bot does not support Direct Messages.")
         return
 
+    # If the bot wrote the message it won't go further
     if message.author == message.guild.me:
         return
 
+    # If the channel is in the list counted_channels than the last active time is updated in the officer_monitor for that officer
     if message.channel.name in counted_channels:
         try:
             officer_monitor[str(message.author.id)]["Last active time"] = time.time()
@@ -277,6 +280,7 @@ async def on_message(message):
         except KeyError:
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
+    # Check if the command exists, if not then send a message notifying someone that this message does not exist
     for command in commands:
         if message.content.split(" ")[0] == command.command:
             break
@@ -284,6 +288,7 @@ async def on_message(message):
         print("The command",message.content.split(" ")[0],"does not exist")
         return
     
+    # If the channel name is not the admin_channel_name than reply with that the bot only works in the admin_channel_name channel
     if message.channel.name != admin_channel_name:
         admin_channel = await getChannelByName(admin_channel_name, message.guild, True)
 
@@ -432,7 +437,6 @@ async def on_voice_state_update(member, before, after):
     if after.channel == channel_being_monitored and before.channel != channel_being_monitored:# Entering the channel being monitored
         officer_monitor[str(member.id)]["Start time"] = current_time
         officer_monitor[str(member.id)]["Last active time"] = current_time
-
     elif before.channel == channel_being_monitored and after.channel != channel_being_monitored:# Exiting the channel being monitored
         try:
             officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
