@@ -20,6 +20,7 @@ manager_role = "Moderator"
 storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
+join_up_channel = "join-up"
 sleep_time_beetween_writes = 3600
 name_of_voice_channel_being_monitored = "on duty"
 admin_channel_name = "admin-bot-channel"
@@ -280,6 +281,18 @@ async def on_message(message):
         except KeyError:
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
+    # Delete message if an LPD members sent to the channel #join-up
+    LPD_role = await getRoleByName(main_role_name, message.guild)
+    if message.channel.name == join_up_channel:
+        if LPD_role in message.author.roles:
+
+            if not message.author.dm_channel:
+                await message.author.create_dm()
+            await message.author.dm_channel.send(main_role_name+" members cannot send to the "+message.channel.mention+" channel")
+            
+            await message.delete()
+            return
+
     # Check if the command exists, if not then send a message notifying someone that this message does not exist
     for command in commands:
         if message.content.split(" ")[0] == command.command:
@@ -364,7 +377,7 @@ async def on_message(message):
             arguments = message.content.split(" ")
             arg2 = arguments[1]
         except IndexError:
-            await sendErrorMessage(message, "Their is a missing argument")
+            await sendErrorMessage(message, "Their is a missing argument do ?help for help")
             return
 
         if arg2 == "user":
