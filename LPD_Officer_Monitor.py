@@ -14,6 +14,7 @@ class Help():
         self.long_explanation = long_explanation
 
 Server_ID = 446345091230072834
+Others_excluded = [294518114903916545]
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
 manager_role = "Moderator"
@@ -283,8 +284,9 @@ async def on_message(message):
 
     # Delete message if an LPD members sent to the channel #join-up
     LPD_role = await getRoleByName(main_role_name, message.guild)
+    Mod_role = await getRoleByName(manager_role, message.guild)
     if message.channel.name == join_up_channel:
-        if LPD_role in message.author.roles:
+        if LPD_role in message.author.roles and Mod_role not in message.author.roles and message.author.id not in Others_excluded:
 
             if not message.author.dm_channel:
                 await message.author.create_dm()
@@ -298,7 +300,6 @@ async def on_message(message):
         if message.content.split(" ")[0] == command.command:
             break
     else:
-        print("The command",message.content.split(" ")[0],"does not exist")
         return
     
     # If the channel name is not the admin_channel_name than reply with that the bot only works in the admin_channel_name channel
