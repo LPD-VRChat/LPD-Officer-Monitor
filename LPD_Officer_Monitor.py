@@ -224,7 +224,7 @@ async def getTopOrBottom(message, arguments, top):
             await sendErrorMessage(message, "The first number must be higher than or equal to 1")
             return
 
-        combined_officer_monitor = officer_monitor
+        combined_officer_monitor = copy.deepcopy(officer_monitor)
         database_officer_monitor = await readDBFile(storage_file_name)
         
         # Get the time from the file and add that to the time in the officer_monitor dict
