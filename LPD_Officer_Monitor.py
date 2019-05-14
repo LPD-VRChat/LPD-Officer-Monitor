@@ -13,7 +13,7 @@ class Help():
         self.short_explanation = short_explanation
         self.long_explanation = long_explanation
 
-Server_ID = 446345091230072834
+Server_ID = 566315650864381953
 Others_excluded = [294518114903916545]
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
@@ -209,54 +209,55 @@ async def logAllInfoToFile(guild):
     finally: openFile.close()
 
 async def getTopOrBottom(message, arguments, top):
-    try:
-        num1 = int(arguments[2])
-        num2 = int(arguments[3])
-    except IndexError:
-        await sendErrorMessage(message, "The userID is missing")
-        return
-    except TypeError:
-        await sendErrorMessage(message, "The two last arguments must be whole numbers")
-        return
-
-    if num1 < 1:
-        await sendErrorMessage(message, "The first number must be higher than or equal to 1")
-        return
-
-    combined_officer_monitor = officer_monitor
-    database_officer_monitor = await readDBFile(storage_file_name)
-    
-    # Get the time from the file and add that to the time in the officer_monitor dict
-    for userID in officer_monitor:
+    async with message.channel.typing():
         try:
-            combined_officer_monitor[userID]["Time"] += database_officer_monitor[userID]["Time"]
-        except KeyError:
-            pass
-    print("combined_officer_monitor:\n",combined_officer_monitor)
+            num1 = int(arguments[2])
+            num2 = int(arguments[3])
+        except IndexError:
+            await sendErrorMessage(message, "The userID is missing")
+            return
+        except TypeError:
+            await sendErrorMessage(message, "The two last arguments must be whole numbers")
+            return
 
-    user_on_duty_time = {n: combined_officer_monitor[n]["Time"] for n in combined_officer_monitor}
-    sortedUsersByTime = sorted(user_on_duty_time, key=user_on_duty_time.get)
+        if num1 < 1:
+            await sendErrorMessage(message, "The first number must be higher than or equal to 1")
+            return
 
-    sortedUsersByTime = list(sortedUsersByTime)
-    if top is True:
-        sortedUsersByTime.reverse()
+        combined_officer_monitor = officer_monitor
+        database_officer_monitor = await readDBFile(storage_file_name)
+        
+        # Get the time from the file and add that to the time in the officer_monitor dict
+        for userID in officer_monitor:
+            try:
+                combined_officer_monitor[userID]["Time"] += database_officer_monitor[userID]["Time"]
+            except KeyError:
+                pass
+        print("combined_officer_monitor:\n",combined_officer_monitor)
 
-    try:
-        await message.channel.send("Officer | on duty time | date\n")
-        for i in range(num1 -1, num2):
-            user_id = sortedUsersByTime[i]
-            #Calculate days, hours, minutes and seconds
-            onDutySeconds = combined_officer_monitor[user_id]["Time"]
-            onDutyMinutes, onDutySeconds = divmod(onDutySeconds, 60)
-            onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
-            onDutyDays, onDutyHours = divmod(onDutyHours, 24)
-            onDutyweeks, onDutyDays = divmod(onDutyDays, 7)
+        user_on_duty_time = {n: combined_officer_monitor[n]["Time"] for n in combined_officer_monitor}
+        sortedUsersByTime = sorted(user_on_duty_time, key=user_on_duty_time.get)
 
-            onDutyTime = str(onDutyweeks) +":"+ str(onDutyDays) +":"+ str(onDutyHours) +":"+ str(onDutyMinutes) +":"+ str(onDutySeconds)
+        sortedUsersByTime = list(sortedUsersByTime)
+        if top is True:
+            sortedUsersByTime.reverse()
 
-            await message.channel.send(client.get_user(int(user_id)).display_name + " | "+onDutyTime+" | "+str(datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
-    except IndexError:
-        await sendErrorMessage(message, "Error - Make sure that you started at 1 or higher and ended at less or equal to all officers in the LPD")
+        try:
+            await message.channel.send("Officer | on duty time | date\n")
+            for i in range(num1 -1, num2):
+                user_id = sortedUsersByTime[i]
+                #Calculate days, hours, minutes and seconds
+                onDutySeconds = combined_officer_monitor[user_id]["Time"]
+                onDutyMinutes, onDutySeconds = divmod(onDutySeconds, 60)
+                onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
+                onDutyDays, onDutyHours = divmod(onDutyHours, 24)
+                onDutyweeks, onDutyDays = divmod(onDutyDays, 7)
+
+                onDutyTime = str(onDutyweeks) +":"+ str(onDutyDays) +":"+ str(onDutyHours) +":"+ str(onDutyMinutes) +":"+ str(onDutySeconds)
+
+                await message.channel.send(client.get_user(int(user_id)).display_name + " | "+onDutyTime+" | "+str(datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
+        except IndexError:
+            await sendErrorMessage(message, "Error - Make sure that you started at 1 or higher and ended at less or equal to all officers in the LPD")
 
 async def checkOfficerHealth(Guild_ID):
     await client.wait_until_ready()
