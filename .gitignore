@@ -110,4 +110,4 @@ token.txt
 .vscode/*
 
 # Local database
-LPD_database.csv
+LPD_database*.csv
