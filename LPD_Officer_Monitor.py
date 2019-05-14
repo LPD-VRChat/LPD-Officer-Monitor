@@ -255,7 +255,7 @@ async def getTopOrBottom(message, arguments, top):
 
                 onDutyTime = str(onDutyweeks) +":"+ str(onDutyDays) +":"+ str(onDutyHours) +":"+ str(onDutyMinutes) +":"+ str(onDutySeconds)
 
-                await message.channel.send(client.get_user(int(user_id)).display_name + " | "+onDutyTime+" | "+str(datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
+                await message.channel.send(client.get_user(int(user_id)).mention + " | "+onDutyTime+" | "+str(datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
         except IndexError:
             await sendErrorMessage(message, "Error - Make sure that you started at 1 or higher and ended at less or equal to all officers in the LPD")
 
