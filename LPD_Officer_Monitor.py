@@ -13,7 +13,7 @@ class Help():
         self.short_explanation = short_explanation
         self.long_explanation = long_explanation
 
-Server_ID = 446345091230072834
+Server_ID = 566315650864381953
 Others_excluded = [294518114903916545]
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
@@ -433,43 +433,42 @@ async def on_message(message):
             return
 
         if arg2 == "user":
-            try: userID = arguments[2]
-            except IndexError:
-                await sendErrorMessage(message, "The userID is missing")
-                return
+            if not message.mentions:
+                await sendErrorMessage(message, "You forgot to mention someone to get info about")
             
             database_officer_monitor = await readDBFile(storage_file_name)
-            try:
-                onDutyTimeFromFile = database_officer_monitor[userID]["Time"]
-            except KeyError:
-                onDutyTimeFromFile = 0
             
-            if client.get_user(int(userID)) is None:
-                await sendErrorMessage(message, "Their is no user in this server with the ID: "+str(userID))
-                return
+            for user in message.mentions:
+                if str(user.id) not in officer_monitor:
+                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+main_role_name+" officer?")
+                else:
+                    try:
+                        onDutyTimeFromFile = database_officer_monitor[str(user.id)]["Time"]
+                    except KeyError:
+                        onDutyTimeFromFile = 0
 
-            # Get the time
-            unixTimeOfUserActive = officer_monitor[userID]["Last active time"]
-            onDutySeconds = officer_monitor[userID]["Time"] + onDutyTimeFromFile
-            #Calculate days, hours, minutes and seconds
-            onDutyMinutes, onDutySeconds = divmod(onDutySeconds, 60)
-            onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
-            onDutyDays, onDutyHours = divmod(onDutyHours, 24)
-            onDutyweeks, onDutyDays = divmod(onDutyDays, 7)
+                    # Get the time
+                    unixTimeOfUserActive = officer_monitor[str(user.id)]["Last active time"]
+                    onDutySeconds = officer_monitor[str(user.id)]["Time"] + onDutyTimeFromFile
+                    #Calculate days, hours, minutes and seconds
+                    onDutyMinutes, onDutySeconds = divmod(onDutySeconds, 60)
+                    onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
+                    onDutyDays, onDutyHours = divmod(onDutyHours, 24)
+                    onDutyweeks, onDutyDays = divmod(onDutyDays, 7)
 
-            onDutyTime = ""
-            if onDutyweeks != 0:
-                onDutyTime += "\nWeeks: "+str(onDutyweeks)
-            if onDutyDays + onDutyweeks != 0:
-                onDutyTime += "\nDays: "+str(onDutyDays)
-            if onDutyHours + onDutyDays + onDutyweeks != 0:
-                onDutyTime += "\nHours: "+str(onDutyHours)
-            if onDutyMinutes + onDutyHours + onDutyDays + onDutyweeks != 0:
-                onDutyTime += "\nMinutes: "+str(onDutyMinutes)
-            onDutyTime += "\nSeconds: "+str(onDutySeconds)
-            
+                    onDutyTime = ""
+                    if onDutyweeks != 0:
+                        onDutyTime += "\nWeeks: "+str(onDutyweeks)
+                    if onDutyDays + onDutyweeks != 0:
+                        onDutyTime += "\nDays: "+str(onDutyDays)
+                    if onDutyHours + onDutyDays + onDutyweeks != 0:
+                        onDutyTime += "\nHours: "+str(onDutyHours)
+                    if onDutyMinutes + onDutyHours + onDutyDays + onDutyweeks != 0:
+                        onDutyTime += "\nMinutes: "+str(onDutyMinutes)
+                    onDutyTime += "\nSeconds: "+str(onDutySeconds)
+                    
 
-            await message.channel.send(str(client.get_user(int(userID)))+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
+                    await message.channel.send(user.mention+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
 
         elif arg2 == "write":
             await logAllInfoToFile(message.guild)
