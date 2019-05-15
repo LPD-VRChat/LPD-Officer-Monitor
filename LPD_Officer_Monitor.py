@@ -13,7 +13,7 @@ class Help():
         self.short_explanation = short_explanation
         self.long_explanation = long_explanation
 
-Server_ID = 566315650864381953
+Server_ID = 446345091230072834
 Others_excluded = [294518114903916545]
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
