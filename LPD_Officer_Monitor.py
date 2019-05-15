@@ -38,7 +38,7 @@ commands = [
     ),
     Help("time",
         "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive",
-        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\ntime user [user id] gets info about a specific user\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\njust like time top but takes from the bottom\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n\ntime user [@ the user/s] gets info about a specific user/users\n\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\n\njust like time top but takes from the bottom\n\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
     ),
     Help("now",
         "Get the current time of the server",
