@@ -13,7 +13,7 @@ class Help():
         self.short_explanation = short_explanation
         self.long_explanation = long_explanation
 
-Server_ID = 446345091230072834
+Server_ID = 566315650864381953
 Others_excluded = [294518114903916545]
 max_inactive_time_days = 28# In days
 max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
@@ -334,9 +334,9 @@ async def on_message(message):
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
     # Delete message if an LPD members sent to the channel #join-up
-    LPD_role = await getRoleByName(main_role_name, message.guild)
-    Mod_role = await getRoleByName(manager_role, message.guild)
     if message.channel.name == join_up_channel:
+        LPD_role = await getRoleByName(main_role_name, message.guild)
+        Mod_role = await getRoleByName(manager_role, message.guild)
         if LPD_role in message.author.roles and Mod_role not in message.author.roles and message.author.id not in Others_excluded:
 
             if not message.author.dm_channel:
