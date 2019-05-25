@@ -53,7 +53,7 @@ token_file_name = "token.txt"
 
 def getToken():
     token_file = open(token_file_name, "r")
-    token = token_file.read()
+    token = token_file.readline()
     token_file.close()
     return token
 
