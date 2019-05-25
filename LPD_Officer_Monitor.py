@@ -55,6 +55,7 @@ def getToken():
     token_file = open(token_file_name, "r")
     token = token_file.readline()
     token_file.close()
+    print('"'+token+'"')
     return token
 
 async def getChannelByName(name, guild, text_channel):
