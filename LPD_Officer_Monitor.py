@@ -22,6 +22,7 @@ storage_file_name = "LPD_database.csv"
 main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
 join_up_channel = "join-up"
+max_applications = 15
 sleep_time_beetween_writes = 3600
 voice_channel_being_monitored = "on duty"
 admin_channel_name = "admin-bot-channel"
@@ -55,8 +56,9 @@ token_file_name = "token.txt"
 
 def getToken():
     token_file = open(token_file_name, "r")
-    token = token_file.read()
+    token = token_file.readline().replace("\n","")
     token_file.close()
+    print('"'+token+'"')
     return token
 
 async def getChannelByName(name, guild, text_channel):
@@ -331,7 +333,20 @@ async def goOffDuty(member, guild):
     on_duty_role = await getRoleByName(voice_channel_being_monitored, guild)
     await member.remove_roles(on_duty_role)
 
+async def removeJoinUpApplication(message, error_text, use_beginning_text = True):
+    # Notify user that join up message did not get accepted
+    if not message.author.dm_channel:
+        await message.author.create_dm()
+        
+    if use_beginning_text is True: await message.author.dm_channel.send("Your application in "+message.channel.mention+" did not follow the template, "+error_text)
+    else: await message.author.dm_channel.send(error_text)
 
+    # Remove application
+    await message.delete()
+
+    return
+
+        
 client = discord.Client()
 
 @client.event
@@ -358,10 +373,16 @@ async def on_message(message):
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
     # Delete message if an LPD members sent to the channel #join-up
-    LPD_role = await getRoleByName(main_role_name, message.guild)
-    Mod_role = await getRoleByName(manager_role, message.guild)
     if message.channel.name == join_up_channel:
-        if LPD_role in message.author.roles and Mod_role not in message.author.roles and message.author.id not in Others_excluded:
+        LPD_role = await getRoleByName(main_role_name, message.guild)
+        Mod_role = await getRoleByName(manager_role, message.guild)
+
+        # If the message is from a moderator, ignore the message
+        if Mod_role in message.author.roles or message.author.id in Others_excluded or message.author.bot is True:
+            return
+        
+        # Check if this message is from an LPD member, if so, remove it
+        if LPD_role in message.author.roles:
 
             if not message.author.dm_channel:
                 await message.author.create_dm()
@@ -369,6 +390,42 @@ async def on_message(message):
             
             await message.delete()
             return
+        
+        # This is a join up application
+
+        # Make sure the message is the right length
+        lines = message.content.count('\n') + 1
+        if lines != 13:
+            await removeJoinUpApplication(message, "please check the line spacing.")
+            return
+
+        # Make sure the person applying has not sent an application already
+        # all_applications = 0
+        async for old_message in message.channel.history(limit=None):
+            if old_message.author == message.author and old_message.id != message.id:
+                await removeJoinUpApplication(message, "You have already applied in "+message.channel.mention+", you cannot apply again until your application has been reviewed but you can edit your current application", False)
+                return
+
+        # This closes the applications after 15 applications but this feature was not accepted:
+        #     if Mod_role not in old_message.author.roles and old_message.author.id not in Others_excluded and message.author.bot is not True:
+        #         all_applications += 1
+                
+        # print(all_applications)
+        
+        # if all_applications >= max_applications:
+        #     await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
+            
+        #     # Lock the channel for the @everyone role
+        #     everyone_role = await getRoleByName("@everyone", message.guild)
+        #     overwrites = message.channel.overwrites
+            
+        #     if everyone_role in overwrites: overwrite = overwrites[everyone_role]
+        #     else: overwrite = discord.PermissionOverwrite()
+
+        #     overwrite.update(send_messages = False)
+
+        #     await message.channel.set_permissions(everyone_role, overwrite=overwrite)
+
 
     # Check if the command exists, if not then send a message notifying someone that this message does not exist
     for command in commands:
