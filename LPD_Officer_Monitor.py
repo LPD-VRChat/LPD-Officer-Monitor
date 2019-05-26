@@ -23,9 +23,12 @@ main_role_name = "LPD"
 counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
 join_up_channel = "join-up"
 sleep_time_beetween_writes = 3600
-name_of_voice_channel_being_monitored = "on duty"
+voice_channel_being_monitored = "on duty"
 admin_channel_name = "admin-bot-channel"
 bot_prefix = "?"
+settingsMessages = {
+    "show_group_channels": 582330373095292950
+}
 
 commands = [
     Help("help",
@@ -37,7 +40,7 @@ commands = [
         "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
     ),
     Help("time",
-        "Get how much time each officer has been in the "+name_of_voice_channel_being_monitored+" channel and how long they have been inactive",
+        "Get how much time each officer has been in the "+voice_channel_being_monitored+" channel and how long they have been inactive",
         "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
     ),
     Help("now",
@@ -307,7 +310,28 @@ async def checkOfficerHealth(Guild_ID):
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(sleep_time_beetween_writes)
 
-        
+async def goOnDuty(member, guild):
+    global officer_monitor
+    current_time = time.time()
+    officer_monitor[str(member.id)]["Start time"] = current_time
+    officer_monitor[str(member.id)]["Last active time"] = current_time
+
+    on_duty_role = await getRoleByName(voice_channel_being_monitored, guild)
+    await member.add_roles(on_duty_role)
+
+async def goOffDuty(member, guild):
+    global officer_monitor
+    current_time = time.time()
+    try:
+        officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
+        print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
+    except KeyError: print(member.name,"left the voice channel and was not being monitored")
+    officer_monitor[str(member.id)]["Last active time"] = current_time
+
+    on_duty_role = await getRoleByName(voice_channel_being_monitored, guild)
+    await member.remove_roles(on_duty_role)
+
+
 client = discord.Client()
 
 @client.event
@@ -493,28 +517,32 @@ async def on_voice_state_update(member, before, after):
     if LPD_role not in member.roles:
         print("A normal member entered or exited a voice channel")
         return
-
-    channel_being_monitored = await getChannelByName(name_of_voice_channel_being_monitored, guild, False)
     
     if after.channel == before.channel: return
-    if before.channel != channel_being_monitored and after.channel != channel_being_monitored: return
-    
-    current_time = time.time()
 
-    if after.channel == channel_being_monitored and before.channel != channel_being_monitored:# Entering the channel being monitored
-        officer_monitor[str(member.id)]["Start time"] = current_time
-        officer_monitor[str(member.id)]["Last active time"] = current_time
-    elif before.channel == channel_being_monitored and after.channel != channel_being_monitored:# Exiting the channel being monitored
-        try:
-            officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
-            print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
-        except KeyError: print(member.name,"left the voice channel and was not being monitored")
-        officer_monitor[str(member.id)]["Last active time"] = current_time
+    if before.channel is None:
+        if after.channel.name == voice_channel_being_monitored or "group " in after.channel.name:
+            # User comming on duty
+            await goOnDuty(member, guild)
+
+    elif after.channel is None:
+        if before.channel.name == voice_channel_being_monitored or "group " in before.channel.name:
+            # User comming off duty
+            await goOffDuty(member, guild)
+
+    else:# This runs if the user is going from one vocie channel to another
+        if (after.channel.name == voice_channel_being_monitored or "group " in after.channel.name) and (before.channel.name != voice_channel_being_monitored and "group " not in before.channel.name):# Entering the channel being monitored
+             # User comming on duty
+            await goOnDuty(member, guild)
+        elif (before.channel.name == voice_channel_being_monitored or "group " in before.channel.name) and (after.channel.name != voice_channel_being_monitored and "group " not in after.channel.name):# Exiting the channel being monitored
+            # User comming off duty
+            await goOffDuty(member, guild)
 
 @client.event
 async def on_member_update(before, after):
     global officer_monitor
 
+    # Check if the member was entering or exiting the LPD role
     main_role = await getRoleByName(main_role_name,before.guild)
 
     if main_role in before.roles and main_role in after.roles:
@@ -529,6 +557,41 @@ async def on_member_update(before, after):
     elif main_role in before.roles and main_role not in after.roles:# Member has left the LPD
         officer_monitor[str(before.id)]
         await removeUser(str(before.id))
+
+@client.event
+async def on_raw_reaction_add(payload):
+    print("Reaction added")
+    if payload.message_id == settingsMessages["show_group_channels"]:
+        # Show group channels
+        member = client.get_user(payload.user_id)
+        guild = client.get_guild(payload.guild_id)
+        
+        overwrite = discord.PermissionOverwrite()
+        overwrite.update(read_messages = True)
+        print("overwrite:",overwrite)
+        print(overwrite.is_empty())
+
+        all_vocie_channels = guild.voice_channels
+        for voice_channel in all_vocie_channels:
+            if "group " in voice_channel.name:
+                print("Name:",voice_channel.name)
+                await voice_channel.set_permissions(member, overwrite=overwrite)
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    print("Reaction removed")
+    if payload.message_id == settingsMessages["show_group_channels"]:
+        # Hide group channels
+        member = client.get_user(payload.user_id)
+        guild = client.get_guild(payload.guild_id)
+        
+        overwrite = discord.PermissionOverwrite()
+        overwrite.update(read_messages = None)
+
+        all_vocie_channels = guild.voice_channels
+        for voice_channel in all_vocie_channels:
+            if "group " in voice_channel.name:
+                await voice_channel.set_permissions(member, overwrite=overwrite)
 
 client.loop.create_task(checkOfficerHealth(Server_ID))
 
