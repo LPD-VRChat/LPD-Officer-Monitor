@@ -42,7 +42,7 @@ commands = [
     ),
     Help("time",
         "Get how much time each officer has been in the "+voice_channel_being_monitored+" channel and how long they have been inactive",
-        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\ntime renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+bot_prefix+"time renew @Hroi#1994 @HroiTest#2003\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
     ),
     Help("now",
         "Get the current time of the server",
@@ -560,6 +560,17 @@ async def on_message(message):
         
         elif arg2 == "bottom":
             await getTopOrBottom(message, arguments, False)
+
+        elif arg2 == "renew":
+            if not message.mentions:
+                await sendErrorMessage(message, "You forgot to mention someone to renew their time")
+        
+            for user in message.mentions:
+                if str(user.id) not in officer_monitor:
+                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+main_role_name+" officer?")
+                else:
+                    officer_monitor[str(user.id)]["Last active time"] = time.time()
+                    await message.channel.send("Last active time for "+user.mention+" has been renewed")
 
 @client.event
 async def on_voice_state_update(member, before, after):
