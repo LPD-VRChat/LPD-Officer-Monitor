@@ -172,7 +172,6 @@ async def logAllInfoToFile(guild):
     for member in members_with_main_role:
         try:
             officer_monitor[str(member.id)]
-            print(member.name,"excists in the dict")
         except KeyError:
             officer_monitor[str(member.id)] = {"Time": 0}
             try:
@@ -628,7 +627,6 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_raw_reaction_add(payload):
-    print("Reaction added")
     if payload.message_id == settingsMessages["show_group_channels"]:
         # Show group channels
         member = client.get_user(payload.user_id)
@@ -636,18 +634,15 @@ async def on_raw_reaction_add(payload):
         
         overwrite = discord.PermissionOverwrite()
         overwrite.update(read_messages = True)
-        print("overwrite:",overwrite)
-        print(overwrite.is_empty())
 
         all_vocie_channels = guild.voice_channels
         for voice_channel in all_vocie_channels:
             if "group " in voice_channel.name:
-                print("Name:",voice_channel.name)
                 await voice_channel.set_permissions(member, overwrite=overwrite)
+                print("Voice channel:",voice_channel.name,"has been enabled for",member.display_name)
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    print("Reaction removed")
     if payload.message_id == settingsMessages["show_group_channels"]:
         # Hide group channels
         member = client.get_user(payload.user_id)
@@ -660,6 +655,7 @@ async def on_raw_reaction_remove(payload):
         for voice_channel in all_vocie_channels:
             if "group " in voice_channel.name:
                 await voice_channel.set_permissions(member, overwrite=overwrite)
+                print("Voice channel:",voice_channel.name,"has been disabled for",member.display_name)
 
 client.loop.create_task(checkOfficerHealth(Server_ID))
 
