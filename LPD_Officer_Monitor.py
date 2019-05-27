@@ -277,11 +277,15 @@ async def checkOfficerHealth(Guild_ID):
                         last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
                         
                         moderator = await getRoleByName(settings["mod_role"], guild)
+
+                        # Calculate the inactive time for this user
+                        inactive_days = int((time.time() - officer_monitor[officer]["Last active time"]) / 86400)
+
                         if moderator.mentionable is True:
-                            await channel.send(moderator.mention+" The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(settings["max_inactive_days"])+" days and was last active "+last_active_time_human_readable)
+                            await channel.send(moderator.mention+" The user "+client.get_user(int(officer)).mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
                         else:
                             await channel.send("ERROR The role "+settings["mod_role"]+" is not mentionable")
-                            await channel.send("The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(settings["max_inactive_days"])+" days and was last active "+last_active_time_human_readable)
+                            await channel.send("The user "+client.get_user(int(officer)).mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
                         officer_monitor[officer]["Reported"] = True
 
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
