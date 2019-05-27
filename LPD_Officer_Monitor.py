@@ -5,44 +5,35 @@ import time
 import asyncio
 import copy
 from datetime import datetime
+import json
 
 class Help():
     def __init__(self, name, short_explanation, long_explanation):
         self.name = name
-        self.command = bot_prefix + name
+        self.command = settings["bot_prefix"] + name
         self.short_explanation = short_explanation
         self.long_explanation = long_explanation
 
-Server_ID = 446345091230072834
-Others_excluded = [294518114903916545]
-max_inactive_time_days = 28# In days
-max_inactive_time_seconds = max_inactive_time_days * 86400# Convert days to seconds
-manager_role = "Moderator"
-storage_file_name = "LPD_database.csv"
-main_role_name = "LPD"
-counted_channels = ["lpd-chat", "looking-for-group", "events-and-announcements"]
-join_up_channel = "join-up"
-max_applications = 15
-sleep_time_beetween_writes = 3600
-voice_channel_being_monitored = "on duty"
-admin_channel_name = "admin-bot-channel"
-bot_prefix = "?"
-settingsMessages = {
-    "show_group_channels": 582330373095292950
-}
+def getSettingsFile():
+    with open("settings.json", "r") as settings_file:
+        data = json.load(settings_file)
+    return data
+
+settings = getSettingsFile()
+max_inactive_time_seconds = settings["max_inactive_days"] * 86400# Convert days to seconds
 
 commands = [
     Help("help",
         "Get info about all commands",
-        "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+bot_prefix+"help who"
+        "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+settings["bot_prefix"]+"help who"
     ),
     Help("who",
         "Get everyone in a voice channel in a list",
-        "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+bot_prefix+"who , General"
+        "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+settings["bot_prefix"]+"who , General"
     ),
     Help("time",
-        "Get how much time each officer has been in the "+voice_channel_being_monitored+" channel and how long they have been inactive",
-        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+bot_prefix+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\ntime renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+bot_prefix+"time renew @Hroi#1994 @HroiTest#2003\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+        "Get how much time each officer has been in the "+settings["voice_channel_being_monitored"]+" channel and how long they have been inactive",
+        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+settings["bot_prefix"]+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\ntime renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+settings["bot_prefix"]+"time renew @Hroi#1994 @HroiTest#2003\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
     ),
     Help("now",
         "Get the current time of the server",
@@ -51,15 +42,6 @@ commands = [
 ]
 
 officer_monitor = {}
-
-token_file_name = "token.txt"
-
-def getToken():
-    token_file = open(token_file_name, "r")
-    token = token_file.readline().replace("\n","")
-    token_file.close()
-    print('"'+token+'"')
-    return token
 
 async def getChannelByName(name, guild, text_channel):
     if text_channel == True: channels = guild.text_channels
@@ -121,7 +103,7 @@ async def writeToDBFile(officer_monitor_local):
     print("++++++++++++++++++++++++++++++++++++++++++++++++++")
     print("Writing to file\n")
 
-    openFile = open(storage_file_name, "w")
+    openFile = open(settings["storage_file_name"], "w")
     try:
         for ID in list(officer_monitor_local):
             openFile.write(str(ID)+","+str(officer_monitor_local[ID]["Last active time"])+","+str(officer_monitor_local[ID]["Time"])+"\n")
@@ -137,7 +119,7 @@ async def removeUser(user_id):
     print("Removing",client.get_user(int(user_id)),"from the officer_monitor\n")
 
     # Get the contents of the file
-    officer_monitor_local = await readDBFile(storage_file_name)
+    officer_monitor_local = await readDBFile(settings["storage_file_name"])
 
     # Remove the user from officer_monitor_local
     try:
@@ -164,10 +146,10 @@ async def logAllInfoToFile(guild):
     print("||||||||||||||||||||||||||||||||||||||||||||||||||")
     print("Starting to log to file\n")
     
-    database_officer_monitor = await readDBFile(storage_file_name)
+    database_officer_monitor = await readDBFile(settings["storage_file_name"])
     
     # Add missing users to officer_monitor
-    main_role = await getRoleByName(main_role_name, guild)
+    main_role = await getRoleByName(settings["main_role"], guild)
     members_with_main_role = [member for member in guild.members if main_role in member.roles]
     for member in members_with_main_role:
         try:
@@ -191,9 +173,9 @@ async def logAllInfoToFile(guild):
 
     # Writing to file
     try:
-        print("Opening file:",str(storage_file_name)+"...")
+        print("Opening file:",str(settings["storage_file_name"])+"...")
         # Writing info from last file and officer_monitor over previus data
-        openFile = open(storage_file_name,"w")
+        openFile = open(settings["storage_file_name"],"w")
         print("File opened")
 
         for ID in list(officer_monitor_static):
@@ -229,7 +211,7 @@ async def getTopOrBottom(message, arguments, top):
             return
 
         combined_officer_monitor = copy.deepcopy(officer_monitor)
-        database_officer_monitor = await readDBFile(storage_file_name)
+        database_officer_monitor = await readDBFile(settings["storage_file_name"])
         
         # Get the time from the file and add that to the time in the officer_monitor dict
         for userID in officer_monitor:
@@ -270,7 +252,7 @@ async def checkOfficerHealth(Guild_ID):
         guild = client.get_guild(Guild_ID)
     else:
         print("Wrong Server_ID")
-        await asyncio.sleep(sleep_time_beetween_writes)
+        await asyncio.sleep(settings["sleep_time_beetween_writes"])
         return
 
 
@@ -289,27 +271,27 @@ async def checkOfficerHealth(Guild_ID):
                         else:
                             officer_monitor[officer]["Not a real key"]
                     except KeyError:# The user has not been reported
-                        channel = await getChannelByName(admin_channel_name, guild, True)# Get the channel to send the message to
+                        channel = await getChannelByName(settings["admin_bot_channel_name"], guild, True)# Get the channel to send the message to
                         # Send the message
                         unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
                         last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
                         
-                        moderator = await getRoleByName(manager_role, guild)
+                        moderator = await getRoleByName(settings["mod_role"], guild)
                         if moderator.mentionable is True:
-                            await channel.send(moderator.mention+" The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(max_inactive_time_days)+" days and was last active "+last_active_time_human_readable)
+                            await channel.send(moderator.mention+" The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(settings["max_inactive_days"])+" days and was last active "+last_active_time_human_readable)
                         else:
-                            await channel.send("ERROR The role "+manager_role+" is not mentionable")
-                            await channel.send("The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(max_inactive_time_days)+" days and was last active "+last_active_time_human_readable)
+                            await channel.send("ERROR The role "+settings["mod_role"]+" is not mentionable")
+                            await channel.send("The user "+str(client.get_user(int(officer)))+" has been inactive for "+str(settings["max_inactive_days"])+" days and was last active "+last_active_time_human_readable)
                         officer_monitor[officer]["Reported"] = True
 
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
 
-            await asyncio.sleep(sleep_time_beetween_writes)
+            await asyncio.sleep(settings["sleep_time_beetween_writes"])
         except Exception as error:
             print("Something failed with logging to file")
             print(error)
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-            await asyncio.sleep(sleep_time_beetween_writes)
+            await asyncio.sleep(settings["sleep_time_beetween_writes"])
 
 async def goOnDuty(member, guild):
     global officer_monitor
@@ -317,7 +299,7 @@ async def goOnDuty(member, guild):
     officer_monitor[str(member.id)]["Start time"] = current_time
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
-    on_duty_role = await getRoleByName(voice_channel_being_monitored, guild)
+    on_duty_role = await getRoleByName(settings["voice_channel_being_monitored"], guild)
     await member.add_roles(on_duty_role)
 
 async def goOffDuty(member, guild):
@@ -329,7 +311,7 @@ async def goOffDuty(member, guild):
     except KeyError: print(member.name,"left the voice channel and was not being monitored")
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
-    on_duty_role = await getRoleByName(voice_channel_being_monitored, guild)
+    on_duty_role = await getRoleByName(settings["voice_channel_being_monitored"], guild)
     await member.remove_roles(on_duty_role)
 
 async def removeJoinUpApplication(message, error_text, use_beginning_text = True):
@@ -364,7 +346,7 @@ async def on_message(message):
         return
 
     # If the channel is in the list counted_channels than the last active time is updated in the officer_monitor for that officer
-    if message.channel.name in counted_channels:
+    if message.channel.name in settings["counted_channels"]:
         try:
             officer_monitor[str(message.author.id)]["Last active time"] = time.time()
             print("Message in",message.channel.name,"written by",message.author.name)
@@ -372,12 +354,12 @@ async def on_message(message):
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
     # Delete message if an LPD members sent to the channel #join-up
-    if message.channel.name == join_up_channel:
-        LPD_role = await getRoleByName(main_role_name, message.guild)
-        Mod_role = await getRoleByName(manager_role, message.guild)
+    if message.channel.name == settings["application_channel"]:
+        LPD_role = await getRoleByName(settings["main_role"], message.guild)
+        Mod_role = await getRoleByName(settings["mod_role"], message.guild)
 
         # If the message is from a moderator, ignore the message
-        if Mod_role in message.author.roles or message.author.id in Others_excluded or message.author.bot is True:
+        if Mod_role in message.author.roles or message.author.id in settings["Other_admins"] or message.author.bot is True:
             return
         
         # Check if this message is from an LPD member, if so, remove it
@@ -385,7 +367,7 @@ async def on_message(message):
 
             if not message.author.dm_channel:
                 await message.author.create_dm()
-            await message.author.dm_channel.send(main_role_name+" members cannot send to the "+message.channel.mention+" channel")
+            await message.author.dm_channel.send(settings["main_role"]+" members cannot send to the "+message.channel.mention+" channel")
             
             await message.delete()
             return
@@ -406,12 +388,12 @@ async def on_message(message):
                 return
 
         # This closes the applications after 15 applications but this feature was not accepted:
-        #     if Mod_role not in old_message.author.roles and old_message.author.id not in Others_excluded and message.author.bot is not True:
+        #     if Mod_role not in old_message.author.roles and old_message.author.id not in settings["Other_admins"] and message.author.bot is not True:
         #         all_applications += 1
                 
         # print(all_applications)
         
-        # if all_applications >= max_applications:
+        # if all_applications >= settings["max_applications"]:
         #     await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
             
         #     # Lock the channel for the @everyone role
@@ -433,18 +415,18 @@ async def on_message(message):
     else:
         return
     
-    # If the channel name is not the admin_channel_name than reply with that the bot only works in the admin_channel_name channel
-    if message.channel.name != admin_channel_name:
-        admin_channel = await getChannelByName(admin_channel_name, message.guild, True)
+    # If the channel name is not the settings["admin_bot_channel_name"] than reply with that the bot only works in the settings["admin_bot_channel_name"] channel
+    if message.channel.name != settings["admin_bot_channel_name"]:
+        admin_channel = await getChannelByName(settings["admin_bot_channel_name"], message.guild, True)
 
         if admin_channel is False:
-            await message.channel.send("Please create a text channel named "+admin_channel_name+" for the bot to use")
+            await message.channel.send("Please create a text channel named "+settings["admin_bot_channel_name"]+" for the bot to use")
             return
 
         await message.channel.send("This bot does only work in "+admin_channel.mention)
         return
 
-    if message.content.find(bot_prefix+"who") != -1:
+    if message.content.find(settings["bot_prefix"]+"who") != -1:
 
         try:
             arguments = message.content.split(" ")
@@ -453,7 +435,7 @@ async def on_message(message):
             channel_name = "".join([" "+x for x in channel_name])
             channel_name = channel_name[1::]
         except IndexError:
-            await sendErrorMessage(message, "There is a missing an argument. Do "+bot_prefix+"help for help")
+            await sendErrorMessage(message, "There is a missing an argument. Do "+settings["bot_prefix"]+"help for help")
             return
 
         channel = await getChannelByName(channel_name, message.guild, False)
@@ -481,11 +463,11 @@ async def on_message(message):
         
         await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
 
-    elif message.content.find(bot_prefix+"help") != -1:
+    elif message.content.find(settings["bot_prefix"]+"help") != -1:
 
         try:
-            message.content[len(bot_prefix)+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
-            argument = message.content[len(bot_prefix)+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
+            message.content[len(settings["bot_prefix"])+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
+            argument = message.content[len(settings["bot_prefix"])+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
             all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
             for command in commands:
@@ -503,7 +485,7 @@ async def on_message(message):
             await sendErrorMessage(message, 'Help page not loaded because "'+argument+'" is not a valid command')
             return
 
-    elif message.content.find(bot_prefix+"time") != -1:
+    elif message.content.find(settings["bot_prefix"]+"time") != -1:
         
         try:
             arguments = message.content.split(" ")
@@ -516,11 +498,11 @@ async def on_message(message):
             if not message.mentions:
                 await sendErrorMessage(message, "You forgot to mention someone to get info about")
             
-            database_officer_monitor = await readDBFile(storage_file_name)
+            database_officer_monitor = await readDBFile(settings["storage_file_name"])
             
             for user in message.mentions:
                 if str(user.id) not in officer_monitor:
-                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+main_role_name+" officer?")
+                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
                 else:
                     try:
                         onDutyTimeFromFile = database_officer_monitor[str(user.id)]["Time"]
@@ -566,7 +548,7 @@ async def on_message(message):
         
             for user in message.mentions:
                 if str(user.id) not in officer_monitor:
-                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+main_role_name+" officer?")
+                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
                 else:
                     officer_monitor[str(user.id)]["Last active time"] = time.time()
                     await message.channel.send("Last active time for "+user.mention+" has been renewed")
@@ -580,7 +562,7 @@ async def on_voice_state_update(member, before, after):
     except AttributeError: guild = after.channel.guild
     
     # Check if this is just a member and if it is than just return
-    LPD_role = await getRoleByName(main_role_name, guild)
+    LPD_role = await getRoleByName(settings["main_role"], guild)
     if LPD_role not in member.roles:
         print("A normal member entered or exited a voice channel")
         return
@@ -588,20 +570,20 @@ async def on_voice_state_update(member, before, after):
     if after.channel == before.channel: return
 
     if before.channel is None:
-        if after.channel.name == voice_channel_being_monitored or "group " in after.channel.name:
+        if after.channel.name == settings["voice_channel_being_monitored"] or "group " in after.channel.name:
             # User comming on duty
             await goOnDuty(member, guild)
 
     elif after.channel is None:
-        if before.channel.name == voice_channel_being_monitored or "group " in before.channel.name:
+        if before.channel.name == settings["voice_channel_being_monitored"] or "group " in before.channel.name:
             # User comming off duty
             await goOffDuty(member, guild)
 
     else:# This runs if the user is going from one vocie channel to another
-        if (after.channel.name == voice_channel_being_monitored or "group " in after.channel.name) and (before.channel.name != voice_channel_being_monitored and "group " not in before.channel.name):# Entering the channel being monitored
+        if (after.channel.name == settings["voice_channel_being_monitored"] or "group " in after.channel.name) and (before.channel.name != settings["voice_channel_being_monitored"] and "group " not in before.channel.name):# Entering the channel being monitored
              # User comming on duty
             await goOnDuty(member, guild)
-        elif (before.channel.name == voice_channel_being_monitored or "group " in before.channel.name) and (after.channel.name != voice_channel_being_monitored and "group " not in after.channel.name):# Exiting the channel being monitored
+        elif (before.channel.name == settings["voice_channel_being_monitored"] or "group " in before.channel.name) and (after.channel.name != settings["voice_channel_being_monitored"] and "group " not in after.channel.name):# Exiting the channel being monitored
             # User comming off duty
             await goOffDuty(member, guild)
 
@@ -610,7 +592,7 @@ async def on_member_update(before, after):
     global officer_monitor
 
     # Check if the member was entering or exiting the LPD role
-    main_role = await getRoleByName(main_role_name,before.guild)
+    main_role = await getRoleByName(settings["main_role"],before.guild)
 
     if main_role in before.roles and main_role in after.roles:
         return
@@ -627,7 +609,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id == settingsMessages["show_group_channels"]:
+    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:
         # Show group channels
         member = client.get_user(payload.user_id)
         guild = client.get_guild(payload.guild_id)
@@ -643,7 +625,7 @@ async def on_raw_reaction_add(payload):
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id == settingsMessages["show_group_channels"]:
+    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:
         # Hide group channels
         member = client.get_user(payload.user_id)
         guild = client.get_guild(payload.guild_id)
@@ -657,10 +639,8 @@ async def on_raw_reaction_remove(payload):
                 await voice_channel.set_permissions(member, overwrite=overwrite)
                 print("Voice channel:",voice_channel.name,"has been disabled for",member.display_name)
 
-client.loop.create_task(checkOfficerHealth(Server_ID))
+client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
 
 # This failes if it is run localy so that then it uses the local token.txt file
 try: client.run(os.environ["DISCORD_TOKEN"])# This is for the heroku server
-except KeyError:
-    token = getToken()
-    client.run(token)
+except KeyError: client.run(settings["Discord_token"])
