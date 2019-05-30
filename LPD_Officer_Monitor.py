@@ -5,7 +5,6 @@ import time
 import asyncio
 import copy
 import datetime
-from datetime import datetime
 import json
 
 class Help():
@@ -246,7 +245,7 @@ async def getTopOrBottom(message, arguments, top):
 
                 onDutyTime = str(onDutyweeks) +":"+ str(onDutyDays) +":"+ str(onDutyHours) +":"+ str(onDutyMinutes) +":"+ str(onDutySeconds)
 
-                await message.channel.send(client.get_user(int(user_id)).mention + " | "+onDutyTime+" | "+str(datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
+                await message.channel.send(client.get_user(int(user_id)).mention + " | "+onDutyTime+" | "+str(datetime.datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
         except IndexError:
             await sendErrorMessage(message, "Error - Make sure that you started at 1 or higher and ended at less or equal to all officers in the LPD")
 
@@ -279,7 +278,7 @@ async def checkOfficerHealth(Guild_ID):
                         channel = await getChannelByName(settings["admin_bot_channel_name"], guild, True)# Get the channel to send the message to
                         # Send the message
                         unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
-                        last_active_time_human_readable = str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
+                        last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
                         
                         moderator = await getRoleByName(settings["mod_role"], guild)
 
@@ -621,7 +620,7 @@ async def on_message(message):
                     onDutyTime += "\nSeconds: "+str(onDutySeconds)
                     
 
-                    await message.channel.send(user.mention+" was last active "+str(datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
+                    await message.channel.send(user.mention+" was last active "+str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))+" and the user has been on duty for:"+onDutyTime)
 
         elif arg2 == "write":
             await logAllInfoToFile(message.guild)
