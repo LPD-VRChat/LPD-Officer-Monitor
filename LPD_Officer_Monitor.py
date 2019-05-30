@@ -39,9 +39,9 @@ commands = [
         "Get the current time of the server",
         "now gives the current time of the server to calculate how far your own time zone is away from the servers time zone."
     ),
-    Help("parse_annoncment",
-        "Short text",
-        "Long text"
+    Help("parse_announcement",
+        "This command reads the latest event announcement and adds local time to it if the bot finds the date/time",
+        "To get the bot to parse a event announcement the time of the event has to be one or two numbers and have either AM or PM right after the time (no space), example: 9PM.\nThe UTC +/- has to have a word starting with UTC in uppercase and right after it (no spaces) have +/- and then right after that a number from 0-9, example: UTC+4.\nThe date has to be seperated by either / or ., this can have a . or , right after the date but make sure to not put a . if you are using . as a seperator for the dates, example: 21/6/2019."
     )
 ]
 
@@ -643,7 +643,7 @@ async def on_message(message):
                     officer_monitor[str(user.id)]["Last active time"] = time.time()
                     await message.channel.send("Last active time for "+user.mention+" has been renewed")
 
-    elif message.content.find(settings["bot_prefix"]+"parse_annoncment") != -1:
+    elif message.content.find(settings["bot_prefix"]+"parse_announcement") != -1:
         announcement_channel = await getChannelByName("events-and-announcements", message.guild, True)
 
         old_message = None
