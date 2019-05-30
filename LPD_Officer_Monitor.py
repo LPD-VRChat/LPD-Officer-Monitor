@@ -4,7 +4,7 @@ import os
 import time
 import asyncio
 import copy
-from datetime import datetime
+import datetime
 import json
 
 class Help():
@@ -38,6 +38,10 @@ commands = [
     Help("now",
         "Get the current time of the server",
         "now gives the current time of the server to calculate how far your own time zone is away from the servers time zone."
+    ),
+    Help("parse_annoncment",
+        "Short text",
+        "Long text"
     )
 ]
 
@@ -331,7 +335,86 @@ async def removeJoinUpApplication(message, error_text, use_beginning_text = True
 
     return
 
-        
+def isNumber(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+async def parseAnnouncement(message):
+    # Parse the message and search for the date
+    for word in message.content.split(" "):
+        number_of_date_separators = 0
+        date_separator = None
+        for letter in word:
+            if date_separator is None:
+                if letter in settings["date_separators"]:
+                    number_of_date_separators += 1
+                    date_separator = letter
+            else:
+                if letter == date_separator:
+                    number_of_date_separators += 1
+        if number_of_date_separators == 2:
+            temp_event_date = word.split(date_separator)
+            try:
+                if isNumber(temp_event_date[0]) and isNumber(temp_event_date[1]) and isNumber(temp_event_date[2][0:4]):
+                    if int(temp_event_date[0]) <= 31 and int(temp_event_date[1]) <= 12:
+                        event_date = temp_event_date
+                        break
+            except IndexError:
+                pass
+    else: return False
+    
+    event_date[2] = event_date[2][0:4]
+    print(event_date)
+    
+    # Parse the message and search for the time
+    event_time = False
+    event_time_ending_pm = None
+    UTC_zone = None
+    for word in message.content.split(" "):
+        if ("PM" in word or "AM" in word) and isNumber(word[0]):
+
+            if isNumber(word[1]): event_time = int(word[0:2])
+            else: event_time = int(word[0])
+
+            if "PM" in word: event_time_ending_pm = True
+            elif "AM" in word: event_time_ending_pm = False
+
+        if "UTC" in word and word[-2] in ["+","-"] and isNumber(word[-1]):
+            UTC_zone = int(word[-2::])
+            break
+
+    else: return False
+
+    if event_time_ending_pm is True:
+        event_time += 12
+
+    print(event_time)
+    print(UTC_zone)
+
+    print("Embeding")
+
+    dateAndTime = datetime.datetime(
+        int(event_date[2]),
+        int(event_date[1]),
+        int(event_date[0]),
+        event_time
+    )
+    dateAndTime += datetime.timedelta(hours=UTC_zone)
+
+    color = discord.Colour.from_rgb(51, 153, 255)
+
+    embed = discord.Embed(
+        title="Time for the event:",
+        colour=color,
+        timestamp=dateAndTime
+    )
+
+    await message.channel.send(embed=embed)
+    return True
+
 client = discord.Client()
 
 @client.event
@@ -411,6 +494,9 @@ async def on_message(message):
 
         #     await message.channel.set_permissions(everyone_role, overwrite=overwrite)
 
+    # Add the time to event announcments
+    if message.channel.name == "events-and-announcements":
+        await parseAnnouncement(message)
 
     # Check if the command exists, if not then send a message notifying someone that this message does not exist
     for command in commands:
@@ -556,6 +642,20 @@ async def on_message(message):
                 else:
                     officer_monitor[str(user.id)]["Last active time"] = time.time()
                     await message.channel.send("Last active time for "+user.mention+" has been renewed")
+
+    elif message.content.find(settings["bot_prefix"]+"parse_annoncment") != -1:
+        announcement_channel = await getChannelByName("events-and-announcements", message.guild, True)
+
+        old_message = None
+        async for old_message_2 in announcement_channel.history(limit=1):
+            old_message = old_message_2
+            break
+
+        worked = await parseAnnouncement(old_message)
+
+        if worked is True: await message.channel.send("Last message parsed and the time/date have been added to it.")
+        else: await message.channel.send("Last message parsed but the time/date were not found.")
+
 
 @client.event
 async def on_voice_state_update(member, before, after):
