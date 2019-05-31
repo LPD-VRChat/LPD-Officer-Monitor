@@ -33,7 +33,21 @@ commands = [
     ),
     Help("time",
         "Get how much time each officer has been in the "+settings["voice_channel_being_monitored"]+" channel and how long they have been inactive",
-        "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.\n-----\ntime user [@ the user/s] gets info about a specific user/users\n-----\ntime top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+settings["bot_prefix"]+"time top 1 10\n-----\njust like time top but takes from the bottom\n-----\ntime renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+settings["bot_prefix"]+"time renew @Hroi#1994 @HroiTest#2003\n-----\n!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline"
+        """
+time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.
+-----
+time user [@ the user/s] gets info about a specific user/users
+-----
+time top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+settings["bot_prefix"]+"time top 1 10
+-----
+just like time top but takes from the bottom
+-----
+time renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+settings["bot_prefix"]+"time renew @Hroi#1994 @HroiTest#2003
+-----
+time inactive gets info about all people that have been inactive for """+str(settings["max_inactive_days"])+""" days or more.
+-----
+!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline
+        """
     ),
     Help("now",
         "Get the current time of the server",
@@ -198,6 +212,8 @@ async def logAllInfoToFile(guild):
     except Exception as error: print("Something failed with writing to file:",error)
     finally: openFile.close()
 
+    print("||||||||||||||||||||||||||||||||||||||||||||||||||")
+
 async def getTopOrBottom(message, arguments, top):
     async with message.channel.typing():
         try:
@@ -265,41 +281,24 @@ async def checkOfficerHealth(Guild_ID):
         try:
             await logAllInfoToFile(guild)
 
-            # Check if someone has to be removed from the LPD because of inactivity
-            for officer in list(officer_monitor):
-                if officer_monitor[officer]["Last active time"] + max_inactive_time_seconds < time.time():
-                    # Check if the message has already been sent
-                    try:
-                        if officer_monitor[officer]["Reported"] is True:
-                            print(client.get_user(int(officer)),"already reported")# user already reproted
-                        else:
-                            officer_monitor[officer]["Not a real key"]
-                    except KeyError:# The user has not been reported
-                        channel = await getChannelByName(settings["admin_bot_channel_name"], guild, True)# Get the channel to send the message to
-                        # Send the message
-                        unixTimeOfUserActive = officer_monitor[officer]["Last active time"]
-                        last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
-                        
-                        moderator = await getRoleByName(settings["mod_role"], guild)
-
-                        # Calculate the inactive time for this user
-                        inactive_days = int((time.time() - officer_monitor[officer]["Last active time"]) / 86400)
-
-                        if moderator.mentionable is True:
-                            await channel.send(moderator.mention+" The user "+client.get_user(int(officer)).mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
-                        else:
-                            await channel.send("ERROR The role "+settings["mod_role"]+" is not mentionable")
-                            await channel.send("The user "+client.get_user(int(officer)).mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
-                        officer_monitor[officer]["Reported"] = True
-
-            print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
         except Exception as error:
             print("Something failed with logging to file")
             print(error)
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
+
+async def checkActivity():
+    global officer_monitor
+
+    all_inactive_people = []
+
+    # Check if someone has to be removed from the LPD because of inactivity
+    for officer_id in list(officer_monitor):
+        if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds < time.time():
+            all_inactive_people.append(officer_id)
+    
+    return all_inactive_people
 
 async def goOnDuty(member, guild):
     global officer_monitor
@@ -643,6 +642,23 @@ async def on_message(message):
                     officer_monitor[str(user.id)]["Last active time"] = time.time()
                     await message.channel.send("Last active time for "+user.mention+" has been renewed")
 
+        elif arg2 == "inactive":
+            all_inactive_officers = await checkActivity()
+
+            if not all_inactive_officers:
+                await message.channel.send("Their is no one inactive in the LPD, it is a good day today.")
+                return
+            
+            for officer_id in all_inactive_officers:
+                officer = client.get_user(int(officer_id))
+                
+                inactive_days = int((time.time() - officer_monitor[officer_id]["Last active time"]) / 86400)
+
+                unixTimeOfUserActive = officer_monitor[officer_id]["Last active time"]
+                last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
+
+                await message.channel.send(officer.mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
+
     elif message.content.find(settings["bot_prefix"]+"parse_announcement") != -1:
         announcement_channel = await getChannelByName("events-and-announcements", message.guild, True)
 
@@ -655,7 +671,6 @@ async def on_message(message):
 
         if worked is True: await message.channel.send("Last message parsed and the time/date have been added to it.")
         else: await message.channel.send("Last message parsed but the time/date were not found.")
-
 
 @client.event
 async def on_voice_state_update(member, before, after):
