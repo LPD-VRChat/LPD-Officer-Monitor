@@ -56,6 +56,10 @@ time inactive gets info about all people that have been inactive for """+str(set
     Help("parse_announcement",
         "This command reads the latest event announcement and adds local time to it if the bot finds the date/time",
         "To get the bot to parse a event announcement the time of the event has to be one or two numbers and have either AM or PM right after the time (no space), example: 9PM.\nThe UTC +/- has to have a word starting with UTC in uppercase and right after it (no spaces) have +/- and then right after that a number from 0-9, example: UTC+4.\nThe date has to be seperated by either / or ., this can have a . or , right after the date but make sure to not put a . if you are using . as a seperator for the dates, example: 21/6/2019."
+    ),
+    Help("count_officers",
+        "get number of rookes/officers/corporal...",
+        "count_officers gets the number of all officers and also number of people with each rank seperatly"
     )
 ]
 
@@ -671,6 +675,62 @@ async def on_message(message):
 
         if worked is True: await message.channel.send("Last message parsed and the time/date have been added to it.")
         else: await message.channel.send("Last message parsed but the time/date were not found.")
+
+    elif message.content.find(settings["bot_prefix"]+"count_officers") != -1:
+        main_role = await getRoleByName(settings["main_role"], message.guild)
+
+        number_of_officers = len(main_role.members)
+
+        number_of_officers_with_rookie = 0
+        number_of_officers_with_officer = 0
+        number_of_officers_with_corporal = 0
+        number_of_officers_with_sergeant = 0
+        number_of_officers_with_lieutenant = 0
+        number_of_officers_with_captain = 0
+        number_of_officers_with_deputy_chief = 0
+        number_of_officers_with_chief = 0
+
+        for member in main_role.members:
+            for role in member.roles:
+                if role.name == "LPD rookie":
+                    number_of_officers_with_rookie += 1
+                    break
+                elif role.name == "LPD officer":
+                    number_of_officers_with_officer += 1
+                    break
+                elif role.name == "LPD corporal":
+                    number_of_officers_with_corporal += 1
+                    break
+                elif role.name == "LPD sergeant":
+                    number_of_officers_with_sergeant += 1
+                    break
+                elif role.name == "LPD lieutenant":
+                    number_of_officers_with_lieutenant += 1
+                    break
+                elif role.name == "LPD captain":
+                    number_of_officers_with_captain += 1
+                    break
+                elif role.name == "LPD deputy chief":
+                    number_of_officers_with_deputy_chief += 1
+                    break
+                elif role.name == "LPD chief":
+                    number_of_officers_with_chief += 1
+                    break
+
+        embed = discord.Embed(
+            title="Number of all LPD officers: "+str(number_of_officers),
+            colour=discord.Colour.from_rgb(255, 255, 0)
+        )
+        embed.add_field(name="Rookies:", value=number_of_officers_with_rookie)
+        embed.add_field(name="Officers:", value=number_of_officers_with_officer)
+        embed.add_field(name="Corporals:", value=number_of_officers_with_corporal)
+        embed.add_field(name="Sergeants:", value=number_of_officers_with_sergeant)
+        embed.add_field(name="Lieutenants:", value=number_of_officers_with_lieutenant)
+        embed.add_field(name="Captains:", value=number_of_officers_with_captain)
+        embed.add_field(name="Deputy_chiefs:", value=number_of_officers_with_deputy_chief)
+        embed.add_field(name="Chiefs:", value=number_of_officers_with_chief)
+
+        await message.channel.send(embed=embed)
 
 @client.event
 async def on_voice_state_update(member, before, after):
