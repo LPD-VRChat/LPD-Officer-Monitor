@@ -788,8 +788,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:
-        # Show group channels
+    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:# Show group channels
         member = client.get_user(payload.user_id)
         guild = client.get_guild(payload.guild_id)
         
@@ -801,6 +800,14 @@ async def on_raw_reaction_add(payload):
             if "group " in voice_channel.name:
                 await voice_channel.set_permissions(member, overwrite=overwrite)
                 print("Voice channel:",voice_channel.name,"has been enabled for",member.display_name)
+    
+    elif payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
+        guild = client.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+
+        role = await getRoleByName(settings["avatar_updates_role"], guild)
+        
+        await member.add_roles(role)
 
 @client.event
 async def on_raw_reaction_remove(payload):
@@ -817,6 +824,14 @@ async def on_raw_reaction_remove(payload):
             if "group " in voice_channel.name:
                 await voice_channel.set_permissions(member, overwrite=overwrite)
                 print("Voice channel:",voice_channel.name,"has been disabled for",member.display_name)
+
+    elif payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
+        guild = client.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+
+        role = await getRoleByName(settings["avatar_updates_role"], guild)
+        
+        await member.remove_roles(role)
 
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
 
