@@ -478,24 +478,24 @@ async def on_message(message):
                 return
 
         # This closes the applications after 15 applications but this feature was not accepted:
-        #     if Mod_role not in old_message.author.roles and old_message.author.id not in settings["Other_admins"] and message.author.bot is not True:
-        #         all_applications += 1
+            if Mod_role not in old_message.author.roles and old_message.author.id not in settings["Other_admins"] and message.author.bot is not True:
+                all_applications += 1
                 
-        # print(all_applications)
+        print(all_applications)
         
-        # if all_applications >= settings["max_applications"]:
-        #     await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
+        if all_applications >= settings["max_applications"]:
+            await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
             
-        #     # Lock the channel for the @everyone role
-        #     everyone_role = await getRoleByName("@everyone", message.guild)
-        #     overwrites = message.channel.overwrites
+            # Lock the channel for the @everyone role
+            everyone_role = await getRoleByName("@everyone", message.guild)
+            overwrites = message.channel.overwrites
             
-        #     if everyone_role in overwrites: overwrite = overwrites[everyone_role]
-        #     else: overwrite = discord.PermissionOverwrite()
+            if everyone_role in overwrites: overwrite = overwrites[everyone_role]
+            else: overwrite = discord.PermissionOverwrite()
 
-        #     overwrite.update(send_messages = False)
+            overwrite.update(send_messages = False)
 
-        #     await message.channel.set_permissions(everyone_role, overwrite=overwrite)
+            await message.channel.set_permissions(everyone_role, overwrite=overwrite)
 
     # Add the time to event announcments
     if message.channel.name == "events-and-announcements":
