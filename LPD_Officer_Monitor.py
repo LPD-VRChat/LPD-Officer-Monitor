@@ -471,18 +471,19 @@ async def on_message(message):
             return
 
         # Make sure the person applying has not sent an application already
-        # all_applications = 0
+        all_applications = 0
         async for old_message in message.channel.history(limit=None):
             if old_message.author == message.author and old_message.id != message.id:
                 await removeJoinUpApplication(message, "You have already applied in "+message.channel.mention+", you cannot apply again until your application has been reviewed but you can edit your current application", False)
                 return
 
-        # This closes the applications after 15 applications but this feature was not accepted:
+            # This counts the nuber of applications
             if Mod_role not in old_message.author.roles and old_message.author.id not in settings["Other_admins"] and message.author.bot is not True:
                 all_applications += 1
                 
-        print(all_applications)
+        print("Number of applications:",all_applications)
         
+        # This closes the applications after a set amount of applications
         if all_applications >= settings["max_applications"]:
             await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
             
