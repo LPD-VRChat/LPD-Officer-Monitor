@@ -740,14 +740,20 @@ async def on_message(message):
     elif message.content.find(settings["bot_prefix"]+"add_inactive_officers") != -1:
 
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
+        
+        if inactive_role is False:
+            await sendErrorMessage(message, 'The role "'+settings['inactive_role']+'" does not exist')
+            return
 
         for officer_id in await findInactiveOfficers():
+            
             officer = message.guild.get_member(int(officer_id))
             if officer is not None:
+
                 print("Adding officer to the inactive role:",officer)
                 await officer.add_roles(inactive_role)
-            else:
-                sendErrorMessage(message, 'A user with the ID: "'+str(officer)+'" was not found in this discord server even though being tracked by the bot, continuing...')
+            
+            else: await sendErrorMessage(message, 'A user with the ID: "'+str(officer)+'" was not found in this discord server even though being tracked by the bot, continuing...')
         
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
 
