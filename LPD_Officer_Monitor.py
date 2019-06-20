@@ -62,13 +62,8 @@ time inactive gets info about all people that have been inactive for """+str(set
         "count_officers gets the number of all officers and also number of people with each rank seperatly"
     ),
     Help("add_inactive_officers",
-<<<<<<< HEAD
-        "Adds inactive officers to a new role",
-        "long explanation"
-=======
         "Adds inactive officers to a role",
         "This command adds all officers on the inactive list to a role witch is in the settings.json file, make sure that the role exists"
->>>>>>> 32f30844211ea91ccbb3e30fd87d3793ffa35887
     )
 ]
 
