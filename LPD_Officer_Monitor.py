@@ -60,6 +60,10 @@ time inactive gets info about all people that have been inactive for """+str(set
     Help("count_officers",
         "get number of rookes/officers/corporal...",
         "count_officers gets the number of all officers and also number of people with each rank seperatly"
+    ),
+    Help("add_inactive_officers",
+        "Adds inactive officers to a new role",
+        "long explanation"
     )
 ]
 
@@ -292,7 +296,7 @@ async def checkOfficerHealth(Guild_ID):
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
 
-async def checkActivity():
+async def findInactiveOfficers():
     global officer_monitor
 
     all_inactive_people = []
@@ -648,7 +652,7 @@ async def on_message(message):
                     await message.channel.send("Last active time for "+user.mention+" has been renewed")
 
         elif arg2 == "inactive":
-            all_inactive_officers = await checkActivity()
+            all_inactive_officers = await findInactiveOfficers()
 
             if not all_inactive_officers:
                 await message.channel.send("Their is no one inactive in the LPD, it is a good day today.")
@@ -733,11 +737,25 @@ async def on_message(message):
 
         await message.channel.send(embed=embed)
 
+    elif message.content.find(settings["bot_prefix"]+"add_inactive_officers") != -1:
+
+        inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
+
+        for officer_id in await findInactiveOfficers():
+            officer = message.guild.get_member(int(officer_id))
+            if officer is not None:
+                print("Adding officer to the inactive role:",officer)
+                await officer.add_roles(inactive_role)
+            else:
+                sendErrorMessage(message, 'A user with the ID: "'+str(officer)+'" was not found in this discord server even though being tracked by the bot, continuing...')
+        
+        await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
+
 @client.event
 async def on_voice_state_update(member, before, after):
     global officer_monitor
 
-    # Get teh guild
+    # Get the guild
     try: guild = before.channel.guild
     except AttributeError: guild = after.channel.guild
     
