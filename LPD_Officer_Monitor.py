@@ -686,54 +686,34 @@ async def on_message(message):
 
         number_of_officers = len(main_role.members)
 
-        number_of_officers_with_rookie = 0
-        number_of_officers_with_officer = 0
-        number_of_officers_with_corporal = 0
-        number_of_officers_with_sergeant = 0
-        number_of_officers_with_lieutenant = 0
-        number_of_officers_with_captain = 0
-        number_of_officers_with_deputy_chief = 0
-        number_of_officers_with_chief = 0
+        number_of_officers_with_each_role = []
+        for role_id in settings["role_ladder_id"]:# This goes through each item in the role_ladder_id list, finds the role and then adds it to a dictionary to be counted
+            role = message.guild.get_role(role_id)
 
-        for member in main_role.members:
-            for role in member.roles:
-                if role.name == "LPD rookie":
-                    number_of_officers_with_rookie += 1
-                    break
-                elif role.name == "LPD officer":
-                    number_of_officers_with_officer += 1
-                    break
-                elif role.name == "LPD corporal":
-                    number_of_officers_with_corporal += 1
-                    break
-                elif role.name == "LPD sergeant":
-                    number_of_officers_with_sergeant += 1
-                    break
-                elif role.name == "LPD lieutenant":
-                    number_of_officers_with_lieutenant += 1
-                    break
-                elif role.name == "LPD captain":
-                    number_of_officers_with_captain += 1
-                    break
-                elif role.name == "LPD deputy chief":
-                    number_of_officers_with_deputy_chief += 1
-                    break
-                elif role.name == "LPD chief":
-                    number_of_officers_with_chief += 1
+            if role is None:
+                await sendErrorMessage(message, "The role with the ID "+str(role_id)+" was not found")
+                return
+            
+            number_of_officers_with_each_role[role] = 0
+        
+        print("number_of_officers_with_each_role:", number_of_officers_with_each_role)
+
+        for officer in main_role.members:# This goes through each officer and checkes what rank they have, if a rank is found the program adds one to that item in the dictionary and breaks to check the next officer
+            for role in number_of_officers_with_each_role:
+                if role in officer.roles:
+                    number_of_officers_with_each_role[role] += 1
                     break
 
         embed = discord.Embed(
-            title="Number of all LPD officers: "+str(number_of_officers),
+            title="Number of all "+settings["main_role"]+" officers: "+str(number_of_officers),
             colour=discord.Colour.from_rgb(255, 255, 0)
         )
-        embed.add_field(name="Rookies:", value=number_of_officers_with_rookie)
-        embed.add_field(name="Officers:", value=number_of_officers_with_officer)
-        embed.add_field(name="Corporals:", value=number_of_officers_with_corporal)
-        embed.add_field(name="Sergeants:", value=number_of_officers_with_sergeant)
-        embed.add_field(name="Lieutenants:", value=number_of_officers_with_lieutenant)
-        embed.add_field(name="Captains:", value=number_of_officers_with_captain)
-        embed.add_field(name="Deputy_chiefs:", value=number_of_officers_with_deputy_chief)
-        embed.add_field(name="Chiefs:", value=number_of_officers_with_chief)
+        for role in number_of_officers_with_each_role:# This adds everything to the embed
+            
+            if role.name[0:len(main_role.name)+1] == main_role.name + " ": name = role.name[len(main_role.name)+1::]
+            else: name = role.name
+
+            embed.add_field(name=name+":", value=number_of_officers_with_each_role[role])
 
         await message.channel.send(embed=embed)
 
