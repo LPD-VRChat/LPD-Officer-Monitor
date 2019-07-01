@@ -697,8 +697,8 @@ async def on_message(message):
         main_role = await getRoleByName(settings["main_role"], message.guild)
 
         number_of_officers = len(main_role.members)
-
-        number_of_officers_with_each_role = []
+        
+        number_of_officers_with_each_role = {}
         for role_id in settings["role_ladder_id"]:# This goes through each item in the role_ladder_id list, finds the role and then adds it to a dictionary to be counted
             role = message.guild.get_role(role_id)
 
@@ -722,7 +722,7 @@ async def on_message(message):
         )
         for role in number_of_officers_with_each_role:# This adds everything to the embed
             
-            if role.name[0:len(main_role.name)+1] == main_role.name + " ": name = role.name[len(main_role.name)+1::]
+            if role.name[0:len(main_role.name)+1] == main_role.name + " ": name = role.name[len(main_role.name)+1::] + "s"
             else: name = role.name
 
             embed.add_field(name=name+":", value=number_of_officers_with_each_role[role])
