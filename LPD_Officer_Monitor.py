@@ -483,7 +483,7 @@ async def on_message(message):
 
         # Make sure the message is the right length
         lines = message.content.count('\n') + 1
-        if lines != 13:
+        if lines != settings["num_of_application_lines"]:
             await removeJoinUpApplication(message, "please check the line spacing.")
             return
 
