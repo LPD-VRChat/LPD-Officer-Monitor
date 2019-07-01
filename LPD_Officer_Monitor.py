@@ -64,6 +64,10 @@ time inactive gets info about all people that have been inactive for """+str(set
     Help("add_inactive_officers",
         "Adds inactive officers to a role",
         "This command adds all officers on the inactive list to a role witch is in the settings.json file, make sure that the role exists"
+    ),
+    Help("accept_all_inactive_resons",
+        "This command removes all the officers who have a message in the "+settings["inactive_channel_name"]+" from the "+settings["inactive_role"]+" role",
+        "Long explanation, to be finished"
     )
 ]
 
@@ -422,6 +426,15 @@ async def parseAnnouncement(message):
     await message.channel.send(embed=embed)
     return True
 
+def renewInactiveTime(member):
+    global officer_monitor
+    
+    if str(member.id) in officer_monitor:
+        officer_monitor[str(member.id)]["Last active time"] = time.time()
+        return True
+    else:
+        return False
+
 client = discord.Client()
 
 @client.event
@@ -489,7 +502,7 @@ async def on_message(message):
         
         # This closes the applications after a set amount of applications
         if all_applications >= settings["max_applications"]:
-            await message.channel.send("We are not accepting more applications until the current applications have been reviewed")
+            await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
             
             # Lock the channel for the @everyone role
             everyone_role = await getRoleByName("@everyone", message.guild)
@@ -645,11 +658,10 @@ async def on_message(message):
                 await sendErrorMessage(message, "You forgot to mention someone to renew their time")
         
             for user in message.mentions:
-                if str(user.id) not in officer_monitor:
-                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
-                else:
-                    officer_monitor[str(user.id)]["Last active time"] = time.time()
-                    await message.channel.send("Last active time for "+user.mention+" has been renewed")
+                result = renewInactiveTime(user)
+                
+                if result: await message.channel.send("Last active time for "+user.mention+" has been renewed")
+                else: await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
 
         elif arg2 == "inactive":
             all_inactive_officers = await findInactiveOfficers()
@@ -736,6 +748,32 @@ async def on_message(message):
             else: await sendErrorMessage(message, 'A user with the ID: "'+str(officer)+'" was not found in this discord server even though being tracked by the bot, continuing...')
         
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
+
+    elif message.content.find(settings["bot_prefix"]+"accept_all_inactive_resons") != -1:
+        inactive_channel = await getChannelByName(settings["inactive_channel_name"], message.guild, True)
+        inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
+
+        officers_removed = 0
+        officers_kicked_for_inactivity = inactive_role.members
+        async for old_message in inactive_channel.history(limit=None):
+            if inactive_role in old_message.author.roles:
+                await old_message.author.remove_roles(inactive_role, reason="The officer has replied in the inactive channel with a reason.")# Remove the inactive role
+                
+                result = renewInactiveTime(old_message.author)# Renew the time
+                if result is False: await sendErrorMessage(message, "The time of "+old_message.author+" who wrote this message could not be updated for some reason:\n```\n"+old_message.content+"\n```")# Let the user know if the time for someone did not get renewed
+                
+                officers_removed += 1
+                
+                if old_message.author in officers_kicked_for_inactivity:
+                    officers_kicked_for_inactivity.remove(old_message.author)# Remove the officer from the list witch contains everyone who has to be removed
+
+        await message.channel.send(str(officers_removed)+" officers have been removed from the inactive role and their time has been renewed")
+        
+        inactive_officers_needing_removal = ""
+        for old_member in officers_kicked_for_inactivity:
+            inactive_officers_needing_removal += old_member.mention
+            inactive_officers_needing_removal += "\n"
+        await message.channel.send("Here is everyone who has to be removed for inactivity:\n"+inactive_officers_needing_removal)
 
 @client.event
 async def on_voice_state_update(member, before, after):
