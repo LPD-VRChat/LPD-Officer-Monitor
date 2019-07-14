@@ -327,7 +327,7 @@ async def goOffDuty(member, guild):
     try:
         officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
         print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
-    except KeyError: print(member.name,"left the voice channel and was not being monitored")
+    except KeyError: print(member.name,"left an on duty voice channel and was not being monitored")
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
     on_duty_role = await getRoleByName(settings["voice_channel_being_monitored"], guild)
@@ -785,29 +785,34 @@ async def on_voice_state_update(member, before, after):
     
     # Check if this is just a member and if it is than just return
     LPD_role = await getRoleByName(settings["main_role"], guild)
-    if LPD_role not in member.roles:
-        print("A normal member entered or exited a voice channel")
-        return
+    if LPD_role not in member.roles: return
     
-    if after.channel == before.channel: return
-
+    if after.channel == before.channel: return# The user was just doing something inside a monitored voice channel
+    
+    # These check if an officer is entering or leaving a monitored voice channel, not moving.
     if before.channel is None:
-        if after.channel.name == settings["voice_channel_being_monitored"] or "group " in after.channel.name:
-            # User comming on duty
+        # An LPD Officer entered any voice channel
+        if after.channel.category_id == settings["on_duty_category"]:
+            # An LPD Officer is going on duty
             await goOnDuty(member, guild)
-
+        return
     elif after.channel is None:
-        if before.channel.name == settings["voice_channel_being_monitored"] or "group " in before.channel.name:
-            # User comming off duty
+        # An LPD Officer left any voice channel
+        if before.channel.category_id == settings["on_duty_category"]:
+            # An LPD Officer is going off duty
             await goOffDuty(member, guild)
+        return
 
-    else:# This runs if the user is going from one vocie channel to another
-        if (after.channel.name == settings["voice_channel_being_monitored"] or "group " in after.channel.name) and (before.channel.name != settings["voice_channel_being_monitored"] and "group " not in before.channel.name):# Entering the channel being monitored
-             # User comming on duty
-            await goOnDuty(member, guild)
-        elif (before.channel.name == settings["voice_channel_being_monitored"] or "group " in before.channel.name) and (after.channel.name != settings["voice_channel_being_monitored"] and "group " not in after.channel.name):# Exiting the channel being monitored
-            # User comming off duty
-            await goOffDuty(member, guild)
+    # Check where the officer was moving between
+    if before.channel.category_id == settings["on_duty_category"] and after.channel.category_id == settings["on_duty_category"]:
+        # An Officer moved between monitored voice channels
+        return
+    elif after.channel.category_id == settings["on_duty_category"]:
+        # The officer moved from a voice channel that is not monitored to one that is monitored
+        await goOnDuty(member, guild)
+    elif before.channel.category_id == settings["on_duty_category"]:
+        # The officer moved from a monitored voice channel to another one witch is not monitored
+        await goOffDuty(member, guild)
 
 @client.event
 async def on_member_update(before, after):
@@ -831,20 +836,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:# Show group channels
-        member = client.get_user(payload.user_id)
-        guild = client.get_guild(payload.guild_id)
-        
-        overwrite = discord.PermissionOverwrite()
-        overwrite.update(read_messages = True)
-
-        all_vocie_channels = guild.voice_channels
-        for voice_channel in all_vocie_channels:
-            if "group " in voice_channel.name:
-                await voice_channel.set_permissions(member, overwrite=overwrite)
-                print("Voice channel:",voice_channel.name,"has been enabled for",member.display_name)
-    
-    elif payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
+    if payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
         guild = client.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
 
@@ -854,21 +846,7 @@ async def on_raw_reaction_add(payload):
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id == settings["settingsMessages"]["show_group_channels"]:
-        # Hide group channels
-        member = client.get_user(payload.user_id)
-        guild = client.get_guild(payload.guild_id)
-        
-        overwrite = discord.PermissionOverwrite()
-        overwrite.update(read_messages = None)
-
-        all_vocie_channels = guild.voice_channels
-        for voice_channel in all_vocie_channels:
-            if "group " in voice_channel.name:
-                await voice_channel.set_permissions(member, overwrite=overwrite)
-                print("Voice channel:",voice_channel.name,"has been disabled for",member.display_name)
-
-    elif payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
+    if payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
         guild = client.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
 
