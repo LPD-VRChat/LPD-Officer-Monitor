@@ -502,7 +502,7 @@ async def on_message(message):
         
         # This closes the applications after a set amount of applications
         if all_applications >= settings["max_applications"]:
-            await message.channel.send("We are not accepting more applications until the current applications have been reivewed")
+            await message.channel.send("We are not accepting more applications until the current applications have been reviewed")
             
             # Lock the channel for the @everyone role
             everyone_role = await getRoleByName("@everyone", message.guild)
