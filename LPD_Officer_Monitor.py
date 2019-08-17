@@ -232,7 +232,7 @@ async def getTopOrBottom(message, arguments, top):
             num1 = int(arguments[2])
             num2 = int(arguments[3])
         except IndexError:
-            await sendErrorMessage(message, "The userID is missing")
+            await sendErrorMessage(message, "You likely forgot to put both numbers, put two numbers after the command, one for where to start in the list, and then one for where to end.")
             return
         except TypeError:
             await sendErrorMessage(message, "The two last arguments must be whole numbers")
@@ -273,9 +273,14 @@ async def getTopOrBottom(message, arguments, top):
 
                 onDutyTime = str(onDutyweeks) +":"+ str(onDutyDays) +":"+ str(onDutyHours) +":"+ str(onDutyMinutes) +":"+ str(onDutySeconds)
 
-                await message.channel.send(client.get_user(int(user_id)).mention + " | "+onDutyTime+" | "+str(datetime.datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
+                user = client.get_user(int(user_id))
+
+                if user is not None:
+                    await message.channel.send(user.mention + " | "+onDutyTime+" | "+str(datetime.datetime.utcfromtimestamp(combined_officer_monitor[user_id]["Last active time"]).strftime('%d.%m.%Y %H:%M:%S')))
+        
         except IndexError:
             await sendErrorMessage(message, "Error - Make sure that you started at 1 or higher and ended at less or equal to all officers in the LPD")
+            return
 
 async def checkOfficerHealth(Guild_ID):
     await client.wait_until_ready()
@@ -300,7 +305,7 @@ async def checkOfficerHealth(Guild_ID):
             print("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
 
-async def findInactiveOfficers():
+async def findInactiveOfficers(guild):
     global officer_monitor
 
     all_inactive_people = []
@@ -308,7 +313,10 @@ async def findInactiveOfficers():
     # Check if someone has to be removed from the LPD because of inactivity
     for officer_id in list(officer_monitor):
         if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds < time.time():
-            all_inactive_people.append(officer_id)
+            officer = guild.get_member(int(officer_id))
+
+            if officer is not None:
+                all_inactive_people.append(officer)
     
     return all_inactive_people
 
@@ -664,18 +672,16 @@ async def on_message(message):
                 else: await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
 
         elif arg2 == "inactive":
-            all_inactive_officers = await findInactiveOfficers()
+            all_inactive_officers = await findInactiveOfficers(message.guild)
 
             if not all_inactive_officers:
                 await message.channel.send("Their is no one inactive in the LPD, it is a good day today.")
                 return
             
-            for officer_id in all_inactive_officers:
-                officer = client.get_user(int(officer_id))
-                
-                inactive_days = int((time.time() - officer_monitor[officer_id]["Last active time"]) / 86400)
+            for officer in all_inactive_officers:
+                inactive_days = int((time.time() - officer_monitor[str(officer.id)]["Last active time"]) / 86400)
 
-                unixTimeOfUserActive = officer_monitor[officer_id]["Last active time"]
+                unixTimeOfUserActive = officer_monitor[str(officer.id)]["Last active time"]
                 last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
 
                 await message.channel.send(officer.mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
@@ -737,16 +743,10 @@ async def on_message(message):
             await sendErrorMessage(message, 'The role "'+settings['inactive_role']+'" does not exist')
             return
 
-        for officer_id in await findInactiveOfficers():
+        for officer in await findInactiveOfficers(message.guild):
+            print("Adding officer to the inactive role:",officer)
+            await officer.add_roles(inactive_role)
 
-            officer = message.guild.get_member(int(officer_id))
-            if officer is not None:
-
-                print("Adding officer to the inactive role:",officer)
-                await officer.add_roles(inactive_role)
-            
-            else: await sendErrorMessage(message, 'A user with the ID: "'+str(officer)+'" was not found in this discord server even though being tracked by the bot, continuing...')
-        
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
 
     elif message.content.find(settings["bot_prefix"]+"accept_all_inactive_resons") != -1:
