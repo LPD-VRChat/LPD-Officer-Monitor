@@ -616,7 +616,11 @@ async def on_message(message):
         if arg2 == "user":
             if not message.mentions:
                 await sendErrorMessage(message, "You forgot to mention someone to get info about")
-            
+                return
+            if message.author in message.mentions:
+                await sendErrorMessage(message, "This feature is not for competing against other higherups, you don't need to know your own time.")
+                return
+
             database_officer_monitor = await readDBFile(settings["storage_file_name"])
             
             for user in message.mentions:
@@ -834,25 +838,6 @@ async def on_member_update(before, after):
         officer_monitor[str(before.id)]
         await removeUser(str(before.id))
 
-@client.event
-async def on_raw_reaction_add(payload):
-    if payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
-        guild = client.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-
-        role = await getRoleByName(settings["avatar_updates_role"], guild)
-        
-        await member.add_roles(role)
-
-@client.event
-async def on_raw_reaction_remove(payload):
-    if payload.message_id == settings["settingsMessages"]["avatar_update_ping"]:# Add a role for being mentioned when avatar updates happen
-        guild = client.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-
-        role = await getRoleByName(settings["avatar_updates_role"], guild)
-        
-        await member.remove_roles(role)
 
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
 
