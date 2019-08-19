@@ -28,8 +28,8 @@ commands = [
         "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+settings["bot_prefix"]+"help who"
     ),
     Help("who",
-        "Get everyone in a voice channel in a list",
-        "who gets a list of all people in a specific voice channel and can output the list with any seperator as long as the separator does not contain spaces. who needs two arguments, argument one is the separator and argument number 2 is the name of the voice channel. To make a tab you put /t and for enter you put /n. Example: "+settings["bot_prefix"]+"who , General"
+        "Get everyone in a voice channel in a list or everyone on duty",
+        "who gets everyone from a specific voice channel in a list or everyone in the on duty voice channels, to get everyone from all the on duty voice channels use the command "+settings["bot_prefix"]+"who on_duty or to get everyone in a specific channel in a list do "+settings["bot_prefix"]+"who channel (replace this with the channel name, without the parentheses)"
     ),
     Help("time",
         "Get how much time each officer has been in the "+settings["voice_channel_being_monitored"]+" channel and how long they have been inactive",
@@ -443,6 +443,20 @@ def renewInactiveTime(member):
     else:
         return False
 
+def getMemberStringFromMemberList(member_list):
+    returnString = ""
+
+    for member in member_list:
+        returnString = returnString + member.mention + "\n"
+    
+    return returnString
+
+def get_category(category_id, guild):
+    for category in guild.categories:
+        if category.id == category_id:
+            return category
+    return None
+
 client = discord.Client()
 
 @client.event
@@ -549,38 +563,51 @@ async def on_message(message):
 
         try:
             arguments = message.content.split(" ")
-            separator = arguments[1]
-            channel_name = arguments[2::]
-            channel_name = "".join([" "+x for x in channel_name])
-            channel_name = channel_name[1::]
+            arg2 = arguments[1]
         except IndexError:
             await sendErrorMessage(message, "There is a missing an argument. Do "+settings["bot_prefix"]+"help for help")
             return
 
-        channel = await getChannelByName(channel_name, message.guild, False)
+        if arg2 == "channel":
+            try:
+                channel_name = arguments[2::]
+                channel_name = "".join([" "+x for x in channel_name])
+                channel_name = channel_name[1::]
+
+                print("Channel name: ",channel_name)
+            except IndexError:
+                await sendErrorMessage(message, "Make sure to include a name for the channel you want to get the time for.")
+                return
+
+            channel = await getChannelByName(channel_name, message.guild, False)
         
-        if channel is False:
-            await sendErrorMessage(message, "The channel "+channel_name+" does not exist or is not a voice channel.")
+            if channel is False:
+                await sendErrorMessage(message, "The channel "+channel_name+" does not exist or is not a voice channel.")
+                return
+            if not channel.members:
+                await sendErrorMessage(message, channel.name+" is empty")
+                return
+
+            everyone_in_channel = getMemberStringFromMemberList(channel.members)
+            await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
             return
 
-        if not channel.members:
-            await sendErrorMessage(message, channel.name+" is empty")
-            return
+        elif arg2 == "on_duty":
+            on_duty_category = get_category(settings["on_duty_category"], message.guild)
+            everyone_on_duty = []
+            
+            for voice_channel in on_duty_category.voice_channels:
+                for member in voice_channel.members:
+                    print("Adding someone")
+                    everyone_on_duty.append(member)
 
-        everyone_in_channel = ""
-        has_run = False
-        for member in channel.members:
-            if has_run is True:
-                everyone_in_channel = everyone_in_channel + separator + member.display_name
-            else:
-                everyone_in_channel += member.display_name
-                has_run = True
+            print("Checking if everyone_on_duty is empty: ",everyone_on_duty)
+            if not everyone_on_duty:
+                await sendErrorMessage(message, "Their is no one on duty.")
+                return
 
-        # This is to remove double backslashes witch discord adds to disable enter/tab functionality but I want that functunality here so I only want one of the backslashes
-        everyone_in_channel = everyone_in_channel.replace("/t","\t")
-        everyone_in_channel = everyone_in_channel.replace("/n","\n")
-        
-        await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
+            everyone = getMemberStringFromMemberList(everyone_on_duty)
+            await message.channel.send("Here is everyone who is on duty:\n"+everyone)
 
     elif message.content.find(settings["bot_prefix"]+"help") != -1:
 
