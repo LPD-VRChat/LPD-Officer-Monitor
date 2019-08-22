@@ -573,7 +573,7 @@ async def on_message(message):
             arguments = message.content.split(" ")
             arg2 = arguments[1]
         except IndexError:
-            await sendErrorMessage(message, "There is a missing an argument. Do "+settings["bot_prefix"]+"help for help")
+            await sendErrorMessage(message, "There is a missing an argument. Do "+settings["bot_prefix"]+"help who to get help for this command")
             return
 
         if arg2 == "channel":
