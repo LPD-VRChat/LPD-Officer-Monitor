@@ -6,6 +6,7 @@ import asyncio
 import copy
 import datetime
 import json
+import emoji
 
 class Help():
     def __init__(self, name, short_explanation, long_explanation):
@@ -447,7 +448,14 @@ def getMemberStringFromMemberList(member_list):
     returnString = ""
 
     for member in member_list:
-        returnString = returnString + member.mention + "\n"
+        print(member.name)
+        print(member.name.find(":"))
+        for letter in member.name:
+            if letter in emoji.UNICODE_EMOJI:
+                returnString = returnString + "`<@" + str(member.id) + ">`\n"
+                break
+        else:
+            returnString = returnString + "@" + member.name + "#" + member.discriminator + "\n"
     
     return returnString
 
