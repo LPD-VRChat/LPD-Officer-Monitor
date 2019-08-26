@@ -624,6 +624,7 @@ async def on_message(message):
             message.content[len(settings["bot_prefix"])+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
             argument = message.content[len(settings["bot_prefix"])+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
         except IndexError:
+
             all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
             for command in commands:
                 all_text = all_text+"\n"+command.command+": "+command.short_explanation
@@ -734,6 +735,13 @@ async def on_message(message):
                 await writeToDBFile(officer_monitor)
 
                 await message.channel.send("The time for everyone has been cleared")
+
+        elif arg2 == "dump":
+            await logAllInfoToFile(message.guild)
+
+            db_file = discord.File(settings["storage_file_name"], settings["storage_file_name"])
+
+            await message.channel.send("Here is the database file:", file=db_file)
 
     elif message.content.find(settings["bot_prefix"]+"parse_announcement") != -1:
         announcement_channel = await getChannelByName("events-and-announcements", message.guild, True)
