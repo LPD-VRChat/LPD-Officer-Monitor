@@ -8,69 +8,16 @@ import datetime
 import json
 import emoji
 
-class Help():
-    def __init__(self, name, short_explanation, long_explanation):
-        self.name = name
-        self.command = settings["bot_prefix"] + name
-        self.short_explanation = short_explanation
-        self.long_explanation = long_explanation
-
-def getSettingsFile():
-    with open("settings.json", "r") as settings_file:
-        data = json.load(settings_file)
+def getJsonFile(file_name):
+    with open(file_name+".json", "r") as json_file:
+        data = json.load(json_file)
     return data
 
-settings = getSettingsFile()
+settings = getJsonFile("settings")
+commands = getJsonFile("help")
+
 max_inactive_time_seconds = settings["max_inactive_days"] * 86400# Convert days to seconds
 
-commands = [
-    Help("help",
-        "Get info about all commands",
-        "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: "+settings["bot_prefix"]+"help who"
-    ),
-    Help("who",
-        "Get everyone in a voice channel in a list or everyone on duty",
-        "who gets everyone from a specific voice channel in a list or everyone in the on duty voice channels, to get everyone from all the on duty voice channels use the command "+settings["bot_prefix"]+"who on_duty or to get everyone in a specific channel in a list do "+settings["bot_prefix"]+"who channel (replace this with the channel name, without the parentheses)"
-    ),
-    Help("time",
-        "Get how much time each officer has been in the "+settings["voice_channel_being_monitored"]+" channel and how long they have been inactive",
-        """
-time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.
------
-time user [@ the user/s] gets info about a specific user/users
------
-time top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: "+settings["bot_prefix"]+"time top 1 10
------
-just like time top but takes from the bottom
------
-time renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: "+settings["bot_prefix"]+"time renew @Hroi#1994 @HroiTest#2003
------
-time inactive gets info about all people that have been inactive for """+str(settings["max_inactive_days"])+""" days or more.
------
-!DEVELPER COMMAND time write writes all changes to file, this is manely used if the bot is going offline
-        """
-    ),
-    Help("now",
-        "Get the current time of the server",
-        "now gives the current time of the server to calculate how far your own time zone is away from the servers time zone."
-    ),
-    Help("parse_announcement",
-        "This command reads the latest event announcement and adds local time to it if the bot finds the date/time",
-        "To get the bot to parse a event announcement the time of the event has to be one or two numbers and have either AM or PM right after the time (no space), example: 9PM.\nThe UTC +/- has to have a word starting with UTC in uppercase and right after it (no spaces) have +/- and then right after that a number from 0-9, example: UTC+4.\nThe date has to be seperated by either / or ., this can have a . or , right after the date but make sure to not put a . if you are using . as a seperator for the dates, example: 21/6/2019."
-    ),
-    Help("count_officers",
-        "get number of rookes/officers/corporal...",
-        "count_officers gets the number of all officers and also number of people with each rank seperatly"
-    ),
-    Help("add_inactive_officers",
-        "Adds inactive officers to a role",
-        "This command adds all officers on the inactive list to a role witch is in the settings.json file, make sure that the role exists"
-    ),
-    Help("accept_all_inactive_resons",
-        "This command removes all the officers who have a message in the "+settings["inactive_channel_name"]+" from the "+settings["inactive_role"]+" role",
-        "Long explanation, to be finished"
-    )
-]
 
 officer_monitor = {}
 
@@ -472,6 +419,9 @@ client = discord.Client()
 async def on_message(message):
     global officer_monitor
 
+
+    # ------------------------------ Start filters ------------------------------
+
     # Eliminate DM's
     try: message.channel.category_id
     except AttributeError:
@@ -483,6 +433,9 @@ async def on_message(message):
     if message.author == message.guild.me:
         return
 
+
+    # ------------------------------ Other channels ------------------------------
+
     # If the channel is in the list counted_channels than the last active time is updated in the officer_monitor for that officer
     if message.channel.name in settings["counted_channels"]:
         try:
@@ -491,81 +444,22 @@ async def on_message(message):
         except KeyError:
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
-    # Delete message if an LPD members sent to the channel #join-up
-    if message.channel.name == settings["application_channel"]:
-        LPD_role = await getRoleByName(settings["main_role"], message.guild)
-        Mod_role = await getRoleByName(settings["mod_role"], message.guild)
-
-        # If the message is from a moderator, ignore the message
-        if Mod_role in message.author.roles or message.author.id in settings["Other_admins"] or message.author.bot is True:
-            return
-        
-        # Check if this message is from an LPD member, if so, remove it
-        if LPD_role in message.author.roles:
-
-            if not message.author.dm_channel:
-                await message.author.create_dm()
-            await message.author.dm_channel.send(settings["main_role"]+" members cannot send to the "+message.channel.mention+" channel")
-            
-            await message.delete()
-            return
-        
-        # This is a join up application
-
-        # Make sure the message is the right length
-        lines = message.content.count('\n') + 1
-        if lines != settings["num_of_application_lines"]:
-            await removeJoinUpApplication(message, "please check the line spacing.")
-            return
-
-        # Make sure the person applying has not sent an application already
-        all_applications = 0
-        async for old_message in message.channel.history(limit=None):
-            if old_message.author == message.author and old_message.id != message.id:
-                await removeJoinUpApplication(message, "You have already applied in "+message.channel.mention+", you cannot apply again until your application has been reviewed but you can edit your current application", False)
-                return
-
-            # This counts the nuber of applications
-            if Mod_role not in old_message.author.roles and old_message.author.id not in settings["Other_admins"] and message.author.bot is not True:
-                all_applications += 1
-                
-        print("Number of applications:",all_applications)
-        
-        # This closes the applications after a set amount of applications
-        if all_applications >= settings["max_applications"]:
-            await message.channel.send("We are not accepting more applications until the current applications have been reviewed")
-            
-            # Lock the channel for the @everyone role
-            everyone_role = await getRoleByName("@everyone", message.guild)
-            overwrites = message.channel.overwrites
-            
-            if everyone_role in overwrites: overwrite = overwrites[everyone_role]
-            else: overwrite = discord.PermissionOverwrite()
-
-            overwrite.update(send_messages = False)
-
-            await message.channel.set_permissions(everyone_role, overwrite=overwrite)
-
     # Add the time to event announcments
     if message.channel.name == "events-and-announcements":
         await parseAnnouncement(message)
 
-    # Check if the command exists, if not then send a message notifying someone that this message does not exist
-    for command in commands:
-        if message.content.split(" ")[0] == command.command:
-            break
-    else:
-        return
-    
-    # If the channel name is not the settings["admin_bot_channel_name"] than reply with that the bot only works in the settings["admin_bot_channel_name"] channel
+
+    # ------------------------------ Admin Bot Channel ------------------------------
+
+    # Stop if the message is not in the admin bot channel
     if message.channel.name != settings["admin_bot_channel_name"]:
-        admin_channel = await getChannelByName(settings["admin_bot_channel_name"], message.guild, True)
+        return
 
-        if admin_channel is False:
-            await message.channel.send("Please create a text channel named "+settings["admin_bot_channel_name"]+" for the bot to use")
-            return
+    # Check if the command exists, if not then send a message notifying someone that this message does not exist
+    user_command = message.content.split(" ")[0][1::]
 
-        await message.channel.send("This bot does only work in "+admin_channel.mention)
+    if user_command not in commands:
+        await message.channel.send("The command you put in does not exist, check how you spelled it.")
         return
 
     if message.content.find(settings["bot_prefix"]+"who") != -1:
@@ -619,27 +513,7 @@ async def on_message(message):
             await message.channel.send("Here is everyone who is on duty:\n"+everyone)
 
     elif message.content.find(settings["bot_prefix"]+"help") != -1:
-
-        try:
-            message.content[len(settings["bot_prefix"])+1+4]# This tests if the string is long enough to contain the channel name and if this is not it goes to the except IndexError
-            argument = message.content[len(settings["bot_prefix"])+1+4::]# This does not throw an index error if the string is only 4 characters (no idea why)
-        except IndexError:
-
-            all_text = "To get more information on how to use a specific command please use ?help and than put the command you want more info on after that."
-            for command in commands:
-                all_text = all_text+"\n"+command.command+": "+command.short_explanation
-
-            await message.channel.send(all_text)
-            return
-
-        for command in commands:
-            if argument == command.name:
-                # Command found
-                await message.channel.send(command.long_explanation)
-                break
-        else:
-            await sendErrorMessage(message, 'Help page not loaded because "'+argument+'" is not a valid command')
-            return
+        pass
 
     elif message.content.find(settings["bot_prefix"]+"time") != -1:
         
