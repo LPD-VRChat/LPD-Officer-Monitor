@@ -1,44 +1,48 @@
 {
     "help": {
         "short_description": "Get info about all commands",
-        "long description": "help gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: ?help who"
+        "long_description": "gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: ?help who"
     },
     "who": {
-        "short_description": "Get everyone in a voice channel in a list or everyone on duty",
-        "long description": "who gets everyone from a specific voice channel in a list or everyone in the on duty voice channels, to get everyone from all the on duty voice channels use the command ?who on_duty or to get everyone in a specific channel in a list do ?who channel {channel}"
+        "short_description": "Get everyone on duty or in a specified voice channel into a list",
+        "long_description": {
+            "description": "gets everyone on duty or in a specified voice channel into a list. The list comes ready to @ everyone in it so just copy the bot output and paste it in any channel to @ everyone on the list.",
+            "commands": {
+                "on_duty": "gets everyone that is on duty and puts them into a list",
+                "channels [voice channel]": "gets everyone in the specified voice channel and puts them into a list"
+            }
+        }
     },
     "time": {
         "short_description": "Get how much time each officer has been on duty and how long they have been inactive",
-        "long description": [
-            "time is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.",
-
-            "time user [@ the user/s] gets info about a specific user/users",
-
-            "time top [from number] [to number] this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: ?time top 1 10",
-            
-            "time bottom just like time top but takes from the bottom",
-            
-            "time renew [@ the user/s] updates last active time for all users mentioned in the message to the current time, Example: ?time renew @Hroi#1994 @HroiTest#2003",
-
-            "time inactive gets info about all people that have been inactive for a set amount of days.",
-
-            "**!DEVELPER COMMAND** time write writes all changes to file, this is manely used if the bot is going offline"
-        ]
+        "long_description": {
+            "description": "is the command to manage and get info about time spent in the on duty voice channel and how long officers have been inactive.",
+            "commands": {
+                "user [@ the user/s]": "gets info about a specified user/users",
+                "top [from number] [to number]": "this gets info about all officers and organizes them from people who have been to most on duty to the ones that have been the least on duty, for example if you want the top 10 do: ?time top 1 10",
+                "bottom [from number] [to number]": "just like time top but takes from the bottom",
+                "renew [@ the user/s]": "updates last active time for all users mentioned in the message to the current time, Example: ?time renew @Hroi#1994 @HroiTest#2003",
+                "inactive": "gets info about all people that have been inactive for a set amount of days.",
+                "reset": "this command resets the on duty time, it is mainly just to clear the old data out after each promotion day.",
+                "dump": "this command dumps the file with the officer time info, this file can be opened with excel to look at indepth but it does include user ID's not user names æso it can be a bit hard to search through.",
+                "write **!DEVELPER COMMAND**": "writes all changes to file, this is manely used if the bot is going offline"
+            }
+        }
     },
     "parse_announcement": {
         "short_description": "This command reads the latest event announcement and adds local time to it if the bot finds the date/time",
-        "long description": "To get the bot to parse a event announcement the time of the event has to be one or two numbers and have either AM or PM right after the time (no space), example: 9PM.\nThe UTC +/- has to have a word starting with UTC in uppercase and right after it (no spaces) have +/- and then right after that a number from 0-9, example: UTC+4.\nThe date has to be seperated by either / or ., this can have a . or , right after the date but make sure to not put a . if you are using . as a seperator for the dates, example: 21/6/2019."
+        "long_description": "gets the bot to parse an event announcement the time of the event has to be one or two numbers and have either AM or PM right after the time (no space), example: 9PM.\nThe UTC +/- has to have a word starting with UTC in uppercase and right after it (no spaces) have +/- and then right after that a number from 0-9, example: UTC+4.\nThe date has to be seperated by either / or ., this can have a . or , right after the date but make sure to not put a . if you are using . as a seperator for the dates, example: 21/6/2019."
     },
     "count_officers": {
         "short_description": "get number of rookes/officers/corporal...",
-        "long description": "count_officers gets the number of all officers and also number of people with each rank seperatly"
+        "long_description": "gets the number of all officers and also number of people with each rank seperatly"
     },
     "add_inactive_officers": {
         "short_description": "Adds inactive officers to a role",
-        "long description": "This command adds all officers on the inactive list to a role witch is in the settings.json file, make sure that the role exists"
+        "long_description": "adds all officers on the inactive list to a role witch is in the settings.json file, make sure that the role exists"
     },
     "accept_all_inactive_resons": {
         "short_description": "This command removes all the officers who have a message in the inactive reason channel from the inactive role",
-        "long description": "Long explanation, to be finished"
+        "long_description": "Long explanation, to be finished"
     }
 }

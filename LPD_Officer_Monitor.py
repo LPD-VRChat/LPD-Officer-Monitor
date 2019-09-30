@@ -412,6 +412,8 @@ def get_category(category_id, guild):
             return category
     return None
 
+def cmd_with_prefix(command):
+    return settings["bot_prefix"]+command+" "
 
 client = discord.Client()
 
@@ -449,20 +451,28 @@ async def on_message(message):
         await parseAnnouncement(message)
 
 
-    # ------------------------------ Admin Bot Channel ------------------------------
+    # ------------------------------ Admin Bot Channel Filters ------------------------------
 
     # Stop if the message is not in the admin bot channel
     if message.channel.name != settings["admin_bot_channel_name"]:
         return
 
-    # Check if the command exists, if not then send a message notifying someone that this message does not exist
-    user_command = message.content.split(" ")[0][1::]
-
-    if user_command not in commands:
-        await message.channel.send("The command you put in does not exist, check how you spelled it.")
+    # Stop if the bot prefix is not in the message
+    if message.content[0] != settings["bot_prefix"]:
         return
 
-    if message.content.find(settings["bot_prefix"]+"who") != -1:
+    # Create a variable with the command the user sent in
+    user_command = message.content.split(" ")[0][1::]
+
+    # Check if the command exists, if not then send a message notifying someone that this message does not exist
+    if user_command not in commands:
+        await sendErrorMessage(message, "The command you put in does not exist, check how you spelled it.")
+        return
+
+
+    # ------------------------------ Commands ------------------------------
+
+    if user_command == "who":
 
         try:
             arguments = message.content.split(" ")
@@ -512,10 +522,65 @@ async def on_message(message):
             everyone = getMemberStringFromMemberList(everyone_on_duty)
             await message.channel.send("Here is everyone who is on duty:\n"+everyone)
 
-    elif message.content.find(settings["bot_prefix"]+"help") != -1:
-        pass
+    elif user_command == "help":
+        
+        # The user put in a specific command to get info about
+        try:
+            # This stops the program if the argument is not a command
+            command = message.content.split(" ")[1]
+            try:
+                commands[command]
+            except KeyError:
+                await sendErrorMessage(message, "Their is no command with the name "+command)
+                return
 
-    elif message.content.find(settings["bot_prefix"]+"time") != -1:
+            if isinstance(commands[command]["long_description"], dict):
+
+                embed = discord.Embed(
+                    title=settings["bot_prefix"]+command,
+                    description=cmd_with_prefix(command)+commands[command]["long_description"]["description"],
+                    colour=discord.Colour.from_rgb(0, 163, 255)
+                )
+
+                for part in commands[command]["long_description"]["commands"]:
+
+                    command_name = u"\u2063"+"\n"+cmd_with_prefix(command)+part
+                    command_description = commands[command]["long_description"]["commands"][part]
+
+                    embed.add_field(
+                        name=command_name,
+                        value=command_description,
+                        inline=False
+                    )
+
+            else:
+
+                embed = discord.Embed(
+                    title=settings["bot_prefix"]+command,
+                    description=cmd_with_prefix(command)+commands[command]["long_description"],
+                    colour=discord.Colour.from_rgb(0, 163, 255)
+                )
+
+            await message.channel.send(embed=embed)
+
+        # The command dosn't have arguments and will give general information about all commands
+        except IndexError:
+            embed = discord.Embed(
+                title="All commands:",
+                description="To get more information about a specific command do "+settings["bot_prefix"]+"help command",
+                colour=discord.Colour.from_rgb(0, 163, 255)
+            )
+
+            for command in commands:
+                embed.add_field(
+                    name=u"\u2063"+"\n"+settings["bot_prefix"]+command,
+                    value=commands[command]["short_description"],
+                    inline=False
+                )
+            
+            await message.channel.send(embed=embed)
+
+    elif user_command == "time":
         
         try:
             arguments = message.content.split(" ")
@@ -617,7 +682,7 @@ async def on_message(message):
 
             await message.channel.send("Here is the database file:", file=db_file)
 
-    elif message.content.find(settings["bot_prefix"]+"parse_announcement") != -1:
+    elif user_command == "parse_announcement":
         announcement_channel = await getChannelByName("events-and-announcements", message.guild, True)
 
         old_message = None
@@ -630,7 +695,7 @@ async def on_message(message):
         if worked is True: await message.channel.send("Last message parsed and the time/date have been added to it.")
         else: await message.channel.send("Last message parsed but the time/date were not found.")
 
-    elif message.content.find(settings["bot_prefix"]+"count_officers") != -1:
+    elif user_command == "count_officers":
         main_role = await getRoleByName(settings["main_role"], message.guild)
 
         number_of_officers = len(main_role.members)
@@ -666,7 +731,7 @@ async def on_message(message):
 
         await message.channel.send(embed=embed)
 
-    elif message.content.find(settings["bot_prefix"]+"add_inactive_officers") != -1:
+    elif user_command == "add_inactive_officers":
 
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
         
@@ -680,7 +745,7 @@ async def on_message(message):
 
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
 
-    elif message.content.find(settings["bot_prefix"]+"accept_all_inactive_resons") != -1:
+    elif user_command == "accept_all_inactive_resons":
         inactive_channel = await getChannelByName(settings["inactive_channel_name"], message.guild, True)
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
 
