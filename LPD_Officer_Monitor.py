@@ -457,6 +457,10 @@ async def on_message(message):
     if message.channel.name != settings["admin_bot_channel_name"]:
         return
 
+    # Stop if their is no content in the message
+    if message.content == "":
+        return
+
     # Stop if the bot prefix is not in the message
     if message.content[0] != settings["bot_prefix"]:
         return
