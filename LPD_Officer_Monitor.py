@@ -280,7 +280,7 @@ async def goOnDuty(member, guild):
     officer_monitor[str(member.id)]["Start time"] = current_time
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
-    on_duty_role = await getRoleByName(settings["voice_channel_being_monitored"], guild)
+    on_duty_role = guild.get_role(settings["on_duty_role"])
     await member.add_roles(on_duty_role)
 
 async def goOffDuty(member, guild):
@@ -292,7 +292,7 @@ async def goOffDuty(member, guild):
     except KeyError: print(member.name,"left an on duty voice channel and was not being monitored")
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
-    on_duty_role = await getRoleByName(settings["voice_channel_being_monitored"], guild)
+    on_duty_role = guild.get_role(settings["on_duty_role"])
     await member.remove_roles(on_duty_role)
 
 async def removeJoinUpApplication(message, error_text, use_beginning_text = True):
