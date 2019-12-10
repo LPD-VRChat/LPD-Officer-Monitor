@@ -130,6 +130,7 @@ async def logAllInfoToFile(guild):
     
     database_officer_monitor = await readDBFile(settings["storage_file_name"])
     
+
     # Add missing users to officer_monitor
     for member in get_all_officers(guild):
         if str(member.id) not in officer_monitor:
@@ -143,8 +144,19 @@ async def logAllInfoToFile(guild):
                 print(member.name,"was reset in the dict and got last active time from the current time")
 
     # Remove extra users from the officer_monitor
-    for member in guild.members:
-        
+    for member_id in list(officer_monitor):
+        member = guild.get_member(int(member_id))
+
+        if member is None:
+            del officer_monitor[member_id]
+            print(member_id,"was removed from the LPD Officer Monitor")
+            continue
+
+        if has_officer_role(member.roles) is False:
+            del officer_monitor[member_id]
+            print(member.name,"was removed from the LPD Officer Monitor")
+            continue
+
 
     # Making a copy of officer_monitor for logging to file
     officer_monitor_static = copy.deepcopy(officer_monitor)
@@ -485,11 +497,11 @@ async def on_message(message):
         return
 
     # Stop if the bot prefix is not in the message
-    if message.content[0] != settings["bot_prefix"]:
+    if message.content[0:len(settings["bot_prefix"])] != settings["bot_prefix"]:
         return
 
     # Create a variable with the command the user sent in
-    user_command = message.content.split(" ")[0][1::]
+    user_command = message.content.split(" ")[0][len(settings["bot_prefix"])::]
 
     # Check if the command exists, if not then send a message notifying someone that this message does not exist
     if user_command not in commands:
