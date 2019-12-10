@@ -9,7 +9,11 @@ import json
 import emoji
 
 def getJsonFile(file_name):
-    with open(file_name+".json", "r") as json_file:
+    # Add the .json extention if it was not included in the file_name
+    if file_name[-5::] != ".json": file_name += ".json"
+
+    # Get all the data out of the JSON file, parse it and return it
+    with open(file_name, "r") as json_file:
         data = json.load(json_file)
     return data
 
@@ -49,7 +53,7 @@ async def readDBFile(fileName):# Reading all info about users from file
 
     # This makes it so that if their is no file it creates the file and then reads from the empty file
     try: openFile = open(fileName, "r")
-    except IOError:
+    except FileNotFoundError:
         # Creating the file
         openFile = open(fileName, "w")
         openFile.write("")
@@ -77,14 +81,14 @@ async def readDBFile(fileName):# Reading all info about users from file
     
     return database_officer_monitor
 
-async def writeToDBFile(officer_monitor_local):
+async def overwriteDBFile(officer_monitor_file):
     print("++++++++++++++++++++++++++++++++++++++++++++++++++")
     print("Writing to file\n")
 
     openFile = open(settings["storage_file_name"], "w")
     try:
-        for ID in list(officer_monitor_local):
-            openFile.write(str(ID)+","+str(officer_monitor_local[ID]["Last active time"])+","+str(officer_monitor_local[ID]["Time"])+"\n")
+        for ID in list(officer_monitor_file):
+            openFile.write(str(ID)+","+str(officer_monitor_file[ID]["Last active time"])+","+str(officer_monitor_file[ID]["Time"])+"\n")
     except Exception as error: print("Something failed with writing to file:",error)
     finally: openFile.close()
     
@@ -97,11 +101,11 @@ async def removeUser(user_id):
     print("Removing",client.get_user(int(user_id)),"from the officer_monitor\n")
 
     # Get the contents of the file
-    officer_monitor_local = await readDBFile(settings["storage_file_name"])
+    officer_monitor_file = await readDBFile(settings["storage_file_name"])
 
-    # Remove the user from officer_monitor_local
+    # Remove the user from officer_monitor_file
     try:
-        del officer_monitor_local[user_id]
+        del officer_monitor_file[user_id]
         print("User removed from the officer_monitor file")
     except KeyError:
         print("Could not delete the user with the user id from officer_monitor file",user_id,"because the user does not exsist in the officer_monitor file (the officer must have been in the LPD for less than an hour")
@@ -115,7 +119,7 @@ async def removeUser(user_id):
         print("officer_monitor:",officer_monitor)
 
     # Write the changes to the file
-    await writeToDBFile(officer_monitor_local)
+    await overwriteDBFile(officer_monitor_file)
 
     print("88888888888888888888888888888888888888888888888888")
 
@@ -127,24 +131,26 @@ async def logAllInfoToFile(guild):
     database_officer_monitor = await readDBFile(settings["storage_file_name"])
     
     # Add missing users to officer_monitor
-    main_role = await getRoleByName(settings["main_role"], guild)
-    members_with_main_role = [member for member in guild.members if main_role in member.roles]
-    for member in members_with_main_role:
-        try:
-            officer_monitor[str(member.id)]
-        except KeyError:
+    for member in get_all_officers(guild):
+        if str(member.id) not in officer_monitor:
+            # Give the missing officer the time of 0
             officer_monitor[str(member.id)] = {"Time": 0}
-            try:
-                officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
+
+            # Check if the officer has any last active time in the file, if so give him that time, otherwise just the current time
+            try: officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
             except KeyError:
                 officer_monitor[str(member.id)]["Last active time"] = time.time()
                 print(member.name,"was reset in the dict and got last active time from the current time")
+
+    # Remove extra users from the officer_monitor
+    for member in guild.members:
+        
 
     # Making a copy of officer_monitor for logging to file
     officer_monitor_static = copy.deepcopy(officer_monitor)
     print("global officer_monitor cloned into officer_monitor_static")
 
-    # Reset Officer Monitor
+    # Reset Officer Monitor on duty time
     for ID in list(officer_monitor):
         officer_monitor[ID]["Time"] = 0
     print("global officer_monitor reset")
@@ -415,6 +421,23 @@ def get_category(category_id, guild):
 def cmd_with_prefix(command):
     return settings["bot_prefix"]+command+" "
 
+def get_all_officers(guild):
+
+    all_officers = []
+
+    for member in guild.members:
+        for role in member.roles:
+            if role.id in settings["role_ladder_id"]:
+                all_officers.append(member)
+    
+    return all_officers
+
+def has_officer_role(roles):
+    for role in roles:
+        if role.id in settings["role_ladder_id"]:
+            return True
+    return False
+
 client = discord.Client()
 
 @client.event
@@ -605,7 +628,7 @@ async def on_message(message):
             
             for user in message.mentions:
                 if str(user.id) not in officer_monitor:
-                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
+                    await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an LPD officer?")
                 else:
                     try:
                         onDutyTimeFromFile = database_officer_monitor[str(user.id)]["Time"]
@@ -653,7 +676,7 @@ async def on_message(message):
                 result = renewInactiveTime(user)
                 
                 if result: await message.channel.send("Last active time for "+user.mention+" has been renewed")
-                else: await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an "+settings["main_role"]+" officer?")
+                else: await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an LPD officer?")
 
         elif arg2 == "inactive":
             all_inactive_officers = await findInactiveOfficers(message.guild)
@@ -675,7 +698,7 @@ async def on_message(message):
                 for officer_id in list(officer_monitor):
                     officer_monitor[officer_id]["Time"] = 0
 
-                await writeToDBFile(officer_monitor)
+                await overwriteDBFile(officer_monitor)
 
                 await message.channel.send("The time for everyone has been cleared")
 
@@ -700,10 +723,12 @@ async def on_message(message):
         else: await message.channel.send("Last message parsed but the time/date were not found.")
 
     elif user_command == "count_officers":
-        main_role = await getRoleByName(settings["main_role"], message.guild)
-
-        number_of_officers = len(main_role.members)
         
+        # Get all officers to count them
+        all_officers = get_all_officers(message.guild)
+        number_of_officers = len(all_officers)
+        
+        # Get a Dictionary ready that will contain number of officers with each role
         number_of_officers_with_each_role = {}
         for role_id in settings["role_ladder_id"]:# This goes through each item in the role_ladder_id list, finds the role and then adds it to a dictionary to be counted
             role = message.guild.get_role(role_id)
@@ -713,22 +738,24 @@ async def on_message(message):
                 return
             
             number_of_officers_with_each_role[role] = 0
-        
-        print("number_of_officers_with_each_role:", number_of_officers_with_each_role)
 
-        for officer in main_role.members:# This goes through each officer and checkes what rank they have, if a rank is found the program adds one to that item in the dictionary and breaks to check the next officer
+        # This goes through each officer and checkes what rank they have, if a rank is found the program adds one to that item in the dictionary and breaks to check the next officer        
+        for officer in all_officers:
             for role in number_of_officers_with_each_role:
                 if role in officer.roles:
                     number_of_officers_with_each_role[role] += 1
                     break
-
+        
+        # Create the embed with number of officers
         embed = discord.Embed(
-            title="Number of all "+settings["main_role"]+" officers: "+str(number_of_officers),
+            title="Number of all LPD officers: "+str(number_of_officers),
             colour=discord.Colour.from_rgb(255, 255, 0)
         )
-        for role in number_of_officers_with_each_role:# This adds everything to the embed
+
+        # Add feilds with each role to the embed
+        for role in number_of_officers_with_each_role:
             
-            if role.name[0:len(main_role.name)+1] == main_role.name + " ": name = role.name[len(main_role.name)+1::] + "s"
+            if role.name[0:4] == "LPD ": name = role.name[4::] + "s"
             else: name = role.name
 
             embed.add_field(name=name+":", value=number_of_officers_with_each_role[role])
@@ -784,8 +811,7 @@ async def on_voice_state_update(member, before, after):
     except AttributeError: guild = after.channel.guild
     
     # Check if this is just a member and if it is than just return
-    LPD_role = await getRoleByName(settings["main_role"], guild)
-    if LPD_role not in member.roles: return
+    if not has_officer_role(member.roles): return
     
     if after.channel == before.channel: return# The user was just doing something inside a monitored voice channel
     
@@ -818,19 +844,21 @@ async def on_voice_state_update(member, before, after):
 async def on_member_update(before, after):
     global officer_monitor
 
-    # Check if the member was entering or exiting the LPD role
-    main_role = await getRoleByName(settings["main_role"],before.guild)
+    officer_before = has_officer_role(before.roles)
+    officer_after = has_officer_role(after.roles)
 
-    if main_role in before.roles and main_role in after.roles:
-        return
-    elif main_role not in before.roles and main_role not in after.roles:
-        return
-
-    elif main_role not in before.roles and main_role in after.roles:# Member has joined the LPD
+    # Nothing happened to an LPD Officer
+    if officer_before is True and officer_before is True: return
+    # Nothing happened to a regular member
+    elif officer_before is False and officer_after is False: return
+    
+    # Member has joined the LPD
+    elif officer_before is False and officer_after is True:
         officer_monitor[str(before.id)] = {"Time": 0,"Last active time": time.time()}# User added to the officer_monitor
         print(before.name,"added to the officer_monitor")
 
-    elif main_role in before.roles and main_role not in after.roles:# Member has left the LPD
+    # Member has left the LPD
+    elif officer_before is True and officer_after is False:
         officer_monitor[str(before.id)]
         await removeUser(str(before.id))
 
