@@ -477,7 +477,7 @@ async def on_message(message):
     # ------------------------------ Admin Bot Channel Filters ------------------------------
 
     # Stop if the message is not in the admin bot channel
-    if message.channel.name != settings["admin_bot_channel_name"]:
+    if message.channel.id != settings["admin_bot_channel"]:
         return
 
     # Stop if their is no content in the message
