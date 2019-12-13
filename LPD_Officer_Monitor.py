@@ -447,9 +447,47 @@ async def on_message(message):
             print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
 
     # Add the time to event announcments
-    if message.channel.name == "events-and-announcements":
-        await parseAnnouncement(message)
 
+    # Not sure if this feature will be enabled again because it hasn't really been used too much,
+    # if it will be enabled again it will have to be made easier to use.
+
+    # if message.channel.name == "events-and-announcements":
+    #     await parseAnnouncement(message)
+
+    if message.channel.id == settings["training_finished_channel"]:
+        start_string = "I trained"
+
+        # This filter makes sure the message starts with the start string
+        if message.content[0:len(start_string)].lower() != start_string.lower():
+            return
+        # This filter makes sure that the person that sent the message is allowed to train people
+        if message.guild.get_role(settings["trainer_role"]) not in message.author.roles:
+            await sendErrorMessage(message, "Only trainers are allowed to train new officers.")
+            return
+        # This filter makes sure that someone is @ed in the message
+        if len(message.mentions) == 0:
+            await sendErrorMessage(message, "You forgot to mention someone in you message.")
+            return
+
+        recruit_role = message.guild.get_role(settings["recruit_role"])
+        for member in message.mentions:
+
+            # Make sure the member is in the LPD but has no other LPD roles
+            LPD_role_found = False
+            for role in member.roles:
+                if role.id == settings["lpd_role"]:
+                    LPD_role_found = True
+                if role.id in settings["role_ladder_id"]:
+                    await message.channel.send(member.mention+" does already have a rank in the LPD.")
+            if LPD_role_found == False:
+                await message.channel.send(member.mention+" is not in the LPD.")
+
+            # Add the role to the member
+            try:
+                await member.add_roles(recruit_role, reason="The member has been trained by "+message.author.display_name)
+                await message.channel.send(member.mention+" is now a recruit.")
+            except discord.HTTPException:
+                await message.channel.send("Failed adding roles to "+member.mention)
 
     # ------------------------------ Admin Bot Channel Filters ------------------------------
 
@@ -834,9 +872,8 @@ async def on_member_update(before, after):
         officer_monitor[str(before.id)]
         await removeUser(str(before.id))
 
-
+# Create a loop so that check Officer Health is run every once in a while
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
 
-# This failes if it is run localy so that then it uses the local token.txt file
-try: client.run(os.environ["DISCORD_TOKEN"])# This is for the heroku server
-except KeyError: client.run(settings["Discord_token"])
+# Start the bot
+client.run(settings["Discord_token"])
