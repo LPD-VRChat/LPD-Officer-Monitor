@@ -105,6 +105,7 @@ venv.bak/
 
 # Settings file
 settings.json
+remote_settings.json
 
 # VSCode
 .vscode/*
