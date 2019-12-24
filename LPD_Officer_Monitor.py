@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import logging
 import os
 import time
 import asyncio
@@ -503,6 +504,10 @@ async def on_message(message):
         if len(message.mentions) == 0:
             await sendErrorMessage(message, "You forgot to mention someone in you message.")
             return
+        # This makes sure the author isn't trying to train themselves
+        if message.author in message.mentions:
+            await sendErrorMessage(message, "You can't train yourself.")
+            return
 
         recruit_role = message.guild.get_role(settings["recruit_role"])
         for member in message.mentions:
@@ -514,8 +519,10 @@ async def on_message(message):
                     LPD_role_found = True
                 if role.id in settings["role_ladder_id"]:
                     await message.channel.send(member.mention+" does already have a rank in the LPD.")
+                    return
             if LPD_role_found == False:
                 await message.channel.send(member.mention+" is not in the LPD.")
+                return
 
             # Add the role to the member
             try:
@@ -523,6 +530,7 @@ async def on_message(message):
                 await message.channel.send(member.mention+" is now a recruit.")
             except discord.HTTPException:
                 await message.channel.send("Failed adding roles to "+member.mention)
+
 
     # ------------------------------ Admin Bot Channel Filters ------------------------------
 
@@ -914,6 +922,14 @@ async def on_member_update(before, after):
 
 # Create a loop so that check Officer Health is run every once in a while
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
+
+
+# Enable logging
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='LPD_Officer_Monitor.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 # Start the bot
 client.run(settings["Discord_token"])
