@@ -18,7 +18,7 @@ def getJsonFile(file_name):
         data = json.load(json_file)
     return data
 
-settings = getJsonFile("settings")
+settings = getJsonFile("remote_settings")
 commands = getJsonFile("help")
 
 max_inactive_time_seconds = settings["max_inactive_days"] * 86400# Convert days to seconds
@@ -451,6 +451,12 @@ def has_officer_role(roles):
             return True
     return False
 
+def has_lpd_role(member):
+    for role in member.roles:
+        if role.id == settings["lpd_role"]:
+            return True
+    return False
+
 client = discord.Client()
 
 @client.event
@@ -491,46 +497,37 @@ async def on_message(message):
     #     await parseAnnouncement(message)
 
     if message.channel.id == settings["training_finished_channel"]:
-        start_string = "I trained"
 
-        # This filter makes sure the message starts with the start string
-        if message.content[0:len(start_string)].lower() != start_string.lower():
-            return
-        # This filter makes sure that the person that sent the message is allowed to train people
-        if message.guild.get_role(settings["trainer_role"]) not in message.author.roles:
-            await sendErrorMessage(message, "Only trainers are allowed to train new officers.")
-            return
-        # This filter makes sure that someone is @ed in the message
-        if len(message.mentions) == 0:
-            await sendErrorMessage(message, "You forgot to mention someone in you message.")
-            return
-        # This makes sure the author isn't trying to train themselves
-        if message.author in message.mentions:
-            await sendErrorMessage(message, "You can't train yourself.")
-            return
-
-        recruit_role = message.guild.get_role(settings["recruit_role"])
-        for member in message.mentions:
-
-            # Make sure the member is in the LPD but has no other LPD roles
-            LPD_role_found = False
-            for role in member.roles:
-                if role.id == settings["lpd_role"]:
-                    LPD_role_found = True
-                if role.id in settings["role_ladder_id"]:
-                    await message.channel.send(member.mention+" does already have a rank in the LPD.")
+        # Check what rank people are requesting
+        if message.content.lower().find("recruit") != -1:
+            # Make sure only one trainer is mentioned
+            if len(message.mentions) == 0:
+                await message.channel.send(message.author.mention+" you need to mention who trained you.")
+            
+            elif len(message.mentions) == 1:
+                # Make sure the person that trained is a trainer
+                trainer = message.mentions[0]
+                for role in trainer.roles:
+                    if role.id == settings["trainer_role"]:
+                        break
+                else:
+                    # The person that trained is not a trainer
+                    await message.channel.send(message.author.mention+" "+trainer.display_name+" is not a trainer")
                     return
-            if LPD_role_found == False:
-                await message.channel.send(member.mention+" is not in the LPD.")
-                return
+                
+                # Make sure the people requesting recruit rank does not already have it
+                if has_officer_role(message.author.roles) is True:
+                    await message.channel.send(message.author.mention+" you are already a recruit or higher.")
+                    return
 
-            # Add the role to the member
-            try:
-                await member.add_roles(recruit_role, reason="The member has been trained by "+message.author.display_name)
-                await message.channel.send(member.mention+" is now a recruit.")
-            except discord.HTTPException:
-                await message.channel.send("Failed adding roles to "+member.mention)
+                # Add the reaction
+                await message.add_reaction("✅")
 
+            elif len(message.mentions) > 1:
+                await message.channel.send(message.author.mention+" please only mention one trainer.")
+        
+        else: await message.channel.send(message.author.mention+" I did not find what rank you are requesting, please check your spelling and make sure to request a rank in the correct format.")
+        
 
     # ------------------------------ Admin Bot Channel Filters ------------------------------
 
@@ -919,6 +916,50 @@ async def on_member_update(before, after):
     elif officer_before is True and officer_after is False:
         officer_monitor[str(before.id)]
         await removeUser(str(before.id))
+
+@client.event
+async def on_raw_reaction_add(payload):
+    if payload.channel_id == settings["training_finished_channel"]:
+        # Make sure the emoji is the ckeckmark emoji
+        if payload.emoji.name != "✅":
+            return
+        
+        # Fetch the neccecery info to remove
+        guild = client.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+        channel = guild.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        
+        # Make sure a bot wasn't reacting
+        if member.bot is True:
+            return
+        
+        # Make sure the LPD Offcer Monitor has reacted on this message
+        for reaction in message.reactions:
+            if reaction.emoji == "✅" and reaction.me:
+                break
+        else: return
+        
+        # Make sure only the trainer can react to the message
+        if member != message.mentions[0]:
+            await message.remove_reaction(payload.emoji, member)
+            return
+        
+        # Make sure the member is not already in the LPD, this is done again
+        # because otherwise reaction to a very old message migth give someone
+        # the recruit role even though they have something higher.
+        if has_officer_role(message.author.roles) is True:
+            return
+        
+        # Make sure the person is already in the LPD, this is also safety to
+        # reacting to old messages
+        if has_lpd_role(message.author) is False:
+            return
+
+        # Add the role to the person that got trained
+        recruit_role = guild.get_role(settings["role_ladder_id"][0])
+        await message.author.add_roles(recruit_role, reason="The member has gotten training by "+member.name)
+
 
 # Create a loop so that check Officer Health is run every once in a while
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
