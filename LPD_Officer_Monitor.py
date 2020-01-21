@@ -18,7 +18,7 @@ def getJsonFile(file_name):
         data = json.load(json_file)
     return data
 
-settings = getJsonFile("remote_settings")
+settings = getJsonFile("settings")
 commands = getJsonFile("help")
 
 max_inactive_time_seconds = settings["max_inactive_days"] * 86400# Convert days to seconds
