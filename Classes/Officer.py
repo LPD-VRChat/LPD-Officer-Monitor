@@ -67,32 +67,32 @@ class Officer(Member):
     async def get_time_days(self, days=28):
         
         # Get the datetime objects
-        from_datetime, to_datetime = self._get_datetime_days(days)
+        from_datetime, to_datetime = await self._get_datetime_days(days)
         
         # Calclulate the time and return it
-        return self._get_time_datetime(from_datetime, to_datetime)
+        return await self._get_time_datetime(from_datetime, to_datetime)
 
     async def get_time_date(self, from_date, to_date=None):
 
         # Get the datetime objects
-        from_datetime, to_datetime = self._get_datetime_date(from_date, to_date)
+        from_datetime, to_datetime = await self._get_datetime_date(from_date, to_date)
 
         # Calclulate the time and return it
-        return self._get_time_datetime(from_datetime, to_datetime)
+        return await self._get_time_datetime(from_datetime, to_datetime)
 
     async def get_full_time_days(self, days=28):
         # Get the datetime objects
-        from_datetime, to_datetime = self._get_datetime_days(days)
+        from_datetime, to_datetime = await self._get_datetime_days(days)
         
         # Calclulate the time and return it
-        return self._get_full_time_datetime(from_datetime, to_datetime)
+        return await self._get_full_time_datetime(from_datetime, to_datetime)
 
     async def get_full_time_date(self, from_date, to_date=None):
         # Get the datetime objects
-        from_datetime, to_datetime = self._get_datetime_date(from_date, to_date)
+        from_datetime, to_datetime = await self._get_datetime_date(from_date, to_date)
 
         # Calclulate the time and return it
-        return self._get_full_time_datetime(from_datetime, to_datetime)
+        return await self._get_full_time_datetime(from_datetime, to_datetime)
 
     async def log_time(self, start_time, end_time):
 
