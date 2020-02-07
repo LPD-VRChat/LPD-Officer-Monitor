@@ -1,31 +1,42 @@
+# ====================
+# Imports
+# ====================
+
+# Standard
 import asyncio
+
+# Community
 import aiomysql
+
+# Mine
 from .Officer import Officer
+
 
 class OfficerManager():
 
-    def __init__(self, db, all_officers, guild):
+    def __init__(self, db, all_officers, guild, settings):
         self.db = db
         self._all_officers = all_officers
         self.guild = guild
+        self.settings = settings
 
     @classmethod
-    async def start(cls, client, server_id, db_name, db_user, db_host, db_password):
+    async def start(cls, client, settings, db_password):
         
         # Get the guild
-        guild = client.get_guild(server_id)
+        guild = client.get_guild(settings["Server_ID"])
         if guild is None:
-            print("ERROR Guild with ID",server_id,"not found")
+            print("ERROR Guild with ID",settings["Server_ID"],"not found")
             print("Shutting down...")
             exit()
 
         # Setup database
         db = await aiomysql.connect(
-            host=db_host,
+            host=settings["DB_host"],
             port=3306,
-            user=db_user,
+            user=settings["DB_user"],
             password=db_password,
-            db=db_name,
+            db=settings["DB_name"],
             loop=asyncio.get_event_loop(),
             autocommit=True
         )
@@ -44,7 +55,7 @@ class OfficerManager():
 
         # Initialize the officer_manager instance so that it can be added with each created officer
         print("Initializing instance of Officer Manager")
-        instance = cls(db, [], guild)
+        instance = cls(db, [], guild, settings)
 
         # Add all the officers to this instance
         print("Adding all the officers to the Officer Manager")
@@ -58,8 +69,12 @@ class OfficerManager():
         return instance
 
     def get_officer(self, officer_id):
-        officer_iterator = filter(lambda x: x.id == officer_id, self._all_officers)
-        return next(officer_iterator)
+        print("Finding",officer_id)
+        for officer in self._all_officers:
+            print("Name:",officer.name)
+            if officer.id == officer_id:
+                return officer
+        return None
 
     async def create_officer(self, officer_id):
 
@@ -84,8 +99,18 @@ class OfficerManager():
         # Return the officer
         return new_officer
 
+
     def is_officer(self, member):
-        return member.id in self._all_officers
+        for role in member.roles:
+            if role.id == self.settings["lpd_role"]:
+                return True
+        return False
+
+    def is_monitored(self, member_id):
+        for officer in self._all_officers:
+            if officer.id == member_id:
+                return True
+        return False
 
     async def remove_officer(self, officer):
 

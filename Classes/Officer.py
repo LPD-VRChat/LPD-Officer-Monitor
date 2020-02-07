@@ -1,8 +1,16 @@
-from discord import Member
+# ====================
+# Imports
+# ====================
+
+# Standard
 import asyncio
-import time
 import math
+import time
 from datetime import datetime
+
+# Community
+from discord import Member
+
 
 class Officer(Member):
     def __init__(self, member_data, guild, officer_manager):
@@ -26,7 +34,7 @@ class Officer(Member):
 
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
-            print("ERROR: A user is going on duty even though he is already on duty")
+            print("WARNING A user is going on duty even though he is already on duty")
             return
         
         # Start counting the officers time
@@ -39,7 +47,8 @@ class Officer(Member):
 
         # Print an error if the user is going off duty even though he is already off duty
         if self.is_on_duty is False:
-            print("Warning: A user is going off duty even though he isn't on duty")
+            print("WARNING A user is going off duty even though he isn't on duty")
+            return
 
         # Calculate the on duty time and store it
         await self.log_time(self._on_duty_start_time, time.time())
@@ -48,14 +57,56 @@ class Officer(Member):
         self._on_duty_start_time = None
         self.is_on_duty = False
 
-    @property
-    def discord_name(self):
-        return self.name+"#"+self.discriminator
-
     async def remove(self):
 
         # Remove itself
         await self.officer_manager.remove_officer(self)
+
+
+    # ====================
+    # properties
+    # ====================
+
+    # External functions
+    
+    @property
+    def is_trainer(self):
+        role_id = self.officer_manager.settings["trainer_role"]
+        return self._has_role(role_id)
+    
+    @property
+    def is_slrt_trainer(self):
+        role_id = self.officer_manager.settings["slrt_trainer_role"]
+        return self._has_role(role_id)
+    
+    @property
+    def is_trained(self):
+        cadet_id = self._get_settings_role("cadet")["id"]
+        return not self._has_role(cadet_id)
+    
+    @property
+    def is_slrt_trained(self):
+        role_id = self.officer_manager.settings["slrt_trained_role"]
+        return not self._has_role(role_id)
+    
+    @property
+    def discord_name(self):
+        return self.name+"#"+self.discriminator
+
+    # Internal functions
+
+    def _get_settings_role(self, name_id):
+        for role in self.officer_manager.settings["role_ladder"]:
+            if role["name_id"] == name_id:
+                return role
+        raise ValueError("name_id not found in settings: "+str(name_id))
+
+    def _has_role(self, role_id):
+        for role in self.roles:
+            if role.id == role_id:
+                return True
+        return False
+
 
 
     # ====================
@@ -98,6 +149,8 @@ class Officer(Member):
 
         string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime('%Y-%m-%d %H-%M-%S')
         string_end_time = datetime.fromtimestamp(math.floor(end_time)).strftime('%Y-%m-%d %H-%M-%S')
+
+        print("DEBUG Time logged for "+self.discord_name+": "+string_start_time+" - "+string_end_time+" Seconds: "+str(math.floor(end_time-start_time)))
         
         cur = await self.officer_manager.db.cursor()
         args = (self.id, string_start_time, string_end_time)

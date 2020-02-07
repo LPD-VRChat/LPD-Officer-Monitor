@@ -1,3 +1,5 @@
+USE LPD_Officer_Monitor;
+
 INSERT INTO
 	Officers(officer_id)
 Values
@@ -29,23 +31,8 @@ SELECT SUM(end_time - start_time) AS 'Time' FROM TimeLog WHERE officer_id = 3786
 
 SELECT * FROM TimeLog WHERE officer_id = 378666988412731404 AND (start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
 
-
-# Get the full time 
-SELECT start_time, end_time, end_time - start_time AS 'duration'
-FROM TimeLog
-WHERE
-	officer_id = 378666988412731404 AND
-	(start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49')
-UNION
-SELECT null AS 'start_time', null AS 'end_time', SUM(end_time - start_time) AS 'duration'
+SELECT start_time, end_time
 FROM TimeLog
 WHERE
 	officer_id = 378666988412731404 AND
 	(start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
-
-
-# Add an officer
-INSERT INTO
-	Officers(officer_id)
-Values
-	(633288536795119646);
