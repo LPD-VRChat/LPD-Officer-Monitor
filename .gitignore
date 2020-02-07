@@ -103,10 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Settings file
-settings.json
-remote_settings.json
-keys.json
+# Settings files
+settings/*
 
 # VSCode
 .vscode/*
