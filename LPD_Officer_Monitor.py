@@ -8,22 +8,58 @@ import copy
 import datetime
 import json
 import emoji
+import traceback
 
-def getJsonFile(file_name):
-    # Add the .json extention if it was not included in the file_name
-    if file_name[-5::] != ".json": file_name += ".json"
+def get_settings_file(settings_file_name):
+    
+    # Add the stuff to the settings_file_name to make it link to the right file
+    file_name = "settings/"+settings_file_name+".json"
 
     # Get all the data out of the JSON file, parse it and return it
     with open(file_name, "r") as json_file:
         data = json.load(json_file)
     return data
 
-settings = getJsonFile("remote_settings")
-commands = getJsonFile("help")
+settings = get_settings_file("old_settings")
+commands = get_settings_file("help")
 
-max_inactive_time_seconds = settings["max_inactive_days"] * 86400# Convert days to seconds
+# Convert days to seconds
+max_inactive_time_seconds = settings["max_inactive_days"] * 86400
 
 
+#########################################
+# Setup the LPD Officer Monitor Logging #
+#########################################
+
+# create logger
+log = logging.getLogger('lpd_officer_monitor')
+log.setLevel(logging.DEBUG)
+
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# create file handler which logs even debug messages
+fh = logging.FileHandler('lpd_officer_monitor.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+log.addHandler(fh)
+
+# create console handle
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+log.addHandler(ch)
+
+# Create Discord Message handler
+# class RequestsHandler(Handler):
+#     def emit(self, record):
+#         try:
+#             log_entry = self.format(record)
+#             return requests.post('http://example.com:8080/',
+#                                 log_entry, headers={"Content-type": "application/json"}).content
+
+
+# Create the officer monitor
 officer_monitor = {}
 
 async def getChannelByName(name, guild, text_channel):
@@ -47,10 +83,10 @@ async def sendErrorMessage(message, text):
     await message.channel.send(message.author.mention+" "+str(text))
 
 async def readDBFile(fileName):# Reading all info about users from file
-    print("--------------------------------------------------")
-    print("Reading from file\n")
+    log.debug("--------------------------------------------------")
+    log.debug("Reading from file\n")
     database_officer_monitor = {}
-    print("officer_monitor created for data from file:",database_officer_monitor)
+    log.debug("officer_monitor created for data from file: "+str(database_officer_monitor))
 
     # This makes it so that if their is no file it creates the file and then reads from the empty file
     try: openFile = open(fileName, "r")
@@ -73,33 +109,33 @@ async def readDBFile(fileName):# Reading all info about users from file
             database_officer_monitor[user_id] = {}
             database_officer_monitor[user_id]["Last active time"] = last_active_time
             database_officer_monitor[user_id]["Time"] = on_duty_time
-    except Exception as error: print("Something failed with reading from file:",error)
+    except Exception as error: log.debug("Something failed with reading from file: "+str(error))
     finally:
         openFile.close()
-        print("officer_monitor read successfully from file")
+        log.debug("officer_monitor read successfully from file")
     
-    print("--------------------------------------------------")
+    log.debug("--------------------------------------------------")
     
     return database_officer_monitor
 
 async def overwriteDBFile(officer_monitor_file):
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++")
-    print("Writing to file\n")
+    log.debug("++++++++++++++++++++++++++++++++++++++++++++++++++")
+    log.debug("Writing to file\n")
 
     openFile = open(settings["storage_file_name"], "w")
     try:
         for ID in list(officer_monitor_file):
             openFile.write(str(ID)+","+str(officer_monitor_file[ID]["Last active time"])+","+str(officer_monitor_file[ID]["Time"])+"\n")
-    except Exception as error: print("Something failed with writing to file:",error)
+    except Exception as error: log.debug("Something failed with writing to file: "+str(error))
     finally: openFile.close()
     
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++")
+    log.debug("++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 async def removeUser(user_id):
     global officer_monitor
 
-    print("88888888888888888888888888888888888888888888888888")
-    print("Removing",client.get_user(int(user_id)),"from the officer_monitor\n")
+    log.debug("88888888888888888888888888888888888888888888888888")
+    log.debug("Removing "+str(client.get_user(int(user_id)))+" from the officer_monitor\n")
 
     # Get the contents of the file
     officer_monitor_file = await readDBFile(settings["storage_file_name"])
@@ -107,34 +143,35 @@ async def removeUser(user_id):
     # Remove the user from officer_monitor_file
     try:
         del officer_monitor_file[user_id]
-        print("User removed from the officer_monitor file")
+        log.debug("User removed from the officer_monitor file")
     except KeyError:
-        print("Could not delete the user with the user id from officer_monitor file",user_id,"because the user does not exsist in the officer_monitor file (the officer must have been in the LPD for less than an hour")
+        log.debug("Could not delete the user with the user id from officer_monitor file "+str(user_id)+" because the user does not exsist in the officer_monitor file (the officer must have been in the LPD for less than an hour")
 
     # Remove the user from the global officer_monitor
     try:
         del officer_monitor[user_id]
-        print("User removed from the officer_monitor")
+        log.debug("User removed from the officer_monitor")
     except KeyError:
-        print("Could not delete the user with the user id from officer_monitor",user_id,"because the user does not exsist in the officer_monitor")
-        print("officer_monitor:",officer_monitor)
+        log.debug("Could not delete the user with the user id from officer_monitor "+str(user_id)+" because the user does not exsist in the officer_monitor")
+        log.debug("officer_monitor: "+str(officer_monitor))
 
     # Write the changes to the file
     await overwriteDBFile(officer_monitor_file)
 
-    print("88888888888888888888888888888888888888888888888888")
+    log.debug("88888888888888888888888888888888888888888888888888")
 
 async def logAllInfoToFile(guild):
     global officer_monitor
-    print("||||||||||||||||||||||||||||||||||||||||||||||||||")
-    print("Starting to log to file\n")
+    log.debug("||||||||||||||||||||||||||||||||||||||||||||||||||")
+    log.debug("Starting to log to file\n")
     
     database_officer_monitor = await readDBFile(settings["storage_file_name"])
     
 
-    # Add missing users to officer_monitor
+    # Add missing users to officer_monitor, this function runs for everyone when the bot first starts up
     for member in get_all_officers(guild):
         if str(member.id) not in officer_monitor:
+            
             # Give the missing officer the time of 0
             officer_monitor[str(member.id)] = {"Time": 0}
 
@@ -142,38 +179,25 @@ async def logAllInfoToFile(guild):
             try: officer_monitor[str(member.id)]["Last active time"] = database_officer_monitor[str(member.id)]["Last active time"]
             except KeyError:
                 officer_monitor[str(member.id)]["Last active time"] = time.time()
-                print(member.name,"was reset in the dict and got last active time from the current time")
-
-    # Remove extra users from the officer_monitor
-    for member_id in list(officer_monitor):
-        member = guild.get_member(int(member_id))
-
-        if member is None:
-            del officer_monitor[member_id]
-            print(member_id,"was removed from the LPD Officer Monitor")
-            continue
-
-        if has_officer_role(member.roles) is False:
-            del officer_monitor[member_id]
-            print(member.name,"was removed from the LPD Officer Monitor")
-            continue
+                log.debug(str(member.name)+"was reset in the dict and got last active time from the current time")
+                await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member.id)+") has been added to the LPD Officer Monitor without being caught by on_member_update event")
 
 
     # Making a copy of officer_monitor for logging to file
     officer_monitor_static = copy.deepcopy(officer_monitor)
-    print("global officer_monitor cloned into officer_monitor_static")
+    log.debug("global officer_monitor cloned into officer_monitor_static")
 
     # Reset Officer Monitor on duty time
     for ID in list(officer_monitor):
         officer_monitor[ID]["Time"] = 0
-    print("global officer_monitor reset")
+    log.debug("global officer_monitor reset")
 
     # Writing to file
     try:
-        print("Opening file:",str(settings["storage_file_name"])+"...")
+        log.debug("Opening file: "+str(settings["storage_file_name"])+"...")
         # Writing info from last file and officer_monitor over previus data
         openFile = open(settings["storage_file_name"],"w")
-        print("File opened")
+        log.debug("File opened")
 
         for ID in list(officer_monitor_static):
             # Add the users stats togather and write it to the file
@@ -187,11 +211,31 @@ async def logAllInfoToFile(guild):
                 last_active_time = database_officer_monitor[ID]["Last active time"]
             
             openFile.write(ID+","+str(last_active_time)+","+str(all_time)+"\n")
-        print("Everything written to file successfully")
-    except Exception as error: print("Something failed with writing to file:",error)
+        log.debug("Everything written to file successfully")
+    except Exception as error: log.error("Something failed with writing to file: "+str(error)+"\n"+traceback.format_exc())
     finally: openFile.close()
 
-    print("||||||||||||||||||||||||||||||||||||||||||||||||||")
+    # Remove extra users from the officer_monitor
+    for member_id in officer_monitor:
+        member = guild.get_member(int(member_id))
+
+        if member is None:
+            del officer_monitor[member_id]
+            log.warning(str(member_id)+" was removed from the LPD Officer Monitor, because he was not found in the server.")
+
+            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he was not found in the server.")
+
+            continue
+
+        if has_officer_role(member.roles) is False:
+            del officer_monitor[member_id]
+            log.warning(str(member.name)+"was removed from the LPD Officer Monitor")
+
+            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he is in the server but does no longer have an LPD Officer role.")
+
+            continue 
+
+    log.debug("||||||||||||||||||||||||||||||||||||||||||||||||||")
 
 async def getTopOrBottom(message, arguments, top):
     async with message.channel.typing():
@@ -218,7 +262,7 @@ async def getTopOrBottom(message, arguments, top):
                 combined_officer_monitor[userID]["Time"] += database_officer_monitor[userID]["Time"]
             except KeyError:
                 pass
-        print("combined_officer_monitor:\n",combined_officer_monitor)
+        log.debug("combined_officer_monitor:\n"+str(combined_officer_monitor))
 
         user_on_duty_time = {n: combined_officer_monitor[n]["Time"] for n in combined_officer_monitor}
         sortedUsersByTime = sorted(user_on_duty_time, key=user_on_duty_time.get)
@@ -255,7 +299,7 @@ async def checkOfficerHealth(Guild_ID):
     if client.get_guild(Guild_ID) is not None:
         guild = client.get_guild(Guild_ID)
     else:
-        print("Wrong Server_ID")
+        log.debug("Wrong Server_ID")
         await asyncio.sleep(settings["sleep_time_beetween_writes"])
         return
 
@@ -267,9 +311,10 @@ async def checkOfficerHealth(Guild_ID):
 
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
         except Exception as error:
-            print("Something failed with logging to file")
-            print(error)
-            print("||||||||||||||||||||||||||||||||||||||||||||||||||")
+            log.error("Something failed with logging to file")
+            log.error(error)
+            log.error(traceback.format_exc())
+            log.debug("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
 
 async def findInactiveOfficers(guild):
@@ -301,8 +346,8 @@ async def goOffDuty(member, guild):
     current_time = time.time()
     try:
         officer_monitor[str(member.id)]["Time"] += int(current_time - officer_monitor[str(member.id)]["Start time"])
-        print("Time in last channel:",str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by",member.name)
-    except KeyError: print(member.name,"left an on duty voice channel and was not being monitored")
+        log.debug("Time in last channel: "+str(int(current_time - officer_monitor[str(member.id)]["Start time"]))+"s by "+str(member.name))
+    except KeyError: log.debug(str(member.name)+" left an on duty voice channel and was not being monitored")
     officer_monitor[str(member.id)]["Last active time"] = current_time
 
     on_duty_role = guild.get_role(settings["on_duty_role"])
@@ -353,7 +398,7 @@ async def parseAnnouncement(message):
     else: return False
     
     event_date[2] = event_date[2][0:4]
-    print(event_date)
+    log.debug(event_date)
     
     # Parse the message and search for the time
     event_time = False
@@ -377,10 +422,10 @@ async def parseAnnouncement(message):
     if event_time_ending_pm is True:
         event_time += 12
 
-    print(event_time)
-    print(UTC_zone)
+    log.debug(event_time)
+    log.debug(UTC_zone)
 
-    print("Embeding")
+    log.debug("Embeding")
 
     dateAndTime = datetime.datetime(
         int(event_date[2]),
@@ -414,8 +459,8 @@ def getMemberStringFromMemberList(member_list):
     returnString = ""
 
     for member in member_list:
-        print(member.name)
-        print(member.name.find(":"))
+        log.debug(member.name)
+        log.debug(member.name.find(":"))
         for letter in member.name:
             if letter in emoji.UNICODE_EMOJI:
                 returnString = returnString + "`<@" + str(member.id) + ">`\n"
@@ -484,9 +529,9 @@ async def on_message(message):
     if message.channel.name in settings["counted_channels"]:
         try:
             officer_monitor[str(message.author.id)]["Last active time"] = time.time()
-            print("Message in",message.channel.name,"written by",message.author.name)
+            log.debug("Message in "+str(message.channel.name)+" written by "+str(message.author.name))
         except KeyError:
-            print("The user",message.author.name,"is not in the officer_monitor and was sending a message to the",message.channel.name,"channel")
+            log.debug("The user "+str(message.author.name)+" is not in the officer_monitor and was sending a message to the "+str(message.channel.name)+" channel")
 
     # Add the time to event announcments
 
@@ -527,7 +572,7 @@ async def on_message(message):
                 await message.channel.send(message.author.mention+" please only mention one trainer.")
         
         else: await message.channel.send(message.author.mention+" I did not find what rank you are requesting, please check your spelling and make sure to request a rank in the correct format.")
-        
+    
 
     # ------------------------------ Admin Bot Channel Filters ------------------------------
 
@@ -569,7 +614,7 @@ async def on_message(message):
                 channel_name = "".join([" "+x for x in channel_name])
                 channel_name = channel_name[1::]
 
-                print("Channel name: ",channel_name)
+                log.debug("Channel name: "+str(channel_name))
             except IndexError:
                 await sendErrorMessage(message, "Make sure to include a name for the channel you want to get the time for.")
                 return
@@ -593,10 +638,10 @@ async def on_message(message):
             
             for voice_channel in on_duty_category.voice_channels:
                 for member in voice_channel.members:
-                    print("Adding someone")
+                    log.debug("Adding someone")
                     everyone_on_duty.append(member)
 
-            print("Checking if everyone_on_duty is empty: ",everyone_on_duty)
+            log.debug("Checking if everyone_on_duty is empty: "+str(everyone_on_duty))
             if not everyone_on_duty:
                 await sendErrorMessage(message, "Their is no one on duty.")
                 return
@@ -826,7 +871,7 @@ async def on_message(message):
             return
 
         for officer in await findInactiveOfficers(message.guild):
-            print("Adding officer to the inactive role:",officer)
+            log.debug("Adding officer to the inactive role: "+str(officer))
             await officer.add_roles(inactive_role)
 
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
@@ -856,6 +901,21 @@ async def on_message(message):
             inactive_officers_needing_removal += old_member.mention
             inactive_officers_needing_removal += "\n"
         await message.channel.send("Here is everyone who has to be removed for inactivity:\n"+inactive_officers_needing_removal)
+
+    elif user_command == "log":
+
+        try:
+            arguments = message.content.split(" ")
+            arg2 = arguments[1]
+        except IndexError:
+            await sendErrorMessage(message, "Their is a missing argument do ?help for help")
+            return
+
+        if arg2 == "dump":
+            
+            db_file = discord.File("LPD_Officer_Monitor.log", "LPD_Officer_Monitor.log")
+
+            await message.channel.send("Here is the log file:", file=db_file)
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -897,6 +957,7 @@ async def on_voice_state_update(member, before, after):
 
 @client.event
 async def on_member_update(before, after):
+    log.debug("on_member_update")
     global officer_monitor
 
     officer_before = has_officer_role(before.roles)
@@ -910,11 +971,13 @@ async def on_member_update(before, after):
     # Member has joined the LPD
     elif officer_before is False and officer_after is True:
         officer_monitor[str(before.id)] = {"Time": 0,"Last active time": time.time()}# User added to the officer_monitor
-        print(before.name,"added to the officer_monitor")
+        log.debug(before.name+" added to the officer_monitor")
+        await client.get_channel(settings["bot_debug_channel"]).send("DEBUG: "+before.mention+" ("+str(before.id)+") has been added to the LPD Officer Monitor the correct way.")
 
     # Member has left the LPD
     elif officer_before is True and officer_after is False:
         officer_monitor[str(before.id)]
+        log.debug(str(before.name)+" removed from the officer_monitor")
         await removeUser(str(before.id))
 
 @client.event
@@ -960,17 +1023,57 @@ async def on_raw_reaction_add(payload):
         recruit_role = guild.get_role(settings["role_ladder_id"][0])
         await message.author.add_roles(recruit_role, reason="The member has gotten training by "+member.name)
 
+@client.event
+async def on_error(event, *args, **kwargs):
+    log.debug("on_error")
+    
+    error_text = "***ERROR***\n\n"
+    error_text += "Error encountered in event: " + str(event) + "\n" + traceback.format_exc()
+
+    try: log.debug(error_text)
+    except Exception as e:
+        channel = client.get_channel(settings["bot_debug_channel"])
+        await channel.send("***Encountered an error in the on_error function!!!***\n***SEVERE ISSUE!!!***\n"+e+"\n"+traceback.format_exc())
+
+    channel = client.get_channel(settings["bot_debug_channel"])
+    try:
+        await channel.send(error_text)
+    except discord.InvalidArgument:
+        await channel.send("***I ENCOUNTERED AN ERROR AND THE ERROR MESSAGE DOES NOT FIT IN DISCORD.***")
+
 
 # Create a loop so that check Officer Health is run every once in a while
 client.loop.create_task(checkOfficerHealth(settings["Server_ID"]))
 
 
-# Enable logging
-logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='LPD_Officer_Monitor.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+# Enable logging for the discord library
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.INFO)
+discord_handler = logging.FileHandler(
+    filename='Discord.log',
+    encoding='utf-8',
+    mode='w'
+)
+discord_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+discord_logger.addHandler(discord_handler)
 
-# Start the bot
-client.run(settings["Discord_token"])
+#################
+# Start the bot #
+#################
+try:
+    client.run(settings["Discord_token"])
+except KeyboardInterrupt:
+
+    # Close LPD Handlers
+    for handler in log.handlers:
+        handler.close()
+        log.removeFilter(handler)
+    
+    # Close discord Handlers
+    for handler in discord_logger.handlers:
+        handler.close()
+        discord_logger.removeFilter(handler)
+    
+    log.debug("Everything closed. Exiting...")
+    exit()
+
