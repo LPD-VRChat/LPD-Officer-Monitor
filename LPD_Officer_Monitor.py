@@ -913,7 +913,7 @@ async def on_message(message):
 
         if arg2 == "dump":
             
-            db_file = discord.File("LPD_Officer_Monitor.log", "LPD_Officer_Monitor.log")
+            db_file = discord.File("lpd_officer_monitor.log", "lpd_officer_monitor.log")
 
             await message.channel.send("Here is the log file:", file=db_file)
 
