@@ -21,7 +21,7 @@ def get_settings_file(settings_file_name):
     return data
 
 settings = get_settings_file("old_settings")
-commands = get_settings_file("help")
+commands = get_settings_file("../help")
 
 # Convert days to seconds
 max_inactive_time_seconds = settings["max_inactive_days"] * 86400
