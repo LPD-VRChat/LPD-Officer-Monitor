@@ -195,7 +195,7 @@ async def logAllInfoToFile(guild):
     # Writing to file
     try:
         log.info("Opening file: "+str(settings["storage_file_name"])+"...")
-        # Writing info from last file and officer_monitor over previus data
+        # Writing info from last file and officer_monitor over previous data
         openFile = open(settings["storage_file_name"],"w")
         log.info("File opened")
 
@@ -223,7 +223,7 @@ async def logAllInfoToFile(guild):
             del officer_monitor[member_id]
             log.warning(str(member_id)+" was removed from the LPD Officer Monitor, because he was not found in the server.")
 
-            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he was not found in the server.")
+            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he was not found in the server.")
 
             continue
 
