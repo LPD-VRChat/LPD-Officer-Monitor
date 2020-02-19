@@ -216,7 +216,7 @@ async def logAllInfoToFile(guild):
     finally: openFile.close()
 
     # Remove extra users from the officer_monitor
-    for member_id in officer_monitor:
+    for member_id in list(officer_monitor):
         member = guild.get_member(int(member_id))
 
         if member is None:
