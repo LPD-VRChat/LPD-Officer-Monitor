@@ -9,6 +9,7 @@ import datetime
 import json
 import emoji
 import traceback
+import re
 
 def get_settings_file(settings_file_name):
     
@@ -853,9 +854,12 @@ async def on_message(message):
         )
 
         # Add feilds with each role to the embed
+        pattern = re.compile(r'LPD \w+')
         for role in number_of_officers_with_each_role:
             
-            if role.name[0:4] == "LPD ": name = role.name[4::] + "s"
+            match = pattern.findall(role.name)
+
+            if match: name = match[0][4::] + "s"
             else: name = role.name
 
             embed.add_field(name=name+":", value=number_of_officers_with_each_role[role])
