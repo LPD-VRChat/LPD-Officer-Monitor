@@ -36,6 +36,8 @@ class Time(commands.Cog):
     @commands.command()
     async def user(self, ctx, *args):
         """
+        This command gets the on duty time for an officer
+
         NAME
             ?user - get on duty time and last active information
                     about a specific officer.
@@ -44,26 +46,31 @@ class Time(commands.Cog):
             ?user [options] officer
         
         OPTIONS
-            --days=NUMBER
+            -d NUMBER,
+            --days NUMBER
                 specify the number of days to look back for activity,
                 this defaults to 28.
 
-            --from-date=DATE
+            -f DATE,
+            --from-date DATE
                 specify the date to look back at, if no --to-date
                 is specified it will show all activity from the
                 --from-date to right now.
 
-            --to-date=DATE
+            -t DATE,
+            --to-date DATE
                 specify the date to stop looking at, --from-date
                 has to be specified with this option.
         """
 
+        # Setup parser
         parser = ArgumentParser(description="Argparse user command")
         parser.add_argument('officer')
         parser.add_argument("-d", "--days", type=int)
         parser.add_argument("-f", "--from-date")
         parser.add_argument("-t", "--to-date")
 
+        # Parse command and check errors
         try: parsed = parser.parse_args(args)
         except argparse.ArgumentError:
             await ctx.send(ctx.author.mention+" This is an error in your command syntax.")
@@ -72,15 +79,69 @@ class Time(commands.Cog):
             await ctx.send(ctx.author.mention+" One of your arguments is the wrong type. For example putting in text where a number is expected.")
             return
 
-        p = re.compile(r"<@[0-9]{18,20}>")
+        # Find the officer ID
+        p = re.compile(r"<@\![0-9]{18,20}>")
         match = p.match(parsed.officer)
-        if match:
-            officer_id = match.group()[2:-1]
-            print(officer_id)
-        else:
-            print("No officer found")
-            
-        officer = self.officer_manager.get_officer(officer_id)
         
+        # Make sure someone is mentioned
+        if not match:
+            await ctx.send(ctx.author.mention+" Make sure to mention an officer.")
+            return
+        
+        # Move the officer_id into a variable
+        officer_id = int(match.group()[3:-1])
+        print("officer_id:",officer_id)
+        
+        # Make sure the person mentioned is an LPD officer
+        officer = self.officer_manager.get_officer(officer_id)
+        if officer is None:
+            await ctx.send(ctx.author.mention+" The person you mentioned is not being monitored, are you sure this person is an officer?")
+            return
+        
+        
+        # ====================
+        # Parse extra options
+        # ====================
 
-        await ctx.send(str(parsed), officer)
+        try:
+            if parsed.days:
+                print("Length")
+                time_seconds = await officer.get_time_days(parsed.days)
+
+                out_string = "On duty time for "+officer.mention+" - last "+str(parsed.days)+ " days"
+                out_string += self.seconds_to_string(time_seconds)
+
+                await ctx.send(out_string)
+
+            elif parsed.from_date or parsed.to_date:
+                print("Date")
+
+                # Make sure their is a from_date if their is a to date
+                if parsed.to_date and not parsed.from_date:
+                    await ctx.send(ctx.author.mention+" If you want to use to-date you have to set a from-date.")
+                    return
+
+                print(parsed.from_date, parsed.to_date)
+
+                time_seconds =  await officer.get_time_date(parsed.from_date, parsed.to_date)
+
+                out_string = "On duty time for "+officer.mention+" - from: "+str(parsed.from_date)+"  to: "+str(parsed.to_date)
+                out_string.replace("None", "Right now")
+                print(time_seconds)
+                out_string += self.seconds_to_string(time_seconds)
+
+                await ctx.send(out_string)
+
+            else:
+                print("Default length")
+                time_seconds =  await officer.get_time_days(28)
+
+                out_string = "On duty time for "+officer.mention+" - last "+str(28)+ " days"
+                out_string += self.seconds_to_string(time_seconds)
+
+                await ctx.send(out_string)
+            
+        except ValueError as error:
+            await ctx.send(error)
+    
+    

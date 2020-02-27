@@ -11,6 +11,9 @@ from datetime import datetime
 # Community
 from discord import Member
 
+# Mine
+import Classes.extra_functions as ef
+
 
 class Officer(Member):
     def __init__(self, member_data, guild, officer_manager):
@@ -170,12 +173,31 @@ class Officer(Member):
     
     async def _get_datetime_date(self, from_date, to_date):
 
+        from_date = from_date.split("/")
+        try: to_date = to_date.split("/")
+        except AttributeError: pass
+
+        # Make sure the values are all their and are numbers
+        for date in [from_date, to_date]:
+            
+            # This makes sure that the checks are 
+            if date is None: continue
+
+            # Make sure the length is correct
+            if len(date) != 3:
+                raise ValueError("Their is an error in the date you put in, make sure to split the date with a slash. Example: 30/2/2020")
+            
+            # Make sure all the things between the slashes are numbers
+            for part in date:
+                if not ef.is_number(part):
+                    raise ValueError("The date you submitted does not only contain numbers, make sure that the date you submit only contains numbers and slashes. Example: 30/2/2020")
+
         # Translate the from_date into datetime a object
-        from_datetime = datetime(from_date[2], from_date[1], from_date[0], 0, 0)
+        from_datetime = datetime(int(from_date[2]), int(from_date[1]), int(from_date[0]), 0, 0)
         
         # If the to_date is none then it will set that as the current time
         if to_date is None: to_datetime = datetime.fromtimestamp(math.floor(time.time()))
-        else: to_datetime = datetime(to_date[2], to_date[1], to_date[0], 0, 0)
+        else: to_datetime = datetime(int(to_date[2]), int(to_date[1]), int(to_date[0]), 0, 0)
 
         # Return the datetime objects
         return (from_datetime, to_datetime)

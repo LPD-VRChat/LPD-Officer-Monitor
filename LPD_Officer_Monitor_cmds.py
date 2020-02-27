@@ -26,9 +26,13 @@ from Classes.commands import *
 # Functions
 # ====================
 
-def getJsonFile(file_name):
-    # Add the .json extention if it was not included in the file_name
-    if file_name[-5::] != ".json": file_name += ".json"
+def get_settings_file(settings_file_name, in_settings_folder = True):
+    
+    # Add the stuff to the settings_file_name to make it link to the right file
+    file_name = settings_file_name+".json"
+
+    # Add the settings folder to the filename if nececery
+    if in_settings_folder: file_name = "settings/" + file_name
 
     # Get all the data out of the JSON file, parse it and return it
     with open(file_name, "r") as json_file:
@@ -48,15 +52,40 @@ async def handleError(*text, end=" "):
     except discord.InvalidArgument:
         await channel.send("***I ENCOUNTERED AN ERROR AND THE ERROR MESSAGE DOES NOT FIT IN DISCORD.***")
 
+async def setup_officer_manager():
+    global officer_manager
+
+    # This loop waits for the bot to start up before running the code inside it
+    while True:
+
+        # Make sure this function does not run until the bot is ready
+        if bot_ready is False:
+            await asyncio.sleep(.5)
+            continue
+
+        # Start the officer manager
+        officer_manager = await OfficerManager.start(
+            bot,
+            settings,
+            keys["SQL_Password"]
+        )
+
+        # Add cogs that need the officer manager
+        bot.add_cog(Time(bot, officer_manager))
+        
+        # Make sure to exit the loop
+        break
+
 
 # ====================
 # Global Variables
 # ====================
 
+bot_ready = False
 officer_manager = None
-settings = getJsonFile("settings")
-keys = getJsonFile("Keys")
-help_dict = getJsonFile("help")
+settings = get_settings_file("settings")
+keys = get_settings_file("Keys")
+help_dict = get_settings_file("help", in_settings_folder = False)
 
 
 # ====================
@@ -86,14 +115,10 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    global officer_manager
     print("on_ready")
-    
-    officer_manager = await OfficerManager.start(
-        bot,
-        settings,
-        keys["SQL_Password"]
-    )
+
+    global bot_ready
+    bot_ready = True
 
 @bot.event
 async def on_message(message):
@@ -113,16 +138,23 @@ async def on_command_error(ctx, exception):
     
     await ctx.send(exception_string)
 
+    if exception_string.find("encountered a problem") != -1:
+        err_channel = bot.get_channel(settings["error_log_channel"])
+        error_string = "***ERROR***\n\n"+exception_string+"\n"+str(traceback.format_exception(None, exception, None))
+        print(error_string)
+        await err_channel.send(error_string)
+
 
 # ====================
 # Add cogs
 # ====================
 
-bot.add_cog(Time(bot, officer_manager))
+
 
 
 # ====================
 # Start
 # ====================
 
+bot.loop.create_task(setup_officer_manager())
 bot.run(keys["Discord_token"])
