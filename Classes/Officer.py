@@ -16,20 +16,20 @@ import Classes.extra_functions as ef
 
 
 class Officer(Member):
-    def __init__(self, member_data, guild, officer_manager):
-        super().__init__(data=member_data, state=guild._state, guild=guild)
+    def __init__(self, member_data, officer_manager):
+        super().__init__(data=member_data, state=officer_manager.guild._state, guild=officer_manager.guild)
         
         self._on_duty_start_time = None
         self.is_on_duty = False
         self.officer_manager = officer_manager
 
     @classmethod
-    async def create(cls, member_id, guild, officer_manager):
+    async def create(cls, member_id, officer_manager):
 
         # Get the member data to be able to initialize the Member class from discord.py later in __init__
-        member_data = await guild._state.http.get_member(guild.id, member_id)
+        member_data = await officer_manager.guild._state.http.get_member(officer_manager.guild.id, member_id)
 
-        return cls(member_data, guild, officer_manager)
+        return cls(member_data, officer_manager)
     
     def go_on_duty(self):
 
@@ -74,12 +74,12 @@ class Officer(Member):
     
     @property
     def is_trainer(self):
-        role_id = self.officer_manager.settings["trainer_role"]
+        role_id = self.officer_manager.bot.settings["trainer_role"]
         return self._has_role(role_id)
     
     @property
     def is_slrt_trainer(self):
-        role_id = self.officer_manager.settings["slrt_trainer_role"]
+        role_id = self.officer_manager.bot.settings["slrt_trainer_role"]
         return self._has_role(role_id)
     
     @property
@@ -89,7 +89,7 @@ class Officer(Member):
     
     @property
     def is_slrt_trained(self):
-        role_id = self.officer_manager.settings["slrt_trained_role"]
+        role_id = self.officer_manager.bot.settings["slrt_trained_role"]
         return not self._has_role(role_id)
     
     @property
@@ -99,7 +99,7 @@ class Officer(Member):
     # Internal functions
 
     def _get_settings_role(self, name_id):
-        for role in self.officer_manager.settings["role_ladder"]:
+        for role in self.officer_manager.bot.settings["role_ladder"]:
             if role["name_id"] == name_id:
                 return role
         raise ValueError("name_id not found in settings: "+str(name_id))
@@ -150,8 +150,8 @@ class Officer(Member):
 
     async def log_time(self, start_time, end_time):
 
-        string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime('%Y-%m-%d %H-%M-%S')
-        string_end_time = datetime.fromtimestamp(math.floor(end_time)).strftime('%Y-%m-%d %H-%M-%S')
+        string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime(self.officer_manager.bot.settings["db_time_format"])
+        string_end_time = datetime.fromtimestamp(math.floor(end_time)).strftime(self.officer_manager.bot.settings["db_time_format"])
 
         print("DEBUG Time logged for "+self.discord_name+": "+string_start_time+" - "+string_end_time+" Seconds: "+str(math.floor(end_time-start_time)))
         
@@ -204,8 +204,8 @@ class Officer(Member):
 
     async def _get_time_datetime(self, from_datetime_obejct, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_obejct.strftime('%Y-%m-%d %H-%M-%S')
-        to_db_time = to_datetime_object.strftime('%Y-%m-%d %H-%M-%S')
+        from_db_time = from_datetime_obejct.strftime(self.officer_manager.bot.settings["db_time_format"])
+        to_db_time = to_datetime_object.strftime(self.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
         cur = await self.officer_manager.db.cursor()
@@ -225,23 +225,31 @@ class Officer(Member):
 
     async def _get_full_time_datetime(self, from_datetime_obejct, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_obejct.strftime('%Y-%m-%d %H-%M-%S')
-        to_db_time = to_datetime_object.strftime('%Y-%m-%d %H-%M-%S')
+        from_db_time = from_datetime_obejct.strftime(self.officer_manager.bot.settings["db_time_format"])
+        to_db_time = to_datetime_object.strftime(self.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
         cur = await self.officer_manager.db.cursor()
-        query = """ SELECT start_time, end_time, end_time - start_time AS 'duration'
-                    FROM TimeLog
-                    WHERE
-                        officer_id = %s AND
-                        (start_time > %s AND start_time < %s)
-                    UNION
-                    SELECT null AS 'start_time', null AS 'end_time', SUM(end_time - start_time) AS 'duration'
-                    FROM TimeLog
-                    WHERE
-                        officer_id = %s AND
-                        (start_time > %s AND start_time < %s)"""
-        args = (str(self.id), from_db_time, to_db_time, str(self.id), from_db_time, to_db_time)
+        query = """
+        SELECT start_time, end_time, end_time - start_time AS 'duration'
+        FROM TimeLog
+        WHERE
+            officer_id = %s AND
+            (start_time > %s AND start_time < %s)"""
+        # This is currently not in use
+        """
+        UNION
+        SELECT null AS 'start_time', null AS 'end_time', SUM(end_time - start_time) AS 'duration'
+        FROM TimeLog
+        WHERE
+            officer_id = %s AND
+            (start_time > "%s" AND start_time < "%s")"""
+        
+        print("From datetime:",from_datetime_obejct)
+        print("From:",from_db_time)
+        print("To:",to_db_time)
+
+        args = (str(self.id), from_db_time, to_db_time)
         await cur.execute(query, args)
         result = await cur.fetchall()
         await cur.close()
@@ -267,7 +275,7 @@ class Officer(Member):
     async def log_message_activity(self, msg, send_time=math.floor(time.time())):
 
         # Make a string from the send_time the database can understand
-        string_send_time = datetime.fromtimestamp(math.floor(send_time)).strftime('%Y-%m-%d %H-%M-%S')
+        string_send_time = datetime.fromtimestamp(math.floor(send_time)).strftime(self.officer_manager.bot.settings["db_time_format"])
         
         # Insert hte data into the database
         cur = await self.officer_manager.db.cursor()

@@ -36,3 +36,9 @@ FROM TimeLog
 WHERE
 	officer_id = 378666988412731404 AND
 	(start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
+    
+SELECT start_time, end_time, end_time - start_time AS 'duration'
+        FROM TimeLog
+        WHERE
+            officer_id = 378666988412731404 AND
+            (start_time > "2020-01-11 14:32:29" AND start_time < "2020-03-02 14:32:29");

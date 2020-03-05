@@ -1,14 +1,20 @@
 from discord.ext import commands
+import texttable
 
-from .custom_arg_parse import ArgumentParser
+from copy import deepcopy
 import argparse
 import re
+from io import StringIO
+import sys
+
+from Classes.custom_arg_parse import ArgumentParser
+import Classes.errors as errors
 
 class Time(commands.Cog):
     """This stores all the time commands."""
-    def __init__(self, bot, officer_manager):
+    def __init__(self, bot):
         self.bot = bot
-        self.officer_manager = officer_manager
+        self.officer_manager = bot.officer_manager
 
     @staticmethod
     def seconds_to_string(onDutySeconds):
@@ -61,6 +67,11 @@ class Time(commands.Cog):
             --to-date DATE
                 specify the date to stop looking at, --from-date
                 has to be specified with this option.
+            
+            -l,
+            --list
+                get a list of all patrols during the specified
+                time period.
         """
 
         # Setup parser
@@ -69,14 +80,18 @@ class Time(commands.Cog):
         parser.add_argument("-d", "--days", type=int)
         parser.add_argument("-f", "--from-date")
         parser.add_argument("-t", "--to-date")
+        parser.add_argument("-l", "--list", action="store_true")
 
         # Parse command and check errors
         try: parsed = parser.parse_args(args)
-        except argparse.ArgumentError:
-            await ctx.send(ctx.author.mention+" This is an error in your command syntax.")
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention+" "+str(error))
             return
-        except argparse.ArgumentTypeError:
-            await ctx.send(ctx.author.mention+" One of your arguments is the wrong type. For example putting in text where a number is expected.")
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention+" "+str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention+" "+str(error))
             return
 
         # Find the officer ID
@@ -102,46 +117,117 @@ class Time(commands.Cog):
         # ====================
         # Parse extra options
         # ====================
+        
+        # Get the time and put it into an out string and also fill the days, from_date and to_date to use when
+        # everything is printed out
+        days = None
+        from_date = None
+        to_date = None
 
         try:
             if parsed.days:
-                print("Length")
-                time_seconds = await officer.get_time_days(parsed.days)
 
-                out_string = "On duty time for "+officer.mention+" - last "+str(parsed.days)+ " days"
-                out_string += self.seconds_to_string(time_seconds)
+                # Set the variable to store the days
+                days = parsed.days
 
-                await ctx.send(out_string)
+                # Set the out_string to store the first part of the message to the user
+                out_string = "On duty time for "+officer.mention+" - last "+str(days)+ " days"
 
             elif parsed.from_date or parsed.to_date:
-                print("Date")
 
                 # Make sure their is a from_date if their is a to date
                 if parsed.to_date and not parsed.from_date:
                     await ctx.send(ctx.author.mention+" If you want to use to-date you have to set a from-date.")
                     return
+                
+                # Set the variables to store the from_date and to_date
+                from_date = parsed.from_date
+                to_date = parsed.to_date
 
-                print(parsed.from_date, parsed.to_date)
-
-                time_seconds =  await officer.get_time_date(parsed.from_date, parsed.to_date)
-
+                # Set the out_string to store the first part of the message to the user
                 out_string = "On duty time for "+officer.mention+" - from: "+str(parsed.from_date)+"  to: "+str(parsed.to_date)
-                out_string.replace("None", "Right now")
-                print(time_seconds)
-                out_string += self.seconds_to_string(time_seconds)
-
-                await ctx.send(out_string)
+                out_string = out_string.replace("None", "Right now")
 
             else:
-                print("Default length")
-                time_seconds =  await officer.get_time_days(28)
 
-                out_string = "On duty time for "+officer.mention+" - last "+str(28)+ " days"
-                out_string += self.seconds_to_string(time_seconds)
+                # Set the variable to store the days
+                days = 28
 
-                await ctx.send(out_string)
-            
+                # Set the out_string to store the first part of the message to the user
+                out_string = "On duty time for "+officer.mention+" - last "+str(days)+ " days"
+
         except ValueError as error:
             await ctx.send(error)
+
+
+        if not parsed.list:
+
+            # Get the time in seconds
+            if days: time_seconds = await officer.get_time_days(days)
+            else: time_seconds = await officer.get_time_date(from_date, to_date)
+
+            # Print the results out
+            out_string += self.seconds_to_string(time_seconds)
+            await ctx.send(out_string)
+
+        else:
+            
+            # Get all the patrols
+            if days: all_patrols = await officer.get_full_time_days(days)
+            else: all_patrols = await officer.get_full_time_date(from_date, to_date)
+
+            # Send the header
+            await ctx.send(out_string)
+            out_string = ""
+
+            # Set up the header of the table
+            table = texttable.Texttable()
+            table.header(["From      ", "To        ", "Seconds  "])
+
+            # This is a lambda to add the discord code block on the table to keep it monospace
+            draw_table = lambda table: "```\n"+table.draw()+"\n```"
+            
+            # Loop through all the patrols to add them to a string and send them
+            for patrol in all_patrols:
+
+                # Store the old table in case the new one gets too long
+                old_table = draw_table(table)
+
+                # This is the timeformat the tables will show
+                time_format = "%d/%m/%Y"
+
+                # Add the next row
+                table.add_row([
+                    str(patrol[0].strftime(time_format)),
+                    str(patrol[1].strftime(time_format)),
+                    str(patrol[2])
+                ])
+
+                # This executes if the table is too long to be sent in one discord message
+                if len(draw_table(table)) >= 2000:
+
+                    # Send the old table because the new one is too long to send
+                    await ctx.send(old_table)
+                    
+                    # Create a new table and add the current row to it
+                    table = texttable.Texttable()
+                    table.add_row([
+                        str(patrol[0].strftime(time_format)),
+                        str(patrol[1].strftime(time_format)),
+                        str(patrol[2])
+                    ])
+            
+            # Send the table if it is not empty
+            if len(table.draw()) > 0: await ctx.send(draw_table(table))
     
+    @commands.command()
+    async def all_monitored_officers(self, ctx):
+        """This command displays all monitored officers."""
+        ctx.send(str(self.officer_manager.all_officers))
+
+class Other(commands.Cog):
+    """This stores all the other commands that do not fit in one of the other categories."""
+    def __init__(self, bot):
+        self.bot = bot
+        self.officer_manager = bot.officer_manager
     

@@ -1,7 +1,15 @@
 import argparse
 from sys import exc_info
+import Classes.errors as errors
 
-class ArgumentParser(argparse.ArgumentParser):    
+class ArgumentParser(argparse.ArgumentParser):
+    def parse_args(self, *args, **kwargs):
+        try: return super().parse_args(*args, **kwargs)
+        except SystemExit as error:
+            print("System exit excepted")
+            print(error)
+            raise errors.ArgumentParsingError("Something failed with parsing your command.")
+
     def _get_action_from_name(self, name):
         """Given a name, get the Action instance registered with this parser.
         If only it were made available in the ArgumentError object. It is 

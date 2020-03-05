@@ -46,14 +46,13 @@ async def handleError(*text, end=" "):
 
     print(error_text)
 
-    channel = bot.get_channel(settings["error_log_channel"])
+    channel = bot.get_channel(bot.settings["error_log_channel"])
     try:
         await channel.send(error_text)
     except discord.InvalidArgument:
         await channel.send("***I ENCOUNTERED AN ERROR AND THE ERROR MESSAGE DOES NOT FIT IN DISCORD.***")
 
 async def setup_officer_manager():
-    global officer_manager
 
     # This loop waits for the bot to start up before running the code inside it
     while True:
@@ -64,11 +63,15 @@ async def setup_officer_manager():
             continue
 
         # Start the officer manager
-        officer_manager = await OfficerManager.start(
+        print("SETTING UP OFFICER MANAGER")
+        officer_manager_local = await OfficerManager.start(
             bot,
             settings,
             keys["SQL_Password"]
         )
+
+        global officer_manager
+        officer_manager = officer_manager_local
 
         # Add cogs that need the officer manager
         bot.add_cog(Time(bot, officer_manager))
@@ -81,18 +84,17 @@ async def setup_officer_manager():
 # Global Variables
 # ====================
 
-bot_ready = False
-officer_manager = None
-settings = get_settings_file("settings")
+bot = commands.Bot(command_prefix='?')
+bot.officer_manager = None
+bot.settings = get_settings_file("settings")
+# help_dict = get_settings_file("help", in_settings_folder = False)
 keys = get_settings_file("Keys")
-help_dict = get_settings_file("help", in_settings_folder = False)
+
 
 
 # ====================
 # Checks
 # ====================
-
-bot = commands.Bot(command_prefix='?')
 
 @bot.check
 def supports_dms(ctx):
@@ -103,27 +105,108 @@ def supports_dms(ctx):
 
 @bot.check
 def officer_manager_ready(ctx):
-    if officer_manager is None:
-        print("Officer Monitor not ready.")
-        raise errors.NotReadyYet("I am still starting up, give me a moment.")
+    if ctx.bot.officer_manager is None: raise errors.NotReadyYet("I am still starting up, give me a moment.")
     else: return True
+
+@bot.check
+def in_admin_bot_channel(ctx):
+    if ctx.channel.id == ctx.bot.settings["admin_bot_channel"]: return True
+    else: raise errors.WrongChannelForCommand("This command only works in the administration bot channel.")
 
 
 # ====================
 # Discord Events
 # ====================
 
+# @bot.event
+# async def on_ready():
+#     print("on_ready")
+
+#     global bot_ready
+#     bot_ready = True
+
 @bot.event
 async def on_ready():
     print("on_ready")
+    global bot
 
-    global bot_ready
-    bot_ready = True
+    # Make sure this function does not run until the bot is ready
+    if bot.officer_manager is not None: return
+
+    # Start the officer manager
+    print("Starting officer manager")
+    bot.officer_manager = await OfficerManager.start(
+        bot,
+        keys["SQL_Password"]
+    )
+
+    # Add cogs that need the officer manager
+    bot.add_cog(Time(bot))
 
 @bot.event
 async def on_message(message):
     print("on_message")
+
     await bot.process_commands(message)
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    print("on_voice_state_update")
+    
+    # Get the officer
+    officer = bot.officer_manager.get_officer(member.id)
+    
+    # Check if this is just a member and if it is than just return
+    if officer is None: return
+    
+    if after.channel == before.channel: return# The user was just doing something inside a monitored voice channel
+    
+    # These check if an officer is entering or leaving a monitored voice channel, not moving.
+    if before.channel is None:
+        # An LPD Officer entered any voice channel
+        if after.channel.category_id == bot.settings["on_duty_category"]:
+            # An LPD Officer is going on duty
+            officer.go_on_duty()
+        return
+    elif after.channel is None:
+        # An LPD Officer left any voice channel
+        if before.channel.category_id == bot.settings["on_duty_category"]:
+            # An LPD Officer is going off duty
+            await officer.go_off_duty()
+        return
+
+    # Check where the officer was moving between
+    if before.channel.category_id == bot.settings["on_duty_category"] and after.channel.category_id == bot.settings["on_duty_category"]:
+        # An Officer moved between monitored voice channels
+        return
+    elif after.channel.category_id == bot.settings["on_duty_category"]:
+        # The officer moved from a voice channel that is not monitored to one that is monitored
+        officer.go_on_duty()
+    elif before.channel.category_id == bot.settings["on_duty_category"]:
+        # The officer moved from a monitored voice channel to another one witch is not monitored
+        await officer.go_off_duty()
+
+@bot.event
+async def on_member_update(before, after):
+    print("on_member_update")
+
+    officer_before = bot.officer_manager.is_officer(before)
+    officer_after = bot.officer_manager.is_officer(after)
+    print("officer_before:",officer_before)
+    print("officer_after:",officer_after)
+
+    # Nothing happened to an LPD Officer
+    if officer_before is True and officer_after is True: return
+    # Nothing happened to a regular member
+    elif officer_before is False and officer_after is False: return
+    
+    # Member has joined the LPD
+    elif officer_before is False and officer_after is True:
+        await bot.officer_manager.create_officer(after.id)
+
+    # Member has left the LPD
+    elif officer_before is True and officer_after is False:
+        await bot.officer_manager.remove_officer(before.id, reason = "this person does not have the LPD role anymore")
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -139,8 +222,9 @@ async def on_command_error(ctx, exception):
     await ctx.send(exception_string)
 
     if exception_string.find("encountered a problem") != -1:
-        err_channel = bot.get_channel(settings["error_log_channel"])
+        err_channel = bot.get_channel(bot.settings["error_log_channel"])
         error_string = "***ERROR***\n\n"+exception_string+"\n"+str(traceback.format_exception(None, exception, None))
+        error_string.replace(r"\\n", r"\n")
         print(error_string)
         await err_channel.send(error_string)
 
@@ -156,5 +240,5 @@ async def on_command_error(ctx, exception):
 # Start
 # ====================
 
-bot.loop.create_task(setup_officer_manager())
+# bot.loop.create_task(setup_officer_manager())
 bot.run(keys["Discord_token"])
