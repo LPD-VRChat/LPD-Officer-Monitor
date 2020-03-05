@@ -52,33 +52,6 @@ async def handleError(*text, end=" "):
     except discord.InvalidArgument:
         await channel.send("***I ENCOUNTERED AN ERROR AND THE ERROR MESSAGE DOES NOT FIT IN DISCORD.***")
 
-async def setup_officer_manager():
-
-    # This loop waits for the bot to start up before running the code inside it
-    while True:
-
-        # Make sure this function does not run until the bot is ready
-        if bot_ready is False:
-            await asyncio.sleep(.5)
-            continue
-
-        # Start the officer manager
-        print("SETTING UP OFFICER MANAGER")
-        officer_manager_local = await OfficerManager.start(
-            bot,
-            settings,
-            keys["SQL_Password"]
-        )
-
-        global officer_manager
-        officer_manager = officer_manager_local
-
-        # Add cogs that need the officer manager
-        bot.add_cog(Time(bot, officer_manager))
-        
-        # Make sure to exit the loop
-        break
-
 
 # ====================
 # Global Variables
@@ -89,7 +62,6 @@ bot.officer_manager = None
 bot.settings = get_settings_file("settings")
 # help_dict = get_settings_file("help", in_settings_folder = False)
 keys = get_settings_file("Keys")
-
 
 
 # ====================
@@ -117,13 +89,6 @@ def in_admin_bot_channel(ctx):
 # ====================
 # Discord Events
 # ====================
-
-# @bot.event
-# async def on_ready():
-#     print("on_ready")
-
-#     global bot_ready
-#     bot_ready = True
 
 @bot.event
 async def on_ready():
