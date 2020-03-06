@@ -173,8 +173,9 @@ class OfficerManager():
 
     def is_officer(self, member):
         if member is None: return False
+        all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
         for role in member.roles:
-            if role.id == self.bot.settings["lpd_role"]:
+            if role.id in all_lpd_ranks:
                 return True
         return False
 
