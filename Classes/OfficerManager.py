@@ -66,8 +66,7 @@ class OfficerManager():
             print("Added "+new_officer.name+"#"+new_officer.discriminator,"to the Officer Manager")
         
         # Set up the automatically running code
-        # event_loop = asyncio.get_event_loop()
-        # event_loop.create_task(await instance.loop())
+        bot.loop.create_task(instance.loop())
 
         # Return the instance
         print("Officer Manager ready")
@@ -79,6 +78,7 @@ class OfficerManager():
     # =====================
 
     async def loop(self):
+        print("Running officer check loop in officer_manager")
 
         try:
             # Add missing officers
@@ -105,7 +105,7 @@ class OfficerManager():
             print(error)
             print(traceback.format_exc())
 
-        await asyncio.sleep(3600)
+        await asyncio.sleep(self.bot.settings["sleep_time_between_officer_checks"])
 
 
     # =====================
