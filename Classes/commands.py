@@ -45,17 +45,17 @@ class Time(commands.Cog):
         This command gets the on duty time for an officer
 
         NAME
-            ?user - get on duty time and last active information
+            =user - get on duty time and last active information
                     about a specific officer.
 
         SYNOPSIS
-            ?user [options] officer
+            =user [options] officer
         
         OPTIONS
             -d NUMBER,
             --days NUMBER
-                specify the number of days to look back for activity,
-                this defaults to 28.
+                specify the number of days to look back for 
+                activity, this defaults to 28.
 
             -f DATE,
             --from-date DATE
@@ -220,11 +220,6 @@ class Time(commands.Cog):
             # Send the table if it is not empty
             if len(table.draw()) > 0: await ctx.send(draw_table(table))
     
-    @commands.command()
-    async def all_monitored_officers(self, ctx):
-        """This command displays all monitored officers."""
-        ctx.send(str(self.officer_manager.all_officers))
-
 class Other(commands.Cog):
     """This stores all the other commands that do not fit in one of the other categories."""
     def __init__(self, bot):

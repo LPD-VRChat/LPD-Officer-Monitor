@@ -57,9 +57,10 @@ async def handleError(*text, end=" "):
 # Global Variables
 # ====================
 
-bot = commands.Bot(command_prefix='?')
+settings = get_settings_file("remote_settings")
+bot = commands.Bot(command_prefix=settings["bot_prefix"])
+bot.settings = settings
 bot.officer_manager = None
-bot.settings = get_settings_file("settings")
 # help_dict = get_settings_file("help", in_settings_folder = False)
 keys = get_settings_file("Keys")
 
@@ -110,13 +111,14 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    print("on_message")
+    # print("on_message")
 
     await bot.process_commands(message)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    print("on_voice_state_update")
+    # print("on_voice_state_update")
+    if bot.officer_manager is None: return
     
     # Get the officer
     officer = bot.officer_manager.get_officer(member.id)
@@ -153,12 +155,11 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_member_update(before, after):
-    print("on_member_update")
+    # print("on_member_uspdate")
+    if bot.officer_manager is None: return
 
     officer_before = bot.officer_manager.is_officer(before)
     officer_after = bot.officer_manager.is_officer(after)
-    print("officer_before:",officer_before)
-    print("officer_after:",officer_after)
 
     # Nothing happened to an LPD Officer
     if officer_before is True and officer_after is True: return

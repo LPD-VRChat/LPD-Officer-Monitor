@@ -25,6 +25,7 @@ VALUES
 
 INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (378666988412731404, "2020-01-10 15-13-05", "2020-01-11 02-15-45");
 
+SELECT * FROM Officers;
 SELECT * FROM TimeLog;
 
 SELECT SUM(end_time - start_time) AS 'Time' FROM TimeLog WHERE officer_id = 378666988412731404;
@@ -38,7 +39,10 @@ WHERE
 	(start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
     
 SELECT start_time, end_time, end_time - start_time AS 'duration'
-        FROM TimeLog
-        WHERE
-            officer_id = 378666988412731404 AND
-            (start_time > "2020-01-11 14:32:29" AND start_time < "2020-03-02 14:32:29");
+FROM TimeLog
+WHERE
+	officer_id = 378666988412731404 AND
+	(start_time > "2020-03-1 14:32:29" AND start_time < "2020-03-02 14:32:29");
+
+DELETE FROM TimeLog WHERE officer_id = '566311811637575680';
+DELETE FROM Officers WHERE officer_id = '566311811637575680';

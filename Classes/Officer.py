@@ -31,6 +31,18 @@ class Officer(Member):
 
         return cls(member_data, officer_manager)
     
+    @classmethod
+    def create_from_member(cls, member, officer_manager):
+        self = cls.__new__(cls)# This skips __init__()
+
+        super()._copy(member)
+
+        self._on_duty_start_time = None
+        self.is_on_duty = False
+        self.officer_manager = officer_manager
+
+        return self
+
     def go_on_duty(self):
 
         print(self.discord_name+" is going on duty")

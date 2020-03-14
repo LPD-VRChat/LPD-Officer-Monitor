@@ -8,6 +8,7 @@ import traceback
 
 # Community
 import aiomysql
+import discord.errors as discord_errors
 
 # Mine
 from .Officer import Officer
@@ -60,11 +61,16 @@ class OfficerManager():
 
         # Add all the officers to this instance
         print("Adding all the officers to the Officer Manager")
-        for officer in result:
-            new_officer = await Officer.create(officer[0], instance)
-            instance._all_officers.append(new_officer)
-            print("Added "+new_officer.name+"#"+new_officer.discriminator,"to the Officer Manager")
-        
+        for db_officer in result:
+            # member = guild.get_member(db_officer[0])
+            # print("member._user:",member._user)
+            try:
+                new_officer = await Officer.create(db_officer[0], instance)
+                instance._all_officers.append(new_officer)
+                print("Added "+new_officer.name+"#"+new_officer.discriminator,"to the Officer Manager")
+            except discord_errors.NotFound:
+                await instance.remove_officer(db_officer[0], reason="this person was not found in the server at bot startup")
+
         # Set up the automatically running code
         bot.loop.create_task(instance.loop())
 
@@ -84,8 +90,7 @@ class OfficerManager():
             # Add missing officers
             for member in self.all_server_members_in_LPD:
                 if not self.is_monitored(member.id):
-                    await self.create_officer(member.id)
-                    await self.bot.get_channel(self.bot.settings["error_log_channel"]).send("WARNING: "+member.mention+" ("+str(member.id)+") has been added to the LPD Officer Monitor without being caught by on_member_update event")
+                    await self.create_officer(member.id, issue="was not caught by on_member_update event")
 
             # Remove extra users from the officer_monitor
             for officer_member in self._all_officers:
@@ -136,7 +141,7 @@ class OfficerManager():
         self._all_officers.append(new_officer)
 
         # Print
-        msg_string = "DEBUG: "+new_officer.mention+" ("+str(new_officer.id)+") has been added to the LPD Officer Monitor"
+        msg_string = "DEBUG: "+new_officer.display_name+" ("+str(new_officer.id)+") has been added to the LPD Officer Monitor"
         if issue is None: msg_string += " the correct way."
         else: msg_string += " but "+str(issue)
         print(msg_string)
