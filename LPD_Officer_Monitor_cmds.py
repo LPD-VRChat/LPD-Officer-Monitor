@@ -57,7 +57,7 @@ async def handleError(*text, end=" "):
 # Global Variables
 # ====================
 
-settings = get_settings_file("remote_settings")
+settings = get_settings_file("settings")
 bot = commands.Bot(command_prefix=settings["bot_prefix"])
 bot.settings = settings
 bot.officer_manager = None
