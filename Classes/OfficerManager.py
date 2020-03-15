@@ -9,6 +9,7 @@ import traceback
 # Community
 import aiomysql
 import discord.errors as discord_errors
+from pymysql import err as mysql_errors
 
 # Mine
 from .Officer import Officer
@@ -33,15 +34,27 @@ class OfficerManager():
             exit()
 
         # Setup database
-        db = await aiomysql.connect(
-            host=bot.settings["DB_host"],
-            port=3306,
-            user=bot.settings["DB_user"],
-            password=db_password,
-            db=bot.settings["DB_name"],
-            loop=asyncio.get_event_loop(),
-            autocommit=True
-        )
+        try:
+            db = await aiomysql.connect(
+                host=bot.settings["DB_host"],
+                port=3306,
+                user=bot.settings["DB_user"],
+                password=db_password,
+                db=bot.settings["DB_name"],
+                loop=asyncio.get_event_loop(),
+                autocommit=True
+            )
+        except mysql_errors.OperationalError:
+            db = await aiomysql.connect(
+                host=bot.settings["DB_host"],
+                port=3306,
+                user=bot.settings["DB_user"],
+                password=db_password,
+                db=bot.settings["DB_name"],
+                loop=asyncio.get_event_loop(),
+                autocommit=True,
+                unix_socket="/var/run/mysqld/mysqld.sock"
+            )
         
         # Fetch all the officers from the database
         try:
