@@ -34,27 +34,15 @@ class OfficerManager():
             exit()
 
         # Setup database
-        try:
-            db = await aiomysql.connect(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True
-            )
-        except mysql_errors.OperationalError:
-            db = await aiomysql.connect(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-                unix_socket="/var/run/mysqld/mysqld.sock"
-            )
+        db = await aiomysql.connect(
+            host=bot.settings["DB_host"],
+            port=3306,
+            user=bot.settings["DB_user"],
+            password=db_password,
+            db=bot.settings["DB_name"],
+            loop=asyncio.get_event_loop(),
+            autocommit=True
+        )
         
         # Fetch all the officers from the database
         try:
