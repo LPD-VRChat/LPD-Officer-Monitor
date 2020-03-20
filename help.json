@@ -4,12 +4,13 @@
         "long_description": "gets general info about all commands if it is used without arguments but an argument can be send with it to get more specific information about a specific command. Example: ?help who"
     },
     "who": {
-        "short_description": "Get everyone on duty or in a specified voice channel into a list",
+        "short_description": "Get everyone on duty, in a specified voice channel or in a specified role into a list",
         "long_description": {
-            "description": "gets everyone on duty or in a specified voice channel into a list. The list comes ready to @ everyone in it so just copy the bot output and paste it in any channel to @ everyone on the list.",
+            "description": "gets everyone on duty, in a specified voice channel or in a specified role into a list. The list comes ready to @ everyone in it so just copy the bot output and paste it in any channel to @ everyone on the list.",
             "commands": {
                 "on_duty": "gets everyone that is on duty and puts them into a list",
-                "channels [voice channel]": "gets everyone in the specified voice channel and puts them into a list"
+                "role [voice channel]": "gets everyone in the specified role and puts them into a list",
+                "channel [voice channel]": "gets everyone in the specified voice channel and puts them into a list"
             }
         }
     },

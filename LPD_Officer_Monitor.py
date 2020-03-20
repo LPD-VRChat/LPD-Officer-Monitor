@@ -503,6 +503,19 @@ def has_lpd_role(member):
             return True
     return False
 
+def filter_start_end(string, list_of_characters_to_filter):
+    while True:
+        if string[0] in list_of_characters_to_filter:
+            string = string[1::]
+        else: break
+
+    while True:
+        if string[-1] in list_of_characters_to_filter:
+            string = string[0:-1]
+        else: break
+    
+    return string
+
 client = discord.Client()
 
 @client.event
@@ -631,6 +644,39 @@ async def on_message(message):
 
             everyone_in_channel = getMemberStringFromMemberList(channel.members)
             await message.channel.send("Here is everyone in the voice channel "+channel.name+":\n"+everyone_in_channel)
+            return
+
+        elif arg2 == "role":
+            try:
+                role_name = arguments[2::]
+                role_name = "".join([" "+x for x in role_name])
+                role_name = role_name[1::]
+                role_name = filter_start_end(role_name, ["|", " ", "⠀", " "])
+
+                log.info("Role name: "+str(role_name))
+            except IndexError:
+                await sendErrorMessage(message, "Make sure to include a name for the channel you want to get the time for.")
+                return
+
+            # Get the role
+            role = None
+            for role_2 in message.guild.roles:
+                if filter_start_end(role_2.name, ["|", " ", "⠀", " "]) == role_name:
+                    role = role_2
+                    break
+        
+            if role is False:
+                await sendErrorMessage(message, "The role "+role_name+" does not exist.")
+                return
+            if not role.members:
+                await sendErrorMessage(message, role_name+" is empty")
+                return
+
+            everyone_in_role = ""
+            for member in role.members:
+                everyone_in_role += member.display_name + "\n"
+
+            await message.channel.send("Here is everyone in the role "+role_name+":\n"+everyone_in_role)
             return
 
         elif arg2 == "on_duty":
