@@ -647,6 +647,8 @@ async def on_message(message):
             return
 
         elif arg2 == "role":
+            
+            # Make sure the right arguments are their
             try:
                 role_name = arguments[2::]
                 role_name = "".join([" "+x for x in role_name])
@@ -664,20 +666,26 @@ async def on_message(message):
                 if filter_start_end(role_2.name, ["|", " ", "⠀", " "]) == role_name:
                     role = role_2
                     break
-        
+            
+            # Make sure the role was found and that people have it
             if role is False:
                 await sendErrorMessage(message, "The role "+role_name+" does not exist.")
                 return
             if not role.members:
                 await sendErrorMessage(message, role_name+" is empty")
                 return
-
-            everyone_in_role = ""
+            
+            # Send everyone
+            send_str = "Here is everyone in the role "+role_name+":\n"
             for member in role.members:
-                everyone_in_role += member.display_name + "\n"
+                if len(send_str + member.display_name) < 2000:
+                    send_str += member.display_name + "\n"
+                else:
+                    await message.channel.send(send_str)
+                    send_str = member.display_name
+            await message.channel.send(send_str)
 
-            await message.channel.send("Here is everyone in the role "+role_name+":\n"+everyone_in_role)
-            return
+
 
         elif arg2 == "on_duty":
             on_duty_category = get_category(settings["on_duty_category"], message.guild)
