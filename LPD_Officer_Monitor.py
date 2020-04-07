@@ -522,7 +522,7 @@ async def output_long_str(channel, string):
         if len(output_str + line + "\n") < 2000:
             output_str += line + "\n"
         else:
-            await message.channel.send(output_str)
+            await channel.send(output_str)
             output_str = line
     await channel.send(output_str)
 
@@ -968,7 +968,7 @@ async def on_message(message):
         for old_member in officers_kicked_for_inactivity:
             inactive_officers_needing_removal += old_member.mention
             inactive_officers_needing_removal += "\n"
-        await output_long_str(channel, "Here is everyone who has to be removed for inactivity:\n"+inactive_officers_needing_removal)
+        await output_long_str(message.channel, "Here is everyone who has to be removed for inactivity:\n"+inactive_officers_needing_removal)
 
     elif user_command == "log":
 
