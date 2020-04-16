@@ -216,25 +216,27 @@ async def logAllInfoToFile(guild):
     except Exception as error: log.error("Something failed with writing to file: "+str(error)+"\n"+traceback.format_exc())
     finally: openFile.close()
 
-    # Remove extra users from the officer_monitor
-    for member_id in list(officer_monitor):
-        member = guild.get_member(int(member_id))
+    # Remove extra users from the officer_monitor, this is currently not in use because this part
+    # of the code does not work and is removing all new officers instead of just the ones leaving.
+    # 
+    # for member_id in list(officer_monitor):
+    #     member = guild.get_member(int(member_id))
 
-        if member is None:
-            del officer_monitor[member_id]
-            log.warning(str(member_id)+" was removed from the LPD Officer Monitor, because he was not found in the server.")
+    #     if member is None:
+    #         del officer_monitor[member_id]
+    #         log.warning(str(member_id)+" was removed from the LPD Officer Monitor, because he was not found in the server.")
 
-            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he was not found in the server.")
+    #         await client.get_channel(settings["bot_debug_channel"]).send("WARNING: ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he was not found in the server.")
 
-            continue
+    #         continue
 
-        if has_officer_role(member.roles) is False:
-            del officer_monitor[member_id]
-            log.warning(str(member.name)+"was removed from the LPD Officer Monitor")
+    #     if has_officer_role(member.roles) is False:
+    #         del officer_monitor[member_id]
+    #         log.warning(str(member.name)+"was removed from the LPD Officer Monitor")
 
-            await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he is in the server but does no longer have an LPD Officer role.")
+    #         await client.get_channel(settings["bot_debug_channel"]).send("WARNING: "+member.mention+" ("+str(member_id)+") has been removed from the LPD Officer Monitor, because he is in the server but does no longer have an LPD Officer role.")
 
-            continue 
+    #         continue 
 
     log.info("||||||||||||||||||||||||||||||||||||||||||||||||||")
 
