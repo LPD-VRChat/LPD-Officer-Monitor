@@ -325,11 +325,9 @@ async def findInactiveOfficers(guild):
 
     # Check if someone has to be removed from the LPD because of inactivity
     for officer_id in list(officer_monitor):
-        if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds < time.time():
-            officer = guild.get_member(int(officer_id))
-
-            if officer is not None:
-                all_inactive_people.append(officer)
+        officer = guild.get_member(int(officer_id))
+        if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds < time.time() and officer and has_officer_role(officer.roles):
+            all_inactive_people.append(officer)
     
     return all_inactive_people
 
