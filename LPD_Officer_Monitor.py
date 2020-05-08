@@ -850,13 +850,14 @@ async def on_message(message):
                 await message.channel.send("Their is no one inactive in the LPD, it is a good day today.")
                 return
             
+            full_string = ""
             for officer in all_inactive_officers:
                 inactive_days = int((time.time() - officer_monitor[str(officer.id)]["Last active time"]) / 86400)
 
                 unixTimeOfUserActive = officer_monitor[str(officer.id)]["Last active time"]
                 last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
 
-                await message.channel.send(officer.mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable)
+                full_string += officer.mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable+"\n"
 
         elif arg2 == "reset":
             async with message.channel.typing():
