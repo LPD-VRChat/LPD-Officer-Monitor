@@ -858,6 +858,8 @@ async def on_message(message):
                 last_active_time_human_readable = str(datetime.datetime.utcfromtimestamp(unixTimeOfUserActive).strftime('%d.%m.%Y %H:%M:%S'))
 
                 full_string += officer.mention+" has been inactive for "+str(inactive_days)+" days and was last active "+last_active_time_human_readable+"\n"
+            
+            await output_long_str(message.channel, full_string)
 
         elif arg2 == "reset":
             async with message.channel.typing():
