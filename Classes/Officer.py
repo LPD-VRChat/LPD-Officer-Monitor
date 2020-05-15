@@ -18,7 +18,8 @@ import Classes.extra_functions as ef
 class Officer(Member):
     def __init__(self, member_data, officer_manager):
         super().__init__(data=member_data, state=officer_manager.guild._state, guild=officer_manager.guild)
-        
+        super()._copy()
+
         self._on_duty_start_time = None
         self.is_on_duty = False
         self.officer_manager = officer_manager
@@ -28,7 +29,7 @@ class Officer(Member):
 
         # Get the member data to be able to initialize the Member class from discord.py later in __init__
         member_data = await officer_manager.guild._state.http.get_member(officer_manager.guild.id, member_id)
-
+        
         return cls(member_data, officer_manager)
     
     @classmethod
