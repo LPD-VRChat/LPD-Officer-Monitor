@@ -39,16 +39,16 @@ class Time(commands.Cog):
         return on_duty_time_string
 
     @commands.command()
-    async def user(self, ctx, *args):
+    async def patrol_time(self, ctx, *args):
         """
         This command gets the on duty time for an officer
 
         NAME
-            =user - get on duty time and last active information
+            =patrol_time - get on duty time and last active information
                     about a specific officer.
 
         SYNOPSIS
-            =user [options] officer
+            =patrol_time [options] officer
         
         OPTIONS
             -d NUMBER,
@@ -94,7 +94,7 @@ class Time(commands.Cog):
             return
 
         # Find the officer ID
-        p = re.compile(r"<@\![0-9]{18,20}>")
+        p = re.compile(r"<@\![0-9]+>")
         match = p.match(parsed.officer)
         
         # Make sure someone is mentioned
