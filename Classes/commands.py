@@ -38,6 +38,22 @@ class Time(commands.Cog):
 
         return on_duty_time_string
 
+    def get_officer_id(self, officer_string):
+    
+        # Check for an @ mention
+        p = re.compile(r"<@\![0-9]+>")
+        match = p.match(officer_string)
+        if match: return int(match.group()[3:-1])
+        
+        # Check for an ID
+        p = re.compile(r"[0-9]+")
+        match = p.match(officer_string)
+        if match: return int(match.group())
+
+        # Nothing was found
+        return None
+
+
     @commands.command()
     async def patrol_time(self, ctx, *args):
         """
@@ -93,23 +109,17 @@ class Time(commands.Cog):
             await ctx.send(ctx.author.mention+" "+str(error))
             return
 
-        # Find the officer ID
-        p = re.compile(r"<@\![0-9]+>")
-        match = p.match(parsed.officer)
-        
-        # Make sure someone is mentioned
-        if not match:
-            await ctx.send(ctx.author.mention+" Make sure to mention an officer.")
+        # Get the officer ID
+        officer_id = await self.get_officer_id(parsed.officer)
+        if officer_id == None:
+            ctx.send("Make sure to mention an officer.")
             return
-        
-        # Move the officer_id into a variable
-        officer_id = int(match.group()[3:-1])
         print(f"officer_id: {officer_id}")
         
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
         if officer is None:
-            await ctx.send(ctx.author.mention+" The person you mentioned is not being monitored, are you sure this person is an officer?")
+            await ctx.send("The person you mentioned is not being monitored, are you sure this person is an officer?")
             return
         
         
