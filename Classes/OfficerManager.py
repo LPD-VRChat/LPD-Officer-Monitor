@@ -17,21 +17,34 @@ from .Officer import Officer
 
 class OfficerManager():
 
-    def __init__(self, db, all_officers, guild, bot):
-        self.db = db
-        self._all_officers = all_officers
-        self.guild = guild
+    def __init__(self, db, all_officer_ids, bot):
         self.bot = bot
+        self.db = db
 
-    @classmethod
-    async def start(cls, bot, db_password):
-        
         # Get the guild
-        guild = bot.get_guild(bot.settings["Server_ID"])
-        if guild is None:
+        self.guild = bot.get_guild(bot.settings["Server_ID"])
+        if self.guild is None:
             print("ERROR Guild with ID",bot.settings["Server_ID"],"not found")
             print("Shutting down...")
             exit()
+
+
+        # Add all the officers to the list
+        self._all_officers = []
+        print("Adding all the officers to the Officer Manager")
+        for officer_id in all_officer_ids:
+            try:
+                new_officer = Officer(officer_id, bot)
+                self._all_officers.append(new_officer)
+                print(f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager.")
+            except discord_errors.NotFound:
+                print(f"The officer with the ID {officer_id} was not found in the server.")
+
+        # Set up the automatically running code
+        bot.loop.create_task(self.loop())
+
+    @classmethod
+    async def start(cls, bot, db_password):
 
         # Setup database
         db = await aiomysql.connect(
@@ -55,29 +68,8 @@ class OfficerManager():
             print(error)
             print("Shutting down...")
             exit()
-
-        # Initialize the officer_manager instance so that it can be added with each created officer
-        print("Initializing instance of Officer Manager")
-        instance = cls(db, [], guild, bot)
-
-        # Add all the officers to this instance
-        print("Adding all the officers to the Officer Manager")
-        for db_officer in result:
-            # member = guild.get_member(db_officer[0])
-            # print("member._user:",member._user)
-            try:
-                new_officer = await Officer.create(db_officer[0], instance)
-                instance._all_officers.append(new_officer)
-                print("Added "+new_officer.name+"#"+new_officer.discriminator,"to the Officer Manager")
-            except discord_errors.NotFound:
-                await instance.remove_officer(db_officer[0], reason="this person was not found in the server at bot startup")
-
-        # Set up the automatically running code
-        bot.loop.create_task(instance.loop())
-
-        # Return the instance
-        print("Officer Manager ready")
-        return instance
+                
+        return cls(db, (x[0] for x in result), bot)
 
 
     # =====================
@@ -136,7 +128,7 @@ class OfficerManager():
             return None
 
         # Create the officer
-        new_officer = await Officer.create(officer_id, self)
+        new_officer = Officer(officer_id, self.bot)
 
         # Add the officer to the _all_officers list
         self._all_officers.append(new_officer)

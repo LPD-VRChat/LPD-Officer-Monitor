@@ -96,7 +96,7 @@ async def on_ready():
     print("on_ready")
     global bot
 
-    # Make sure this function does not run until the bot is ready
+    # Make sure this function does not create the officer manager twice
     if bot.officer_manager is not None: return
 
     # Start the officer manager
@@ -105,9 +105,6 @@ async def on_ready():
         bot,
         keys["SQL_Password"]
     )
-
-    # Add cogs that need the officer manager
-    bot.add_cog(Time(bot))
 
 @bot.event
 async def on_message(message):
@@ -189,8 +186,11 @@ async def on_command_error(ctx, exception):
 
     if exception_string.find("encountered a problem") != -1:
         err_channel = bot.get_channel(bot.settings["error_log_channel"])
-        error_string = "***ERROR***\n\n"+exception_string+"\n"+str(traceback.format_exception(None, exception, None))
-        error_string.replace(r"\\n", r"\n")
+        error_string = f"***ERROR***\n\n{exception_string}\n"
+        
+        # Format the exception printout the correct way
+        error_string += "".join(traceback.format_exception(None, exception, None))
+
         print(error_string)
         await err_channel.send(error_string)
 
@@ -199,7 +199,7 @@ async def on_command_error(ctx, exception):
 # Add cogs
 # ====================
 
-
+bot.add_cog(Time(bot))
 
 
 # ====================

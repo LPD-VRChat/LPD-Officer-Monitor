@@ -14,7 +14,6 @@ class Time(commands.Cog):
     """This stores all the time commands."""
     def __init__(self, bot):
         self.bot = bot
-        self.officer_manager = bot.officer_manager
 
     @staticmethod
     def seconds_to_string(onDutySeconds):
@@ -105,10 +104,10 @@ class Time(commands.Cog):
         
         # Move the officer_id into a variable
         officer_id = int(match.group()[3:-1])
-        print("officer_id:",officer_id)
+        print(f"officer_id: {officer_id}")
         
         # Make sure the person mentioned is an LPD officer
-        officer = self.officer_manager.get_officer(officer_id)
+        officer = self.bot.officer_manager.get_officer(officer_id)
         if officer is None:
             await ctx.send(ctx.author.mention+" The person you mentioned is not being monitored, are you sure this person is an officer?")
             return
@@ -124,41 +123,39 @@ class Time(commands.Cog):
         from_date = None
         to_date = None
 
-        try:
-            if parsed.days:
+        # The user selected nothing and will get the automatic option
+        if parsed.days == None and parsed.from_date == None and parsed.to_date == None:
+            parsed.days = 28
 
-                # Set the variable to store the days
-                days = parsed.days
+        # The user selected a set amount of days
+        if parsed.days:
 
-                # Set the out_string to store the first part of the message to the user
-                out_string = "On duty time for "+officer.mention+" - last "+str(days)+ " days"
+            # Set the variable to store the days
+            days = parsed.days
 
-            elif parsed.from_date or parsed.to_date:
+            # Set the out_string to store the first part of the message to the user
+            out_string = "On duty time for "+officer.mention+" - last "+str(days)+ " days"
 
-                # Make sure their is a from_date if their is a to date
-                if parsed.to_date and not parsed.from_date:
-                    await ctx.send(ctx.author.mention+" If you want to use to-date you have to set a from-date.")
-                    return
-                
-                # Set the variables to store the from_date and to_date
-                from_date = parsed.from_date
-                to_date = parsed.to_date
+        # The user selected from or to dates
+        elif parsed.from_date or parsed.to_date:
 
-                # Set the out_string to store the first part of the message to the user
-                out_string = "On duty time for "+officer.mention+" - from: "+str(parsed.from_date)+"  to: "+str(parsed.to_date)
-                out_string = out_string.replace("None", "Right now")
+            # Make sure their is a from_date if their is a to date
+            if parsed.to_date and not parsed.from_date:
+                await ctx.send(ctx.author.mention+" If you want to use to-date you have to set a from-date.")
+                return
+            
+            # Set the variables to store the from_date and to_date
+            from_date = parsed.from_date
+            to_date = parsed.to_date
 
-            else:
+            # Set the out_string to store the first part of the message to the user
+            out_string = "On duty time for "+officer.mention+" - from: "+str(parsed.from_date)+"  to: "+str(parsed.to_date)
+            out_string = out_string.replace("None", "Right now")
 
-                # Set the variable to store the days
-                days = 28
 
-                # Set the out_string to store the first part of the message to the user
-                out_string = "On duty time for "+officer.mention+" - last "+str(days)+ " days"
-
-        except ValueError as error:
-            await ctx.send(error)
-
+        # ====================
+        # Output
+        # ====================
 
         if not parsed.list:
 
@@ -219,7 +216,7 @@ class Time(commands.Cog):
             
             # Send the table if it is not empty
             if len(table.draw()) > 0: await ctx.send(draw_table(table))
-    
+
 class Other(commands.Cog):
     """This stores all the other commands that do not fit in one of the other categories."""
     def __init__(self, bot):
