@@ -19,7 +19,8 @@ import commentjson as json
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
 import Classes.errors as errors
-from Classes.commands import *
+from Classes.commands import Time
+from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file, output_long_str
 
 
@@ -166,7 +167,9 @@ async def on_command_error(ctx, exception):
 # Add cogs
 # ====================
 
+bot.remove_command("help")
 bot.add_cog(Time(bot))
+bot.add_cog(Help(bot))
 
 
 # ====================

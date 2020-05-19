@@ -20,9 +20,10 @@ import Classes.errors as errors
 
 
 class Time(commands.Cog):
-    """This stores all the time commands."""
+    """Here are all the commands relating to managing the time of officers."""
     def __init__(self, bot):
         self.bot = bot
+        self.color = discord.Color.blue()
 
     @staticmethod
     def seconds_to_string(onDutySeconds):
@@ -96,39 +97,31 @@ class Time(commands.Cog):
         return embed
 
 
-    @commands.command()
+    @commands.command(usage="[options] <officer>")
     async def patrol_time(self, ctx, *args):
         """
-        This command gets the on duty time for an officer
+        This command gets the on duty time for an officer.
 
-        NAME
-            =patrol_time - get on duty time and last active information
-                    about a specific officer.
-
-        SYNOPSIS
-            =patrol_time [options] officer
         
         OPTIONS
+
             -d NUMBER,
             --days NUMBER
-                specify the number of days to look back for 
-                activity, this defaults to 28.
+                specify the number of days to look back for activity, this defaults to 28.
 
             -f DATE,
             --from-date DATE
-                specify the date to look back at, if no --to-date
-                is specified it will show all activity from the
-                --from-date to right now.
+                specify the date to look back at, if no --to-date is specified it will show all activity from the --from-date to right now.
 
             -t DATE,
             --to-date DATE
-                specify the date to stop looking at, --from-date
-                has to be specified with this option.
+                specify the date to stop looking at, --from-date has to be specified with this option.
             
             -l,
             --list
-                get a list of all patrols during the specified
-                time period.
+                get a list of all patrols during the specified time period.
+        
+        PARSE RAW
         """
 
         # Setup parser
@@ -291,6 +284,12 @@ class Time(commands.Cog):
 
     @commands.command()
     async def last_active_time(self, ctx, officer):
+        """
+        This command gets all the times the officer was last active.
+
+        To use the command do =last_active_time @mention_the_officer_or_officer_id,
+        for example =last_active_time @Hroi#1994 or =last_active_time 378666988412731404.
+        """
 
         officer_id = self.get_officer_id(officer)
         if officer_id == None:
