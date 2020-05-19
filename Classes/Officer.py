@@ -10,6 +10,7 @@ from datetime import datetime
 
 # Community
 from discord import Member
+from Classes.errors import MemberNotFoundError
 
 # Mine
 import Classes.extra_functions as ef
@@ -19,6 +20,8 @@ class Officer():
     def __init__(self, user_id, bot):
         self.bot = bot
         self.member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
+        if self.member == None:
+            raise MemberNotFoundError()
 
         self._on_duty_start_time = None
         self.is_on_duty = False
@@ -119,7 +122,6 @@ class Officer():
         return False
 
 
-
     # ====================
     # On Duty Activity
     # ====================
@@ -210,9 +212,9 @@ class Officer():
         # Return the datetime objects
         return (from_datetime, to_datetime)
 
-    async def _get_time_datetime(self, from_datetime_obejct, to_datetime_object):
+    async def _get_time_datetime(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_obejct.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
+        from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
         to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
@@ -231,9 +233,9 @@ class Officer():
         if result[0][0] is None: return 0
         else: return result[0][0]
 
-    async def _get_full_time_datetime(self, from_datetime_obejct, to_datetime_object):
+    async def _get_full_time_datetime(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_obejct.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
+        from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
         to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
@@ -253,7 +255,7 @@ class Officer():
             officer_id = %s AND
             (start_time > "%s" AND start_time < "%s")"""
         
-        print("From datetime:",from_datetime_obejct)
+        print("From datetime:",from_datetime_object)
         print("From:",from_db_time)
         print("To:",to_db_time)
 
@@ -269,25 +271,85 @@ class Officer():
     # Message Activity
     # ====================
 
-    async def get_last_activity(self, counted_channels):
-        # This functions returns the last active date for an officer,
-        # the channels that are to be counted and how many days you
-        # want to look back are passed into the function.
-        pass
+    # External functions
 
-    async def get_all_activity(self, counted_channels, days):
-        # This functions returns the last message times for an officer,
-        # the channels that are to be counted are passed into the function.
-        pass
+    async def get_last_activity(self, counted_channel_ids):
+        """
+        This functions returns the last active date for an officer,
+        the channels that are to be counted and how many days you
+        want to look back are passed into the function.
+        """
+        result = await self._get_all_activity(counted_channel_ids)
+        if result == None: return None
+        max_result = max(result, key=lambda x: time.mktime(x[3].timetuple()))
 
-    async def log_message_activity(self, msg, send_time=math.floor(time.time())):
+        return self._create_activity_dict(max_result)
 
+    async def get_all_activity(self, counted_channel_ids):
+        """
+        This functions returns the last message times for an officer,
+        the channels that are to be counted are passed into the function.
+        """
+        result = await self._get_all_activity(counted_channel_ids)
+
+        if not result: return None
+        return tuple(self._create_activity_dict(x) for x in result)
+
+    async def log_message_activity(self, msg, send_time=None):
+        
+        # Set the send_time if it was not passed in, this was in
+        # the kwargs but their it only ran once and gave the same
+        # time every single time the function was run.
+        if send_time == None:
+            send_time = math.floor(time.time())
+        
         # Make a string from the send_time the database can understand
         string_send_time = datetime.fromtimestamp(math.floor(send_time)).strftime(self.bot.officer_manager.bot.settings["db_time_format"])
         
-        # Insert hte data into the database
-        cur = await self.bot.officer_manager.db.cursor()
-        query = "INSERT INTO MessageActivityLog(message_id, channel_id, officer_id, send_time) VALUES (%s, %s, %s, %s)"
-        args = (msg.id, msg.channel.id, self.id, string_send_time)
-        await cur.execute(query, args)
-        await cur.close()
+        # Get the row ID for the last activity in the channel
+        row_id = await self.bot.officer_manager.send_db_request(
+            "SELECT entry_number FROM MessageActivityLog WHERE officer_id = %s AND channel_id = %s",
+            (self.id, msg.channel.id)
+        )
+
+        # Insert the data into the database
+        if row_id:
+            row_id = row_id[0][0]
+            await self.bot.officer_manager.send_db_request(
+                "UPDATE MessageActivityLog SET message_id = %s, send_time = %s WHERE entry_number = %s",
+                (msg.id, string_send_time, row_id)
+            )
+        else:
+            await self.bot.officer_manager.send_db_request(
+                "INSERT INTO MessageActivityLog(message_id, channel_id, officer_id, send_time) VALUES (%s, %s, %s, %s)",
+                (msg.id, msg.channel.id, self.id, string_send_time)
+            )
+
+    # Internal functions
+
+    def _create_activity_dict(self, activity_tuple):
+        return {
+            "officer_id": activity_tuple[0],
+            "channel_id": activity_tuple[1],
+            "message_id": activity_tuple[2],
+            "time": activity_tuple[3]
+        }
+
+    async def _get_all_activity(self, counted_channel_ids):
+        result = await self.bot.officer_manager.send_db_request(
+            """
+            SELECT officer_id, channel_id, message_id, send_time
+            FROM MessageActivityLog
+            WHERE officer_id = %s
+            UNION
+            (SELECT officer_id, 0, 0, end_time
+            FROM TimeLog
+            WHERE officer_id = %s
+                ORDER BY end_time DESC
+                LIMIT 1)
+            """,
+            (self.id, self.id)
+        )
+        
+        if result == None: return None
+        return filter(lambda x: x[1] in counted_channel_ids or x[1] == 0, result)

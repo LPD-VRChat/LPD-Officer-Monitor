@@ -46,3 +46,35 @@ WHERE
 
 DELETE FROM TimeLog WHERE officer_id = '566311811637575680';
 DELETE FROM Officers WHERE officer_id = '566311811637575680';
+
+INSERT INTO 
+	MessageActivityLog(message_id, channel_id, officer_id, send_time)
+VALUES
+	(711212837799985182, 645385529868812348, 507951982808399878, NOW()),
+    (711212744581447802, 660935988738129937, 507951982808399878, NOW()),
+    (711212727862951947, 697185649949933698, 507951982808399878, NOW()),
+    (711212687979184148, 708736137463726131, 507951982808399878, NOW());
+
+SELECT * FROM MessageActivityLog WHERE officer_id = 507951982808399878 AND channel_id = 660935988738129937;
+SELECT * FROM MessageActivityLog;
+
+UPDATE MessageActivityLog
+SET
+	message_id = 711763900915253266,
+	send_time = "2020-05-18 02:10:52"
+WHERE
+	entry_number = 10;
+    
+UPDATE MessageActivityLog SET message_id = 711763900915253266, send_time = "2020-05-18 02:15:53" WHERE entry_number = 10;
+
+SELECT * FROM MessageActivityLog WHERE officer_id = 378666988412731404;
+
+SELECT officer_id, channel_id, message_id, send_time
+FROM MessageActivityLog
+WHERE officer_id = 378666988412731404
+UNION
+SELECT officer_id, 0, 0, end_time AS "send_time"
+FROM TimeLog
+WHERE officer_id = 378666988412731404
+	ORDER BY end_time DESC
+    LIMIT 1;

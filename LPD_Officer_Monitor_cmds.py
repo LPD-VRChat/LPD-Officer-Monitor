@@ -20,37 +20,7 @@ from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
 import Classes.errors as errors
 from Classes.commands import *
-
-
-# ====================
-# Functions
-# ====================
-
-def get_settings_file(settings_file_name, in_settings_folder = True):
-    
-    # Add the stuff to the settings_file_name to make it link to the right file
-    file_name = settings_file_name+".json"
-
-    # Add the settings folder to the filename if nececery
-    if in_settings_folder: file_name = "settings/" + file_name
-
-    # Get all the data out of the JSON file, parse it and return it
-    with open(file_name, "r") as json_file:
-        data = json.load(json_file)
-    return data
-
-async def handleError(*text, end=" "):
-    error_text = "***ERROR***\n\n"
-    for line in text: error_text += str(line) + end
-    error_text += "\n" + traceback.format_exc()
-
-    print(error_text)
-
-    channel = bot.get_channel(bot.settings["error_log_channel"])
-    try:
-        await channel.send(error_text)
-    except discord.InvalidArgument:
-        await channel.send("***I ENCOUNTERED AN ERROR AND THE ERROR MESSAGE DOES NOT FIT IN DISCORD.***")
+from Classes.extra_functions import handle_error, get_settings_file, output_long_str
 
 
 # ====================
@@ -111,6 +81,10 @@ async def on_message(message):
     # print("on_message")
 
     await bot.process_commands(message)
+
+    if message.channel.category_id not in bot.settings["monitored_channels"]["ignored_categories"]:
+        officer = bot.officer_manager.get_officer(message.author.id)
+        if officer: await officer.log_message_activity(message)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -174,7 +148,7 @@ async def on_member_update(before, after):
 @bot.event
 async def on_error(event, *args, **kwargs):
     print("on_error")
-    await handleError("Error encountered in event: ", event)
+    await handle_error(bot, f"Error encountered in event: {event}", traceback.format_exc())
 
 @bot.event
 async def on_command_error(ctx, exception):
@@ -183,16 +157,9 @@ async def on_command_error(ctx, exception):
     exception_string = str(exception).replace("raised an exception", "encountered a problem")
     
     await ctx.send(exception_string)
-
+    
     if exception_string.find("encountered a problem") != -1:
-        err_channel = bot.get_channel(bot.settings["error_log_channel"])
-        error_string = f"***ERROR***\n\n{exception_string}\n"
-        
-        # Format the exception printout the correct way
-        error_string += "".join(traceback.format_exception(None, exception, None))
-
-        print(error_string)
-        await err_channel.send(error_string)
+        await handle_error(bot, exception_string, "".join(traceback.format_exception(None, exception, None)))
 
 
 # ====================

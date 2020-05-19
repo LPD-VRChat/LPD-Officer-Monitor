@@ -1,14 +1,23 @@
-from discord.ext import commands
-import texttable
-
+# Standard
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO
 import sys
+from datetime import datetime
+from datetime import timedelta
+import time
 
+# Community
+import discord
+from discord.ext import commands
+import texttable
+import arrow
+
+# Mine
 from Classes.custom_arg_parse import ArgumentParser
 import Classes.errors as errors
+
 
 class Time(commands.Cog):
     """This stores all the time commands."""
@@ -52,6 +61,39 @@ class Time(commands.Cog):
 
         # Nothing was found
         return None
+
+    def create_last_active_embed(self, officer, time_results):
+
+        if not time_results: embed = discord.Embed(description="No activity recorded")
+        else: embed = discord.Embed(description="Latest activity")
+
+        # Set the author of the embed
+        embed.set_author(
+            name=officer.display_name,
+            icon_url=officer.member.avatar_url
+        )
+
+        # Return the embed if their are no results to add
+        if not time_results: return embed
+
+        # Order the time_results:
+        time_results = sorted(time_results, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True)
+
+        # Add the channels
+        for result in time_results:
+            if result['channel_id'] == 0:
+                embed.add_field(
+                    name=arrow.Arrow.fromdatetime(result["time"]).humanize(),
+                    value=f"On duty activity"
+                )
+            else:
+                url = f"https://discordapp.com/channels/{self.bot.officer_manager.guild.id}/{result['channel_id']}/{result['message_id']}"
+                embed.add_field(
+                    name=arrow.Arrow.fromdatetime(result["time"]).humanize(),
+                    value=f"[#{self.bot.get_channel(result['channel_id']).name}]({url})"
+                )
+        
+        return embed
 
 
     @commands.command()
@@ -110,7 +152,7 @@ class Time(commands.Cog):
             return
 
         # Get the officer ID
-        officer_id = await self.get_officer_id(parsed.officer)
+        officer_id = self.get_officer_id(parsed.officer)
         if officer_id == None:
             ctx.send("Make sure to mention an officer.")
             return
@@ -226,6 +268,47 @@ class Time(commands.Cog):
             
             # Send the table if it is not empty
             if len(table.draw()) > 0: await ctx.send(draw_table(table))
+
+    # @commands.command()
+    # async def last_active_time(self, ctx, officer):
+
+    #     officer_id = self.get_officer_id(officer)
+    #     if officer_id == None:
+    #         ctx.send("Make sure to mention an officer.")
+    #         return
+    #     print(f"officer_id: {officer_id}")
+        
+    #     # Make sure the person mentioned is an LPD officer
+    #     officer = self.bot.officer_manager.get_officer(officer_id)
+    #     if officer is None:
+    #         await ctx.send("The person you mentioned is not being monitored, are you sure this person is an officer?")
+    #         return
+
+    #     # Get the time
+    #     result = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
+
+    #     await ctx.send(embed=self.create_last_active_embed(officer, result))
+
+    @commands.command()
+    async def last_active_time(self, ctx, officer):
+
+        officer_id = self.get_officer_id(officer)
+        if officer_id == None:
+            ctx.send("Make sure to mention an officer.")
+            return
+        print(f"officer_id: {officer_id}")
+        
+        # Make sure the person mentioned is an LPD officer
+        officer = self.bot.officer_manager.get_officer(officer_id)
+        if officer is None:
+            await ctx.send("The person you mentioned is not being monitored, are you sure this person is an officer?")
+            return
+
+        # Get the time
+        result = await officer.get_all_activity(ctx.bot.officer_manager.all_monitored_channels)
+
+        # Send the embed
+        await ctx.send(embed=self.create_last_active_embed(officer, result))
 
 class Other(commands.Cog):
     """This stores all the other commands that do not fit in one of the other categories."""

@@ -10,9 +10,11 @@ import traceback
 import aiomysql
 import discord.errors as discord_errors
 from pymysql import err as mysql_errors
+import discord
 
 # Mine
-from .Officer import Officer
+from Classes.Officer import Officer
+from Classes.errors import MemberNotFoundError
 
 
 class OfficerManager():
@@ -28,6 +30,8 @@ class OfficerManager():
             print("Shutting down...")
             exit()
 
+        # Get all monitored channels
+        self.all_monitored_channels = [c.id for c in self.guild.channels if c.category not in bot.settings["monitored_channels"]["ignored_categories"] and isinstance(c, discord.channel.TextChannel)]
 
         # Add all the officers to the list
         self._all_officers = []
@@ -37,7 +41,7 @@ class OfficerManager():
                 new_officer = Officer(officer_id, bot)
                 self._all_officers.append(new_officer)
                 print(f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager.")
-            except discord_errors.NotFound:
+            except MemberNotFoundError:
                 print(f"The officer with the ID {officer_id} was not found in the server.")
 
         # Set up the automatically running code
@@ -70,6 +74,19 @@ class OfficerManager():
             exit()
                 
         return cls(db, (x[0] for x in result), bot)
+
+    async def send_db_request(self, query, args):
+        cur = await self.db.cursor()
+
+        await cur.execute(query, args)
+        result = await cur.fetchall()
+
+        await cur.close()
+
+        try: result[0][0]
+        except IndexError: result = None
+
+        return result
 
 
     # =====================
