@@ -31,14 +31,14 @@ from Classes.extra_functions import handle_error, get_settings_file
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--server", action="store_true")
-parsed = parser.parse_args(sys.argv)
+args = parser.parse_args()
 
 
 # ====================
 # Global Variables
 # ====================
 
-if parsed.server:
+if args.server:
     settings = get_settings_file("remote_settings")
     keys = get_settings_file("remote_keys")
 else:
