@@ -103,8 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Settings file
-settings/
+# Ignore the keys
+*keys.json
 
 # VSCode
 .vscode/*

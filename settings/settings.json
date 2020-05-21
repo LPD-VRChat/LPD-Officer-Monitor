@@ -1,0 +1,59 @@
+{
+    "Server_ID": 566315650864381953,
+    "max_inactive_days": 28,
+    "bot_prefix": "?",
+    "db_time_format": "%Y-%m-%d %H:%M:%S",
+    "sleep_time_between_officer_checks": 60,
+    
+    // Channels
+    "monitored_channels": {
+        "ignored_categories": [
+            696352449228832778,
+            645390444691456020,
+            647218270411292694,
+            658094796413599754
+        ]
+    },
+    "training_finished_channel": 655128316373762121,
+    "admin_bot_channel": 566777522252152883,
+    "error_log_channel": 670751809538752512,
+    "inactive_channel_name": "inactive",
+    
+    // Roles
+    "lpd_role": 655133459714670592,
+    "trainer_role": 655128037993742337,
+    "slrt_trainer_role": 670305215265636386,
+    "slrt_trained_role": 670305435332378624,
+    "inactive_role": "LPD_inactive",
+    "role_ladder": [
+        {
+            "name": "LPD Cadet",
+            "name_id": "cadet",
+            "id": 666005873679663134
+        },
+        {
+            "name": "LPD Recruit",
+            "name_id": "recruit",
+            "id": 594238854102515735
+        },
+        {
+            "name": "LPD Officer",
+            "name_id": "officer",
+            "id": 594239040723615780
+        },
+        {
+            "name": "LPD Captain",
+            "name_id": "captain",
+            "id": 584111242705371138
+        }
+    ],
+    
+    // On duty
+    "on_duty_category": 599764719212953610,
+    "on_duty_role": 581553952550551564,
+    
+    // Database
+    "DB_name": "lpd_officer_monitor",
+    "DB_user": "root",
+    "DB_host": "127.0.0.1"
+}
