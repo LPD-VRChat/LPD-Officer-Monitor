@@ -79,5 +79,6 @@
     // Database
     "DB_name": "lpd_officer_monitor",
     "DB_user": "lpd",
-    "DB_host": "localhost"
+    "DB_host": "localhost",
+    "DB_socket": "/run/mysqld/mysqld.sock"
 }

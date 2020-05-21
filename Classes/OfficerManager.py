@@ -51,15 +51,27 @@ class OfficerManager():
     async def start(cls, bot, db_password):
 
         # Setup database
-        db = await aiomysql.connect(
-            host=bot.settings["DB_host"],
-            port=3306,
-            user=bot.settings["DB_user"],
-            password=db_password,
-            db=bot.settings["DB_name"],
-            loop=asyncio.get_event_loop(),
-            autocommit=True
-        )
+        try:
+            db = await aiomysql.connect(
+                host=bot.settings["DB_host"],
+                port=3306,
+                user=bot.settings["DB_user"],
+                password=db_password,
+                db=bot.settings["DB_name"],
+                loop=asyncio.get_event_loop(),
+                autocommit=True,
+                unix_socket=bot.settings["DB_socket"]
+            )
+        except KeyError:
+            db = await aiomysql.connect(
+                host=bot.settings["DB_host"],
+                port=3306,
+                user=bot.settings["DB_user"],
+                password=db_password,
+                db=bot.settings["DB_name"],
+                loop=asyncio.get_event_loop(),
+                autocommit=True
+            )
         
         # Fetch all the officers from the database
         try:
