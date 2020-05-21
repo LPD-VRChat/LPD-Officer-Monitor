@@ -8,6 +8,7 @@ import datetime
 import time
 import sys
 import traceback
+import argparse
 
 # Community
 import aiomysql
@@ -25,15 +26,28 @@ from Classes.extra_functions import handle_error, get_settings_file
 
 
 # ====================
+# Argparse
+# ====================
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-s", "--server", action="store_true")
+parsed = parser.parse_args(sys.argv)
+
+
+# ====================
 # Global Variables
 # ====================
 
-settings = get_settings_file("remote_settings")
+if parsed.server:
+    settings = get_settings_file("remote_settings")
+    keys = get_settings_file("remote_keys")
+else:
+    settings = get_settings_file("settings")
+    keys = get_settings_file("keys")
+
 bot = commands.Bot(command_prefix=settings["bot_prefix"])
 bot.settings = settings
 bot.officer_manager = None
-# help_dict = get_settings_file("help", in_settings_folder = False)
-keys = get_settings_file("Keys")
 
 
 # ====================
