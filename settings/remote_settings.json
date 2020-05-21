@@ -1,0 +1,83 @@
+{
+    "Server_ID": 645383380870889482,
+    "max_inactive_days": 28,
+    "bot_prefix": "=",
+    "db_time_format": "%Y-%m-%d %H:%M:%S",
+    "sleep_time_between_officer_checks": 3600,
+
+    // Channels
+    "monitored_channels": {
+        "ignored_categories": [
+            696352449228832778,
+            645390444691456020,
+            647218270411292694,
+            658094796413599754
+        ]
+    },
+    "training_finished_channel": 655570475216535585,
+    "admin_bot_channel": 645383848284258305,
+    "error_log_channel": 677546865998168144,
+    "inactive_channel_name": "inactive",
+
+    // Roles
+    "lpd_role": 654438235950415902,
+    "trainer_role": 654438056656371736,
+    "slrt_trainer_role": 663137582317568001,
+    "slrt_trained_role": 665996573981016103,
+    "role_ladder": [
+        {
+            "name": "LPD Cadet",
+            "name_id": "cadet",
+            "id": 663138744588566532
+        },
+        {
+            "name": "LPD Recruit",
+            "name_id": "recruit",
+            "id": 645394827025842196
+        },
+        {
+            "name": "LPD Officer",
+            "name_id": "officer",
+            "id": 645394785267482624
+        },
+        {
+            "name": "LPD Corporal",
+            "name_id": "corporal",
+            "id": 645394678409330688
+        },
+        {
+            "name": "LPD Sergeant",
+            "name_id": "sergeant",
+            "id": 645394647350247465
+        },
+        {
+            "name": "LPD Lieutenant",
+            "name_id": "lieutenant",
+            "id": 645394607714074634
+        },
+        {
+            "name": "LPD Captain",
+            "name_id": "captain",
+            "id": 645394574055047198
+        },
+        {
+            "name": "LPD Deputy Chief",
+            "name_id": "deputy_chief",
+            "id": 645394500717641751
+        },
+        {
+            "name": "LPD Chief",
+            "name_id": "chief",
+            "id": 645388308158873610
+        }
+    ],
+
+    // On duty
+    "on_duty_category": 645392700257992728,
+    "on_duty_role": 653753817099272222,
+
+    // Database
+    "DB_name": "lpd_officer_monitor",
+    "DB_user": "root",
+    "DB_host": "localhost"
+}
