@@ -78,6 +78,6 @@
 
     // Database
     "DB_name": "lpd_officer_monitor",
-    "DB_user": "root",
+    "DB_user": "lpd",
     "DB_host": "localhost"
 }
