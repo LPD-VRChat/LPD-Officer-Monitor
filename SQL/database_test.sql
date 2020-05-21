@@ -82,4 +82,13 @@ WHERE officer_id = 378666988412731404
 SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
 FROM TimeLog
 WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
-GROUP BY officer_id;
+GROUP BY officer_id
+ORDER BY patrol_length DESC
+LIMIT 3;
+
+SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+FROM TimeLog
+WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
+GROUP BY officer_id
+ORDER BY patrol_length DESC
+LIMIT 3;
