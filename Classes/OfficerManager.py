@@ -186,6 +186,20 @@ class OfficerManager():
     #    check officers   
     # ====================
 
+    async def get_most_active_officers(self, number_of_officers, from_datetime, to_datetime):
+        result = await self.send_db_request(
+            """
+            SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+            FROM TimeLog
+            WHERE end_time > %s AND end_time < %s
+            GROUP BY officer_id
+            ORDER BY patrol_length DESC
+            LIMIT %s
+            """,
+            (from_datetime, to_datetime, number_of_officers)
+        )
+        return result
+
     def is_officer(self, member):
         if member is None: return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]

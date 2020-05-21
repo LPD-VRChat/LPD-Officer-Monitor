@@ -172,46 +172,6 @@ class Officer():
 
     # Internal functions
 
-    async def _get_datetime_days(self, days):
-
-        # Create the datetime objects from the number of second since epoc
-        from_datetime = datetime.fromtimestamp(math.floor(time.time() - days * 86400))
-        to_datetime = datetime.fromtimestamp(math.floor(time.time()))
-
-        # Return the datetime objects
-        return (from_datetime, to_datetime)
-    
-    async def _get_datetime_date(self, from_date, to_date):
-
-        from_date = from_date.split("/")
-        try: to_date = to_date.split("/")
-        except AttributeError: pass
-
-        # Make sure the values are all their and are numbers
-        for date in [from_date, to_date]:
-            
-            # This makes sure that the checks are 
-            if date is None: continue
-
-            # Make sure the length is correct
-            if len(date) != 3:
-                raise ValueError("Their is an error in the date you put in, make sure to split the date with a slash. Example: 30/2/2020")
-            
-            # Make sure all the things between the slashes are numbers
-            for part in date:
-                if not ef.is_number(part):
-                    raise ValueError("The date you submitted does not only contain numbers, make sure that the date you submit only contains numbers and slashes. Example: 30/2/2020")
-
-        # Translate the from_date into datetime a object
-        from_datetime = datetime(int(from_date[2]), int(from_date[1]), int(from_date[0]), 0, 0)
-        
-        # If the to_date is none then it will set that as the current time
-        if to_date is None: to_datetime = datetime.fromtimestamp(math.floor(time.time()))
-        else: to_datetime = datetime(int(to_date[2]), int(to_date[1]), int(to_date[0]), 0, 0)
-
-        # Return the datetime objects
-        return (from_datetime, to_datetime)
-
     async def _get_time_datetime(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
         from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])

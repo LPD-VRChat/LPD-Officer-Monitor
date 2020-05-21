@@ -14,15 +14,17 @@ def is_number(string):
     except ValueError:
         return False
 
-async def output_long_str(channel, string):
-    output_str = ""
+async def send_long(channel, string):
+    str_list_len = lambda str_list: sum(len(i)+1 for i in str_list)
+
+    output_list = []
     for line in string.splitlines():
-        if len(output_str + line + "\n") < 2000:
-            output_str += line + "\n"
+        if str_list_len(output_list) + len(line) + 1 < 2000:
+            output_list.append(line)
         else:
-            await channel.send(output_str)
-            output_str = line
-    await channel.send(output_str)
+            await channel.send("\n".join(output_list))
+            output_list = [line]
+    await channel.send("\n".join(output_list))
 
 def get_settings_file(settings_file_name, in_settings_folder = True):
     

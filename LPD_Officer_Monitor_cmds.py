@@ -21,7 +21,7 @@ from Classes.OfficerManager import OfficerManager
 import Classes.errors as errors
 from Classes.commands import Time
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, output_long_str
+from Classes.extra_functions import handle_error, get_settings_file
 
 
 # ====================

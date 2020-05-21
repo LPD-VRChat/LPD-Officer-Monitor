@@ -73,8 +73,13 @@ SELECT officer_id, channel_id, message_id, send_time
 FROM MessageActivityLog
 WHERE officer_id = 378666988412731404
 UNION
-SELECT officer_id, 0, 0, end_time AS "send_time"
+(SELECT officer_id, 0, 0, end_time
 FROM TimeLog
 WHERE officer_id = 378666988412731404
 	ORDER BY end_time DESC
-    LIMIT 1;
+    LIMIT 1);
+
+SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+FROM TimeLog
+WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
+GROUP BY officer_id;
