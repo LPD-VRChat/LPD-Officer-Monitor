@@ -11,7 +11,8 @@ USE LPD_Officer_Monitor;
 
 CREATE TABLE Officers
 (
-	officer_id BIGINT UNSIGNED PRIMARY KEY
+	officer_id BIGINT UNSIGNED PRIMARY KEY,
+    started_monitoring_time DATETIME
 );
 
 /*CREATE TABLE TimePeriods

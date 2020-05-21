@@ -69,15 +69,19 @@ UPDATE MessageActivityLog SET message_id = 711763900915253266, send_time = "2020
 
 SELECT * FROM MessageActivityLog WHERE officer_id = 378666988412731404;
 
-SELECT officer_id, channel_id, message_id, send_time
+SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
 FROM MessageActivityLog
 WHERE officer_id = 378666988412731404
 UNION
-(SELECT officer_id, 0, 0, end_time
+(SELECT officer_id, null, null, end_time, "On duty activity" AS "other_activity"
 FROM TimeLog
 WHERE officer_id = 378666988412731404
 	ORDER BY end_time DESC
-    LIMIT 1);
+    LIMIT 1)
+UNION
+(SELECT officer_id, null, null, started_monitoring_time, "Started monitoring" AS "other_activity"
+FROM Officers
+WHERE officer_id = 378666988412731404);
 
 SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
 FROM TimeLog

@@ -5,6 +5,7 @@
 # Standard
 import asyncio
 import traceback
+from datetime import datetime, timezone
 
 # Community
 import aiomysql
@@ -150,7 +151,10 @@ class OfficerManager():
         # Add the officer to the database
         try:
             cur = await self.db.cursor()
-            await cur.execute("INSERT INTO Officers(officer_id) Values (%s)", (officer_id))
+            await cur.execute(
+                "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
+                (officer_id, datetime.now(timezone.utc))
+            )
             await cur.close()
         except Exception as error:
             print("ERROR failed to add the officer with the ID",officer_id,"to the database:\n"+str(error))

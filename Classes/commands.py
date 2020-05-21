@@ -92,10 +92,10 @@ class Time(commands.Cog):
 
         # Add the channels
         for result in time_results:
-            if result['channel_id'] == 0:
+            if result['channel_id'] == None:
                 embed.add_field(
                     name=arrow.Arrow.fromdatetime(result["time"]).humanize(),
-                    value=f"On duty activity"
+                    value=result["other_activity"]
                 )
             else:
                 url = f"https://discordapp.com/channels/{self.bot.officer_manager.guild.id}/{result['channel_id']}/{result['message_id']}"
@@ -147,7 +147,7 @@ class Time(commands.Cog):
 
             if from_datetime == None and to_datetime != None:
                 # The user wants the from_time to be the current time
-                from_datetime = datetime.now(timezone.utc())
+                from_datetime = datetime.now(timezone.utc)
                 to_datetime = self.parse_date(parsed.to_date)
 
             elif from_datetime != None and to_datetime == None:

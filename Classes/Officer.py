@@ -160,8 +160,8 @@ class Officer():
 
     async def log_time(self, start_time, end_time):
 
-        string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime(self.bot.officer_manager.bot.settings["db_time_format"])
-        string_end_time = datetime.fromtimestamp(math.floor(end_time)).strftime(self.bot.officer_manager.bot.settings["db_time_format"])
+        string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime(self.bot.settings["db_time_format"])
+        string_end_time = datetime.fromtimestamp(math.floor(end_time)).strftime(self.bot.settings["db_time_format"])
 
         print("DEBUG Time logged for "+self.discord_name+": "+string_start_time+" - "+string_end_time+" Seconds: "+str(math.floor(end_time-start_time)))
         
@@ -292,24 +292,29 @@ class Officer():
             "officer_id": activity_tuple[0],
             "channel_id": activity_tuple[1],
             "message_id": activity_tuple[2],
-            "time": activity_tuple[3]
+            "time": activity_tuple[3],
+            "other_activity": activity_tuple[4]
         }
 
     async def _get_all_activity(self, counted_channel_ids):
         result = await self.bot.officer_manager.send_db_request(
             """
-            SELECT officer_id, channel_id, message_id, send_time
+            SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
             FROM MessageActivityLog
             WHERE officer_id = %s
             UNION
-            (SELECT officer_id, 0, 0, end_time
+            (SELECT officer_id, null, null, end_time, "On duty activity" AS "other_activity"
             FROM TimeLog
             WHERE officer_id = %s
                 ORDER BY end_time DESC
                 LIMIT 1)
+            UNION
+            (SELECT officer_id, null, null, started_monitoring_time, "Started monitoring" AS "other_activity"
+            FROM Officers
+            WHERE officer_id = %s)
             """,
-            (self.id, self.id)
+            (self.id, self.id, self.id)
         )
         
         if result == None: return None
-        return filter(lambda x: x[1] in counted_channel_ids or x[1] == 0, result)
+        return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)
