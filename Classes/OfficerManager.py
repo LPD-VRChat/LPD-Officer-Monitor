@@ -20,9 +20,9 @@ from Classes.errors import MemberNotFoundError
 
 class OfficerManager():
 
-    def __init__(self, db, all_officer_ids, bot):
+    def __init__(self, db_pool, all_officer_ids, bot):
         self.bot = bot
-        self.db = db
+        self.db_pool = db_pool
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -53,7 +53,7 @@ class OfficerManager():
 
         # Setup database
         try:
-            db = await aiomysql.connect(
+            db_pool = await aiomysql.create_pool(
                 host=bot.settings["DB_host"],
                 port=3306,
                 user=bot.settings["DB_user"],
@@ -64,7 +64,7 @@ class OfficerManager():
                 unix_socket=bot.settings["DB_socket"]
             )
         except KeyError:
-            db = await aiomysql.connect(
+            db_pool = await aiomysql.create_pool(
                 host=bot.settings["DB_host"],
                 port=3306,
                 user=bot.settings["DB_user"],
@@ -76,25 +76,28 @@ class OfficerManager():
         
         # Fetch all the officers from the database
         try:
-            cur = await db.cursor()
-            await cur.execute("SELECT officer_id FROM Officers")
-            result = await cur.fetchall()
-            await cur.close()
+            async with db_pool.acquire() as conn:
+                cur = await conn.cursor()
+                await cur.execute("SELECT officer_id FROM Officers")
+                result = await cur.fetchall()
+                await cur.close()
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
             print(error)
             print("Shutting down...")
             exit()
                 
-        return cls(db, (x[0] for x in result), bot)
+        return cls(db_pool, (x[0] for x in result), bot)
 
     async def send_db_request(self, query, args):
-        cur = await self.db.cursor()
 
-        await cur.execute(query, args)
-        result = await cur.fetchall()
+        async with self.db_pool.acquire() as conn:
+            cur = await conn.cursor()
 
-        await cur.close()
+            await cur.execute(query, args)
+            result = await cur.fetchall()
+
+            await cur.close()
 
         try:
             if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
@@ -152,12 +155,10 @@ class OfficerManager():
 
         # Add the officer to the database
         try:
-            cur = await self.db.cursor()
-            await cur.execute(
+            await self.send_db_request(
                 "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
                 (officer_id, datetime.now(timezone.utc))
             )
-            await cur.close()
         except Exception as error:
             print("ERROR failed to add the officer with the ID",officer_id,"to the database:\n"+str(error))
             return None
@@ -182,10 +183,11 @@ class OfficerManager():
     async def remove_officer(self, officer_id, reason=None):
 
         # Remove the officer from the database
-        cur = await self.db.cursor()
-        await cur.execute("DELETE FROM TimeLog WHERE officer_id = %s", (officer_id))
-        await cur.execute("DELETE FROM Officers WHERE officer_id = %s", (officer_id))
-        await cur.close()
+        async with self.db_pool.acquire() as conn:
+            cur = await conn.cursor()
+            for table in ["MessageActivityLog", "TimeLog", "Officers"]:
+                await cur.execute("DELETE FROM %s WHERE officer_id = %s", (table, officer_id))
+            await cur.close()
 
         # Remove the officer from the officer list
         i = 0

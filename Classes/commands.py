@@ -128,13 +128,14 @@ class Time(commands.Cog):
         # Set the variables
         from_datetime = None
         to_datetime = None
+        time_string = None
 
         # The user selected nothing and will get the automatic option
         if parsed.days == None and parsed.from_date == None and parsed.to_date == None:
             parsed.days = 28
 
         # The user selected a set amount of days
-        if parsed.days:
+        if parsed.days != None:
 
             # Create the datetime objects from the number of second since epoc
             from_datetime = datetime.fromtimestamp(math.floor(time.time() - parsed.days * 86400))
@@ -143,14 +144,14 @@ class Time(commands.Cog):
             time_string = f"for the last {parsed.days} days"
 
         # The user selected from or to dates
-        elif parsed.from_date or parsed.to_date:
+        elif parsed.from_date != None or parsed.to_date != None:
 
-            if from_datetime == None and to_datetime != None:
+            if parsed.from_date == None and parsed.to_date != None:
                 # The user wants the from_time to be the current time
                 from_datetime = datetime.now(timezone.utc)
                 to_datetime = self.parse_date(parsed.to_date)
 
-            elif from_datetime != None and to_datetime == None:
+            elif parsed.from_date != None and parsed.to_date == None:
                 # The user wants the to_datetime to be 28 days from from_datetime
                 from_datetime = self.parse_date(parsed.from_date)
                 to_datetime = from_datetime + timedelta(days=28)
@@ -256,7 +257,7 @@ class Time(commands.Cog):
         else:
             
             # Get all the patrols
-            all_patrols = officer.get_full_time(from_datetime, to_datetime)
+            all_patrols = await officer.get_full_time(from_datetime, to_datetime)
 
             # Send the header
             await ctx.send(out_string)

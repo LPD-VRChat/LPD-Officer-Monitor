@@ -135,10 +135,10 @@ class Officer():
 
         print("DEBUG Time logged for "+self.discord_name+": "+string_start_time+" - "+string_end_time+" Seconds: "+str(math.floor(end_time-start_time)))
         
-        cur = await self.bot.officer_manager.db.cursor()
-        args = (self.id, string_start_time, string_end_time)
-        await cur.execute("INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (%s, %s, %s)", args)
-        await cur.close()
+        await self.bot.officer_manager.send_db_request(
+            "INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (%s, %s, %s)",
+            (self.id, string_start_time, string_end_time)
+        )
 
     async def get_time(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
@@ -162,36 +162,20 @@ class Officer():
         else: return result[0][0]
 
     async def get_full_time(self, from_datetime_object, to_datetime_object):
-        # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
-        to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
-        cur = await self.bot.officer_manager.db.cursor()
-        query = """
-        SELECT start_time, end_time, end_time - start_time AS 'duration'
-        FROM TimeLog
-        WHERE
-            officer_id = %s AND
-            (start_time > %s AND start_time < %s)"""
-        # This is currently not in use
-        """
-        UNION
-        SELECT null AS 'start_time', null AS 'end_time', SUM(end_time - start_time) AS 'duration'
-        FROM TimeLog
-        WHERE
-            officer_id = %s AND
-            (start_time > "%s" AND start_time < "%s")"""
-        
-        print("From datetime:",from_datetime_object)
-        print("From:",from_db_time)
-        print("To:",to_db_time)
+        result = await self.bot.officer_manager.send_db_request(
+            """
+            SELECT start_time, end_time, end_time - start_time AS 'duration'
+            FROM TimeLog
+            WHERE
+                officer_id = %s AND
+                (start_time > %s AND start_time < %s)
+            """,
+            (self.id, from_datetime_object, to_datetime_object)
+        )
 
-        args = (str(self.id), from_db_time, to_db_time)
-        await cur.execute(query, args)
-        result = await cur.fetchall()
-        await cur.close()
-
+        # Return the result
         return result
 
 
