@@ -96,8 +96,10 @@ class OfficerManager():
 
         await cur.close()
 
-        try: result[0][0]
-        except IndexError: result = None
+        try:
+            if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
+                return None
+        except IndexError: return None
 
         return result
 

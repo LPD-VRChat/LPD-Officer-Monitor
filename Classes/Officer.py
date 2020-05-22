@@ -178,19 +178,19 @@ class Officer():
         to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
-        cur = await self.bot.officer_manager.db.cursor()
-        query = """ SELECT SUM(end_time - start_time) AS 'Time'
-                    FROM TimeLog
-                    WHERE
-                        officer_id = %s AND
-                        (start_time > %s AND start_time < %s)"""
-        args = (str(self.id), from_db_time, to_db_time)
-        await cur.execute(query, args)
-        result = await cur.fetchall()
-        await cur.close()
+        result = await self.bot.officer_manager.send_db_request(
+            """
+            SELECT SUM(end_time - start_time) AS 'Time'
+            FROM TimeLog
+            WHERE
+                officer_id = %s AND
+                (start_time > %s AND start_time < %s)
+            """,
+            (str(self.id), from_db_time, to_db_time)
+        )
 
         # Make sure the function will return a number even though the user has never gone on duty
-        if result[0][0] is None: return 0
+        if result == None: return 0
         else: return result[0][0]
 
     async def _get_full_time_datetime(self, from_datetime_object, to_datetime_object):
