@@ -182,8 +182,8 @@ async def on_command_error(ctx, exception):
 # ====================
 
 bot.remove_command("help")
-bot.add_cog(Time(bot))
 bot.add_cog(Help(bot))
+bot.add_cog(Time(bot))
 
 
 # ====================
