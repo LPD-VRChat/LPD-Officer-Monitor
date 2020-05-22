@@ -147,14 +147,16 @@ class Time(commands.Cog):
         elif parsed.from_date != None or parsed.to_date != None:
 
             if parsed.from_date == None and parsed.to_date != None:
-                # The user wants the from_time to be the current time
-                from_datetime = datetime.now(timezone.utc)
+                # The user is giving to_time and thus wants from_time
+                # to be a month before from_time
                 to_datetime = self.parse_date(parsed.to_date)
+                from_datetime = to_datetime - timedelta(days=28)
 
             elif parsed.from_date != None and parsed.to_date == None:
-                # The user wants the to_datetime to be 28 days from from_datetime
+                # The user is giving from_time and thus wants from_time
+                # to be the current time
                 from_datetime = self.parse_date(parsed.from_date)
-                to_datetime = from_datetime + timedelta(days=28)
+                to_datetime = datetime.now(timezone.utc)
 
             else:
                 # Both are here, they can just be parsed
