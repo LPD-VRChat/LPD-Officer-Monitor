@@ -247,7 +247,7 @@ class Time(commands.Cog):
         if not parsed.list:
 
             # Get the time in seconds
-            time_seconds = await officer._get_time_datetime(from_datetime, to_datetime)
+            time_seconds = await officer.get_time(from_datetime, to_datetime)
 
             # Print the results out
             out_string += self.seconds_to_string(time_seconds)
@@ -256,7 +256,7 @@ class Time(commands.Cog):
         else:
             
             # Get all the patrols
-            all_patrols = officer._get_full_time_datetime(from_datetime, to_datetime)
+            all_patrols = officer.get_full_time(from_datetime, to_datetime)
 
             # Send the header
             await ctx.send(out_string)

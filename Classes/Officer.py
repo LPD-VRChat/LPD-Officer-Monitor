@@ -128,36 +128,6 @@ class Officer():
 
     # External functions
 
-    async def get_time_days(self, days=28):
-        
-        # Get the datetime objects
-        from_datetime, to_datetime = await self._get_datetime_days(days)
-        
-        # Calclulate the time and return it
-        return await self._get_time_datetime(from_datetime, to_datetime)
-
-    async def get_time_date(self, from_date, to_date=None):
-
-        # Get the datetime objects
-        from_datetime, to_datetime = await self._get_datetime_date(from_date, to_date)
-
-        # Calclulate the time and return it
-        return await self._get_time_datetime(from_datetime, to_datetime)
-
-    async def get_full_time_days(self, days=28):
-        # Get the datetime objects
-        from_datetime, to_datetime = await self._get_datetime_days(days)
-        
-        # Calclulate the time and return it
-        return await self._get_full_time_datetime(from_datetime, to_datetime)
-
-    async def get_full_time_date(self, from_date, to_date=None):
-        # Get the datetime objects
-        from_datetime, to_datetime = await self._get_datetime_date(from_date, to_date)
-
-        # Calclulate the time and return it
-        return await self._get_full_time_datetime(from_datetime, to_datetime)
-
     async def log_time(self, start_time, end_time):
 
         string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime(self.bot.settings["db_time_format"])
@@ -170,9 +140,7 @@ class Officer():
         await cur.execute("INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (%s, %s, %s)", args)
         await cur.close()
 
-    # Internal functions
-
-    async def _get_time_datetime(self, from_datetime_object, to_datetime_object):
+    async def get_time(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
         from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
         to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
@@ -193,7 +161,7 @@ class Officer():
         if result == None: return 0
         else: return result[0][0]
 
-    async def _get_full_time_datetime(self, from_datetime_object, to_datetime_object):
+    async def get_full_time(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
         from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
         to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
