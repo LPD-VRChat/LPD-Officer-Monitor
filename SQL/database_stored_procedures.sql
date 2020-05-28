@@ -15,7 +15,7 @@ DROP PROCEDURE IF EXISTS GetUserTimeSeconds//
 CREATE PROCEDURE GetUserTimeSeconds(officer_id BIGINT, time_period_id INT)
 BEGIN
 
-	SET @sql = 'SELECT SUM(end_time - start_time) AS "Time" FROM TimeLog WHERE officer_id=@VAR1 AND time_period_id=@VAR2;';
+	SET @sql = 'SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "Time" FROM TimeLog WHERE officer_id=@VAR1 AND time_period_id=@VAR2;';
 	SET @VAR1=officer_id;
 	SET @VAR2=time_period_id;
     

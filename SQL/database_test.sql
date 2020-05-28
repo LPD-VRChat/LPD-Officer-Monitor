@@ -28,7 +28,7 @@ INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (378666988412731404
 SELECT * FROM Officers;
 SELECT * FROM TimeLog;
 
-SELECT SUM(end_time - start_time) AS 'Time' FROM TimeLog WHERE officer_id = 378666988412731404;
+SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS 'Time' FROM TimeLog WHERE officer_id = 378666988412731404;
 
 SELECT * FROM TimeLog WHERE officer_id = 378666988412731404 AND (start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
 
@@ -38,7 +38,7 @@ WHERE
 	officer_id = 378666988412731404 AND
 	(start_time > '2020-01-07 15:17:04' AND start_time < '2020-01-07 21:16:49');
     
-SELECT start_time, end_time, end_time - start_time AS 'duration'
+SELECT start_time, end_time, TIMESTAMPDIFF(SECOND, start_time, end_time) AS 'duration'
 FROM TimeLog
 WHERE
 	officer_id = 378666988412731404 AND
@@ -83,14 +83,14 @@ UNION
 FROM Officers
 WHERE officer_id = 378666988412731404);
 
-SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
 FROM TimeLog
 WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
 GROUP BY officer_id
 ORDER BY patrol_length DESC
 LIMIT 3;
 
-SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
 FROM TimeLog
 WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
 GROUP BY officer_id

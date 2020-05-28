@@ -209,7 +209,7 @@ class OfficerManager():
     async def get_most_active_officers(self, number_of_officers, from_datetime, to_datetime):
         result = await self.send_db_request(
             """
-            SELECT officer_id, SUM(end_time - start_time) AS "patrol_length"
+            SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
             WHERE end_time > %s AND end_time < %s
             GROUP BY officer_id

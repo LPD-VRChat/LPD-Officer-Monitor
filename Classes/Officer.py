@@ -148,7 +148,7 @@ class Officer():
         # Execute the query to get the time information
         result = await self.bot.officer_manager.send_db_request(
             """
-            SELECT SUM(end_time - start_time) AS 'Time'
+            SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS 'Time'
             FROM TimeLog
             WHERE
                 officer_id = %s AND
@@ -166,7 +166,7 @@ class Officer():
         # Execute the query to get the time information
         result = await self.bot.officer_manager.send_db_request(
             """
-            SELECT start_time, end_time, end_time - start_time AS 'duration'
+            SELECT start_time, end_time, TIMESTAMPDIFF(SECOND, start_time, end_time) AS 'duration'
             FROM TimeLog
             WHERE
                 officer_id = %s AND
