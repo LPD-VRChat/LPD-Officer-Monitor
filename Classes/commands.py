@@ -401,6 +401,10 @@ class Time(commands.Cog):
 
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
+        """
+        This command lists all the recruits that have been active enough in the last 28
+        days to get promoted to officer.
+        """
         
         # Make sure required_hours is a number
         try: required_hours = int(required_hours)
