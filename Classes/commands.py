@@ -381,7 +381,11 @@ class Time(commands.Cog):
             return
 
         # Get the time for all the officers
-        all_times = await self.bot.officer_manager.get_most_active_officers(parsed.how_many_officers, from_datetime, to_datetime)
+        all_times = await self.bot.officer_manager.get_most_active_officers(
+            from_datetime,
+            to_datetime,
+            limit=parsed.how_many_officers
+        )
         
         # Format the output and send it
         output_list = []
@@ -394,3 +398,38 @@ class Time(commands.Cog):
             output_list.append(f"{officer.mention} | {time_string}")
 
         await send_long(ctx.channel, "\n".join(output_list))
+
+    @commands.command()
+    async def officer_promotions(self, ctx, required_hours):
+        
+        # Make sure required_hours is a number
+        try: required_hours = int(required_hours)
+        except ValueError:
+            await ctx.send("required_hours needs to be a number.")
+            return
+
+        # Get everyone that has been active enough
+        all_times = await self.bot.officer_manager.get_most_active_officers(
+            datetime.now(timezone.utc) - timedelta(days=28),
+            datetime.now(timezone.utc),
+            limit = None
+        )
+
+        # Filter list for only recruits that have been active enough
+        all_officers_for_promotion = []
+        for row in all_times:
+            officer = self.bot.officer_manager.get_officer(row[0])
+            
+            recruit_role_id = self.bot.officer_manager.get_settings_role("recruit")["id"]
+            if officer and recruit_role_id in (x.id for x in officer.member.roles) and row[1] >= required_hours*3600:
+                all_officers_for_promotion.append(officer)
+        
+        # Format the output and send it
+        if len(all_officers_for_promotion) == 0:
+            await ctx.send(f"Their are no recruits that have been active for {required_hours} hours in the last 28 days.")
+        else:
+            out_str = "\n".join((
+                f"Recruits that have been active for {required_hours} hours in the last 28 days:",
+                "\n".join(f"@{x.discord_name}" for x in all_officers_for_promotion)
+            ))
+            await send_long(ctx.channel, out_str)

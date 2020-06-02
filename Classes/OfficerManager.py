@@ -206,19 +206,21 @@ class OfficerManager():
     #    check officers   
     # ====================
 
-    async def get_most_active_officers(self, number_of_officers, from_datetime, to_datetime):
-        result = await self.send_db_request(
-            """
+    async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
+        db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
             WHERE end_time > %s AND end_time < %s
             GROUP BY officer_id
             ORDER BY patrol_length DESC
-            LIMIT %s
-            """,
-            (from_datetime, to_datetime, number_of_officers)
-        )
-        return result
+            """
+        arg_list = [from_datetime, to_datetime]
+
+        if limit:
+            db_request += "\nLIMIT %s"
+            arg_list.append(limit)
+
+        return await self.send_db_request( db_request, arg_list)
 
     def is_officer(self, member):
         if member is None: return False
@@ -245,3 +247,14 @@ class OfficerManager():
     @property
     def all_officers(self):
         return self._all_officers
+
+
+    # ====================
+    #   other functions   
+    # ====================
+
+    def get_settings_role(self, name_id):
+        for role in self.bot.officer_manager.bot.settings["role_ladder"]:
+            if role["name_id"] == name_id:
+                return role
+        raise ValueError("name_id not found in settings: "+str(name_id))

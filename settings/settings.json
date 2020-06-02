@@ -15,6 +15,9 @@
     "admin_bot_channel": 566777522252152883,
     "error_log_channel": 670751809538752512,
     "inactive_channel_name": "inactive",
+    "allowed_command_channels": [
+        566777522252152883
+    ],
     
     // Roles
     "lpd_role": 655133459714670592,

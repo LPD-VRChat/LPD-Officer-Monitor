@@ -79,7 +79,7 @@ class Officer():
     
     @property
     def is_trained(self):
-        cadet_id = self._get_settings_role("cadet")["id"]
+        cadet_id = self.bot.officer_manager.get_settings_role("cadet")["id"]
         return not self._has_role(cadet_id)
     
     @property
@@ -92,7 +92,7 @@ class Officer():
 
     @property
     def discord_name(self):
-        return self.member.name+"#"+self.member.discriminator
+        return f"{self.member.name}#{self.member.discriminator}"
 
     @property
     def mention(self):
@@ -108,12 +108,6 @@ class Officer():
 
 
     # Internal functions
-
-    def _get_settings_role(self, name_id):
-        for role in self.bot.officer_manager.bot.settings["role_ladder"]:
-            if role["name_id"] == name_id:
-                return role
-        raise ValueError("name_id not found in settings: "+str(name_id))
 
     def _has_role(self, role_id):
         for role in self.member.roles:

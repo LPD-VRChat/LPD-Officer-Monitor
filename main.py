@@ -95,8 +95,11 @@ async def on_ready():
 async def on_message(message):
     # print("on_message")
 
-    await bot.process_commands(message)
+    # Only parse the commands if the message was sent in an allowed channel
+    if message.channel.id in bot.settings["allowed_command_channels"]:
+        await bot.process_commands(message)
 
+    # Archive the message
     if message.channel.category_id not in bot.settings["monitored_channels"]["ignored_categories"] and bot.officer_manager != None:
         officer = bot.officer_manager.get_officer(message.author.id)
         if officer: await officer.log_message_activity(message)
