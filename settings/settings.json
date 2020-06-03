@@ -13,6 +13,7 @@
     },
     "training_finished_channel": 655128316373762121,
     "admin_bot_channel": 566777522252152883,
+    "general_bot_channel": 708117281376305232,
     "error_log_channel": 670751809538752512,
     "inactive_channel_name": "inactive",
     "allowed_command_channels": [
@@ -44,7 +45,15 @@
         {
             "name": "LPD Captain",
             "name_id": "captain",
-            "id": 584111242705371138
+            "id": 584111242705371138,
+            "is_white_shirt": true
+        },
+        {
+            "name": "LPD Chief",
+            "name_id": "chief",
+            "id": 717803321569837216,
+            "is_white_shirt": true,
+            "is_admin": true
         }
     ],
     

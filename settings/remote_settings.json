@@ -16,6 +16,7 @@
     },
     "training_finished_channel": 655570475216535585,
     "admin_bot_channel": 645383848284258305,
+    "general_bot_channel": 708736137463726131,
     "error_log_channel": 677546865998168144,
     "inactive_channel_name": "inactive",
     "allowed_command_channels": [
@@ -28,11 +29,6 @@
     "slrt_trainer_role": 663137582317568001,
     "slrt_trained_role": 665996573981016103,
     "role_ladder": [
-        {
-            "name": "LPD Cadet",
-            "name_id": "cadet",
-            "id": 663138744588566532
-        },
         {
             "name": "LPD Recruit",
             "name_id": "recruit",
@@ -54,24 +50,36 @@
             "id": 645394647350247465
         },
         {
+            "name": "LPD Staff Sergeant",
+            "name_id": "staff_sergeant",
+            "id": 645394647350247465,
+            "is_white_shirt": true
+        },
+        {
             "name": "LPD Lieutenant",
             "name_id": "lieutenant",
-            "id": 645394607714074634
+            "id": 645394607714074634,
+            "is_white_shirt": true
         },
         {
             "name": "LPD Captain",
             "name_id": "captain",
-            "id": 645394574055047198
+            "id": 645394574055047198,
+            "is_white_shirt": true
         },
         {
             "name": "LPD Deputy Chief",
             "name_id": "deputy_chief",
-            "id": 645394500717641751
+            "id": 645394500717641751,
+            "is_white_shirt": true,
+            "is_admin": true
         },
         {
             "name": "LPD Chief",
             "name_id": "chief",
-            "id": 645388308158873610
+            "id": 645388308158873610,
+            "is_white_shirt": true,
+            "is_admin": true
         }
     ],
 

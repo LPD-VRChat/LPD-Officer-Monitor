@@ -16,6 +16,7 @@ import discord
 # Mine
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
+from Classes.extra_functions import handle_error
 
 
 class OfficerManager():
@@ -155,12 +156,20 @@ class OfficerManager():
 
         # Add the officer to the database
         try:
-            await self.send_db_request(
-                "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
-                (officer_id, datetime.now(timezone.utc))
-            )
+            try:
+                await self.send_db_request(
+                    "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
+                    (officer_id, datetime.now(timezone.utc))
+                )
+            except mysql_errors.IntegrityError as error:
+                print(repr(error.args))
+                return None
         except Exception as error:
-            print("ERROR failed to add the officer with the ID",officer_id,"to the database:\n"+str(error))
+            await handle_error(
+                self.bot,
+                f"**Failed to add the officer with the ID {officer_id} to the database.**",
+                traceback.format_exc()
+            )
             return None
 
         # Create the officer
@@ -225,6 +234,7 @@ class OfficerManager():
     def is_officer(self, member):
         if member is None: return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
+        all_lpd_ranks.append(self.bot.settings["lpd_role"])
         for role in member.roles:
             if role.id in all_lpd_ranks:
                 return True

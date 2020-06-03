@@ -66,26 +66,27 @@ class Officer():
     # ====================
 
     # External functions
+
+    @property
+    def is_white_shirt(self):
+        print(self._get_roles_with_tag("is_white_shirt"))
+        return self._has_role(*self._get_roles_with_tag("is_white_shirt"))
     
     @property
+    def is_admin(self):
+        return self._has_role(*self._get_roles_with_tag("is_admin"))
+
+    @property
     def is_trainer(self):
-        role_id = self.bot.officer_manager.bot.settings["trainer_role"]
-        return self._has_role(role_id)
+        return self._has_role(self.bot.settings["trainer_role"])
     
     @property
     def is_slrt_trainer(self):
-        role_id = self.bot.officer_manager.bot.settings["slrt_trainer_role"]
-        return self._has_role(role_id)
-    
-    @property
-    def is_trained(self):
-        cadet_id = self.bot.officer_manager.get_settings_role("cadet")["id"]
-        return not self._has_role(cadet_id)
+        return self._has_role(self.bot.settings["slrt_trainer_role"])
     
     @property
     def is_slrt_trained(self):
-        role_id = self.bot.officer_manager.bot.settings["slrt_trained_role"]
-        return not self._has_role(role_id)
+        return not self._has_role(self.bot.settings["slrt_trained_role"])
     
 
     # Often used member functions
@@ -109,11 +110,14 @@ class Officer():
 
     # Internal functions
 
-    def _has_role(self, role_id):
+    def _has_role(self, *role_ids):
         for role in self.member.roles:
-            if role.id == role_id:
+            if role.id in role_ids:
                 return True
         return False
+
+    def _get_roles_with_tag(self, role_tag):
+        return tuple(x["id"] for x in self.bot.settings["role_ladder"] if role_tag in x and x[role_tag] == True)
 
 
     # ====================
@@ -136,8 +140,8 @@ class Officer():
 
     async def get_time(self, from_datetime_object, to_datetime_object):
         # Convert the datetime objects into strings the database can understand
-        from_db_time = from_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
-        to_db_time = to_datetime_object.strftime(self.bot.officer_manager.bot.settings["db_time_format"])
+        from_db_time = from_datetime_object.strftime(self.bot.settings["db_time_format"])
+        to_db_time = to_datetime_object.strftime(self.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
         result = await self.bot.officer_manager.send_db_request(
@@ -210,7 +214,7 @@ class Officer():
             send_time = math.floor(time.time())
         
         # Make a string from the send_time the database can understand
-        string_send_time = datetime.fromtimestamp(math.floor(send_time)).strftime(self.bot.officer_manager.bot.settings["db_time_format"])
+        string_send_time = datetime.fromtimestamp(math.floor(send_time)).strftime(self.bot.settings["db_time_format"])
         
         # Get the row ID for the last activity in the channel
         row_id = await self.bot.officer_manager.send_db_request(

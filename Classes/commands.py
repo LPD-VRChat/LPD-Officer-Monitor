@@ -1,14 +1,13 @@
 # Standard
+import sys
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO
-import sys
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 import time
 import math
+import traceback
 
 # Community
 import discord
@@ -17,9 +16,11 @@ import texttable
 import arrow
 
 # Mine
+from Classes.extra_functions import send_long, handle_error
 from Classes.custom_arg_parse import ArgumentParser
+from Classes.menus import Confirm
 import Classes.errors as errors
-from Classes.extra_functions import send_long
+import Classes.checks as check
 
 
 class Time(commands.Cog):
@@ -171,6 +172,8 @@ class Time(commands.Cog):
 
     # Commands
 
+    @check.is_admin_bot_channel()
+    @check.is_white_shirt()
     @commands.command(usage="[options] <officer>")
     async def patrol_time(self, ctx, *args):
         """
@@ -305,6 +308,8 @@ class Time(commands.Cog):
             # Send the table if it is not empty
             if len(table.draw()) > 0: await ctx.send(draw_table(table))
 
+    @check.is_admin_bot_channel()
+    @check.is_white_shirt()
     @commands.command()
     async def last_active(self, ctx, officer):
         """
@@ -332,6 +337,8 @@ class Time(commands.Cog):
         # Send the embed
         await ctx.send(embed=self.create_last_active_embed(officer, result))
 
+    @check.is_admin_bot_channel()
+    @check.is_white_shirt()
     @commands.command(usage="[options] <how_many_officers>")
     async def top(self, ctx, *args):
         """
@@ -399,6 +406,8 @@ class Time(commands.Cog):
 
         await send_long(ctx.channel, "\n".join(output_list))
 
+    @check.is_admin_bot_channel()
+    @check.is_white_shirt()
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
@@ -437,3 +446,47 @@ class Time(commands.Cog):
                 "\n".join(f"@{x.discord_name}" for x in all_officers_for_promotion)
             ))
             await send_long(ctx.channel, out_str)
+
+    @check.is_admin_bot_channel()
+    @check.is_admin()
+    @commands.command()
+    async def promote_to_officer(self, ctx, *args):
+        """
+        This command promotes everyone that is mentioned in the message to officer.
+
+        This command should be used after =officer_promotions, when everyone has agreed
+        on who should be promoted and the promotion message has been posted in
+        #announcements.
+
+        You can just paste the message that came from =officer_promotions into this
+        command as long as everyone agreed that their was no one that needed to be
+        removed from that list.
+        """
+
+        # Make sure the admin is sure
+        result = await Confirm("Are you sure you want to promote all the recruits you mentioned to officer?").prompt(ctx)
+        if result != True:
+            await ctx.send("The promotion has been cancelled.")
+            return
+
+        # Set up some global variables
+        guild = self.bot.officer_manager.guild
+        recruit_role = guild.get_role(self.bot.officer_manager.get_settings_role("recruit")["id"])
+        officer_role = guild.get_role(self.bot.officer_manager.get_settings_role("officer")["id"])
+
+        # Promote everyone
+        try:
+
+            await ctx.send("I am now promoting everyone, please give me a few minutes.")
+
+            for member in ctx.message.mentions:
+                # Make sure the officer is a recruit
+                if recruit_role.id in (x.id for x in member.roles):
+                    await member.add_roles(officer_role)
+                    await member.remove_roles(recruit_role)
+
+            await ctx.send("Everyone has been promted to officer successfully.")
+
+        except Exception as error:
+            await ctx.send("**Not everyone was promoted to officer successfully**. Please go through and manually change the roles of members that did not get promoted. Please also contact Hroi so that he can fix the bot before next officer promotions happen.")
+            await handle_error(ctx.bot, error, traceback.format_exc())

@@ -66,11 +66,6 @@ def officer_manager_ready(ctx):
     if ctx.bot.officer_manager is None: raise errors.NotReadyYet("I am still starting up, give me a moment.")
     else: return True
 
-@bot.check
-def in_admin_bot_channel(ctx):
-    if ctx.channel.id == ctx.bot.settings["admin_bot_channel"]: return True
-    else: raise errors.WrongChannelForCommand("This command only works in the administration bot channel.")
-
 
 # ====================
 # Discord Events
