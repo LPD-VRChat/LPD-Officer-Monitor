@@ -1,7 +1,6 @@
 # Standard
 import discord
-from io import StringIO
-from io import BytesIO
+from io import StringIO, BytesIO
 
 # Community
 import commentjson as json
@@ -44,14 +43,4 @@ async def handle_error(bot, title, traceback_string):
     print(error_text)
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
-    if len(error_text) < 2000:
-        await channel.send(error_text)
-    else:
-        error_file_sio = StringIO(error_text)
-        error_file = BytesIO(error_file_sio.read().encode('utf8'))
-
-        await channel.send("The error output is too big to fit in a discord message so it is insted in a file.", file=discord.File(error_file, filename="Error.txt"))
-
-        # with open("temp_file.txt", "w") as error_file:
-        #     temp_file.write(error_text)
-        # with open("temp_file.txt", "w") as error_file:
+    await send_long(channel, error_text)
