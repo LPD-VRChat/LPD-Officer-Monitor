@@ -449,7 +449,7 @@ class Time(commands.Cog):
 
     @check.is_admin_bot_channel()
     @check.is_admin()
-    @commands.command()
+    @commands.command(usage="<officers_to_promote>")
     async def promote_to_officer(self, ctx, *args):
         """
         This command promotes everyone that is mentioned in the message to officer.
