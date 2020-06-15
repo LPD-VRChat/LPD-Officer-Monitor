@@ -26,7 +26,7 @@ class NotForYouError(commands.CheckFailure):
 class ArgumentParsingError(Exception):
     """This exception is raised when the parser in argparse fails to parse a command and exits."""
     def __init__(self, message=None):
-        super().__init__(message or 'Their is an issue in the ')
+        super().__init__(message or 'Their is an issue in the arguments you passed in.')
 
 class MemberNotFoundError(Exception):
     """This exception is raised when a member is not found in a server when creating officers."""

@@ -19,10 +19,13 @@ import commentjson as json
 # Mine
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-import Classes.errors as errors
-from Classes.commands import Time
+
+from Classes.VRChatUserManager import VRChatUserManager
+
+from Classes.commands import Time, VRChatAccoutLink
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
+import Classes.errors as errors
 
 
 # ====================
@@ -86,6 +89,9 @@ async def on_ready():
         keys["SQL_Password"]
     )
 
+    # Start the VRChatUserManager
+    bot.user_manager = await VRChatUserManager.start(bot)
+
 @bot.event
 async def on_message(message):
     # print("on_message")
@@ -139,8 +145,13 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_member_update(before, after):
-    # print("on_member_uspdate")
+    
     if bot.officer_manager is None: return
+
+
+    ############################
+    # Check status of officers #
+    ############################
 
     officer_before = bot.officer_manager.is_officer(before)
     officer_after = bot.officer_manager.is_officer(after)
@@ -156,6 +167,7 @@ async def on_member_update(before, after):
 
     # Member has left the LPD
     elif officer_before is True and officer_after is False:
+        await bot.user_manager.remove_user(before.id)
         await bot.officer_manager.remove_officer(before.id, reason = "this person does not have the LPD role anymore")
 
 @bot.event
@@ -182,11 +194,11 @@ async def on_command_error(ctx, exception):
 bot.remove_command("help")
 bot.add_cog(Help(bot))
 bot.add_cog(Time(bot))
+bot.add_cog(VRChatAccoutLink(bot))
 
 
 # ====================
 # Start
 # ====================
 
-# bot.loop.create_task(setup_officer_manager())
 bot.run(keys["Discord_token"])

@@ -28,7 +28,7 @@ class Officer():
 
     def go_on_duty(self):
 
-        print(self.discord_name+" is going on duty")
+        print(f"self.discord_name is going on duty")
 
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
@@ -41,7 +41,7 @@ class Officer():
     
     async def go_off_duty(self):
         
-        print(self.discord_name+" is going off duty")
+        print(f"{self.discord_name} is going off duty")
 
         # Print an error if the user is going off duty even though he is already off duty
         if self.is_on_duty is False:
@@ -58,7 +58,7 @@ class Officer():
     async def remove(self):
 
         # Remove itself
-        await self.bot.officer_manager.remove_officer(self)
+        await self.bot.officer_manager.remove_officer(self.id)
 
 
     # ====================
@@ -69,8 +69,7 @@ class Officer():
 
     @property
     def is_white_shirt(self):
-        print(self._get_roles_with_tag("is_white_shirt"))
-        return self._has_role(*self._get_roles_with_tag("is_white_shirt"))
+        return self._has_role(*self._get_roles_with_tag('is_white_shirt'))
     
     @property
     def is_admin(self):

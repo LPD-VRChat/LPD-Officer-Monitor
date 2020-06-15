@@ -4,6 +4,7 @@
     "bot_prefix": "=",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
+    "name_separator": ";",
     
     // Channels
     "monitored_channels": {
@@ -17,7 +18,8 @@
     "error_log_channel": 670751809538752512,
     "inactive_channel_name": "inactive",
     "allowed_command_channels": [
-        566777522252152883
+        566777522252152883,
+        708117281376305232
     ],
     
     // Roles

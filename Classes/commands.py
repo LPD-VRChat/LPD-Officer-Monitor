@@ -3,7 +3,7 @@ import sys
 from copy import deepcopy
 import argparse
 import re
-from io import StringIO
+from io import StringIO, BytesIO
 from datetime import datetime, timedelta, timezone
 import time
 import math
@@ -20,7 +20,7 @@ from Classes.extra_functions import send_long, handle_error
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
-import Classes.checks as check
+import Classes.checks as checks
 
 
 class Time(commands.Cog):
@@ -172,8 +172,8 @@ class Time(commands.Cog):
 
     # Commands
 
-    @check.is_admin_bot_channel()
-    @check.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
     @commands.command(usage="[options] <officer>")
     async def patrol_time(self, ctx, *args):
         """
@@ -210,7 +210,8 @@ class Time(commands.Cog):
         parser.add_argument("-l", "--list", action="store_true")
 
         # Parse command and check errors
-        try: parsed = parser.parse_args(args)
+        cmd = f"self.bot.command_prefix"
+        try: parsed = parser.parse_args("=patrol_time", args)
         except argparse.ArgumentError as error:
             await ctx.send(ctx.author.mention+" "+str(error))
             return
@@ -308,8 +309,8 @@ class Time(commands.Cog):
             # Send the table if it is not empty
             if len(table.draw()) > 0: await ctx.send(draw_table(table))
 
-    @check.is_admin_bot_channel()
-    @check.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
     @commands.command()
     async def last_active(self, ctx, officer):
         """
@@ -337,8 +338,8 @@ class Time(commands.Cog):
         # Send the embed
         await ctx.send(embed=self.create_last_active_embed(officer, result))
 
-    @check.is_admin_bot_channel()
-    @check.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
     @commands.command(usage="[options] <how_many_officers>")
     async def top(self, ctx, *args):
         """
@@ -370,7 +371,7 @@ class Time(commands.Cog):
         parser.add_argument("-t", "--to-date")
 
         # Parse command and check errors
-        try: parsed = parser.parse_args(args)
+        try: parsed = parser.parse_args("=top", args)
         except argparse.ArgumentError as error:
             await ctx.send(ctx.author.mention+" "+str(error))
             return None
@@ -406,8 +407,8 @@ class Time(commands.Cog):
 
         await send_long(ctx.channel, "\n".join(output_list))
 
-    @check.is_admin_bot_channel()
-    @check.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
@@ -447,8 +448,8 @@ class Time(commands.Cog):
             ))
             await send_long(ctx.channel, out_str)
 
-    @check.is_admin_bot_channel()
-    @check.is_admin()
+    @checks.is_admin_bot_channel()
+    @checks.is_admin()
     @commands.command(usage="<officers_to_promote>")
     async def promote_to_officer(self, ctx, *args):
         """
@@ -490,3 +491,154 @@ class Time(commands.Cog):
         except Exception as error:
             await ctx.send("**Not everyone was promoted to officer successfully**. Please go through and manually change the roles of members that did not get promoted. Please also contact Hroi so that he can fix the bot before next officer promotions happen.")
             await handle_error(ctx.bot, error, traceback.format_exc())
+
+class VRChatAccoutLink(commands.Cog):
+    """This stores all the VRChatAccoutLink commands."""
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.red()
+    
+    @commands.command()
+    @checks.is_lpd()
+    @checks.is_general_bot_channel()
+    async def info(self, ctx):
+        """
+        This command gets info about your current account status.
+
+        This command shows you information about if you have your VRChat account connected or
+        not and how to connect it or disconnect it.
+        """
+        vrchat_name = self.bot.user_manager.get_vrc_by_discord(ctx.author.id)
+        if vrchat_name: await ctx.send(f'You have a VRChat account linked with the name `{vrchat_name}`, if you want to unlink it use the command =unlink or if you want to update your VRChat name use the command =link new_vrchat_name.')
+        else: await ctx.send("You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name.")
+
+    @commands.command()
+    @checks.is_lpd()
+    @checks.is_general_bot_channel()
+    async def link(self, ctx, vrchat_name):
+        r"""
+        This command is used to tell the bot your VRChat name.
+
+        This information is used for detecting if you are in
+        the LPD when entering the LPD Station. To use the
+        command do =link your_vrchat_name.
+
+        If your VRChat name contains spaces put quotes before and after
+        your VRChat name, example: =link "your vrchat name". If it contains
+        quotes and spaces you can do \ before every quote you want to be
+        apart of your name, example: =link "your \\\"vrchat\\\" name".
+
+        If your name contains any special characters like symbols make sure to
+        copy your VRChat name from the debug console in the LPD Station. The
+        debug console can be enabled with a button under the front desk.
+        """
+
+        # Make sure the name does not contain the seperation character
+        if self.bot.settings["name_separator"] in vrchat_name:
+            hroi = self.bot.get_guild(self.bot.settings["Server_ID"]).get_member(378666988412731404)
+            await ctx.send(f'The name you put in contains a character that cannot be used "{self.bot.settings["name_separator"]}" please change your name or contact {hroi.mention} so that he can change the illegal character.')
+            return
+
+        # If the officer already has a registered account
+        previous_vrchat_name = self.bot.user_manager.get_vrc_by_discord(ctx.author.id)
+        if previous_vrchat_name:
+            confirm = await Confirm(f'You already have a VRChat account registered witch is `{previous_vrchat_name}`, do you want to replace that account?').prompt(ctx)
+            if not confirm:
+                await ctx.send("Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again.")
+                return
+
+        # Confirm the VRC name
+        confirm = await Confirm(f'Are you sure `{vrchat_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**').prompt(ctx)
+        if confirm:
+            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await ctx.send(f'Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink')
+        else:
+            await ctx.send("Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again.")
+    
+    @commands.command()
+    @checks.is_lpd()
+    @checks.is_general_bot_channel()
+    async def unlink(self, ctx):
+        """
+        This command removes your account if you have a
+        connected VRChat account.
+        """
+        vrchat_name = self.bot.user_manager.get_vrc_by_discord(ctx.author.id)
+
+        if vrchat_name == None:
+            await ctx.send("You do not have your VRChat name linked.")
+            return
+
+        confirm = await Confirm(f'Your VRChat name is currently set to `{vrchat_name}`. Do you want to unlink that?').prompt(ctx)
+        if confirm:
+            await self.bot.user_manager.remove_user(ctx.author.id)
+            await ctx.send('Your VRChat name has been successfully unlinked, if you want to link another account you can do that with =link.')
+        else:
+            await ctx.send(f'Your VRChat accout has not been unlinked and is still `{vrchat_name}`')
+    
+    @commands.command()
+    @checks.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    async def lvn(self, ctx):
+        """
+        This command is used to get the VRChat names of the people that are LPD Officers.
+        
+        The output from this command is only intended to be read by computers and is not
+        easy to read for humans.
+        """
+        sep_char = self.bot.settings["name_separator"]
+        vrc_names = [x[1] for x in self.bot.user_manager.all_users]
+        
+        output_text = f"{sep_char.join(vrc_names)}"
+        if len(output_text) == 0: await ctx.send("There are no registered users.")
+        elif len(output_text) < 2000: await ctx.send(output_text)
+        else:
+            with StringIO(output_text) as error_file_sio:
+                with BytesIO(error_file_sio.read().encode('utf8')) as error_file:
+                    await ctx.send("The output is too big to fit in a discord message so it is insted in a file.", file=discord.File(error_file, filename="all_vrc_names.txt"))
+
+    @commands.command()
+    @checks.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    async def list(self, ctx):
+        """
+        This command shows the Discord and VRChat names of all officers registered with the bot.
+
+        This information is intended to check who has a specific VRChat account.
+        """
+        out_string = "**All linked accounts:**\n**Discord - VRChat\n**"
+
+        guild = self.bot.get_guild(self.bot.settings["Server_ID"])
+        for user in self.bot.user_manager.all_users:
+            member = guild.get_member(user[0])
+            string_being_added = f"`{member.display_name} - {user[1]}`\n"
+
+            if len(out_string + string_being_added) >= 2000:
+                await ctx.send(out_string)
+                out_string = string_being_added
+            else:
+                out_string += string_being_added
+        await ctx.send(out_string)
+
+    @commands.command()
+    @checks.is_white_shirt()
+    @checks.is_admin_bot_channel()
+    async def debug(self, ctx):
+        """
+        This command is just for testing the bot.
+        """
+        await ctx.send(str(self.bot.user_manager.all_users))
+
+class Other(commands.Cog):
+    """Here are all the one off commands that I have created and are not apart of any group."""
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.dark_magenta()
+    
+    @commands.command()
+    async def role_to_vrc(self):
+        """
+        This command takes in a name of a role and outputs the VRC names of the people in it.
+
+        This command ignores the decoration on the role if it has any and it also requires
+        """

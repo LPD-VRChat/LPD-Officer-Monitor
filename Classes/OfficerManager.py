@@ -191,12 +191,10 @@ class OfficerManager():
 
     async def remove_officer(self, officer_id, reason=None):
 
-        # Remove the officer from the database
-        async with self.db_pool.acquire() as conn:
-            cur = await conn.cursor()
-            for table in ["MessageActivityLog", "TimeLog", "Officers"]:
-                await cur.execute("DELETE FROM %s WHERE officer_id = %s", (table, officer_id))
-            await cur.close()
+        await self.send_db_request("DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id))
+        await self.send_db_request("DELETE FROM TimeLog WHERE officer_id = %s", (officer_id))
+        # await self.send_db_request("DELETE FROM VRChatNames WHERE officer_id = %s", (officer_id))
+        await self.send_db_request("DELETE FROM Officers WHERE officer_id = %s", (officer_id))
 
         # Remove the officer from the officer list
         i = 0
@@ -264,7 +262,7 @@ class OfficerManager():
     # ====================
 
     def get_settings_role(self, name_id):
-        for role in self.bot.officer_manager.bot.settings["role_ladder"]:
+        for role in self.bot.settings["role_ladder"]:
             if role["name_id"] == name_id:
                 return role
-        raise ValueError("name_id not found in settings: "+str(name_id))
+        raise ValueError(f"{name_id} not found in bot.settings")

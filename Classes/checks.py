@@ -6,7 +6,7 @@ import Classes.errors as errors
 
 def is_lpd():
     def predicate(ctx):
-        officer = ctx.bot.officer_manager.get_officer(ctx.author)
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
         if officer: return True
         else: raise errors.NotForYouError("This command is only for LPD Members.")
     return commands.check(predicate)
