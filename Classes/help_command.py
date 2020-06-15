@@ -89,7 +89,6 @@ class Help(commands.Cog):
                 )]
                 
                 # Loop through all the commands and add them to the embed if they are available in the current context
-                print(self.bot.cogs)
                 for cog_name in self.bot.cogs:
 
                     cog = self.bot.cogs[cog_name]
@@ -105,13 +104,15 @@ class Help(commands.Cog):
                             description=cog.description
                         )
 
+                    usable_commands_in_cog = 0
                     for single_command in cog.get_commands():
                         if await self.can_use(single_command, ctx):
                             title = self.get_title(single_command)
                             short_description = self.get_short_description(single_command.help)
                             cog_embed.add_field(name=title, value=short_description, inline=False)
+                            usable_commands_in_cog += 1
                     
-                    all_help_embeds.append(cog_embed)
+                    if usable_commands_in_cog > 0: all_help_embeds.append(cog_embed)
 
                 # Send the embed
                 for embed in all_help_embeds:

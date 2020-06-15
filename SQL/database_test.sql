@@ -39,6 +39,8 @@ WHERE
 	officer_id = 378666988412731404 AND
 	(start_time > "2020-03-1 14:32:29" AND start_time < "2020-03-02 14:32:29");
 
+DELETE FROM Officers WHERE officer_id = 566311811637575680;
+
 DELETE FROM TimeLog WHERE officer_id = '566311811637575680';
 DELETE FROM Officers WHERE officer_id = '566311811637575680';
 
@@ -91,3 +93,23 @@ WHERE end_time > "2020-02-20 11:40:14" AND end_time < NOW()
 GROUP BY officer_id
 ORDER BY patrol_length DESC
 LIMIT 3;
+
+SELECT officer_id, vrc_name FROM VRChatNames;
+
+INSERT INTO 
+	VRChatNames(officer_id, vrc_name)
+VALUES
+	(378666988412731404, "Hroi");
+
+DELETE FROM VRChatNames WHERE officer_id = 378666988412731404;
+
+SELECT *
+FROM Officers o
+	LEFT JOIN VRChatNames v
+		ON o.officer_id = v.officer_id;
+
+ALTER TABLE Officers
+ADD COLUMN vrc_name VARCHAR(255) AFTER officer_id;
+
+ALTER TABLE Officers
+DROP COLUMN vrc_name;

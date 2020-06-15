@@ -41,3 +41,9 @@ CREATE TABLE MessageActivityLog
     
     CONSTRAINT officer_id_FK_2 FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );
+
+CREATE TABLE VRChatNames
+(
+	officer_id BIGINT UNSIGNED PRIMARY KEY,
+    vrc_name VARCHAR(255)
+);
