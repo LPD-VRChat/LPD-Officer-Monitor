@@ -28,7 +28,7 @@ class Officer():
 
     def go_on_duty(self):
 
-        print(f"self.discord_name is going on duty")
+        print(f"{self.discord_name} is going on duty")
 
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
