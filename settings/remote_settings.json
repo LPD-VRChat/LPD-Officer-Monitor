@@ -21,7 +21,8 @@
     "error_log_channel": 677546865998168144,
     "inactive_channel_name": "inactive",
     "allowed_command_channels": [
-        645383848284258305
+        645383848284258305,
+        708736137463726131
     ],
 
     // Roles
