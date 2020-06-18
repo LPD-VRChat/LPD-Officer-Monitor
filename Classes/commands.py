@@ -660,7 +660,7 @@ class Applications(commands.Cog):
 
                 # Get the roles to be updated
                 lpd_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lpd_role"])
-                recruit_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "cadet"))
+                recruit_role = self.bot.officer_manager.guild.get_role(self.bot.settings["cadet_role"])
                 civilian_role = self.bot.officer_manager.guild.get_role(self.bot.settings["civilian_role"])
                 
                 # Update the roles
