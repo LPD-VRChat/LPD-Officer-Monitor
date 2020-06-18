@@ -44,3 +44,12 @@ async def handle_error(bot, title, traceback_string):
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await send_long(channel, error_text)
+
+def get_rank_id(settings, role_id):
+    role_ladder = settings["role_ladder"]
+
+    for role in role_ladder:
+        if role["name_id"] == role_id:
+            return role["id"]
+    
+    return None

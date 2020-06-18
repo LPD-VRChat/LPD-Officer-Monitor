@@ -20,9 +20,11 @@
     "general_bot_channel": 708736137463726131,
     "error_log_channel": 677546865998168144,
     "inactive_channel_name": "inactive",
+    "application_channel": 655793001787949086,
     "allowed_command_channels": [
         645383848284258305,
-        708736137463726131
+        708736137463726131,
+        655793001787949086
     ],
 
     // Roles
@@ -30,6 +32,8 @@
     "trainer_role": 654438056656371736,
     "slrt_trainer_role": 663137582317568001,
     "slrt_trained_role": 665996573981016103,
+    "recruiter_role": 655632175168749600,
+    "civilian_role": 659121007923167234,
     "role_ladder": [
         {
             "name": "LPD Recruit",

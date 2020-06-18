@@ -16,7 +16,7 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error
+from Classes.extra_functions import send_long, handle_error, get_rank_id
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
@@ -628,6 +628,53 @@ class VRChatAccoutLink(commands.Cog):
         This command is just for testing the bot.
         """
         await ctx.send(str(self.bot.user_manager.all_users))
+
+class Applications(commands.Cog):
+    """Here are all the commands relating to managing the applications."""
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.orange()
+    
+
+    @checks.is_application_channel()
+    @checks.is_recruiter()
+    @commands.command(usage="<mentioned_officers>")
+    async def add(self, ctx, *args):
+        """
+        This command adds the recruit and LPD roles to the members you mention.
+        It also removes the civilian role when needed.
+        """
+        result = await Confirm("Are you sure you want to add all the members you mentioned to the LPD?").prompt(ctx)
+        if not result: await ctx.send("Officer adding canceled.")
+        else:
+            # Store the bots messages
+            bot_messages = []
+
+            # Update the roles for all the members
+            bot_messages.append(await ctx.send("Please give me one moment while I update everyone's roles."))
+            for member in ctx.message.mentions:
+                # Make sure the member is not an officer already
+                if self.bot.officer_manager.is_officer(member):
+                    bot_messages.append(await ctx.send(f"{member.mention} is already an officer and has been skipped."))
+                    continue
+
+                # Get the roles to be updated
+                lpd_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lpd_role"])
+                recruit_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "cadet"))
+                civilian_role = self.bot.officer_manager.guild.get_role(self.bot.settings["civilian_role"])
+                
+                # Update the roles
+                await member.add_roles(lpd_role, recruit_role)
+                try: await member.remove_roles(civilian_role)
+                except discord.errors.HTTPException: pass
+            bot_messages.append(await ctx.send("Everyone you mentioned has been added to cadet."))
+            
+            # Remove the users message
+            result = await Confirm("Can I remove your message?").prompt(ctx)
+            if result: await ctx.message.delete()
+
+            # Remove all the bot messages
+            for message in bot_messages: await message.delete()
 
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""

@@ -76,6 +76,10 @@ class Officer():
         return self._has_role(*self._get_roles_with_tag("is_admin"))
 
     @property
+    def is_recruiter(self):
+        return self._has_role(self.bot.settings["recruiter_role"])
+
+    @property
     def is_trainer(self):
         return self._has_role(self.bot.settings["trainer_role"])
     
