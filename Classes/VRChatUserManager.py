@@ -65,9 +65,7 @@ class VRChatUserManager():
         
         self.all_users = []
 
-        print(f"DB_result: {repr(db_result)}")
         if db_result == None: return
         for line in db_result:
-            print(f"Line: {repr(line)}")
             self.all_users.append(list(line))
     
