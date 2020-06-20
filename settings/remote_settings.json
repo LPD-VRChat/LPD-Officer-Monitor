@@ -63,6 +63,12 @@
             "is_white_shirt": true
         },
         {
+            "name": "LPD Advisor",
+            "name_id": "advisor",
+            "id": 679474638266433567,
+            "is_white_shirt": true
+        },
+        {
             "name": "LPD Lieutenant",
             "name_id": "lieutenant",
             "id": 645394607714074634,
