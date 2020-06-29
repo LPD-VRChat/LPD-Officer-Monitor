@@ -37,6 +37,11 @@
     "cadet_role": 663138744588566532,
     "role_ladder": [
         {
+            "name": "LPD Cadet",
+            "name_id": "cadet",
+            "id": 663138744588566532
+        },
+        {
             "name": "LPD Recruit",
             "name_id": "recruit",
             "id": 645394827025842196
@@ -59,7 +64,7 @@
         {
             "name": "LPD Staff Sergeant",
             "name_id": "staff_sergeant",
-            "id": 645394647350247465,
+            "id": 711366388186480751,
             "is_white_shirt": true
         },
         {

@@ -35,6 +35,11 @@
     "inactive_role": "LPD_inactive",
     "role_ladder": [
         {
+            "name": "LPD Cadet",
+            "name_id": "cadet",
+            "id": 666005873679663134
+        },
+        {
             "name": "LPD Recruit",
             "name_id": "recruit",
             "id": 594238854102515735
