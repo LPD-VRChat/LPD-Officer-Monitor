@@ -16,7 +16,7 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error, get_rank_id
+from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
@@ -486,11 +486,39 @@ class Time(commands.Cog):
                     await member.add_roles(officer_role)
                     await member.remove_roles(recruit_role)
 
-            await ctx.send("Everyone has been promted to officer successfully.")
+            await ctx.send("Everyone has been promoted to officer successfully.")
 
         except Exception as error:
             await ctx.send("**Not everyone was promoted to officer successfully**. Please go through and manually change the roles of members that did not get promoted. Please also contact Hroi so that he can fix the bot before next officer promotions happen.")
             await handle_error(ctx.bot, error, traceback.format_exc())
+
+    @checks.is_admin_bot_channel()
+    @checks.is_admin()
+    @commands.command()
+    async def remove_inactive_cadets(self, ctx, inactive_days_required):
+        """
+        This command removes all cadets that have been inactive for
+        28 days.
+        """
+        await ctx.send("Please give me a moment, this may take quite some time.")
+
+        removable_members = []
+        cadet_id = get_rank_id(self.bot.settings, "cadet")
+        cadets = (c for c in self.bot.officer_manager.guild.members if has_role(c.roles, cadet_id))
+        for cadet in cadets:
+
+            # Get the officer
+            officer = self.bot.officer_manager.get_officer(cadet.id)
+            if not officer:
+                await ctx.send(f"WARNING {cadet.mention} is a cadet but is not being monitored.")
+                continue
+            
+            last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
+            active_days_ago = (datetime.now() - last_activity["time"]).days
+            if active_days_ago > inactive_days_required:
+                removable_members.append(officer.member)
+        
+        await ctx.send(f"{ctx.author.mention} I have now removed all the inactive cadets.")
 
 class VRChatAccoutLink(commands.Cog):
     """This stores all the VRChatAccoutLink commands."""
@@ -498,6 +526,7 @@ class VRChatAccoutLink(commands.Cog):
         self.bot = bot
         self.color = discord.Color.red()
     
+
     @commands.command()
     @checks.is_lpd()
     @checks.is_general_bot_channel()
@@ -681,11 +710,50 @@ class Other(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = discord.Color.dark_magenta()
-    
+
+
+    @staticmethod
+    def filter_start_end(string, list_of_characters_to_filter):
+        while True:
+            if string[0] in list_of_characters_to_filter:
+                string = string[1::]
+            else: break
+
+        while True:
+            if string[-1] in list_of_characters_to_filter:
+                string = string[0:-1]
+            else: break
+        
+        return string
+
+
     @commands.command()
-    async def role_to_vrc(self):
+    async def rtv(self, ctx, role_name):
         """
         This command takes in a name of a role and outputs the VRC names of the people in it.
 
         This command ignores the decoration on the role if it has any and it also requires
         """
+
+        # Get the role
+        return_role = None
+        for role_2 in ctx.guild.roles:
+            if self.filter_start_end(role_2.name, ["|", " ", "⠀", " "]) == role_name:
+                return_role = role_2
+                break
+        else:
+            await ctx.send(f"The role {role_name} was not found.")
+            return
+
+        # Make sure that people have the role
+        if not return_role.members:
+            await ctx.send(f"{role_name} is empty.")
+            return
+        
+        # Sort the members
+        get_vrc_name = lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
+        members = sorted(return_role.members, key=get_vrc_name)
+        members_str = "\n".join(get_vrc_name(x) for x in members)
+
+        # Send everyone
+        await send_long(ctx, f"Here is everyone in the role {role_name}:\n```\n{members_str}\n```", code_block=True)

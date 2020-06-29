@@ -22,7 +22,7 @@ from Classes.OfficerManager import OfficerManager
 
 from Classes.VRChatUserManager import VRChatUserManager
 
-from Classes.commands import Time, VRChatAccoutLink, Applications
+from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
@@ -196,6 +196,7 @@ bot.add_cog(Help(bot))
 bot.add_cog(Time(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
+bot.add_cog(Other(bot))
 
 
 # ====================
