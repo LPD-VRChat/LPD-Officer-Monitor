@@ -33,6 +33,16 @@ class VRChatUserManager():
     async def add_user(self, discord_id, vrchat_name):
         await self.remove_user(discord_id)
 
+        # Replace the characters VRChat replaces
+        vrchat_name = vrchat_name\
+            .replace("@", "＠").replace("#", "＃").replace("$", "＄").replace("%", "％")\
+            .replace("&", "＆").replace("=", "＝").replace("+", "＋").replace("/", "⁄")\
+            .replace("\\", "＼").replace(";", ";").replace(":", "˸").replace(",", "‚")\
+            .replace("?", "？").replace("!", "ǃ").replace('"', "＂").replace("<", "≺")\
+            .replace(">", "≻").replace(".", "․").replace("^", "＾").replace("{", "｛")\
+            .replace("}", "｝").replace("[", "［").replace("]", "］").replace("(", "（")\
+            .replace(")", "）").replace("|", "｜").replace("*", "∗")
+
         # Add to the cache
         self.all_users.append([discord_id, vrchat_name])
 
