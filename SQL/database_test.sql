@@ -22,6 +22,7 @@ INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (378666988412731404
 
 SELECT * FROM Officers;
 SELECT * FROM TimeLog;
+SELECT * FROM VRChatNames;
 
 SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS 'Time' FROM TimeLog WHERE officer_id = 378666988412731404;
 
