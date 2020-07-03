@@ -51,6 +51,7 @@ else:
 bot = commands.Bot(command_prefix=settings["bot_prefix"])
 bot.settings = settings
 bot.officer_manager = None
+bot.everything_ready = False
 
 
 # ====================
@@ -82,15 +83,23 @@ async def on_ready():
     # Make sure this function does not create the officer manager twice
     if bot.officer_manager is not None: return
 
+    # Create the function to run before officer removal
+    async def before_officer_removal(bot, officer_id):
+        await bot.user_manager.remove_user(officer_id)
+
     # Start the officer manager
     print("Starting officer manager")
     bot.officer_manager = await OfficerManager.start(
         bot,
-        keys["SQL_Password"]
+        keys["SQL_Password"],
+        run_before_officer_removal=before_officer_removal
     )
 
     # Start the VRChatUserManager
     bot.user_manager = await VRChatUserManager.start(bot)
+
+    # Mark everything ready
+    bot.everything_ready = True
 
 @bot.event
 async def on_message(message):
@@ -167,8 +176,12 @@ async def on_member_update(before, after):
 
     # Member has left the LPD
     elif officer_before is True and officer_after is False:
-        await bot.user_manager.remove_user(before.id)
         await bot.officer_manager.remove_officer(before.id, reason = "this person does not have the LPD role anymore")
+
+@bot.event
+async def on_member_remove(member):
+    if bot.officer_manager.is_officer(member):
+        await bot.officer_manager.remove_officer(member.id, reason="this person left the server.")
 
 @bot.event
 async def on_error(event, *args, **kwargs):

@@ -21,9 +21,10 @@ from Classes.extra_functions import handle_error
 
 class OfficerManager():
 
-    def __init__(self, db_pool, all_officer_ids, bot):
+    def __init__(self, db_pool, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
         self.db_pool = db_pool
+        self._before_officer_removal = run_before_officer_removal
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -37,6 +38,7 @@ class OfficerManager():
 
         # Add all the officers to the list
         self._all_officers = []
+        self._officers_needing_removal = []
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
             try:
@@ -44,13 +46,15 @@ class OfficerManager():
                 self._all_officers.append(new_officer)
                 print(f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager.")
             except MemberNotFoundError:
-                print(f"The officer with the ID {officer_id} was not found in the server.")
+                print(f"The officer with the ID {officer_id} was not found in the server. The officer will be removed in a moment.")
+                self._officers_needing_removal.append(officer_id)
+        print(f"Officers needing removal: {self._officers_needing_removal}")
 
         # Set up the automatically running code
         bot.loop.create_task(self.loop())
 
     @classmethod
-    async def start(cls, bot, db_password):
+    async def start(cls, bot, db_password, run_before_officer_removal=None):
 
         # Setup database
         try:
@@ -88,7 +92,7 @@ class OfficerManager():
             print("Shutting down...")
             exit()
                 
-        return cls(db_pool, (x[0] for x in result), bot)
+        return cls(db_pool, (x[0] for x in result), bot, run_before_officer_removal=run_before_officer_removal)
 
     async def send_db_request(self, query, args):
 
@@ -113,6 +117,9 @@ class OfficerManager():
     # =====================
 
     async def loop(self):
+        # Wait until everything is ready
+        while not self.bot.everything_ready: await asyncio.sleep(2)
+
         print("Running officer check loop in officer_manager")
 
         try:
@@ -134,6 +141,10 @@ class OfficerManager():
                 if self.is_officer(member) is False:
                     await self.remove_officer(member_id, reason="this person is in the server but does no longer have an LPD Officer role")
                     continue 
+
+            # Remove the users in the remove list
+            for officer_id in self._officers_needing_removal:
+                await self.remove_officer(officer_id, reason="this person was not found in the server.")
 
         except Exception as error:
             print(error)
@@ -191,9 +202,18 @@ class OfficerManager():
 
     async def remove_officer(self, officer_id, reason=None):
 
+        # Run the function that needs to run before the officer removal
+        try:
+            if self._before_officer_removal: await self._before_officer_removal(self.bot, officer_id)
+        except Exception:
+            await handle_error(
+                self.bot,
+                "Error encountered in before_officer_removal function",
+                traceback.format_exc()
+            )
+
         await self.send_db_request("DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id))
         await self.send_db_request("DELETE FROM TimeLog WHERE officer_id = %s", (officer_id))
-        # await self.send_db_request("DELETE FROM VRChatNames WHERE officer_id = %s", (officer_id))
         await self.send_db_request("DELETE FROM Officers WHERE officer_id = %s", (officer_id))
 
         # Remove the officer from the officer list
