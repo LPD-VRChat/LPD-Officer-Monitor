@@ -4,7 +4,7 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time
 import time
 import math
 import traceback
@@ -33,31 +33,79 @@ class Time(commands.Cog):
     # Time functions
 
     @staticmethod
-    def seconds_to_string(seconds, multi_line=True):
+    def seconds_to_string(seconds, max_values=0, multi_line=False):
+        """
+        This function takes in seconds and returns a string that represents it with seconds,
+        minutes, hours, days and weeks, it can be adjusted how many of these you want to see.
 
-        # Calculate days, hours, minutes and seconds
-        onDutyMinutes, onDutySeconds = divmod(seconds, 60)
-        onDutyHours, onDutyMinutes = divmod(onDutyMinutes, 60)
-        onDutyDays, onDutyHours = divmod(onDutyHours, 24)
-        
-        onDutyweeks, onDutyDaysWithWeeks = divmod(onDutyDays, 7)
+        Args:
+
+            seconds (int): How many seconds should be calculated into a string.
+
+            max_values (int, optional): How many values should be displayed, this can go from 0-5, 0 means that it will show as many as possible. For example with two it would only show minutes and seconds. Defaults to 0.
+            
+            multi_line (bool, optional): Allow the returned string to span multiple lines. Defaults to True.
+
+        Raises:
+
+            ValueError: If max_values is under 0 or above 5.
+
+        Returns:
+
+            string: This string represents the seconds passed in in a human readable fromat.
+        """
+
+        # Check on the value of max_values
+        max_value = 5
+        if max_values > max_value or max_values < 0:
+            raise ValueError(f"max_values can't be higher than {max_value}.")
+        elif max_values == 0: max_values = max_value
+
+        # Calculate weeks, days, hours, minutes and seconds.
+        # This is the code that is commented out below but translated into a for loop.
+        divisions = [60, 60, 24, 7]
+        calculations = [[seconds]]
+        for i in range(0, len(divisions)):
+            second_if_end, first = divmod(calculations[i][0], divisions[i])
+            calculations[i].append(first)
+            calculations.append([second_if_end])
+        # Old Code:
+            # seconds_if_end = seconds
+            # minutes_if_end, seconds = divmod(seconds_if_end, 60)
+            # hours_if_end, minutes = divmod(minutes_if_end, 60)
+            # days_if_end, hours = divmod(hours_if_end, 24)
+            # weeks_if_end, days = divmod(days_if_end, 7)
+            
+            # # Set up the list
+            # calculations = [
+            #     [seconds_if_end, seconds],
+            #     [minutes_if_end, minutes],
+            #     [hours_if_end,   hours],
+            #     [days_if_end,    days],
+            #     [weeks_if_end]
+            # ]
+            # print(calculations)
 
         # Move the time to the string
-        if multi_line:
-            on_duty_time_string = ""
-            if onDutyweeks != 0:
-                on_duty_time_string += f"\nWeeks: {onDutyweeks}"
-            if onDutyDaysWithWeeks + onDutyweeks != 0:
-                on_duty_time_string += f"\nDays: {onDutyDaysWithWeeks}"
-            if onDutyHours + onDutyDaysWithWeeks + onDutyweeks != 0:
-                on_duty_time_string += f"\nHours: {onDutyHours}"
-            if onDutyMinutes + onDutyHours + onDutyDaysWithWeeks + onDutyweeks != 0:
-                on_duty_time_string += f"\nMinutes: {onDutyMinutes}"
-            on_duty_time_string += f"\nSeconds: {onDutySeconds}"
+        return_str = ""
+        time_names = [ "Seconds", "Minutes", "Hours", "Days", "Weeks" ]
+        for i in range(0, max_values):
 
-            return on_duty_time_string
-        else:
-            return f"{onDutyDays}:{onDutyHours}:{onDutyMinutes}:{onDutySeconds}"
+            # Determine the fetch num
+            if i+1 == max_values: fetch_num = 0
+            else: fetch_num = 1
+
+            # Add to the string
+            if multi_line:
+                # End the loop if everything after will be 0
+                if calculations[i][0] == 0 and i != 0: break
+                return_str = f"{time_names[i]}: {calculations[i][fetch_num]}\n{return_str}"
+            else:
+                if i == 0: return_str = f"{calculations[i][fetch_num]}"
+                else: return_str = f"{calculations[i][fetch_num]}:{return_str}"
+
+        # Return the string 
+        return return_str
 
     def get_officer_id(self, officer_string):
     
@@ -210,7 +258,6 @@ class Time(commands.Cog):
         parser.add_argument("-l", "--list", action="store_true")
 
         # Parse command and check errors
-        cmd = f"self.bot.command_prefix"
         try: parsed = parser.parse_args("=patrol_time", args)
         except argparse.ArgumentError as error:
             await ctx.send(ctx.author.mention+" "+str(error))
@@ -257,7 +304,7 @@ class Time(commands.Cog):
             time_seconds = await officer.get_time(from_datetime, to_datetime)
 
             # Print the results out
-            out_string += self.seconds_to_string(time_seconds)
+            out_string += "\n" + self.seconds_to_string(time_seconds, multi_line=True)
             await ctx.send(out_string)
 
         else:
@@ -271,7 +318,7 @@ class Time(commands.Cog):
 
             # Set up the header of the table
             table = texttable.Texttable()
-            table.header(["From      ", "To        ", "Seconds  "])
+            table.header(["From      ", "To        ", "hr:min:sec"])
 
             # This is a lambda to add the discord code block on the table to keep it monospace
             draw_table = lambda table: "```\n"+table.draw()+"\n```"
@@ -289,7 +336,7 @@ class Time(commands.Cog):
                 table.add_row([
                     str(patrol[0].strftime(time_format)),
                     str(patrol[1].strftime(time_format)),
-                    str(patrol[2])
+                    str(self.seconds_to_string(patrol[2], max_values=3))
                 ])
 
                 # This executes if the table is too long to be sent in one discord message
@@ -401,7 +448,7 @@ class Time(commands.Cog):
         output_list.append("Officer | On duty time")
         for officer_result in all_times:
             officer = self.bot.officer_manager.get_officer(officer_result[0])
-            time_string = self.seconds_to_string(officer_result[1], multi_line=False)
+            time_string = self.seconds_to_string(officer_result[1])
             
             output_list.append(f"{officer.mention} | {time_string}")
 
