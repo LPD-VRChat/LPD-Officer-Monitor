@@ -774,6 +774,8 @@ class Other(commands.Cog):
         return string
 
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
