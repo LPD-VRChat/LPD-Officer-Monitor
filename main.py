@@ -194,7 +194,13 @@ async def on_command_error(ctx, exception):
 
     exception_string = str(exception).replace("raised an exception", "encountered a problem")
     
-    await ctx.send(exception_string)
+    # Send the reason for the error into the channel the user sent the command in,
+    # if the bot does not have permission to do do so it will send an error message
+    # into bot-debug-channel.
+    try: await ctx.send(exception_string)
+    except discord.Forbidden:
+        bot.get_channel(settings["error_log_channel"]).send(f"**I do not have permission to send messages in {ctx.channel.mention}**")
+        pass
     
     if exception_string.find("encountered a problem") != -1:
         await handle_error(bot, exception_string, "".join(traceback.format_exception(None, exception, None)))
