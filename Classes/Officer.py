@@ -193,9 +193,9 @@ class Officer():
         want to look back are passed into the function.
         """
         result = await self._get_all_activity(counted_channel_ids)
+
         if result == None: return None
         max_result = max(result, key=lambda x: time.mktime(x[3].timetuple()))
-
         return self._create_activity_dict(max_result)
 
     async def get_all_activity(self, counted_channel_ids):
@@ -250,6 +250,10 @@ class Officer():
         }
 
     async def _get_all_activity(self, counted_channel_ids):
+        # This database request includes 3 combined queries, they are described here below:
+        #     1) The messages from MessageActivityLog        - other_activity is null
+        #     2) Last on duty activity                       - other_activity is On duty activity
+        #     3) When the bot started monitoring the officer - other_activity is Started monitoring
         result = await self.bot.officer_manager.send_db_request(
             """
             SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
@@ -270,4 +274,5 @@ class Officer():
         )
         
         if result == None: return None
+        # Filter all non-counted channels out
         return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)

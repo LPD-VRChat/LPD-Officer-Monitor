@@ -547,9 +547,23 @@ class Time(commands.Cog):
         This command removes all cadets that have been inactive for
         28 days.
         """
-        await ctx.send("Please give me a moment, this may take quite some time.")
 
-        removable_members = []
+        # Make sure inactive_days_required is an integer
+        try: inactive_days_required = int(inactive_days_required)
+        except ValueError:
+            await ctx.send("inactive_days_required needs to be a whole number.")
+            return
+
+        # Make sure the user is sure.
+        are_you_sure = await Confirm(f"Are you sure you want to remove all cadets that have been inactive for {inactive_days_required} days?", delete_message_after=False, clear_reactions_after=True).prompt(ctx)
+        if not are_you_sure:
+            await ctx.send("Cadet removal has been canceled.")
+            return
+
+        await ctx.send("Please give me a moment to find all the inactive cadets.")
+
+        # Create a list of who needs to be removed
+        officers_to_remove = []
         cadet_id = get_rank_id(self.bot.settings, "cadet")
         cadets = (c for c in self.bot.officer_manager.guild.members if has_role(c.roles, cadet_id))
         for cadet in cadets:
@@ -560,11 +574,38 @@ class Time(commands.Cog):
                 await ctx.send(f"WARNING {cadet.mention} is a cadet but is not being monitored.")
                 continue
             
+            # Check the last activity
             last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
             active_days_ago = (datetime.now() - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
-                removable_members.append(officer.member)
+                officers_to_remove.append(officer)
         
+        # Check if their are no cadets to remove
+        if len(officers_to_remove) == 0:
+            await ctx.send(f"{ctx.author.mention} Their are no inactive cadets to remove.")
+            return
+
+        # Make sure the user is sure again
+        officers_to_remove_str = "\n".join((x.mention for x in officers_to_remove))
+        await send_long(ctx.channel, f"Here is everyone that will be removed:\n{officers_to_remove_str}")
+        are_you_sure = await Confirm(f"{ctx.author.mention} Are you sure you want to remove all these cadets?", timeout=300, delete_message_after=False, clear_reactions_after=True).prompt(ctx)
+        if not are_you_sure:
+            await ctx.send("Cadet removal has been canceled.")
+            return
+        
+        # Start the removal process
+        await ctx.send("Please give me a moment again, this may take quite some time.")
+        # Get the roles to be updated
+        lpd_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lpd_role"])
+        cadet_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "cadet"))
+        for officer in officers_to_remove:
+            
+            # Update the roles
+            try: await officer.member.remove_roles(lpd_role, cadet_role)
+            except discord.HTTPException as error:
+                await ctx.send(f"WARNING Failed to remove {officer.mention}")
+                await handle_error(bot, error, traceback.format_exc())
+
         await ctx.send(f"{ctx.author.mention} I have now removed all the inactive cadets.")
 
 class VRChatAccoutLink(commands.Cog):
@@ -736,11 +777,11 @@ class Applications(commands.Cog):
 
                 # Get the roles to be updated
                 lpd_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lpd_role"])
-                recruit_role = self.bot.officer_manager.guild.get_role(self.bot.settings["cadet_role"])
+                cadet_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "cadet"))
                 civilian_role = self.bot.officer_manager.guild.get_role(self.bot.settings["civilian_role"])
                 
                 # Update the roles
-                await member.add_roles(lpd_role, recruit_role)
+                await member.add_roles(lpd_role, cadet_role)
                 try: await member.remove_roles(civilian_role)
                 except discord.errors.HTTPException: pass
             bot_messages.append(await ctx.send("Everyone you mentioned has been added to cadet."))
