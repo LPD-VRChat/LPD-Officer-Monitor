@@ -947,7 +947,7 @@ async def on_message(message):
 
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
 
-    elif user_command == "accept_all_inactive_resons":
+    elif user_command == "accept_all_inactive_reasons":
         inactive_channel = await getChannelByName(settings["inactive_channel_name"], message.guild, True)
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
 
