@@ -1004,7 +1004,7 @@ async def on_message(message):
             f"{len(members_to_remove)} are on the inactivity removal list after that.",
             "",
             "Here is everyone who has to be removed for inactivity:",
-            "\n".join(members_to_remove)# Create the list of members that need to be removed
+            str("\n".join(members_to_remove))# Create the list of members that need to be removed
         ]))
 
     elif user_command == "log":
