@@ -948,30 +948,64 @@ async def on_message(message):
         await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
 
     elif user_command == "accept_all_inactive_reasons":
+
+        # Get the channels and roles that are needed
         inactive_channel = await getChannelByName(settings["inactive_channel_name"], message.guild, True)
+        loa_channel = await getChannelByName(settings["loa_channel_name"], message.guild, True)
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
 
-        officers_removed = 0
-        officers_kicked_for_inactivity = inactive_role.members
-        async for old_message in inactive_channel.history(limit=None):
-            if inactive_role in old_message.author.roles:
-                await old_message.author.remove_roles(inactive_role, reason="The officer has replied in the inactive channel with a reason.")# Remove the inactive role
-                
-                result = renewInactiveTime(old_message.author)# Renew the time
-                if result is False: await sendErrorMessage(message, "The time of "+old_message.author+" who wrote this message could not be updated for some reason:\n```\n"+old_message.content+"\n```")# Let the user know if the time for someone did not get renewed
-                
-                officers_removed += 1
-                
-                if old_message.author in officers_kicked_for_inactivity:
-                    officers_kicked_for_inactivity.remove(old_message.author)# Remove the officer from the list witch contains everyone who has to be removed
+        # Make sure everything was found
+        if inactive_channel == False:
+            await message.channel.send(f"The channel {settings['inactive_channel_name']} was not found.")
+            return
+        if loa_channel == False:
+            await message.channel.send(f"The channel {settings['loa_channel_name']} was not found.")
+            return
+        if inactive_role == False:
+            await message.channel.send(f"The role {settings['inactive_role']} was not found.")
+            return
 
-        await message.channel.send(str(officers_removed)+" officers have been removed from the inactive role and their time has been renewed")
-        
-        inactive_officers_needing_removal = ""
-        for old_member in officers_kicked_for_inactivity:
-            inactive_officers_needing_removal += old_member.mention
-            inactive_officers_needing_removal += "\n"
-        await output_long_str(message.channel, "Here is everyone who has to be removed for inactivity:\n"+inactive_officers_needing_removal)
+
+        # Get the names of people that are in the leave-of-absence channel.
+        loa_members = []
+        async for old_message in loa_channel.history(limit=None):
+            if old_message.author not in loa_members: loa_members.append(old_message.author)
+
+        # Get the names of the people that answered and still have a message in #inactive.
+        inactive_channel_members = []
+        async for old_message in inactive_channel.history(limit=None):
+
+            # Add the member to the inactive_channel_members list if they have a message in
+            # the channel and they have the inactive role.
+            if inactive_role in old_message.author.roles:
+                inactive_channel_members.append(old_message.author)
+
+        # Loop over the members and add them to a remove list or renew their time
+        members_to_remove = []
+        for member in inactive_role.members:
+            # The member did not have any reason for his activity and will be removed
+            if member not in loa_members and member not in inactive_channel_members:
+                members_to_remove.append(member)
+
+            # The member needs to have their time renewed
+            else:
+                # Remove the inactive role
+                await member.author.remove_roles(inactive_role, reason="The officer has replied in the inactive channel with a reason or was in the leave-of-absence channel.")# Remove the inactive role
+                
+                # Renew the time
+                result = renewInactiveTime(member)# Renew the time
+                if result is False: await sendErrorMessage(message, "The time of "+member+" could not be renewed for some reason. Please renew the time manually in #admin-bot-channel.")# Let the user know if the time for someone did not get renewed
+
+
+        # Create and send the output string
+        await output_long_str(message.channel, "\n".join([
+            f"{len(inactive_channel_members)} members have been skipped because they answered in {inactive_channel.mention}.",
+            f"{len(loa_members)} members have been skipped because had a reason in {loa_channel.mention}.",
+            f"{len(members_to_remove)} are on the inactivity removal list after that.",
+            "",
+            "Here is everyone who has to be removed for inactivity:",
+            "\n".join(members_to_remove)# Create the list of members that need to be removed
+        ]))
 
     elif user_command == "log":
 
