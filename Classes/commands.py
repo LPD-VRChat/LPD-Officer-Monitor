@@ -778,12 +778,10 @@ class Applications(commands.Cog):
                 # Get the roles to be updated
                 lpd_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lpd_role"])
                 cadet_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "cadet"))
-                civilian_role = self.bot.officer_manager.guild.get_role(self.bot.settings["civilian_role"])
                 
                 # Update the roles
                 await member.add_roles(lpd_role, cadet_role)
-                try: await member.remove_roles(civilian_role)
-                except discord.errors.HTTPException: pass
+                
             bot_messages.append(await ctx.send("Everyone you mentioned has been added to cadet."))
             
             # Remove the users message
