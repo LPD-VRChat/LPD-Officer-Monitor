@@ -1,0 +1,106 @@
+{
+    "Server_ID": YOUR_SERVER_ID,
+    "max_inactive_days": 28,                    // Maximum days to be inactive before the member can be removed for inactivity.
+    "bot_prefix": "=",                          // The prefix for the bot.
+    "db_time_format": "%Y-%m-%d %H:%M:%S",      // What kind of format the database wants, this is the one for MySQL.
+    "sleep_time_between_officer_checks": 3600,  // How often the bot checks if it missend anyone that left or if someone is not being tracked.
+    "name_separator": ";",                      // The separator used when transferring VRChat names outside of the bot
+
+    // Channels
+    "monitored_channels": {                     // What channels are monitored by the bot, it monitors all channels for fast updating of this however when a user requests last active time this list is used.
+        "ignored_categories": [                 // ignored_categories is the only one implemented so far
+            CATEGORY_ID's
+        ]
+    },
+    "training_finished_channel": CHANNEL_ID,    // The channel where users post in once they have finished their training.
+    "admin_bot_channel": CHANNEL_ID,            // The bot channels for administrators, this is accessible to all LPD Staff.
+    "general_bot_channel": CHANNEL_ID,          // The bot channel for general users, this is for them to link their VRChat names in.
+    "error_log_channel": CHANNEL_ID,            // The channel the bot posts debug messages into.
+    "inactive_channel_name": "CHANNEL_NAME",    // The channel that users post their reason for their activity in.
+    "application_channel": CHANNEL_ID,          // The channel recruiters use to interact with the bot.
+    "allowed_command_channels": [               // All the channels the bot is allowed to post into.
+        CHANNEL_ID's
+    ],
+
+    // Roles
+    "lpd_role": ROLE_ID,                        // The LPD role.
+    "trainer_role": ROLE_ID,                    // The role regular trainers have.
+    "slrt_trainer_role": ROLE_ID,               // The role SLRT trainers have.
+    "slrt_trained_role": ROLE_ID,               // The role people get after SLRT training.
+    "recruiter_role": ROLE_ID,                  // The role recruiters have.
+    "role_ladder": [                            // A list of the roles in the LPD and their permissions, from cadet to chief.
+        {
+            "name": "LPD Cadet",
+            "name_id": "cadet",
+            "id": ROLE_ID
+        },
+        {
+            "name": "LPD Recruit",
+            "name_id": "recruit",
+            "id": ROLE_ID
+        },
+        {
+            "name": "LPD Officer",
+            "name_id": "officer",
+            "id": ROLE_ID
+        },
+        {
+            "name": "LPD Corporal",
+            "name_id": "corporal",
+            "id": ROLE_ID
+        },
+        {
+            "name": "LPD Sergeant",
+            "name_id": "sergeant",
+            "id": ROLE_ID
+        },
+        {
+            "name": "LPD Staff Sergeant",
+            "name_id": "staff_sergeant",
+            "id": ROLE_ID,
+            "is_white_shirt": true
+        },
+        {
+            "name": "LPD Advisor",
+            "name_id": "advisor",
+            "id": ROLE_ID,
+            "is_white_shirt": true
+        },
+        {
+            "name": "LPD Lieutenant",
+            "name_id": "lieutenant",
+            "id": ROLE_ID,
+            "is_white_shirt": true
+        },
+        {
+            "name": "LPD Captain",
+            "name_id": "captain",
+            "id": ROLE_ID,
+            "is_white_shirt": true
+        },
+        {
+            "name": "LPD Deputy Chief",
+            "name_id": "deputy_chief",
+            "id": ROLE_ID,
+            "is_white_shirt": true,
+            "is_admin": true
+        },
+        {
+            "name": "LPD Chief",
+            "name_id": "chief",
+            "id": ROLE_ID,
+            "is_white_shirt": true,
+            "is_admin": true
+        }
+    ],
+
+    // On duty
+    "on_duty_category": CATEGORY_ID,            // The category of voice channels member go to when they are going on-duty.
+    "on_duty_role": ROLE_ID,                    // The role members should be assigned when they go on-duty.
+
+    // Database
+    "DB_name": "LPD_Officer_Monitor",           // The name of the SQL Database.
+    "DB_user": "DB_USER",                       // The database user that the bot should log into, the password is stored in the key file.
+    "DB_host": "localhost",                     // The location the database is, this can be an ip address or localhost if the database is a local one.
+    "DB_socket": "/run/mysqld/mysqld.sock"      // This is the default MySQL socket on Linux, this should be removed if the database is on Windows.
+}

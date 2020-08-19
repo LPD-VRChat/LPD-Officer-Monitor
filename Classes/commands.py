@@ -781,7 +781,6 @@ class Applications(commands.Cog):
                 
                 # Update the roles
                 await member.add_roles(lpd_role, cadet_role)
-                
             bot_messages.append(await ctx.send("Everyone you mentioned has been added to cadet."))
             
             # Remove the users message

@@ -34,6 +34,7 @@ import Classes.errors as errors
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--server", action="store_true")
+parser.add_argument("-l", "--local", action="store_true")
 args = parser.parse_args()
 
 
@@ -42,8 +43,11 @@ args = parser.parse_args()
 # ====================
 
 if args.server:
-    settings = get_settings_file("remote_settings")
-    keys = get_settings_file("remote_keys")
+    settings = get_settings_file("Presets/remote_settings")
+    keys = get_settings_file("Presets/remote_keys")
+elif args.local:
+    settings = get_settings_file("Presets/local_settings")
+    keys = get_settings_file("Presets/local_keys")
 else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
