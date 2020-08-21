@@ -18,7 +18,14 @@ async def send_long(channel, string, code_block=False):
 
     output_list = []
     for line in string.splitlines():
-        
+
+        # If the line is longer that 2000, send it as a file and exit.
+        if len(line) > 2000:
+            with StringIO(string) as error_file_sio:
+                with BytesIO(error_file_sio.read().encode('utf8')) as error_file:
+                    await channel.send("The output is too big to fit in a discord message so it is insted in a file.", file=discord.File(error_file, filename="long_output.txt"))
+                    return
+
         # Calculate the output length
         #            Previous output            \n   this line   the backticks is that is enabled
         output_len = str_list_len(output_list) + 1 + len(line) + (len("```") if code_block else 0)
