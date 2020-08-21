@@ -709,7 +709,7 @@ class VRChatAccoutLink(commands.Cog):
         
         output_text = f"{sep_char.join(vrc_names)}"
         if len(output_text) == 0: await ctx.send("There are no registered users.")
-        else: send_long(ctx.channel, output_text, code_block=True)
+        else: send_long(ctx.channel, output_text)
 
     @commands.command()
     @checks.is_white_shirt()
