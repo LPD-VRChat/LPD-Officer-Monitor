@@ -887,7 +887,7 @@ class Other(commands.Cog):
                 "member_count": len(members),
                 "members": [self.get_vrc_name(m) for m in members],
                 "has_unlock_all_button": role_dict.get("has_unlock_all_button", False),
-                "is_whiteshirt": role_dict.get("is_whiteshirt", False)
+                "is_white_shirt": role_dict.get("is_white_shirt", False)
             })
 
         # Send the JSON file
