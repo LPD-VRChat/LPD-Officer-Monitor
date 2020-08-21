@@ -891,4 +891,4 @@ class Other(commands.Cog):
             })
 
         # Send the JSON file
-        await send_long(ctx.channel, json.dumps(json_out), code_block=True)
+        await send_long(ctx.channel, json.dumps(json_out))
