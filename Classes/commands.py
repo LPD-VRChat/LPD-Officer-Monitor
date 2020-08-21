@@ -709,7 +709,7 @@ class VRChatAccoutLink(commands.Cog):
         
         output_text = f"{sep_char.join(vrc_names)}"
         if len(output_text) == 0: await ctx.send("There are no registered users.")
-        else: send_long(ctx.channel, output_text)
+        else: send_long(ctx.channel, output_text, code_block=True)
 
     @commands.command()
     @checks.is_white_shirt()
@@ -798,7 +798,7 @@ class Other(commands.Cog):
     def get_role_by_name(self, role_name):
 
         # Get the role
-        for role in ctx.guild.roles:
+        for role in self.bot.officer_manager.guild.roles:
             if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
                 return role 
                 
@@ -846,7 +846,8 @@ class Other(commands.Cog):
         members_str = "\n".join(self.get_vrc_name(x) for x in members)
 
         # Send everyone
-        await send_long(ctx, f"Here is everyone in the role {role_name}:\n```\n{members_str}\n```", code_block=True)
+        await ctx.send(f"Here is everyone in the role {role_name}:")
+        await send_long(ctx.channel, members_str, code_block=True)
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
@@ -891,4 +892,4 @@ class Other(commands.Cog):
             })
 
         # Send the JSON file
-        await send_long(ctx.channel, json.dumps(json_out))
+        await send_long(ctx.channel, json.dumps(json_out), code_block=True)

@@ -14,10 +14,16 @@ def is_number(string):
         return False
 
 async def send_long(channel, string, code_block=False):
+    
+    # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i)+1 for i in str_list)
 
+    # Add a code block around the string if needed.
+    if code_block: input_string_list = ("```"+string+"```").splitlines()
+    else: input_string_list = string.splitlines()
+
     output_list = []
-    for line in string.splitlines():
+    for line in input_string_list:
 
         # If the line is longer that 2000, send it as a file and exit.
         if len(line) > 2000:
@@ -27,7 +33,7 @@ async def send_long(channel, string, code_block=False):
                     return
 
         # Calculate the output length
-        #            Previous output            \n   this line   the backticks is that is enabled
+        #            Previous output            \n   this line   the backticks if that is enabled
         output_len = str_list_len(output_list) + 1 + len(line) + (len("```") if code_block else 0)
 
         # Check the output length
