@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone, time
 import time
 import math
 import traceback
+import json
 
 # Community
 import discord
@@ -665,7 +666,7 @@ class VRChatAccoutLink(commands.Cog):
                 return
 
         # Confirm the VRC name
-        confirm = await Confirm(f'Are you sure `{vrchat_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**').prompt(ctx)
+        confirm = await Confirm(f'Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**').prompt(ctx)
         if confirm:
             await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
             await ctx.send(f'Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink')
@@ -795,7 +796,26 @@ class Other(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = discord.Color.dark_magenta()
+        self.get_vrc_name = lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
 
+
+    def get_role_by_name(self, role_name):
+
+        # Get the role
+        for role in ctx.guild.roles:
+            if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
+                return role 
+                
+        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+
+    def get_role_members(self, role):
+
+        # Make sure that people have the role
+        if not role.members:
+            raise errors.GetRoleMembersError(message=f"{role_name} is empty.")
+        
+        # Sort the members
+        return sorted(role.members, key=self.get_vrc_name)
 
     @staticmethod
     def filter_start_end(string, list_of_characters_to_filter):
@@ -822,25 +842,57 @@ class Other(commands.Cog):
         This command ignores the decoration on the role if it has any and it also requires
         """
 
-        # Get the role
-        return_role = None
-        for role_2 in ctx.guild.roles:
-            if self.filter_start_end(role_2.name, ["|", " ", "⠀", " "]) == role_name:
-                return_role = role_2
-                break
-        else:
-            await ctx.send(f"The role {role_name} was not found.")
+        try: members = self.get_role_members(self.get_role_by_name(role_name))
+        except errors.GetRoleMembersError as error:
+            await ctx.send(error)
             return
 
-        # Make sure that people have the role
-        if not return_role.members:
-            await ctx.send(f"{role_name} is empty.")
-            return
-        
-        # Sort the members
-        get_vrc_name = lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
-        members = sorted(return_role.members, key=get_vrc_name)
-        members_str = "\n".join(get_vrc_name(x) for x in members)
+        members_str = "\n".join(self.get_vrc_name(x) for x in members)
 
         # Send everyone
         await send_long(ctx, f"Here is everyone in the role {role_name}:\n```\n{members_str}\n```", code_block=True)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def team_json(self, ctx):
+        """
+        This command outputs a json object that stores all the team and white shirt info.
+
+        It is used to transport information from the bot to the LPD Station efficiently.
+        """
+
+        teams = deepcopy(self.bot.settings["teams"])
+        json_out = []
+
+        # Add the white shirts onto the teams list
+        for rank in self.bot.settings["role_ladder"]:
+            try: rank["is_white_shirt"]
+            except KeyError: pass
+            else:
+                rank["has_unlock_all_button"] = True
+                teams.append(rank)
+
+        # Create the JSON from the team list
+        for role_dict in teams:
+
+            # Get the members
+            role = self.bot.officer_manager.guild.get_role(role_dict["id"])
+            try: members = self.get_role_members(role)
+            except errors.GetRoleMembersError as error:
+                await ctx.send(error)
+                return
+
+            # Add the JSON role object
+            json_out.append({
+                "id": role_dict["id"],
+                "name": self.filter_start_end(role.name, ["|", " ", "⠀", " "]),
+                "name_id": role_dict["name_id"],
+                "member_count": len(members),
+                "members": [self.get_vrc_name(m) for m in members],
+                "has_unlock_all_button": role_dict.get("has_unlock_all_button", False),
+                "is_whiteshirt": role_dict.get("is_whiteshirt", False)
+            })
+
+        # Send the JSON file
+        await send_long(ctx.channel, json.dumps(json_out), code_block=True)

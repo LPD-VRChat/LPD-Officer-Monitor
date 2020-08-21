@@ -34,6 +34,40 @@
     "slrt_trained_role": 665996573981016103,
     "recruiter_role": 655632175168749600,
     "civilian_role": 659121007923167234,
+    "teams": [
+        {
+            "id": 0,
+            "name": "Dev Team",
+            "name_id": "dev_team"
+        },
+        {
+            "id": 0,
+            "name": "Trainer",
+            "name_id": "trainer",
+            "has_unlock_all_button": true
+        },
+        {
+            "id": 0,
+            "name": "SLRT Trainer",
+            "name_id": "slrt_trainer"
+        },
+        {
+            "id": 0,
+            "name": "LMT Trainer",
+            "name_id": "lmt_trainer"
+        },
+        {
+            "id": 0,
+            "name": "Event Host",
+            "name_id": "event_host",
+            "has_unlock_all_button": true
+        },
+        {
+            "id": 0,
+            "name": "Media Production",
+            "name_id": "media_production"
+        }
+    ],
     "role_ladder": [
         {
             "name": "LPD Cadet",

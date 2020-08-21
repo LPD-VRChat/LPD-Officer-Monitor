@@ -32,3 +32,8 @@ class MemberNotFoundError(Exception):
     """This exception is raised when a member is not found in a server when creating officers."""
     def __init__(self, message=None):
         super().__init__(message or 'The member you were searching for was not found.')
+
+class GetRoleMembersError(Exception):
+    """This exception is raised when the bot does not manage to fetch users from a role in get_role_members."""
+    def __init__(self, message=None, role_name="Unknown Role"):
+        super().__init__(message or f'An unknown error occurred when searching for the members in the role "{role_name}".')

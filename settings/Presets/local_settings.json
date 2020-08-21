@@ -32,6 +32,13 @@
     "recruiter_role": 633018289777410068,
     "civilian_role": 723276594935758998,
     "inactive_role": "LPD_inactive",
+    "teams": [
+        {
+            "id": 746362203225063454,
+            "name": "Dev Team",
+            "name_id": "dev_team"
+        }
+    ],
     "role_ladder": [
         {
             "name": "LPD Cadet",
