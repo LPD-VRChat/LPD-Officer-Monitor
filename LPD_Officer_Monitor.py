@@ -320,18 +320,36 @@ async def checkOfficerHealth(Guild_ID):
             log.info("||||||||||||||||||||||||||||||||||||||||||||||||||")
             await asyncio.sleep(settings["sleep_time_beetween_writes"])
 
-async def findInactiveOfficers(guild):
+async def findInactiveOfficers(guild, loa_channel=None):
     global officer_monitor
 
-    all_inactive_people = []
+    # Get the LOA officers if there are any.
+    loa_members = []
+    if loa_channel != None:
+        async for old_message in loa_channel.history(limit=None):
+            if old_message.author not in loa_members: loa_members.append(old_message.author)
 
     # Check if someone has to be removed from the LPD because of inactivity
+    all_inactive_people = []
+    loa_members_skipped = 0
     for officer_id in list(officer_monitor):
         officer = guild.get_member(int(officer_id))
-        if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds < time.time() and officer and has_officer_role(officer.roles):
-            all_inactive_people.append(officer)
+
+        # Skip if the monitored member isn't an officer, this shouldn't happen but is here for safety
+        if not officer or not has_officer_role(officer.roles): continue
+
+        # Skip if the officer was active recently enough
+        if officer_monitor[officer_id]["Last active time"] + max_inactive_time_seconds > time.time():
+            continue
+
+        # Skip if the officer has a LOA
+        if officer in loa_members:
+            loa_members_skipped += 1
+            continue
+        
+        all_inactive_people.append(officer)
     
-    return all_inactive_people
+    return (all_inactive_people, loa_members_skipped)
 
 async def goOnDuty(member, guild):
     global officer_monitor
@@ -844,13 +862,27 @@ async def on_message(message):
                 else: await sendErrorMessage(message, user.mention+" is not being monitored, are you sure this is an LPD officer?")
 
         elif arg2 == "inactive":
-            all_inactive_officers = await findInactiveOfficers(message.guild)
+
+            # Get the inactive channel
+            loa_channel = await getChannelByName(settings["loa_channel_name"], message.guild, True)
+            if loa_channel == False:
+                await message.channel.send(f"The channel {settings['loa_channel_name']} was not found.")
+                return
+
+            # Get the inactive officers
+            all_inactive_officers, loa_skipped_num = await findInactiveOfficers(message.guild, loa_channel=loa_channel)
 
             if not all_inactive_officers:
                 await message.channel.send("Their is no one inactive in the LPD, it is a good day today.")
                 return
             
-            full_string = ""
+            full_string = "\n".join([
+                f"{len(all_inactive_officers)} members are inactive and need to be removed.",
+                f"{loa_skipped_num} members have been skipped because had a reason in {loa_channel.mention}.",
+                "",
+                "Here is everyone who has to be removed for inactivity:",
+                "",
+            ])
             for officer in all_inactive_officers:
                 inactive_days = int((time.time() - officer_monitor[str(officer.id)]["Last active time"]) / 86400)
 
@@ -935,17 +967,25 @@ async def on_message(message):
 
     elif user_command == "add_inactive_officers":
 
+        loa_channel = await getChannelByName(settings["loa_channel_name"], message.guild, True)
         inactive_role = await getRoleByName(settings["inactive_role"], message.guild)
         
-        if inactive_role is False:
+        if inactive_role == False:
             await sendErrorMessage(message, 'The role "'+settings['inactive_role']+'" does not exist')
             return
+        if loa_channel == False:
+            await message.channel.send(f"The channel {settings['loa_channel_name']} was not found.")
+            return
 
-        for officer in await findInactiveOfficers(message.guild):
+        inactive_officers, loa_skipped_num = await findInactiveOfficers(message.guild, loa_channel=loa_channel)
+        for officer in inactive_officers:
             log.info("Adding officer to the inactive role: "+str(officer))
             await officer.add_roles(inactive_role)
 
-        await message.channel.send("All inactive officers have been added to the role "+inactive_role.name)
+        await message.channel.send("\n".join([
+            f"{len(inactive_officers)} members are inactive and have been added to the {inactive_role.name} role.",
+            f"{loa_skipped_num} members have been skipped because they had a reason in {loa_channel.mention}."
+        ]))
 
     elif user_command == "accept_all_inactive_reasons":
 
