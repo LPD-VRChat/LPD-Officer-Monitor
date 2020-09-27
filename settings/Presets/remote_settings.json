@@ -5,7 +5,6 @@
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 3600,
     "name_separator": ";",
-
     // Channels
     "monitored_channels": {
         "ignored_categories": [
@@ -26,7 +25,6 @@
         708736137463726131,
         655793001787949086
     ],
-
     // Roles
     "lpd_role": 654438235950415902,
     "trainer_role": 654438056656371736,
@@ -85,6 +83,11 @@
             "id": 645394785267482624
         },
         {
+            "name": "LPD Senior Officer",
+            "name_id": "senior_officer",
+            "id": 759455978495148062
+        },
+        {
             "name": "LPD Corporal",
             "name_id": "corporal",
             "id": 645394678409330688
@@ -133,11 +136,9 @@
             "is_admin": true
         }
     ],
-
     // On duty
     "on_duty_category": 645392700257992728,
     "on_duty_role": 653753817099272222,
-
     // Database
     "DB_name": "LPD_Officer_Monitor",
     "DB_user": "lpd",
