@@ -1034,7 +1034,7 @@ async def on_message(message):
                 
                 # Renew the time
                 result = renewInactiveTime(member)# Renew the time
-                if result is False: await sendErrorMessage(message, "The time of "+member+" could not be renewed for some reason. Please renew the time manually in #admin-bot-channel.")# Let the user know if the time for someone did not get renewed
+                if result is False: await sendErrorMessage(message, f"The time of {member} could not be renewed for some reason. Please renew the time manually in #admin-bot-channel.")# Let the user know if the time for someone did not get renewed
 
 
         # Create and send the output string
