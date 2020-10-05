@@ -1030,7 +1030,7 @@ async def on_message(message):
             # The member needs to have their time renewed
             else:
                 # Remove the inactive role
-                await member.author.remove_roles(inactive_role, reason="The officer has replied in the inactive channel with a reason or was in the leave-of-absence channel.")# Remove the inactive role
+                await member.remove_roles(inactive_role, reason="The officer has replied in the inactive channel with a reason or was in the leave-of-absence channel.")# Remove the inactive role
                 
                 # Renew the time
                 result = renewInactiveTime(member)# Renew the time
