@@ -115,6 +115,15 @@ async def on_ready():
 async def on_message(message):
     # print("on_message")
 
+    # Early out if message from the bot itself
+    if message.author.bot:
+        return
+
+    # Private message are ignored
+    if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel):
+        await message.channel.send("I'm just a robot")
+        return
+
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
