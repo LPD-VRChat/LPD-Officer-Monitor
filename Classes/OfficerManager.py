@@ -19,8 +19,7 @@ from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error
 
 
-class OfficerManager():
-
+class OfficerManager:
     def __init__(self, db_pool, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
         self.db_pool = db_pool
@@ -29,12 +28,18 @@ class OfficerManager():
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
         if self.guild is None:
-            print("ERROR Guild with ID",bot.settings["Server_ID"],"not found")
+            print("ERROR Guild with ID", bot.settings["Server_ID"], "not found")
             print("Shutting down...")
             exit()
 
         # Get all monitored channels
-        self.all_monitored_channels = [c.id for c in self.guild.channels if c.category not in bot.settings["monitored_channels"]["ignored_categories"] and isinstance(c, discord.channel.TextChannel)]
+        self.all_monitored_channels = [
+            c.id
+            for c in self.guild.channels
+            if c.category
+            not in bot.settings["monitored_channels"]["ignored_categories"]
+            and isinstance(c, discord.channel.TextChannel)
+        ]
 
         # Add all the officers to the list
         self._all_officers = []
@@ -44,9 +49,13 @@ class OfficerManager():
             try:
                 new_officer = Officer(officer_id, bot)
                 self._all_officers.append(new_officer)
-                print(f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager.")
+                print(
+                    f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager."
+                )
             except MemberNotFoundError:
-                print(f"The officer with the ID {officer_id} was not found in the server. The officer will be removed in a moment.")
+                print(
+                    f"The officer with the ID {officer_id} was not found in the server. The officer will be removed in a moment."
+                )
                 self._officers_needing_removal.append(officer_id)
         print(f"Officers needing removal: {self._officers_needing_removal}")
 
@@ -66,7 +75,7 @@ class OfficerManager():
                 db=bot.settings["DB_name"],
                 loop=asyncio.get_event_loop(),
                 autocommit=True,
-                unix_socket=bot.settings["DB_socket"]
+                unix_socket=bot.settings["DB_socket"],
             )
         except KeyError:
             db_pool = await aiomysql.create_pool(
@@ -76,9 +85,9 @@ class OfficerManager():
                 password=db_password,
                 db=bot.settings["DB_name"],
                 loop=asyncio.get_event_loop(),
-                autocommit=True
+                autocommit=True,
             )
-        
+
         # Fetch all the officers from the database
         try:
             async with db_pool.acquire() as conn:
@@ -91,8 +100,13 @@ class OfficerManager():
             print(error)
             print("Shutting down...")
             exit()
-                
-        return cls(db_pool, (x[0] for x in result), bot, run_before_officer_removal=run_before_officer_removal)
+
+        return cls(
+            db_pool,
+            (x[0] for x in result),
+            bot,
+            run_before_officer_removal=run_before_officer_removal,
+        )
 
     async def send_db_request(self, query, args):
 
@@ -107,18 +121,19 @@ class OfficerManager():
         try:
             if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
                 return None
-        except IndexError: return None
+        except IndexError:
+            return None
 
         return result
 
-
     # =====================
-    #    Loop   
+    #    Loop
     # =====================
 
     async def loop(self):
         # Wait until everything is ready
-        while not self.bot.everything_ready: await asyncio.sleep(2)
+        while not self.bot.everything_ready:
+            await asyncio.sleep(2)
 
         print("Running officer check loop in officer_manager")
 
@@ -126,25 +141,34 @@ class OfficerManager():
             # Add missing officers
             for member in self.all_server_members_in_LPD:
                 if not self.is_monitored(member.id):
-                    await self.create_officer(member.id, issue="was not caught by on_member_update event")
+                    await self.create_officer(
+                        member.id, issue="was not caught by on_member_update event"
+                    )
 
             # Remove extra users from the officer_monitor
             for officer_member in self._all_officers:
                 member_id = officer_member.id
-                
+
                 member = self.guild.get_member(member_id)
 
                 if member is None:
-                    await self.remove_officer(member_id, reason = "this person was not found in the server")
+                    await self.remove_officer(
+                        member_id, reason="this person was not found in the server"
+                    )
                     continue
 
                 if self.is_officer(member) is False:
-                    await self.remove_officer(member_id, reason="this person is in the server but does no longer have an LPD Officer role")
-                    continue 
+                    await self.remove_officer(
+                        member_id,
+                        reason="this person is in the server but does no longer have an LPD Officer role",
+                    )
+                    continue
 
             # Remove the users in the remove list
             for officer_id in self._officers_needing_removal:
-                await self.remove_officer(officer_id, reason="this person was not found in the server.")
+                await self.remove_officer(
+                    officer_id, reason="this person was not found in the server."
+                )
 
         except Exception as error:
             print(error)
@@ -152,11 +176,10 @@ class OfficerManager():
 
         await asyncio.sleep(self.bot.settings["sleep_time_between_officer_checks"])
 
+    # =====================
+    #    modify officers
+    # =====================
 
-    # =====================
-    #    modify officers   
-    # =====================
-    
     def get_officer(self, officer_id):
         for officer in self._all_officers:
             if officer.id == officer_id:
@@ -170,7 +193,7 @@ class OfficerManager():
             try:
                 await self.send_db_request(
                     "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
-                    (officer_id, datetime.now(timezone.utc))
+                    (officer_id, datetime.now(timezone.utc)),
                 )
             except mysql_errors.IntegrityError as error:
                 print(repr(error.args))
@@ -179,7 +202,7 @@ class OfficerManager():
             await handle_error(
                 self.bot,
                 f"**Failed to add the officer with the ID {officer_id} to the database.**",
-                traceback.format_exc()
+                traceback.format_exc(),
             )
             return None
 
@@ -190,12 +213,20 @@ class OfficerManager():
         self._all_officers.append(new_officer)
 
         # Print
-        msg_string = "DEBUG: "+new_officer.display_name+" ("+str(new_officer.id)+") has been added to the LPD Officer Monitor"
-        if issue is None: msg_string += " the correct way."
-        else: msg_string += " but "+str(issue)
+        msg_string = (
+            "DEBUG: "
+            + new_officer.display_name
+            + " ("
+            + str(new_officer.id)
+            + ") has been added to the LPD Officer Monitor"
+        )
+        if issue is None:
+            msg_string += " the correct way."
+        else:
+            msg_string += " but " + str(issue)
         print(msg_string)
         channel = self.bot.get_channel(self.bot.settings["error_log_channel"])
-        await channel.send(msg_string)        
+        await channel.send(msg_string)
 
         # Return the officer
         return new_officer
@@ -204,33 +235,46 @@ class OfficerManager():
 
         # Run the function that needs to run before the officer removal
         try:
-            if self._before_officer_removal: await self._before_officer_removal(self.bot, officer_id)
+            if self._before_officer_removal:
+                await self._before_officer_removal(self.bot, officer_id)
         except Exception:
             await handle_error(
                 self.bot,
                 "Error encountered in before_officer_removal function",
-                traceback.format_exc()
+                traceback.format_exc(),
             )
 
-        await self.send_db_request("DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id))
-        await self.send_db_request("DELETE FROM TimeLog WHERE officer_id = %s", (officer_id))
-        await self.send_db_request("DELETE FROM Officers WHERE officer_id = %s", (officer_id))
+        await self.send_db_request(
+            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
+        )
+        await self.send_db_request(
+            "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
+        )
+        await self.send_db_request(
+            "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
+        )
 
         # Remove the officer from the officer list
         i = 0
         while i < len(self._all_officers):
-            if self._all_officers[i].id == officer_id: del self._all_officers[i]
-            else: i += 1
+            if self._all_officers[i].id == officer_id:
+                del self._all_officers[i]
+            else:
+                i += 1
 
-        msg_string = "WARNING: "+str(officer_id)+" has been removed from the LPD Officer Monitor"
-        if reason is not None: msg_string += " because "+str(reason)
+        msg_string = (
+            "WARNING: "
+            + str(officer_id)
+            + " has been removed from the LPD Officer Monitor"
+        )
+        if reason is not None:
+            msg_string += " because " + str(reason)
         print(msg_string)
         channel = self.bot.get_channel(self.bot.settings["error_log_channel"])
         await channel.send(msg_string)
 
-
     # ====================
-    #    check officers   
+    #    check officers
     # ====================
 
     async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
@@ -247,10 +291,11 @@ class OfficerManager():
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
-        return await self.send_db_request( db_request, arg_list)
+        return await self.send_db_request(db_request, arg_list)
 
     def is_officer(self, member):
-        if member is None: return False
+        if member is None:
+            return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
         all_lpd_ranks.append(self.bot.settings["lpd_role"])
         for role in member.roles:
@@ -267,7 +312,7 @@ class OfficerManager():
     @property
     def all_server_members_in_LPD(self):
         return [m for m in self.guild.members if self.is_officer(m)]
-    
+
     @property
     def all_server_members_not_in_LPD(self):
         return [m for m in self.guild.members if self.is_officer(m)]
@@ -276,9 +321,8 @@ class OfficerManager():
     def all_officers(self):
         return self._all_officers
 
-
     # ====================
-    #   other functions   
+    #   other functions
     # ====================
 
     def get_settings_role(self, name_id):
