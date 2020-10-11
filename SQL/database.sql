@@ -19,7 +19,8 @@ CREATE TABLE LeaveTimes
 (
     officer_id BIGINT UNSIGNED PRIMARY KEY,
     date_start DATETIME,
-    date_end DATETIME
+    date_end DATETIME,
+    reason TEXT
 );
 
 
