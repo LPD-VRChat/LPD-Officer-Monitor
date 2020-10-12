@@ -94,3 +94,13 @@ def get_rank_id(settings, name_id):
 
 def has_role(role_list, role_id):
     return len([x for x in role_list if x.id == role_id]) > 0
+
+
+# Process the role_ladder into a usable list when called
+def role_id_index(self, bad_role=0):
+    role_id_ladder = []
+    for entry in self.bot.settings["role_ladder"]:
+        if entry["id"] == bad_role:
+            return entry["name"]
+        role_id_ladder.append(entry["id"])
+    return role_id_ladder
