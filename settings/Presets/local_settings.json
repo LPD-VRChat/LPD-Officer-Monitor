@@ -16,6 +16,7 @@
     "admin_bot_channel": 566777522252152883,
     "general_bot_channel": 708117281376305232,
     "error_log_channel": 670751809538752512,
+    "leave_of_absence_channel": 734906620630401045,
     "inactive_channel_name": "inactive",
     "application_channel": 723234394524876882,
     "allowed_command_channels": [
@@ -31,7 +32,7 @@
     "slrt_trained_role": 670305435332378624,
     "recruiter_role": 633018289777410068,
     "civilian_role": 723276594935758998,
-    "inactive_role": "LPD_inactive",
+    "inactive_role": 590684921534873620,
     "teams": [
         {
             "id": 746362203225063454,

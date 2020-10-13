@@ -32,6 +32,7 @@ import Classes.errors as errors
 intents = discord.Intents.default()
 intents.members = True
 
+
 # ====================
 # Argparse
 # ====================
@@ -132,6 +133,10 @@ async def on_message(message):
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
+
+    # If the message was sent in the #leave-of-absence channel, process it
+    if message.channel.id == bot.settings["leave_of_absence_channel"]:
+        await process_loa(message)
 
     # Archive the message
     if (
@@ -261,6 +266,156 @@ async def on_command_error(ctx, exception):
             exception_string,
             "".join(traceback.format_exception(None, exception, None)),
         )
+
+
+async def save_loa(officer_id, date_start, date_end, reason):
+
+    # Documentation:
+    #
+    # Pass all 4 required fields to save_loa()
+    # If record with matching officer_id is found,
+    # record will be updated with new dates and reason.
+
+    db_pool = await aiomysql.create_pool(
+        host=bot.settings["DB_host"],
+        port=3306,
+        user=bot.settings["DB_user"],
+        password=keys["SQL_Password"],
+        db=bot.settings["DB_name"],
+        loop=asyncio.get_event_loop(),
+        autocommit=True,
+        unix_socket=bot.settings["DB_socket"],
+    )
+
+    async with db_pool.acquire() as conn:
+        cur = await conn.cursor()
+        await cur.execute(
+            "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`) VALUES (%s, %s, %s, %s)",
+            (officer_id, date_start, date_end, reason),
+        )
+        await cur.close()
+
+
+async def process_loa(message):
+
+    # Try and parse the message to get a useful date range
+
+    try:
+        date_range = message.content.split(":")[0]
+        date_a = date_range.split("-")[0]
+        date_b = date_range.split("-")[1]
+        date_start = ["", "", ""]
+        date_end = ["", "", ""]
+        date_start[0] = date_a.split("/")[0].strip()
+        date_start[1] = date_a.split("/")[1].strip()
+        date_start[2] = date_a.split("/")[2].strip()
+        date_end[0] = date_b.split("/")[0].strip()
+        date_end[1] = date_b.split("/")[1].strip()
+        date_end[2] = date_b.split("/")[2].strip()
+        reason = message.content.split(":")[1].strip()
+        months = dict(
+            JAN=1,
+            FEB=2,
+            MAR=3,
+            APR=4,
+            MAY=5,
+            JUN=6,
+            JUL=7,
+            AUG=8,
+            SEP=9,
+            OCT=10,
+            NOV=11,
+            DEC=12,
+        )
+        officer_id = message.author.id
+    except:
+        # If all of that failed, let the user know with an autodeleting message
+        await message.channel.send(
+            message.author.mention
+            + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+            delete_after=10,
+        )
+        await message.delete()
+        return
+
+    # Try and make sense of the month - allowable types are Mon, Month, or number
+    try:
+        int(date_start[1])
+    except:
+        try:
+            date_start[1] = date_start[1].upper()[0:3]
+            date_start[1] = months[date_start[1]]
+        except:
+            # If all of that failed, let the user know with an autodeleting message
+            await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+    try:
+        int(date_end[1])
+    except:
+        try:
+            date_end[1] = date_end[1].upper()[0:3]
+            date_end[1] = months[date_end[1]]
+        except:
+            # If all of that failed, let the user know with an autodeleting message
+            await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+    date_start = [int(i) for i in date_start]
+    date_end = [int(i) for i in date_end]
+
+    if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
+        # If the month isn't 1-12, let the user know they dumb
+        await message.channel.send(
+            message.author.mention + " There are only 12 months in a year, Einstein.",
+            delete_after=10,
+        )
+        await message.delete()
+        return
+
+    # Convert our separate data into a usable datetime
+    date_start_complex = (
+        str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
+    )
+    date_end_complex = (
+        str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
+    )
+    date_start = datetime.datetime.strptime(date_start_complex, "%d/%m/%Y")
+    date_end = datetime.datetime.strptime(date_end_complex, "%d/%m/%Y")
+
+    if date_end > date_start + datetime.timedelta(
+        weeks=+12
+    ) or date_end < date_start + datetime.timedelta(weeks=+4):
+        # If more than 12 week LOA, inform user
+        await message.channel.send(
+            message.author.mention
+            + " Leaves of Absence are limited to 4-12 weeks. No longer, no shorter.",
+            delete_after=10,
+        )
+        await message.delete()
+        return
+
+    # Fire the script to save the entry
+    await save_loa(officer_id, date_start, date_end, reason)
+    await message.channel.send(
+        message.author.mention
+        + " your leave of absence from "
+        + str(date_start.date())
+        + " to "
+        + str(date_end.date())
+        + " has been updated. To edit your Leave of Absence, simply send another message."
+    )
+    await message.delete()
 
 
 # ====================

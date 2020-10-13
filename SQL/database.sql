@@ -15,6 +15,18 @@ CREATE TABLE Officers
     started_monitoring_time DATETIME
 );
 
+CREATE TABLE LeaveTimes
+(
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
+    date_start DATETIME,
+    date_end DATETIME,
+    reason TEXT
+	approved BOOLEAN DEFAULT 0
+);
+
+
+
+
 /*CREATE TABLE TimePeriods
 (
 	time_period_id INT PRIMARY KEY AUTO_INCREMENT,

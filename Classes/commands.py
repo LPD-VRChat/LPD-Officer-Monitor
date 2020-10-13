@@ -24,7 +24,33 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import get_settings_file, role_id_index
+from Classes.extra_functions import get_settings_file
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-s", "--server", action="store_true")
+parser.add_argument("-l", "--local", action="store_true")
+args = parser.parse_args()
+
+
+# Get keys so that we can establish a connection to the MySQL Server for LOA
+if args.server:
+    settings = get_settings_file("Presets/remote_settings")
+    keys = get_settings_file("Presets/remote_keys")
+elif args.local:
+    settings = get_settings_file("Presets/local_settings")
+    keys = get_settings_file("Presets/local_keys")
+else:
+    settings = get_settings_file("settings")
+    keys = get_settings_file("keys")
+
+# Process the role_ladder into a usable list when called
+def role_id_index(self, bad_role=0):
+    role_id_ladder = []
+    for entry in self.bot.settings["role_ladder"]:
+        if entry["id"] == bad_role:
+            return entry["name"]
+        role_id_ladder.append(entry["id"])
+    return role_id_ladder
 
 
 class Time(commands.Cog):
@@ -1107,3 +1133,105 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # List the inactive officers
+    async def list_inactive(self, ctx):
+
+        # Fire up a connection to the SQL server to grab Leave of Absence records
+        bot = self.bot
+        db_pool = await aiomysql.create_pool(
+            host=bot.settings["DB_host"],
+            port=3306,
+            user=bot.settings["DB_user"],
+            password=keys["SQL_Password"],
+            db=bot.settings["DB_name"],
+            loop=asyncio.get_event_loop(),
+            autocommit=True,
+            unix_socket=bot.settings["DB_socket"],
+        )
+
+        # Get all fields from LeaveTimes
+        async with db_pool.acquire() as conn:
+            cur = await conn.cursor()
+            await cur.execute("SELECT * FROM LeaveTimes")
+            loa_entries = await cur.fetchall()
+
+        loa_officer_ids = []
+
+        # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
+        for entry in loa_entries:
+            if entry[2] > datetime.now():
+                loa_officer_ids.append(entry[0])
+            else:
+                await cur.execute(
+                    "DELETE FROM LeaveTimes WHERE officer_id = " + str(entry[0])
+                )
+
+        # For everyone in the server where their role is in the role ladder,
+        # get their last activity times, or if no last activity time, use
+        # the time we started monitoring them. Exclude those we have already
+        # determined have a valid Leave of Absence
+
+        # Get a date range for our LOAs, and make some dictionaries to work in
+        max_inactive_days = bot.settings["max_inactive_days"]
+        oldest_valid = datetime.now()  # - timedelta(days=max_inactive_days)
+        global inactive_officers
+        inactive_officers = []
+        role_ids = role_id_index(self)
+        officers_to_check = []
+        guild = self.bot.officer_manager.guild
+
+        for member in guild.members:
+            for role in member.roles:
+                if (
+                    role.id in role_ids
+                    and member.id not in loa_officer_ids
+                    and member not in officers_to_check
+                ):
+                    officers_to_check.append(member)
+                    officer = self.bot.officer_manager.get_officer(member.id)
+                    last_activity = await officer.get_last_activity(
+                        ctx.bot.officer_manager.all_monitored_channels
+                    )
+                    last_activity = last_activity["time"]
+                    # If they've gone past the inactivity limit, add them to the list
+                    if last_activity < oldest_valid:
+                        inactive_officers.append(member)
+                        print(member.name)
+                        print(inactive_officers)
+
+        # Build the message to send back
+        string = "Inactive Officers are"
+        for member in inactive_officers:
+            string = string + " " + member.mention
+        string = (
+            string
+            + ", and may be removed. Run `=mark_inactive` to mark these Officers as `Inactive`."
+        )
+
+        await ctx.channel.send(string)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Mark Officers inactive after running =list_inactive
+    async def mark_inactive(self, ctx):
+        global inactive_officers
+        if len(inactive_officers) == 0:
+            await ctx.channel.send(
+                "Please run `=list_inactive` to gather the list of Inactive Officers before running this command."
+            )
+        else:
+            string = "Marked Officers"
+            role = self.bot.officer_manager.guild.get_role(
+                self.bot.settings["inactive_role"]
+            )
+            for member in inactive_officers:
+                await member.add_roles(role)
+                string = string + " " + member.mention
+            string = string + " with the inactive role."
+            await ctx.channel.send(string)
+            inactive_officers = []

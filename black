@@ -1,0 +1,4 @@
+for i in `find . -name "*.py" -type f`
+do
+    /usr/local/bin/black $i
+done
