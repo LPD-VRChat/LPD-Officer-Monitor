@@ -32,7 +32,6 @@ import Classes.errors as errors
 intents = discord.Intents.default()
 intents.members = True
 
-
 # ====================
 # Argparse
 # ====================
