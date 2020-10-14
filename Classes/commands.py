@@ -1036,7 +1036,10 @@ class Other(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Reimplementation of old ?count_officers command
+    """
+    This command returns a chart including a total Officer count,
+    and a count of Officers in each rank-role in the server.
+    """
     async def count_officers(self, ctx):
         # Call our function to get a list of roles
         role_ids = role_id_index(self)
