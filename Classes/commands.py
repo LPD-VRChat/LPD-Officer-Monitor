@@ -1042,6 +1042,7 @@ class Other(commands.Cog):
     """
     async def count_officers(self, ctx):
         # Call our function to get a list of roles
+        settings = self.bot.settings
         role_ids = role_id_index(settings)
 
         # Build index of Officers, keeping only the highest role in the ladder
