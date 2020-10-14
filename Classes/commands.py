@@ -1042,7 +1042,7 @@ class Other(commands.Cog):
     """
     async def count_officers(self, ctx):
         # Call our function to get a list of roles
-        role_ids = role_id_index(self)
+        role_ids = role_id_index()
 
         # Build index of Officers, keeping only the highest role in the ladder
         all_officers = []
@@ -1064,12 +1064,7 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(
-                    ctx.message.author.mention
-                    + " The role ID for "
-                    + role_id_index(self, entry)
-                    + " has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
-                )
+                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
             else:
                 number_of_officers_with_each_role[
                     role
