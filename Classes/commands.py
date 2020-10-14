@@ -9,7 +9,7 @@ import time
 import math
 import traceback
 import json
-import aiomysql
+#import aiomysql
 import asyncio
 
 # Community
@@ -24,33 +24,8 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import get_settings_file
+from Classes.extra_functions import role_id_index, get_role_name_by_id
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-s", "--server", action="store_true")
-parser.add_argument("-l", "--local", action="store_true")
-args = parser.parse_args()
-
-
-# Get keys so that we can establish a connection to the MySQL Server for LOA
-if args.server:
-    settings = get_settings_file("Presets/remote_settings")
-    keys = get_settings_file("Presets/remote_keys")
-elif args.local:
-    settings = get_settings_file("Presets/local_settings")
-    keys = get_settings_file("Presets/local_keys")
-else:
-    settings = get_settings_file("settings")
-    keys = get_settings_file("keys")
-
-# Process the role_ladder into a usable list when called
-def role_id_index(self, bad_role=0):
-    role_id_ladder = []
-    for entry in self.bot.settings["role_ladder"]:
-        if entry["id"] == bad_role:
-            return entry["name"]
-        role_id_ladder.append(entry["id"])
-    return role_id_ladder
 
 
 class Time(commands.Cog):
@@ -1064,8 +1039,10 @@ class Other(commands.Cog):
     @commands.command()
     # Reimplementation of old ?count_officers command
     async def count_officers(self, ctx):
-        # Call our function to get a list of roles
-        role_ids = role_id_index(self)
+        """
+        This command returns a chart of Officer counts in the LPD, both Total, and by rank-role.
+        """
+        role_ids = role_id_index(self.bot.settings)
 
         # Build index of Officers, keeping only the highest role in the ladder
         all_officers = []
@@ -1087,12 +1064,7 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(
-                    ctx.message.author.mention
-                    + " The role ID for "
-                    + role_id_index(self, entry)
-                    + " has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
-                )
+                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(self.bot.settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
             else:
                 number_of_officers_with_each_role[
                     role
@@ -1134,41 +1106,42 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Get the list of Leaves of Absence - modes 2 returns all entries, otherwise mode is boolean for acceptance state
+    async def get_loa(self, mode=2):
+        if mode == 2: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes'
+        if mode == 1: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 1'
+        if mode == 0: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 0'
+
+        loa_entries = await self.bot.officer_manager.send_db_request(query)
+        return loa_entries
+
+
+
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
     # List the inactive officers
-    async def list_inactive(self, ctx):
-
-        # Fire up a connection to the SQL server to grab Leave of Absence records
+    async def list_inactive(self, ctx, bool=0):
+        """
+        This command provides a list of all Officers in the LPD that currently
+        meet the standards for being marked inactive.
+        """
         bot = self.bot
-        db_pool = await aiomysql.create_pool(
-            host=bot.settings["DB_host"],
-            port=3306,
-            user=bot.settings["DB_user"],
-            password=keys["SQL_Password"],
-            db=bot.settings["DB_name"],
-            loop=asyncio.get_event_loop(),
-            autocommit=True,
-            unix_socket=bot.settings["DB_socket"],
-        )
-
         # Get all fields from LeaveTimes
-        async with db_pool.acquire() as conn:
-            cur = await conn.cursor()
-            await cur.execute("SELECT * FROM LeaveTimes")
-            loa_entries = await cur.fetchall()
+        loa_entries = await self.bot.officer_manager.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, approved FROM LeaveTimes')
 
         loa_officer_ids = []
 
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         for entry in loa_entries:
-            if entry[2] > datetime.now():
-                loa_officer_ids.append(entry[0])
+            if entry[2] > datetime.now().date():
+                if entry[3]: loa_officer_ids.append(entry[0])
             else:
-                await cur.execute(
-                    "DELETE FROM LeaveTimes WHERE officer_id = " + str(entry[0])
-                )
+                await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTimes WHERE officer_id = " + str(entry[0]))
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
@@ -1177,10 +1150,10 @@ class Other(commands.Cog):
 
         # Get a date range for our LOAs, and make some dictionaries to work in
         max_inactive_days = bot.settings["max_inactive_days"]
-        oldest_valid = datetime.now()  # - timedelta(days=max_inactive_days)
+        oldest_valid = datetime.now() - timedelta(days=max_inactive_days)
         global inactive_officers
         inactive_officers = []
-        role_ids = role_id_index(self)
+        role_ids = role_id_index(bot.settings)
         officers_to_check = []
         guild = self.bot.officer_manager.guild
 
@@ -1200,10 +1173,11 @@ class Other(commands.Cog):
                     # If they've gone past the inactivity limit, add them to the list
                     if last_activity < oldest_valid:
                         inactive_officers.append(member)
-                        print(member.name)
-                        print(inactive_officers)
 
         # Build the message to send back
+        if len(inactive_officers) == 0:
+            await ctx.channel.send("There are no Officers needing to be marked inactive at this time. It is a good day in the LPD!")
+            return
         string = "Inactive Officers are"
         for member in inactive_officers:
             string = string + " " + member.mention
@@ -1219,6 +1193,9 @@ class Other(commands.Cog):
     @commands.command()
     # Mark Officers inactive after running =list_inactive
     async def mark_inactive(self, ctx):
+        """
+        This command marks the Officers listed by =list_inactive with the LPD_inactive role.
+        """
         global inactive_officers
         if len(inactive_officers) == 0:
             await ctx.channel.send(
@@ -1235,3 +1212,60 @@ class Other(commands.Cog):
             string = string + " with the inactive role."
             await ctx.channel.send(string)
             inactive_officers = []
+
+
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Review Leaves of Absence
+    async def review_loa(self, ctx):
+        """
+        This command displays all Leave of Absense requests currently awaiting approval.
+        """
+        loa_entries = await self.get_loa(0)
+        i = 0
+        for entry in loa_entries:
+            i = i + 1
+            officer = self.bot.get_user(entry[0])
+            await ctx.channel.send(f"There is a Leave of Absence request pending approval for {officer.mention} from {entry[1]} to {entry[2]}  for reason: {entry[3]} - To approve this Leave of Absence, run `=approve_loa `{officer.mention}")
+        if i > 1: await ctx.channel.send("You may approve multiple applications at one time by mentioning multiple officers.")
+        if i == 0: await ctx.channel.send("There are no pending Leave of Absence requests at this time.")
+
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Review the Leave of Absence for the specified user
+    async def approve_loa(self, ctx):
+        """
+        This command approves Leave of Absence requests for mentioned Officers.
+        """
+        if len(ctx.message.mentions) == 0:
+            await ctx.channel.send("Gotta mention somebody for me to approve them buddy...")
+        bot = self.bot
+        channel = bot.get_channel(bot.settings["leave_of_absence_channel"])
+        loa_entries = await self.get_loa(0)
+        loa_entries = list(loa_entries)
+        loa_ids = []
+        for entry in loa_entries:
+            loa_ids.append(entry[0])
+        mentioned_officers = []
+        for officer in ctx.message.mentions:
+            mentioned_officers.append(officer.id)
+        desired_officers = list((set.intersection(set(loa_ids), set(mentioned_officers))))
+
+        for officer in ctx.message.mentions:
+            for entry in loa_entries:
+                if entry[0] in desired_officers:
+                    desired_officers.remove(entry[0])
+                    await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`,`approved`) VALUES ({entry[0]},'{entry[1]}','{entry[2]}','{entry[3]}',{entry[4]},1)")
+                    await ctx.channel.send(f"Approved Leave of Absence request for {officer.mention}")
+                    await channel.send(f"{officer.mention} Your Leave of Absence has been approved! Enjoy your time off.")
+                    break
+                if entry[0] in mentioned_officers and entry[0] not in loa_ids:
+                    await ctx.channel.send(f"There was no Leave of Absence request found for {officer.mention}")
+                    break
+                if entry[0] in mentioned_officers and entry[5]:
+                    await ctx.channel.send(f"The Leave of Absence request for {officer.mention} has already been approved.")
+                    break

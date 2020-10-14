@@ -20,7 +20,8 @@ CREATE TABLE LeaveTimes
     officer_id BIGINT UNSIGNED PRIMARY KEY,
     date_start DATETIME,
     date_end DATETIME,
-    reason TEXT
+    reason TEXT,
+	request_id,
 	approved BOOLEAN DEFAULT 0
 );
 

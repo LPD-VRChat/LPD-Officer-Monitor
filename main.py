@@ -267,32 +267,15 @@ async def on_command_error(ctx, exception):
         )
 
 
-async def save_loa(officer_id, date_start, date_end, reason):
+async def save_loa(officer_id, date_start, date_end, reason, request_id, approved=0):
 
     # Documentation:
     #
     # Pass all 4 required fields to save_loa()
     # If record with matching officer_id is found,
     # record will be updated with new dates and reason.
-
-    db_pool = await aiomysql.create_pool(
-        host=bot.settings["DB_host"],
-        port=3306,
-        user=bot.settings["DB_user"],
-        password=keys["SQL_Password"],
-        db=bot.settings["DB_name"],
-        loop=asyncio.get_event_loop(),
-        autocommit=True,
-        unix_socket=bot.settings["DB_socket"],
-    )
-
-    async with db_pool.acquire() as conn:
-        cur = await conn.cursor()
-        await cur.execute(
-            "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`) VALUES (%s, %s, %s, %s)",
-            (officer_id, date_start, date_end, reason),
-        )
-        await cur.close()
+    
+    await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`,`approved`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id},{approved})")
 
 
 async def process_loa(message):
@@ -405,15 +388,9 @@ async def process_loa(message):
         return
 
     # Fire the script to save the entry
-    await save_loa(officer_id, date_start, date_end, reason)
-    await message.channel.send(
-        message.author.mention
-        + " your leave of absence from "
-        + str(date_start.date())
-        + " to "
-        + str(date_end.date())
-        + " has been updated. To edit your Leave of Absence, simply send another message."
-    )
+    sent = await message.channel.send(f"{message.author.mention} your leave of absence from {date_start.date()} to {date_end.date()} has been updated and is pending approval. To edit your Leave of Absence, simply send another message.")
+    request_id = sent.id
+    await save_loa(officer_id, date_start, date_end, reason, request_id)
     await message.delete()
 
 
