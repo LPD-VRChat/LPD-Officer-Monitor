@@ -24,7 +24,7 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import get_settings_file, role_id_index
+from Classes.extra_functions import role_id_index
 
 
 class Time(commands.Cog):
