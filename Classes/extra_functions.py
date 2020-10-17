@@ -97,10 +97,15 @@ def has_role(role_list, role_id):
 
 
 # Process the role_ladder into a usable list when called
-def role_id_index(self, bad_role=0):
+def role_id_index(settings):
     role_id_ladder = []
-    for entry in self.bot.settings["role_ladder"]:
-        if entry["id"] == bad_role:
-            return entry["name"]
+    for entry in settings["role_ladder"]:
         role_id_ladder.append(entry["id"])
     return role_id_ladder
+
+
+# Identify a role's expected name by its ID
+def get_role_name_by_id(settings, bad_role):
+    for entry in settings["role_ladder"]:
+        if entry["id"] == bad_role:
+            return entry["name"]
