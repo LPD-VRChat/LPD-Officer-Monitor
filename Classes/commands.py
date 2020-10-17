@@ -678,7 +678,7 @@ class Time(commands.Cog):
                 await officer.member.remove_roles(lpd_role, cadet_role)
             except discord.HTTPException as error:
                 await ctx.send(f"WARNING Failed to remove {officer.mention}")
-                await handle_error(bot, error, traceback.format_exc())
+                await handle_error(self.bot, error, traceback.format_exc())
 
         await ctx.send(
             f"{ctx.author.mention} I have now removed all the inactive cadets."
@@ -813,7 +813,7 @@ class VRChatAccoutLink(commands.Cog):
         if len(output_text) == 0:
             await ctx.send("There are no registered users.")
         else:
-            send_long(ctx.channel, output_text, code_block=True)
+            await send_long(ctx.channel, output_text, code_block=True)
 
     @commands.command()
     @checks.is_white_shirt()
