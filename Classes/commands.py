@@ -24,7 +24,7 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import role_id_index, get_role_name_by_id
+from Classes.extra_functions import get_settings_file, role_id_index
 
 
 class Time(commands.Cog):
@@ -1036,14 +1036,10 @@ class Other(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    """
-    This command returns a chart including a total Officer count,
-    and a count of Officers in each rank-role in the server.
-    """
+    # Reimplementation of old ?count_officers command
     async def count_officers(self, ctx):
         # Call our function to get a list of roles
-        settings = self.bot.settings
-        role_ids = role_id_index(settings)
+        role_ids = role_id_index(self)
 
         # Build index of Officers, keeping only the highest role in the ladder
         all_officers = []
@@ -1065,7 +1061,12 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(
+                    ctx.message.author.mention
+                    + " The role ID for "
+                    + role_id_index(self, entry)
+                    + " has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role
