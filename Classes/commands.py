@@ -681,7 +681,7 @@ class Time(commands.Cog):
                 await officer.member.remove_roles(lpd_role, cadet_role)
             except discord.HTTPException as error:
                 await ctx.send(f"WARNING Failed to remove {officer.mention}")
-                await handle_error(self.bot, error, traceback.format_exc())
+                await handle_error(bot, error, traceback.format_exc())
 
         await ctx.send(
             f"{ctx.author.mention} I have now removed all the inactive cadets."
