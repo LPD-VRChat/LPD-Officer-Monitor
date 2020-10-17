@@ -816,7 +816,7 @@ class VRChatAccoutLink(commands.Cog):
         if len(output_text) == 0:
             await ctx.send("There are no registered users.")
         else:
-            await send_long(ctx.channel, output_text, code_block=True)
+            send_long(ctx.channel, output_text, code_block=True)
 
     @commands.command()
     @checks.is_white_shirt()
