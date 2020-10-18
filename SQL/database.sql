@@ -25,7 +25,11 @@ CREATE TABLE LeaveTimes
 	approved BOOLEAN DEFAULT 0
 );
 
-
+CREATE TABLE Detainees
+(
+	member_id BIGINT UNSIGNED PRIMARY KEY,
+	date DATETIME
+);
 
 
 /*CREATE TABLE TimePeriods
