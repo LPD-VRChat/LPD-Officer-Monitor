@@ -1106,10 +1106,11 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
-
+    """
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
+    """
     # Get the list of Leaves of Absence - modes 2 returns all entries, otherwise mode is boolean for acceptance state
     async def get_loa(self, mode=2):
         if mode == 2: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes'
@@ -1125,7 +1126,7 @@ class Other(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     # List the inactive officers
-    async def list_inactive(self, ctx, bool=0):
+    async def list_inactive(self, ctx):
         """
         This command provides a list of all Officers in the LPD that currently
         meet the standards for being marked inactive.
