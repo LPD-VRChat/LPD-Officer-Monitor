@@ -1270,3 +1270,25 @@ class Other(commands.Cog):
                 if entry[0] in mentioned_officers and entry[5]:
                     await ctx.channel.send(f"The Leave of Absence request for {officer.mention} has already been approved.")
                     break
+                    
+                
+    @checks.is_chat_moderator()
+    @commands.command()
+    # Put a user in detention
+    async def detain(self, ctx):
+        """
+        This command places a non-LPD user in detention by assigning the Detention and Detention Waiting Area roles.
+        Chat moderators may use this to effectively temp ban a user without having the ban permission.
+        """
+        detainees = ctx.message.mentions
+        role_ids = role_id_index(self.bot.settings)
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+        
+        string = 'Moving'
+        send_string = 0
+        # First, check and see if the mentioned users are in the LPD. If they are, let the mod know what's up
+        random_variable = 0
+        for user in detainees:
+            next_user = 0
+            for role in user.roles:
