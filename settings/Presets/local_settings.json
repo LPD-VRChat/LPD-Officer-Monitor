@@ -33,6 +33,10 @@
     "recruiter_role": 633018289777410068,
     "civilian_role": 723276594935758998,
     "inactive_role": 590684921534873620,
+    "chat_moderator_role": 767437788475162641,
+	"moderator_role": 569166391891197964,
+	"detention_role": 767436972804538418,
+	"detention_waiting_area_role": 767437105948655666,
     "teams": [
         {
             "id": 746362203225063454,
