@@ -86,3 +86,26 @@ def is_recruiter():
             raise errors.NotForYouError("This command is only for LPD Recruiters.")
 
     return commands.check(predicate)
+
+def is_chat_moderator():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_chat_moderator:
+            return True
+        elif officer and officer.is_moderator:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Chat Moderators.")
+            
+    return commands.check(predicate)
+    
+    
+def is_moderator():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_moderator:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Moderators.")
+            
+    return commands.check(predicate)
