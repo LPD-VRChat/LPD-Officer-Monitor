@@ -100,3 +100,19 @@ def is_recruiter():
             raise errors.NotForYouError("This command is only for LPD Recruiters.")
 
     return commands.check(predicate)
+
+
+def is_event_host_or_any_trainer():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and (
+            officer.is_event_host
+            or officer.is_trainer
+            or officer.is_slrt_trainer
+            or officer.is_lmt_trainer
+        ):
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Recruiters.")
+
+    return commands.check(predicate)
