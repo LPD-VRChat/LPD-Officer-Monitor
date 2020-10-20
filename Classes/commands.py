@@ -1036,11 +1036,11 @@ class Other(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    """
-    This command returns a chart including a total Officer count,
-    and a count of Officers in each rank-role in the server.
-    """
     async def count_officers(self, ctx):
+        """
+        This command returns a chart including a total Officer count,
+        and a count of Officers in each rank-role in the server.
+        """
         # Call our function to get a list of roles
         settings = self.bot.settings
         role_ids = role_id_index(settings)
