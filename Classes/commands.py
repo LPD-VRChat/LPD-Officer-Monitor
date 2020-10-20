@@ -1107,6 +1107,7 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
+    @checks.is_event_bot_channel()
     @commands.command()
     async def who(self, ctx, *args):
         """
@@ -1140,7 +1141,7 @@ class Other(commands.Cog):
 
         # Parse command and check errors
         try:
-            parsed = parser.parse_args("?who", args)
+            parsed = parser.parse_args("who", args)
         except argparse.ArgumentError as error:
             await ctx.send(ctx.author.mention + " " + str(error))
             return None
@@ -1225,7 +1226,7 @@ class Other(commands.Cog):
         ### formating for output
         if parsed.embed:
             attend_embed = discord.Embed(
-                title="Attendees List", description="", color=discord.Color.blue()
+                title="Attendees List", description="", color=self.color
             )
 
             for channel_name in channel_data:
