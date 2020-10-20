@@ -94,3 +94,22 @@ def get_rank_id(settings, name_id):
 
 def has_role(role_list, role_id):
     return len([x for x in role_list if x.id == role_id]) > 0
+
+
+
+def role_id_index(settings):
+    """
+    Process the role_ladder into a usable list when called
+    """
+    role_id_ladder = []
+    for entry in settings["role_ladder"]:
+        role_id_ladder.append(entry["id"])
+    return role_id_ladder
+
+def get_role_name_by_id(settings, bad_role):
+    """
+    Identify a role's expected name by its ID
+    """
+    for entry in settings["role_ladder"]:
+        if entry["id"] == bad_role:
+            return entry["name"]

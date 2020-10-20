@@ -9,6 +9,8 @@ import time
 import math
 import traceback
 import json
+import aiomysql
+import asyncio
 
 # Community
 import discord
@@ -22,6 +24,7 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
+from Classes.extra_functions import role_id_index, get_role_name_by_id
 
 
 class Time(commands.Cog):
@@ -1029,3 +1032,77 @@ class Other(commands.Cog):
 
         # Send the JSON file
         await send_long(ctx.channel, json.dumps(json_out), code_block=True)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def count_officers(self, ctx):
+        """
+        This command returns a chart including a total Officer count,
+        and a count of Officers in each rank-role in the server.
+        """
+        # Call our function to get a list of roles
+        settings = self.bot.settings
+        role_ids = role_id_index(settings)
+
+        # Build index of Officers, keeping only the highest role in the ladder
+        all_officers = []
+        guild = self.bot.officer_manager.guild
+        for member in guild.members:
+            for role in member.roles:
+                if role.id in role_ids:
+                    if member in all_officers:
+                        del all_officers[-1]
+                    all_officers.append(member)
+
+        # Get a usable number of oficers, and create a dictionary for the count by role
+        number_of_officers = len(all_officers)
+        number_of_officers_with_each_role = {}
+
+        # For every role in the role list, reverse sorted to preserve higher role:
+        for entry in role_ids[::-1]:
+            role = guild.get_role(entry)
+            if (
+                role is None
+            ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
+                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+            else:
+                number_of_officers_with_each_role[
+                    role
+                ] = 0  # Create entry in the dictionary
+
+        # This actually counts the officers per role
+        for officer in all_officers:
+            for role in number_of_officers_with_each_role:
+                if role in officer.roles:
+                    number_of_officers_with_each_role[role] += 1
+                    break
+
+        # Build the embed
+        embed = discord.Embed(
+            title="Number of all LPD Officers: " + str(number_of_officers),
+            colour=discord.Colour.from_rgb(255, 255, 0),
+        )
+
+        pattern = re.compile(r"LPD \w+")
+
+        # Reverse the order of the dictionary, since we reversed the list earlier. This preserves the previous output of Cadet first, Chief last
+        number_of_officers_with_each_role = dict(
+            reversed(list(number_of_officers_with_each_role.items()))
+        )
+
+        # Make the embed look pretty with actual role names in server
+        for role in number_of_officers_with_each_role:
+
+            match = pattern.findall(role.name)
+            if match:
+                name = match[0][4::] + "s"
+            else:
+                name = role.name
+
+            embed.add_field(
+                name=name + ":", value=number_of_officers_with_each_role[role]
+            )
+
+        # Send the results
+        await ctx.channel.send(embed=embed)

@@ -75,7 +75,8 @@
     "on_duty_role": 581553952550551564,
     
     // Database
-    "DB_name": "lpd_officer_monitor",
+    "DB_name": "LPD_Officer_Monitor",
     "DB_user": "root",
-    "DB_host": "127.0.0.1"
+    "DB_host": "127.0.0.1",
+    "DB_socket": "/run/mysqld/mysqld.sock"
 }

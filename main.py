@@ -28,6 +28,10 @@ from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
 
 
+# Set intents for the bot - this allows the bot to see other users in the server
+intents = discord.Intents.default()
+intents.members = True
+
 # ====================
 # Argparse
 # ====================
@@ -52,7 +56,9 @@ else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
 
-bot = commands.Bot(command_prefix=settings["bot_prefix"])
+bot = commands.Bot(
+    command_prefix=settings["bot_prefix"], intents=intents
+)  # 10/12/2020 - Destructo added intents
 bot.settings = settings
 bot.officer_manager = None
 bot.everything_ready = False

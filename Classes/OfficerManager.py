@@ -77,7 +77,7 @@ class OfficerManager:
                 autocommit=True,
                 unix_socket=bot.settings["DB_socket"],
             )
-        except KeyError:
+        except (KeyError, mysql_errors.OperationalError):
             db_pool = await aiomysql.create_pool(
                 host=bot.settings["DB_host"],
                 port=3306,
