@@ -983,7 +983,7 @@ class Other(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
-    @commands.command()
+    # @commands.command()
     async def team_json(self, ctx):
         """
         This command outputs a json object that stores all the team and white shirt info.
