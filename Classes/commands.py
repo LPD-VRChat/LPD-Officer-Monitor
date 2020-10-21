@@ -1096,7 +1096,6 @@ class Other(commands.Cog):
 
             match = pattern.findall(role.name)
             if match:
-                print(match)
                 name = "".join(match[0][1]) + "s"
             else:
                 name = role.name
