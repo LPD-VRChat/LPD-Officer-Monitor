@@ -537,7 +537,7 @@ class Time(commands.Cog):
             await send_long(ctx.channel, out_str)
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command(usage="<officers_to_promote>")
     async def promote_to_officer(self, ctx, *args):
         """
@@ -589,7 +589,7 @@ class Time(commands.Cog):
             await handle_error(ctx.bot, error, traceback.format_exc())
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
