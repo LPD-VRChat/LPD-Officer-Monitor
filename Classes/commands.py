@@ -489,7 +489,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28
+        This command lists all the recruits that have been active enough in the last 28 
         days to get promoted to officer.
         """
 
@@ -593,7 +593,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for
+        This command removes all cadets that have been inactive for 
         28 days.
         """
 
