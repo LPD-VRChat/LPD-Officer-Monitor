@@ -1084,7 +1084,7 @@ class Other(commands.Cog):
             colour=discord.Colour.from_rgb(255, 255, 0),
         )
 
-        pattern = re.compile(r"LPD \w+")
+        pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
 
         # Reverse the order of the dictionary, since we reversed the list earlier. This preserves the previous output of Cadet first, Chief last
         number_of_officers_with_each_role = dict(
@@ -1096,7 +1096,8 @@ class Other(commands.Cog):
 
             match = pattern.findall(role.name)
             if match:
-                name = match[0][4::] + "s"
+                print(match)
+                name = "".join(match[0][1]) + "s"
             else:
                 name = role.name
 
