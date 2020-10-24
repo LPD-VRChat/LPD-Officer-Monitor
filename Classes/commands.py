@@ -1140,7 +1140,7 @@ class Other(commands.Cog):
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         for entry in loa_entries:
             if entry[2] > datetime.now().date():
-                if entry[3]: loa_officer_ids.append(entry[0])
+                loa_officer_ids.append(entry[0])
             else:
                 await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTimes WHERE officer_id = " + str(entry[0]))
 
@@ -1220,54 +1220,14 @@ class Other(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     # Review Leaves of Absence
-    async def review_loa(self, ctx):
+    async def show_loa(self, ctx):
         """
-        This command displays all Leave of Absense requests currently awaiting approval.
+        This command displays all Leave of Absense requests currently on record.
         """
-        loa_entries = await self.get_loa(0)
+        loa_entries = await self.get_loa(2)
         i = 0
         for entry in loa_entries:
             i = i + 1
             officer = self.bot.get_user(entry[0])
-            await ctx.channel.send(f"There is a Leave of Absence request pending approval for {officer.mention} from {entry[1]} to {entry[2]}  for reason: {entry[3]} - To approve this Leave of Absence, run `=approve_loa `{officer.mention}")
-        if i > 1: await ctx.channel.send("You may approve multiple applications at one time by mentioning multiple officers.")
-        if i == 0: await ctx.channel.send("There are no pending Leave of Absence requests at this time.")
-
-
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    @commands.command()
-    # Review the Leave of Absence for the specified user
-    async def approve_loa(self, ctx):
-        """
-        This command approves Leave of Absence requests for mentioned Officers.
-        """
-        if len(ctx.message.mentions) == 0:
-            await ctx.channel.send("Gotta mention somebody for me to approve them buddy...")
-        bot = self.bot
-        channel = bot.get_channel(bot.settings["leave_of_absence_channel"])
-        loa_entries = await self.get_loa(0)
-        loa_entries = list(loa_entries)
-        loa_ids = []
-        for entry in loa_entries:
-            loa_ids.append(entry[0])
-        mentioned_officers = []
-        for officer in ctx.message.mentions:
-            mentioned_officers.append(officer.id)
-        desired_officers = list((set.intersection(set(loa_ids), set(mentioned_officers))))
-
-        for officer in ctx.message.mentions:
-            for entry in loa_entries:
-                if entry[0] in desired_officers:
-                    desired_officers.remove(entry[0])
-                    await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`,`approved`) VALUES ({entry[0]},'{entry[1]}','{entry[2]}','{entry[3]}',{entry[4]},1)")
-                    await ctx.channel.send(f"Approved Leave of Absence request for {officer.mention}")
-                    await channel.send(f"{officer.mention} Your Leave of Absence has been approved! Enjoy your time off.")
-                    break
-                if entry[0] in mentioned_officers and entry[0] not in loa_ids:
-                    await ctx.channel.send(f"There was no Leave of Absence request found for {officer.mention}")
-                    break
-                if entry[0] in mentioned_officers and entry[5]:
-                    await ctx.channel.send(f"The Leave of Absence request for {officer.mention} has already been approved.")
-                    break
-                    
+            await ctx.channel.send(f"There is a Leave of Absence on record for {officer.mention} from {entry[1]} to {entry[2]}  for reason: {entry[3]}")
+        if i == 0: await ctx.channel.send("There are no Leave of Absences on file at this time.")

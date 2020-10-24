@@ -241,6 +241,18 @@ async def on_error(event, *args, **kwargs):
 
 
 @bot.event
+async def on_raw_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {payload.message_id}")
+    
+@bot.event
+async def on_raw_bulk_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        for each in payload.message_ids:
+            await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {each}")
+
+
+@bot.event
 async def on_command_error(ctx, exception):
     print("on_command_error")
 
@@ -267,7 +279,7 @@ async def on_command_error(ctx, exception):
         )
 
 
-async def save_loa(officer_id, date_start, date_end, reason, request_id, approved=0):
+async def save_loa(officer_id, date_start, date_end, reason, request_id, approved=1):
 
     # Documentation:
     #
@@ -388,7 +400,7 @@ async def process_loa(message):
         return
 
     # Fire the script to save the entry
-    sent = await message.channel.send(f"{message.author.mention} your leave of absence from {date_start.date()} to {date_end.date()} has been updated and is pending approval. To edit your Leave of Absence, simply send another message.")
+    sent = await message.channel.send(f"{message.author.mention} your leave of absence from {date_start.date()} to {date_end.date()} has been updated. To edit your Leave of Absence, simply send another message.")
     request_id = sent.id
     await save_loa(officer_id, date_start, date_end, reason, request_id)
     await message.delete()
