@@ -239,6 +239,10 @@ async def on_error(event, *args, **kwargs):
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
 
+"""
+@bot.event
+async def on_raw_message_delete(event, 
+"""
 
 @bot.event
 async def on_command_error(ctx, exception):
@@ -281,7 +285,7 @@ async def save_loa(officer_id, date_start, date_end, reason, request_id, approve
 async def process_loa(message):
 
     # Try and parse the message to get a useful date range
-
+    officer_id = message.author.id
     try:
         date_range = message.content.split(":")[0]
         date_a = date_range.split("-")[0]
@@ -309,7 +313,7 @@ async def process_loa(message):
             NOV=11,
             DEC=12,
         )
-        officer_id = message.author.id
+        
     except:
         # If all of that failed, let the user know with an autodeleting message
         await message.channel.send(
@@ -320,6 +324,31 @@ async def process_loa(message):
         await message.delete()
         return
 
+
+    try:
+        int(date_start[0])
+    except:
+        await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+        await message.delete()
+        return
+        
+
+    try:
+        int(date_end[0])
+    except:
+        await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+        await message.delete()
+        return        
+        
+    
     # Try and make sense of the month - allowable types are Mon, Month, or number
     try:
         int(date_start[1])
