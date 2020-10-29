@@ -31,7 +31,10 @@ class VRChatUserManager:
                 return user[0]
         return None
 
-    def vrc_name_format(self, string):
+    def vrc_name_format(self, string, skip_format_name=False):
+
+        if skip_format_name:
+            return string
 
         # Replace the characters VRChat replaces
         string = (
@@ -66,11 +69,11 @@ class VRChatUserManager:
 
         return string
 
-    async def add_user(self, discord_id, vrchat_name):
+    async def add_user(self, discord_id, vrchat_name, skip_format_name=False):
         await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
-        vrchat_name = self.vrc_name_format(vrchat_name)
+        vrchat_name = self.vrc_name_format(vrchat_name, skip_format_name)
 
         # Add to the cache
         self.all_users.append([discord_id, vrchat_name])
