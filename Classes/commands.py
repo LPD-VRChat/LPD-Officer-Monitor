@@ -1134,7 +1134,7 @@ class Other(commands.Cog):
         """
 
         # Setup parser
-        parser = ArgumentParser(description="Argparse user command")
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
         parser.add_argument("-t", "--training", action="store_true")
         parser.add_argument("-p", "--patrol", action="store_true")
         parser.add_argument("-a", "--all", action="store_true")
