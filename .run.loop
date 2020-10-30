@@ -1,7 +1,0 @@
-while true
-do
-    sleep 1
-    clear
-    python3.8 main.py -l
-    read
-done
