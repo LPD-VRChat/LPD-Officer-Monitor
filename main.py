@@ -239,13 +239,11 @@ async def on_error(event, *args, **kwargs):
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
 
-"""
-@bot.event
-async def on_raw_message_delete(event, 
-"""
 
 @bot.event
 async def on_raw_message_delete(payload):
+    print(payload.channel_id)
+    print(payload.message_id)
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
         await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {payload.message_id}")
     

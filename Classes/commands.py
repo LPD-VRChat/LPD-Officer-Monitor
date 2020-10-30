@@ -1096,6 +1096,8 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = match[0][4::] + "s"
+            elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
+                name = 'Cadets'
             else:
                 name = role.name
 
@@ -1106,11 +1108,6 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
-    """
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    @commands.command()
-    """
     # Get the list of Leaves of Absence - modes 2 returns all entries, otherwise mode is boolean for acceptance state
     async def get_loa(self, mode=2):
         if mode == 2: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes'
@@ -1176,6 +1173,7 @@ class Other(commands.Cog):
                         inactive_officers.append(member)
 
         # Build the message to send back
+        print(inactive_officers)
         if len(inactive_officers) == 0:
             await ctx.channel.send("There are no Officers needing to be marked inactive at this time. It is a good day in the LPD!")
             return
@@ -1220,11 +1218,11 @@ class Other(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     # Review Leaves of Absence
-    async def review_loa(self, ctx):
+    async def show_loa(self, ctx):
         """
         This command displays all Leave of Absense requests currently on file.
         """
-        loa_entries = await self.get_loa(0)
+        loa_entries = await self.get_loa(1)
         i = 0
         for entry in loa_entries:
             i = i + 1
