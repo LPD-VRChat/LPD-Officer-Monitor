@@ -26,8 +26,6 @@ import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
 
-
-
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
 
@@ -490,7 +488,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28
+        This command lists all the recruits that have been active enough in the last 28 
         days to get promoted to officer.
         """
 
@@ -538,7 +536,7 @@ class Time(commands.Cog):
             await send_long(ctx.channel, out_str)
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command(usage="<officers_to_promote>")
     async def promote_to_officer(self, ctx, *args):
         """
@@ -590,11 +588,11 @@ class Time(commands.Cog):
             await handle_error(ctx.bot, error, traceback.format_exc())
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for
+        This command removes all cadets that have been inactive for 
         28 days.
         """
 
@@ -682,7 +680,7 @@ class Time(commands.Cog):
                 await officer.member.remove_roles(lpd_role, cadet_role)
             except discord.HTTPException as error:
                 await ctx.send(f"WARNING Failed to remove {officer.mention}")
-                await handle_error(bot, error, traceback.format_exc())
+                await handle_error(self.bot, error, traceback.format_exc())
 
         await ctx.send(
             f"{ctx.author.mention} I have now removed all the inactive cadets."
@@ -817,7 +815,7 @@ class VRChatAccoutLink(commands.Cog):
         if len(output_text) == 0:
             await ctx.send("There are no registered users.")
         else:
-            send_long(ctx.channel, output_text, code_block=True)
+            await send_long(ctx.channel, output_text, code_block=True)
 
     @commands.command()
     @checks.is_white_shirt()
@@ -984,7 +982,7 @@ class Other(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
-    @commands.command()
+    # @commands.command()
     async def team_json(self, ctx):
         """
         This command outputs a json object that stores all the team and white shirt info.
@@ -1037,12 +1035,14 @@ class Other(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Reimplementation of old ?count_officers command
     async def count_officers(self, ctx):
         """
-        This command returns a chart of Officer counts in the LPD, both Total, and by rank-role.
+        This command returns a chart including a total Officer count,
+        and a count of Officers in each rank-role in the server.
         """
-        role_ids = role_id_index(self.bot.settings)
+        # Call our function to get a list of roles
+        settings = self.bot.settings
+        role_ids = role_id_index(settings)
 
         # Build index of Officers, keeping only the highest role in the ladder
         all_officers = []
@@ -1064,7 +1064,7 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(self.bot.settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
             else:
                 number_of_officers_with_each_role[
                     role
@@ -1083,7 +1083,7 @@ class Other(commands.Cog):
             colour=discord.Colour.from_rgb(255, 255, 0),
         )
 
-        pattern = re.compile(r"LPD \w+")
+        pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
 
         # Reverse the order of the dictionary, since we reversed the list earlier. This preserves the previous output of Cadet first, Chief last
         number_of_officers_with_each_role = dict(
@@ -1095,7 +1095,7 @@ class Other(commands.Cog):
 
             match = pattern.findall(role.name)
             if match:
-                name = match[0][4::] + "s"
+                name = "".join(match[0][1]) + "s"
             elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
                 name = 'Cadets'
             else:
