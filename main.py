@@ -270,14 +270,10 @@ async def on_command_error(ctx, exception):
 async def on_member_join(member):
     detainee_ids = await bot.officer_manager.send_db_request(f"select member_id from Detainees WHERE member_id = {member.id}")
     if detainee_ids == None: return
-    print(detainee_ids)
     for detainee_id in detainee_ids:
         if member.id in detainee_id:
             detention_role = bot.officer_manager.guild.get_role(bot.settings["detention_role"])
             detention_waiting_area_role = bot.officer_manager.guild.get_role(bot.settings["detention_waiting_area_role"])
-            print(member.name)
-            print(detention_role.id)
-            print(detention_waiting_area_role.id)
             await member.add_roles(detention_role)
             await member.add_roles(detention_waiting_area_role)
 
