@@ -268,17 +268,18 @@ async def on_command_error(ctx, exception):
 
 @bot.event        
 async def on_member_join(member):
-    detainee_id = await bot.officer_manager.send_db_request(f"select member_id from Detainees WHERE member_id = {member.id}")
-    if detainee_id == None: return
-    print(detainee_id)
-    if member.id in detainee_id:
-        detention_role = bot.officer_manager.guild.get_role(bot.settings["detention_role"])
-        detention_waiting_area_role = bot.officer_manager.guild.get_role(bot.settings["detention_waiting_area_role"])
-        print(member.name)
-        print(detention_role.id)
-        print(detention_waiting_area_role.id)
-        await member.add_roles(detention_role)
-        await member.add_roles(detention_waiting_area_role)
+    detainee_ids = await bot.officer_manager.send_db_request(f"select member_id from Detainees WHERE member_id = {member.id}")
+    if detainee_ids == None: return
+    print(detainee_ids)
+    for detainee_id in detainee_ids:
+        if member.id in detainee_id:
+            detention_role = bot.officer_manager.guild.get_role(bot.settings["detention_role"])
+            detention_waiting_area_role = bot.officer_manager.guild.get_role(bot.settings["detention_waiting_area_role"])
+            print(member.name)
+            print(detention_role.id)
+            print(detention_waiting_area_role.id)
+            await member.add_roles(detention_role)
+            await member.add_roles(detention_waiting_area_role)
 
 async def save_loa(officer_id, date_start, date_end, reason, request_id, approved=0):
 
