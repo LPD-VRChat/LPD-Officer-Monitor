@@ -268,7 +268,7 @@ async def on_command_error(ctx, exception):
 
 @bot.event        
 async def on_member_join(member):
-    detainee_id = bot.officer_manager.send_db_request(f"select member_id from Detainees WHERE member_id = {member.id}")
+    detainee_id = await bot.officer_manager.send_db_request(f"select member_id from Detainees WHERE member_id = {member.id}")
     if detainee_id == None: return
     print(detainee_id)
     if member.id in detainee_id:
