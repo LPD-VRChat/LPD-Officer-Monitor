@@ -1193,12 +1193,14 @@ class Other(commands.Cog):
         channel_data = dict()
         for vc in ctx.guild.voice_channels:
             if vc.category_id == self.bot.settings["on_duty_category"]:
+                # skip if it's not a training channel but we only want training
                 if (
                     parsed.training
                     and not parsed.patrol
                     and not vc.name.startswith("Training")
                 ):
                     continue
+                # skip if we want patrol only but it's a training channel
                 if (
                     not parsed.training
                     and parsed.patrol
