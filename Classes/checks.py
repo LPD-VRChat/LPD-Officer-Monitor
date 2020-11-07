@@ -113,6 +113,8 @@ def is_event_host_or_any_trainer():
         ):
             return True
         else:
-            raise errors.NotForYouError("This command is only for LPD Recruiters.")
+            raise errors.NotForYouError(
+                "This command is only for LPD event Host or Trainers."
+            )
 
     return commands.check(predicate)
