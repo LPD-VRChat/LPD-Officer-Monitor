@@ -275,6 +275,11 @@ bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
 
+if args.local:
+    from Classes.commands import Debug
+
+    bot.add_cog(Debug(bot))
+
 
 # ====================
 # Start

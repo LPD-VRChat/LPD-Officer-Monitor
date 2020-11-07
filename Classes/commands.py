@@ -11,6 +11,7 @@ import traceback
 import json
 import aiomysql
 import asyncio
+import inspect
 
 # Community
 import discord
@@ -1264,3 +1265,58 @@ class Other(commands.Cog):
                 result += "\n".join(channel_data[channel_name])
                 result += "\n\n"
             await ctx.send(f"```\n{result}```")
+
+
+class Debug(commands.Cog):
+    """yes"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.blue()
+
+    @commands.command()
+    async def dbg_officer(self, ctx):
+        # member = self.bot.get_guild(self.bot.settings["Server_ID"]).get_member(mention)
+        if len(ctx.message.mentions) == 0:
+            await ctx.send("You need to mention the users")
+            return
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer is None:
+                embed = discord.Embed(
+                    title="Not an LPD Officer !!!",
+                    description=f"{member.display_name}#{member.discriminator}",
+                    color=discord.Color.red(),
+                    footer="not found in records",
+                )
+                await ctx.send(None, embed=embed)
+                return
+
+            embed = discord.Embed(
+                title="LPD Officer",
+                description=f"{member.display_name}#{member.discriminator}",
+                color=self.color,
+            )
+
+            for attrib in dir(officer):
+                if attrib.startswith("_") or attrib == "mention" or attrib == "bot":
+                    continue
+                value = None
+                try:
+                    value = getattr(officer, attrib)
+                except AttributeError:
+                    continue
+                if (
+                    callable(value)
+                    or inspect.isclass(value)
+                    or inspect.ismethod(value)
+                    or inspect.ismodule(value)
+                    or inspect.isfunction(value)
+                ):
+                    continue
+                embed.add_field(
+                    name=attrib,
+                    value=value,
+                    inline=True,
+                )
+            await ctx.send(None, embed=embed)
