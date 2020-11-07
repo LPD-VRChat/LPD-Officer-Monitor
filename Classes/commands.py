@@ -1109,7 +1109,7 @@ class Other(commands.Cog):
 
     @checks.is_event_bot_channel()
     @checks.is_event_host_or_any_trainer()
-    @commands.command()
+    @commands.command(usage="<options>")
     async def who(self, ctx, *args):
         """
         This command list officers in Voice Channels.
