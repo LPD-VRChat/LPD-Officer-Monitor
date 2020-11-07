@@ -1209,14 +1209,14 @@ class Other(commands.Cog):
                     continue
                 # this is cached so it may be incorrect
                 if len(vc.members) > 0 and len(vc.members) == len(vc.voice_states):
-                    channel_name = vc.mention
+                    channel_name = vc.name if parsed.embed else vc.mention
                     channel_data[channel_name] = []
                     for member in vc.members:
                         channel_data[channel_name].append(member.mention)
 
                 # docs says this should be available all the time
                 elif len(vc.voice_states) > 0:
-                    channel_name = vc.mention
+                    channel_name = vc.name if parsed.embed else vc.mention
                     channel_data[channel_name] = []
                     for member_id in vc.voice_states:
                         member = ctx.guild.get_member(member_id)
@@ -1263,7 +1263,7 @@ class Other(commands.Cog):
                 await ctx.send("Communication channels are empty")
                 return
             for channel_name in channel_data:
-                result += channel_name + ":\n"
+                result += f"**{channel_name}** :\n"
                 result += "\n".join(channel_data[channel_name])
                 result += "\n\n"
             await ctx.send(f"```\n{result}```")
