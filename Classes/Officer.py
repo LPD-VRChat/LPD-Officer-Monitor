@@ -88,11 +88,11 @@ class Officer:
 
     @property
     def is_slrt_trained(self):
-        return not self._has_role(self.bot.settings["slrt_trained_role"])
+        return self._has_role(self.bot.settings["slrt_trained_role"])
 
     @property
     def is_event_host(self):
-        return not self._has_role(self.bot.settings["event_host_role"])
+        return self._has_role(self.bot.settings["event_host_role"])
 
     @property
     def is_lmt_trainer(self):
@@ -100,7 +100,7 @@ class Officer:
 
     @property
     def is_lmt_trained(self):
-        return not self._has_role(self.bot.settings["lmt_trained_role"])
+        return self._has_role(self.bot.settings["lmt_trained_role"])
 
     # Often used member functions
 
