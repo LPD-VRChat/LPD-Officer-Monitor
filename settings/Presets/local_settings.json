@@ -11,18 +11,21 @@
             713371297182384128
         ]
     },
-    "training_finished_channel": 655128316373762121,
     "admin_bot_channel": 566777522252152883,
+    "application_channel": 723234394524876882,
+    "team_bot_channel": 774748395972722688,
     "general_bot_channel": 708117281376305232,
     "event_bot_channel": 768198897776328736,
+
     "error_log_channel": 670751809538752512,
+    "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
-    "application_channel": 723234394524876882,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,
         723234394524876882,
         768198897776328736
+        774748395972722688
     ],
     // Roles
     "lpd_role": 655133459714670592,
@@ -30,6 +33,7 @@
     "slrt_trainer_role": 670305215265636386,
     "slrt_trained_role": 670305435332378624,
     "recruiter_role": 633018289777410068,
+    "dev_team_role": 746362203225063454,
     "civilian_role": 723276594935758998,
     "event_host_role": 768205907770867732,
     "lmt_trainer_role": 773997789939761204,

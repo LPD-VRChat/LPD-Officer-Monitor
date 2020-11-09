@@ -102,6 +102,10 @@ class Officer:
     def is_lmt_trained(self):
         return self._has_role(self.bot.settings["lmt_trained_role"])
 
+    @property
+    def is_dev_member(self):
+        return self._has_role(self.bot.settings["dev_team_role"])
+
     # Often used member functions
 
     @property

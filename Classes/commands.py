@@ -490,7 +490,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28
+        This command lists all the recruits that have been active enough in the last 28 
         days to get promoted to officer.
         """
 
@@ -538,7 +538,7 @@ class Time(commands.Cog):
             await send_long(ctx.channel, out_str)
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command(usage="<officers_to_promote>")
     async def promote_to_officer(self, ctx, *args):
         """
@@ -590,11 +590,11 @@ class Time(commands.Cog):
             await handle_error(ctx.bot, error, traceback.format_exc())
 
     @checks.is_admin_bot_channel()
-    @checks.is_admin()
+    @checks.is_white_shirt()
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for
+        This command removes all cadets that have been inactive for 
         28 days.
         """
 
@@ -801,8 +801,8 @@ class VRChatAccoutLink(commands.Cog):
             )
 
     @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     async def lvn(self, ctx):
         """
         This command is used to get the VRChat names of the people that are LPD Officers.
@@ -960,8 +960,8 @@ class Other(commands.Cog):
 
         return string
 
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
@@ -984,7 +984,7 @@ class Other(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
-    @commands.command()
+    # @commands.command()
     async def team_json(self, ctx):
         """
         This command outputs a json object that stores all the team and white shirt info.
@@ -1085,7 +1085,7 @@ class Other(commands.Cog):
             colour=discord.Colour.from_rgb(255, 255, 0),
         )
 
-        pattern = re.compile(r"LPD \w+")
+        pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
 
         # Reverse the order of the dictionary, since we reversed the list earlier. This preserves the previous output of Cadet first, Chief last
         number_of_officers_with_each_role = dict(
@@ -1097,7 +1097,7 @@ class Other(commands.Cog):
 
             match = pattern.findall(role.name)
             if match:
-                name = match[0][4::] + "s"
+                name = "".join(match[0][1]) + "s"
             else:
                 name = role.name
 
