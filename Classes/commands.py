@@ -1096,8 +1096,11 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = "".join(match[0][1]) + "s"
+            """
             elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
                 name = 'Cadets'
+            Leaving this here for future use if needed.
+            """
             else:
                 name = role.name
 
@@ -1108,14 +1111,7 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
-    # Get the list of Leaves of Absence - modes 2 returns all entries, otherwise mode is boolean for acceptance state
-    async def get_loa(self, mode=2):
-        if mode == 2: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes'
-        if mode == 1: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 1'
-        if mode == 0: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 0'
 
-        loa_entries = await self.bot.officer_manager.send_db_request(query)
-        return loa_entries
 
 
 
@@ -1177,12 +1173,12 @@ class Other(commands.Cog):
         if len(inactive_officers) == 0:
             await ctx.channel.send("There are no Officers needing to be marked inactive at this time. It is a good day in the LPD!")
             return
-        string = "Inactive Officers are"
+        string = "Inactive Officers are listed below. Run `=mark_inactive` to mark these Officers Inactive."
         for member in inactive_officers:
-            string = string + " " + member.mention
-        string = (
-            string
-            + ", and may be removed. Run `=mark_inactive` to mark these Officers as `Inactive`."
+            string = f"{string}\n{member.mention}"
+            if len(string) > 1000:
+                await ctx.channel.send(string)
+                string = ''
         )
 
         await ctx.channel.send(string)
@@ -1201,14 +1197,17 @@ class Other(commands.Cog):
                 "Please run `=list_inactive` to gather the list of Inactive Officers before running this command."
             )
         else:
-            string = "Marked Officers"
+            string = "Marking these Officers with the inactive role"
             role = self.bot.officer_manager.guild.get_role(
                 self.bot.settings["inactive_role"]
             )
             for member in inactive_officers:
                 await member.add_roles(role)
-                string = string + " " + member.mention
-            string = string + " with the inactive role."
+                string = f"{string}\n{member.mention}"
+                if len(string) > 1000:
+                    await ctx.channel.send(string)
+                    string = ''
+                    
             await ctx.channel.send(string)
             inactive_officers = []
 
@@ -1222,10 +1221,15 @@ class Other(commands.Cog):
         """
         This command displays all Leave of Absense requests currently on file.
         """
-        loa_entries = await self.get_loa(1)
+        loa_entries = await self.bot.officer_manager.get_loa(1)
         i = 0
         for entry in loa_entries:
             i = i + 1
             officer = self.bot.get_user(entry[0])
-            await ctx.channel.send(f"There is a Leave of Absence for {officer.mention} from {entry[1]} to {entry[2]}  for reason: {entry[3]}")
+            string = f"There are currently Leaves of Absence on file for the following Officers:"
+            string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
+            if len(string) > 1000:
+                await ctx.channel.send(string)
+                string = ''
+                
         if i == 0: await ctx.channel.send("There are no Leave of Absences at this time.")

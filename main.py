@@ -243,8 +243,6 @@ async def on_error(event, *args, **kwargs):
 
 @bot.event
 async def on_raw_message_delete(payload):
-    print(payload.channel_id)
-    print(payload.message_id)
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
         await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {payload.message_id}")
     
@@ -283,12 +281,11 @@ async def on_command_error(ctx, exception):
 
 
 async def save_loa(officer_id, date_start, date_end, reason, request_id, approved=1):
-
-    # Documentation:
-    #
-    # Pass all 4 required fields to save_loa()
-    # If record with matching officer_id is found,
-    # record will be updated with new dates and reason.
+    """
+    Pass all 4 required fields to save_loa()
+    If record with matching officer_id is found,
+    record will be updated with new dates and reason.
+    """
     
     await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`,`approved`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id},{approved})")
 
@@ -399,7 +396,7 @@ async def process_loa(message):
     if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
         # If the month isn't 1-12, let the user know they dumb
         await message.channel.send(
-            message.author.mention + " There are only 12 months in a year, Einstein.",
+            message.author.mention + " There are only 12 months in a year.",
             delete_after=10,
         )
         await message.delete()
@@ -421,7 +418,7 @@ async def process_loa(message):
         # If more than 12 week LOA, inform user
         await message.channel.send(
             message.author.mention
-            + " Leaves of Absence are limited to 4-12 weeks. No longer, no shorter.",
+            + " Leaves of Absence are limited to 4-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
             delete_after=10,
         )
         await message.delete()
