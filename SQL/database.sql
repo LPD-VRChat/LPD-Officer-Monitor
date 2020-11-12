@@ -22,7 +22,9 @@ CREATE TABLE LeaveTimes
     date_end DATETIME,
     reason TEXT,
 	request_id BIGINT UNSIGNED,
-	approved BOOLEAN DEFAULT 0
+	approved BOOLEAN DEFAULT 0,
+	
+	CONSTRAINT officer_id_FK_LOA FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );
 
 
