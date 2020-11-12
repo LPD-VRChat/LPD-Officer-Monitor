@@ -21,7 +21,7 @@ CREATE TABLE LeaveTimes
     date_start DATETIME,
     date_end DATETIME,
     reason TEXT,
-	request_id,
+	request_id BIGINT UNSIGNED,
 	approved BOOLEAN DEFAULT 0
 );
 
