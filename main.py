@@ -427,7 +427,7 @@ async def process_loa(message):
     # Fire the script to save the entry
     request_id = message.id
     await save_loa(officer_id, date_start, date_end, reason, request_id)
-    message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+    await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
 
 # ====================
 # Add cogs
