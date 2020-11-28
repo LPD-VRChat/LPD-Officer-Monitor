@@ -321,77 +321,34 @@ async def process_loa(message):
             NOV=11,
             DEC=12,
         )
+        int(date_start[0])
+        int(date_end[0])
         
+        try:
+            int(date_start[1])
+        except:
+            date_start[1] = date_start[1].upper()[0:3]
+            date_start[1] = months[date_start[1]]
+
+        try:
+            int(date_end[1])
+        except:
+            date_end[1] = date_end[1].upper()[0:3]
+            date_end[1] = months[date_end[1]]
+  
     except:
         # If all of that failed, let the user know with an autodeleting message
         await message.channel.send(
             message.author.mention
             + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
             delete_after=10,
-        )
-        await message.delete()
-        return
-
-
-    try:
-        int(date_start[0])
-    except:
-        await message.channel.send(
-                message.author.mention
-                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
-                delete_after=10,
             )
         await message.delete()
         return
-        
 
-    try:
-        int(date_end[0])
-    except:
-        await message.channel.send(
-                message.author.mention
-                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
-                delete_after=10,
-            )
-        await message.delete()
-        return        
-        
     
-    # Try and make sense of the month - allowable types are Mon, Month, or number
-    try:
-        int(date_start[1])
-    except:
-        try:
-            date_start[1] = date_start[1].upper()[0:3]
-            date_start[1] = months[date_start[1]]
-        except:
-            # If all of that failed, let the user know with an autodeleting message
-            await message.channel.send(
-                message.author.mention
-                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
-                delete_after=10,
-            )
-            await message.delete()
-            return
-
-    try:
-        int(date_end[1])
-    except:
-        try:
-            date_end[1] = date_end[1].upper()[0:3]
-            date_end[1] = months[date_end[1]]
-        except:
-            # If all of that failed, let the user know with an autodeleting message
-            await message.channel.send(
-                message.author.mention
-                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
-                delete_after=10,
-            )
-            await message.delete()
-            return
-
-    date_start = [int(i) for i in date_start]
-    date_end = [int(i) for i in date_end]
+        date_start = [int(i) for i in date_start]
+        date_end = [int(i) for i in date_end]
 
     if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
         # If the month isn't 1-12, let the user know they dumb
