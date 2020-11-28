@@ -425,10 +425,8 @@ async def process_loa(message):
         return
 
     # Fire the script to save the entry
-    sent = await message.channel.send(f"{message.author.mention} your leave of absence from {date_start.date()} to {date_end.date()} has been updated. To edit your Leave of Absence, simply send another message.")
-    request_id = sent.id
+    request_id = message.id
     await save_loa(officer_id, date_start, date_end, reason, request_id)
-    await message.delete()
 
 
 # ====================
