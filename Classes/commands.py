@@ -1172,7 +1172,6 @@ class Other(commands.Cog):
                         inactive_officers.append(member)
 
         # Build the message to send back
-        print(inactive_officers)
         if len(inactive_officers) == 0:
             await ctx.channel.send("There are no Officers needing to be marked inactive at this time. It is a good day in the LPD!")
             return
@@ -1182,7 +1181,7 @@ class Other(commands.Cog):
             if len(string) > 1000:
                 await ctx.channel.send(string)
                 string = ''
-        )
+        
 
         await ctx.channel.send(string)
 
