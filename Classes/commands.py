@@ -1096,13 +1096,16 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = "".join(match[0][1]) + "s"
+                
+            else:
+                name = role.name
+            
             """
             elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
                 name = 'Cadets'
             Leaving this here for future use if needed.
             """
-            else:
-                name = role.name
+            
 
             embed.add_field(
                 name=name + ":", value=number_of_officers_with_each_role[role]
