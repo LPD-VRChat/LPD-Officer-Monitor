@@ -347,8 +347,8 @@ async def process_loa(message):
         return
 
     
-        date_start = [int(i) for i in date_start]
-        date_end = [int(i) for i in date_end]
+    date_start = [int(i) for i in date_start]
+    date_end = [int(i) for i in date_end]
 
     if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
         # If the month isn't 1-12, let the user know they dumb
