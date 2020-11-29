@@ -324,19 +324,19 @@ async def process_loa(message):
         int(date_start[0])
         int(date_end[0])
         
-        try:
+        if type(date_start[1]) != 'str':
             int(date_start[1])
-        except:
+        else:
             date_start[1] = date_start[1].upper()[0:3]
             date_start[1] = months[date_start[1]]
 
-        try:
+        if type(date_end[1]) != 'str':
             int(date_end[1])
-        except:
+        else:
             date_end[1] = date_end[1].upper()[0:3]
             date_end[1] = months[date_end[1]]
   
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, KeyError):
         # If all of that failed, let the user know with an autodeleting message
         await message.channel.send(
             message.author.mention
