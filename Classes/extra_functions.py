@@ -2,7 +2,7 @@
 import discord
 import datetime
 
-from Classes.Officer import Officer.save_loa as save_loa
+from Classes.Officer import save_loa as save_loa
 from io import StringIO, BytesIO
 
 # Community
