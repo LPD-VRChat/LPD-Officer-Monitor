@@ -20,6 +20,7 @@ import arrow
 
 # Mine
 from Classes.Officer import Officer
+from Classes.OfficerManager import OfficerManager
 from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -750,7 +751,7 @@ class Inactivity(commands.Cog):
                         inactive_officers.append(member)
         '''
         
-        for officer in self.bot.OfficerManager.all_officers:
+        for officer in OfficerManager.all_officers:
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
                 last_activity = last_activity["time"]
