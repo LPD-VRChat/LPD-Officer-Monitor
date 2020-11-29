@@ -2,7 +2,7 @@
 import discord
 import datetime
 
-from Classes.Officer import Officer
+from Classes.Officer import Officer.save_loa as save_loa
 from io import StringIO, BytesIO
 
 # Community
@@ -154,7 +154,7 @@ async def process_loa(message):
 
     # Fire the script to save the entry
     request_id = message.id
-    await Officer.save_loa(bot, officer_id, date_start, date_end, reason, request_id)
+    await save_loa(bot, officer_id, date_start, date_end, reason, request_id)
     await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
 
 def get_settings_file(settings_file_name, in_settings_folder=True):
