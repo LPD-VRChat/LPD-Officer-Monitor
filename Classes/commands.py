@@ -1234,6 +1234,6 @@ class Other(commands.Cog):
                 await ctx.channel.send(string)
                 string = ''
         
-        if i == 0: string = "There are no Leave of Absences at this time."
+        if i == 0: string = "There are no Leaves of Absence on file at this time."
         await ctx.channel.send(string)                
         
