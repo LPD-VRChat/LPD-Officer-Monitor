@@ -7,6 +7,7 @@ import asyncio
 import math
 import time
 from datetime import datetime
+import datetime as dt
 
 # Community
 from discord import Member
@@ -153,12 +154,12 @@ class Officer:
         date_end_complex = (
             str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
         )
-        date_start = datetime.strptime(date_start_complex, "%d/%m/%Y")
-        date_end = datetime.strptime(date_end_complex, "%d/%m/%Y")
+        date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
+        date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
     
-        if date_end > date_start + datetime.timedelta(
+        if date_end > date_start + dt.timedelta(
             weeks=+12
-        ) or date_end < date_start + datetime.timedelta(weeks=+4):
+        ) or date_end < date_start + dt.timedelta(weeks=+4):
             # If more than 12 week LOA, inform user
             await message.channel.send(
                 message.author.mention
