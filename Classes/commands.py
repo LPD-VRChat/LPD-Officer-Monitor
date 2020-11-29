@@ -1129,7 +1129,7 @@ class Other(commands.Cog):
         bot = self.bot
 
         # Get all fields from LeaveTimes
-        loa_entries = await self.bot.officer_manager.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, approved FROM LeaveTimes')
+        loa_entries = await Officer.return_loa(self.bot)
 
         loa_officer_ids = []
 
@@ -1138,7 +1138,7 @@ class Other(commands.Cog):
             if entry[2] > datetime.now().date():
                 if entry[3]: loa_officer_ids.append(entry[0])
             else:
-                await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTimes WHERE officer_id = " + str(entry[0]))
+                await Officer.remove_loa(self.bot, str(request_id))
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
