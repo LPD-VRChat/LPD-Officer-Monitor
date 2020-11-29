@@ -68,7 +68,13 @@ class Officer:
         """
         
         await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id})")
+      
+    async def remove_loa(bot, request_id)
+        """
+        Delete the specified Leave of Absence
+        """
         
+        await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {request_id}")
 
     # ====================
     # properties
