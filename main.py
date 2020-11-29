@@ -24,7 +24,7 @@ from Classes.VRChatUserManager import VRChatUserManager
 
 from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, process_loa
+from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
 
 
@@ -136,7 +136,7 @@ async def on_message(message):
 
     # If the message was sent in the #leave-of-absence channel, process it
     if message.channel.id == bot.settings["leave_of_absence_channel"]:
-        await process_loa(message)
+        await Officer.process_loa(bot, message)
 
     # Archive the message
     if (
