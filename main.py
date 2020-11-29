@@ -280,16 +280,6 @@ async def on_command_error(ctx, exception):
         )
 
 
-async def save_loa(officer_id, date_start, date_end, reason, request_id):
-    """
-    Pass all 4 required fields to save_loa()
-    If record with matching officer_id is found,
-    record will be updated with new dates and reason.
-    """
-    
-    await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id})")
-
-
 async def process_loa(message):
 
     # Try and parse the message to get a useful date range
@@ -383,7 +373,7 @@ async def process_loa(message):
 
     # Fire the script to save the entry
     request_id = message.id
-    await save_loa(officer_id, date_start, date_end, reason, request_id)
+    await Officer.save_loa(officer_id, date_start, date_end, reason, request_id)
     await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
 
 # ====================
