@@ -1139,7 +1139,7 @@ class Other(commands.Cog):
             if entry[2] > datetime.now().date():
                 if entry[3]: loa_officer_ids.append(entry[0])
             else:
-                await Officer.remove_loa(self.bot, str(request_id))
+                await Officer.remove_loa(self.bot, str(entry[4]))
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
