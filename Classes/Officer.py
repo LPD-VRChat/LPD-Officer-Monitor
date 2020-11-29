@@ -76,7 +76,10 @@ class Officer:
         """
         
         await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {request_id}")
-        
+
+    async def return_loa(bot):
+        loa_entries = await bot.officer_manager.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes')
+        return loa_entries
         
     async def process_loa(bot, message):
     
