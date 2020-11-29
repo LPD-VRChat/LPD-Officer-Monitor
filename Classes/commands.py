@@ -1223,7 +1223,7 @@ class Other(commands.Cog):
         """
         This command displays all Leave of Absense requests currently on file.
         """
-        loa_entries = await self.bot.officer_manager.get_loa(1)
+        loa_entries = await self.bot.officer_manager.get_loa()
         i = 0
         for entry in loa_entries:
             i = i + 1
