@@ -1181,7 +1181,7 @@ class Other(commands.Cog):
             )
             for member in inactive_officers:
                 await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?').prompt(ctx)
-                if confirm
+                if confirm:
                     await member.add_roles(role)
                 
             inactive_officers = []
