@@ -915,7 +915,7 @@ class Applications(commands.Cog):
                 await message.delete()
 
 class Inactivity(commands.Cog):
-    """Here are all the commands relating to managing the time of officers."""
+    """Here are all the commands relating to Leaves of Absence and Inactivity"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -975,23 +975,18 @@ class Inactivity(commands.Cog):
                         inactive_officers.append(member)
         
         
-        if len(inactive_officers) == 0:
-            await ctx.channel.send(
-                "Please run `=list_inactive` to gather the list of Inactive Officers before running this command."
-            )
-        else:
-            role = self.bot.officer_manager.guild.get_role(
-                self.bot.settings["inactive_role"]
-            )
-            for member in inactive_officers:
-                confirm = await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?').prompt(ctx)
-                if confirm:
-                    await member.add_roles(role)
-                    await ctx.channel.send(f'{member.mention} has been marked LPD_inactive')
-                else:
-                    await ctx.channel.send(f'{member.mention} will have their inactivity reevaluated at a later date.')
-                
-            inactive_officers = []
+        role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+        for member in inactive_officers:
+            confirm = await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?').prompt(ctx)
+            if confirm:
+                await member.add_roles(role)
+                await ctx.channel.send(f'{member.mention} has been marked LPD_inactive')
+            else:
+                await ctx.channel.send(f'{member.mention} will have their inactivity reevaluated at a later date.')
+            
+        inactive_officers = []
 
 
 
