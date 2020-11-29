@@ -153,8 +153,8 @@ class Officer:
         date_end_complex = (
             str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
         )
-        date_start = datetime.datetime.strptime(date_start_complex, "%d/%m/%Y")
-        date_end = datetime.datetime.strptime(date_end_complex, "%d/%m/%Y")
+        date_start = datetime.strptime(date_start_complex, "%d/%m/%Y")
+        date_end = datetime.strptime(date_end_complex, "%d/%m/%Y")
     
         if date_end > date_start + datetime.timedelta(
             weeks=+12
