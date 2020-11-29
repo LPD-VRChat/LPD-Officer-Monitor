@@ -2,7 +2,7 @@
 import discord
 import datetime
 
-from Officer import Officer
+from Classes.Officer import Officer
 from io import StringIO, BytesIO
 
 # Community
