@@ -171,7 +171,7 @@ class Officer:
     
         # Fire the script to save the entry
         request_id = message.id
-        await save_loa(bot, officer_id, date_start, date_end, reason, request_id)
+        await self.save_loa(bot, officer_id, date_start, date_end, reason, request_id)
         await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
 
     # ====================
