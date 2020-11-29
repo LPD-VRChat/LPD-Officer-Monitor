@@ -1180,7 +1180,7 @@ class Other(commands.Cog):
                 self.bot.settings["inactive_role"]
             )
             for member in inactive_officers:
-                await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?).prompt(ctx)
+                await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?').prompt(ctx)
                 if confirm
                     await member.add_roles(role)
                 
