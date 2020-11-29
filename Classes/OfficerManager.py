@@ -127,16 +127,12 @@ class OfficerManager:
         return result
 
 
-    async def get_loa(self, mode=2):
+    async def get_loa(self):
         """
-        Get the list of Leaves of Absence - modes 2 returns all entries, otherwise mode is boolean for acceptance state
+        Get the list of Leaves of Absence from the database
         """
         
-        if mode == 2: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes'
-        elif mode == 1: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 1'
-        elif mode == 0: query = 'SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes WHERE approved = 0'
-
-        loa_entries = await self.send_db_request(query)
+        loa_entries = await self.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes')
         return loa_entries
 
 
