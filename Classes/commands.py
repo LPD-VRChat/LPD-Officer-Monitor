@@ -759,7 +759,7 @@ class Inactivity(commands.Cog):
                     inactive_officers.append(officer)
         '''
         
-        print(OfficerManager.all_officers)
+        print(OfficerManager._all_officers)
         
         
         role = self.bot.officer_manager.guild.get_role(
