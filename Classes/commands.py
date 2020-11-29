@@ -750,7 +750,7 @@ class Inactivity(commands.Cog):
                         inactive_officers.append(member)
         '''
         
-        for officer in OfficerManager.all_officers:
+        for officer in self.bot.OfficerManager.all_officers:
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
                 last_activity = last_activity["time"]
