@@ -244,13 +244,13 @@ async def on_error(event, *args, **kwargs):
 @bot.event
 async def on_raw_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
-        await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {payload.message_id}")
+        await Officer.remove_loa(bot, payload.message_id)
     
 @bot.event
 async def on_raw_bulk_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
-        for each in payload.message_ids:
-            await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {each}")
+        for message_id in payload.message_ids:
+            await Officer.remove_loa(bot, message_id)
 
 
 @bot.event
