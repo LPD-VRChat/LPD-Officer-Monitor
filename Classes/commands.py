@@ -1117,17 +1117,17 @@ class Other(commands.Cog):
 
 
 
-
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # List the inactive officers
-    async def list_inactive(self, ctx):
+    # Mark Officers inactive after running =list_inactive
+    async def mark_inactive(self, ctx):
         """
-        This command provides a list of all Officers in the LPD that currently
-        meet the standards for being marked inactive.
+        This command lists Inactive OFficers, and prompts the user to mark them with the LPD_inactive role.
         """
+
         bot = self.bot
+
         # Get all fields from LeaveTimes
         loa_entries = await self.bot.officer_manager.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, approved FROM LeaveTimes')
 
@@ -1148,7 +1148,6 @@ class Other(commands.Cog):
         # Get a date range for our LOAs, and make some dictionaries to work in
         max_inactive_days = bot.settings["max_inactive_days"]
         oldest_valid = datetime.now() - timedelta(days=max_inactive_days)
-        global inactive_officers
         inactive_officers = []
         role_ids = role_id_index(bot.settings)
         officers_to_check = []
@@ -1170,47 +1169,21 @@ class Other(commands.Cog):
                     # If they've gone past the inactivity limit, add them to the list
                     if last_activity < oldest_valid:
                         inactive_officers.append(member)
-
-        # Build the message to send back
-        if len(inactive_officers) == 0:
-            await ctx.channel.send("There are no Officers needing to be marked inactive at this time. It is a good day in the LPD!")
-            return
-        string = "Inactive Officers are listed below. Run `=mark_inactive` to mark these Officers Inactive."
-        for member in inactive_officers:
-            string = f"{string}\n{member.mention}"
-            if len(string) > 1000:
-                await ctx.channel.send(string)
-                string = ''
         
-
-        await ctx.channel.send(string)
-
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    @commands.command()
-    # Mark Officers inactive after running =list_inactive
-    async def mark_inactive(self, ctx):
-        """
-        This command marks the Officers listed by =list_inactive with the LPD_inactive role.
-        """
-        global inactive_officers
+        
         if len(inactive_officers) == 0:
             await ctx.channel.send(
                 "Please run `=list_inactive` to gather the list of Inactive Officers before running this command."
             )
         else:
-            string = "Marking these Officers with the inactive role"
             role = self.bot.officer_manager.guild.get_role(
                 self.bot.settings["inactive_role"]
             )
             for member in inactive_officers:
-                await member.add_roles(role)
-                string = f"{string}\n{member.mention}"
-                if len(string) > 1000:
-                    await ctx.channel.send(string)
-                    string = ''
-                    
-            await ctx.channel.send(string)
+                await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?).prompt(ctx)
+                if confirm
+                    await member.add_roles(role)
+                
             inactive_officers = []
 
 
