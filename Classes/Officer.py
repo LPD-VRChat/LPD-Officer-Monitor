@@ -60,7 +60,7 @@ class Officer:
         # Remove itself
         await self.bot.officer_manager.remove_officer(self.id)
         
-    async def save_loa(self, officer_id, date_start, date_end, reason, request_id):
+    async def save_loa(officer_id, date_start, date_end, reason, request_id):
         """
         Pass all 4 required fields to save_loa()
         If record with matching officer_id is found,
