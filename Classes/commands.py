@@ -750,18 +750,13 @@ class Inactivity(commands.Cog):
                     if last_activity < oldest_valid:
                         inactive_officers.append(member)
         '''
-        '''
-        for officer in OfficerManager.all_officers:
+        
+        for officer in self.bot.officer_manager.all_officers:
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
                 last_activity = last_activity["time"]
                 if last_activity < oldest_valid:
                     inactive_officers.append(officer)
-        '''
-        
-        garbage = self.bot.officer_manager.all_officers
-        
-        print(garbage)
         
         
         role = self.bot.officer_manager.guild.get_role(
