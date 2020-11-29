@@ -1,6 +1,8 @@
 # Standard
 import discord
 import datetime
+
+from Classes.Officer import Officer
 from io import StringIO, BytesIO
 
 # Community
