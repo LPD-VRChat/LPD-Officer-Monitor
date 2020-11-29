@@ -19,6 +19,7 @@ import texttable
 import arrow
 
 # Mine
+from Classes.Officer import Officer
 from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
