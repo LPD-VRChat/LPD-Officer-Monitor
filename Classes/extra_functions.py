@@ -58,6 +58,101 @@ async def send_long(channel, string, code_block=False):
 
     await channel.send("\n".join(output_list))
 
+async def process_loa(message):
+
+    # Try and parse the message to get a useful date range
+    officer_id = message.author.id
+    try:
+        date_range = message.content.split(":")[0]
+        date_a = date_range.split("-")[0]
+        date_b = date_range.split("-")[1]
+        date_start = ["", "", ""]
+        date_end = ["", "", ""]
+        date_start[0] = date_a.split("/")[0].strip()
+        date_start[1] = date_a.split("/")[1].strip()
+        date_start[2] = date_a.split("/")[2].strip()
+        date_end[0] = date_b.split("/")[0].strip()
+        date_end[1] = date_b.split("/")[1].strip()
+        date_end[2] = date_b.split("/")[2].strip()
+        reason = message.content.split(":")[1].strip()
+        months = dict(
+            JAN=1,
+            FEB=2,
+            MAR=3,
+            APR=4,
+            MAY=5,
+            JUN=6,
+            JUL=7,
+            AUG=8,
+            SEP=9,
+            OCT=10,
+            NOV=11,
+            DEC=12,
+        )
+        int(date_start[0])
+        int(date_end[0])
+        
+        if type(date_start[1]) != 'str':
+            int(date_start[1])
+        else:
+            date_start[1] = date_start[1].upper()[0:3]
+            date_start[1] = months[date_start[1]]
+
+        if type(date_end[1]) != 'str':
+            int(date_end[1])
+        else:
+            date_end[1] = date_end[1].upper()[0:3]
+            date_end[1] = months[date_end[1]]
+  
+    except (TypeError, ValueError, KeyError, IndexError):
+        # If all of that failed, let the user know with an autodeleting message
+        await message.channel.send(
+            message.author.mention
+            + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+            delete_after=10,
+            )
+        await message.delete()
+        return
+
+    
+    date_start = [int(i) for i in date_start]
+    date_end = [int(i) for i in date_end]
+
+    if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
+        # If the month isn't 1-12, let the user know they dumb
+        await message.channel.send(
+            message.author.mention + " There are only 12 months in a year.",
+            delete_after=10,
+        )
+        await message.delete()
+        return
+
+    # Convert our separate data into a usable datetime
+    date_start_complex = (
+        str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
+    )
+    date_end_complex = (
+        str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
+    )
+    date_start = datetime.datetime.strptime(date_start_complex, "%d/%m/%Y")
+    date_end = datetime.datetime.strptime(date_end_complex, "%d/%m/%Y")
+
+    if date_end > date_start + datetime.timedelta(
+        weeks=+12
+    ) or date_end < date_start + datetime.timedelta(weeks=+4):
+        # If more than 12 week LOA, inform user
+        await message.channel.send(
+            message.author.mention
+            + " Leaves of Absence are limited to 4-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
+            delete_after=10,
+        )
+        await message.delete()
+        return
+
+    # Fire the script to save the entry
+    request_id = message.id
+    await Officer.save_loa(bot, officer_id, date_start, date_end, reason, request_id)
+    await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
 
 def get_settings_file(settings_file_name, in_settings_folder=True):
 
