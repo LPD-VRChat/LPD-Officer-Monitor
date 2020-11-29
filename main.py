@@ -336,7 +336,7 @@ async def process_loa(message):
             date_end[1] = date_end[1].upper()[0:3]
             date_end[1] = months[date_end[1]]
   
-    except:
+    except (TypeError, ValueError):
         # If all of that failed, let the user know with an autodeleting message
         await message.channel.send(
             message.author.mention
