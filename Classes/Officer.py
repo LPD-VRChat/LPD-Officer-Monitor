@@ -62,12 +62,12 @@ class Officer:
         
     async def save_loa(officer_id, date_start, date_end, reason, request_id):
         """
-        Pass all 4 required fields to save_loa()
+        Pass all 5 required fields to save_loa()
         If record with matching officer_id is found,
         record will be updated with new dates and reason.
         """
         
-        await self.bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id})")
+        await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id})")
         
 
     # ====================
