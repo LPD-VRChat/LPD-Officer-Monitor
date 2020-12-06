@@ -1106,3 +1106,69 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    # Put a user in detention
+    async def detain(self, ctx):
+        """
+        This command places a non-LPD user in detention by assigning the Detention and Detention Waiting Area roles.
+        Chat moderators may use this to effectively temp ban a user without having the ban permission.
+        """
+        detainees = ctx.message.mentions
+        role_ids = role_id_index(self.bot.settings)
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+        
+        string = 'Moving'
+        send_string = 0
+        # First, check and see if the mentioned users are in the LPD. If they are, let the mod know what's up
+        random_variable = 0
+        for user in detainees:
+            next_user = 0
+            for role in user.roles:
+                if next_user == 0:
+                    if role.id in role_ids:
+                        await ctx.channel.send(f"{user.mention} is an LPD member. This command has no effect on Officers, and is meant for use on the public.", delete_after=10)
+                        next_user = 1
+                        random_variable = 1
+            if next_user == 1: continue
+            else: send_string = 1
+            await user.add_roles(detention_role)
+            await user.add_roles(detention_waiting_area_role)
+            await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (`member_id`,`date`) VALUES ({user.id},'{datetime.now()}')")
+            string = f"{string} {user.mention}"
+        
+        string = f"{string} to the detention area."
+        if send_string == 1: await ctx.channel.send(string, delete_after=10)
+        if send_string == 0 and random_variable == 0: await ctx.channel.send("Please mention the users you would like to detain.", delete_after=10)
+        
+    @checks.is_moderator()
+    @commands.command()
+    # Remove a user from detention
+    async def restore(self, ctx):
+        """
+        This command removes a non-LPD user from detention by removing the Detention and Detention Waiting Area roles.
+        Use of this command is restricted to Moderators and above.
+        """
+        detainees = ctx.message.mentions
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+        string = 'Removing'
+        send_string = 0
+        
+        for user in detainees:
+            for role in user.roles:
+                if role.id == detention_role.id:
+                    send_string = 1
+                    await user.remove_roles(detention_role)
+                if role.id == detention_waiting_area_role.id:
+                    send_string = 1
+                    await user.remove_roles(detention_waiting_area_role)
+                if role.id == detention_role.id or role.id == detention_waiting_area_role.id:
+                    await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
+            string = f"{string} {user.mention}"
+        
+        string = f"{string} from detention."
+        if send_string == 1: await ctx.channel.send(string, delete_after=10)
+        else: await ctx.channel.send("Please mention the users you wish to release from detention.", delete_after=10)                    
