@@ -20,6 +20,10 @@
     "error_log_channel": 670751809538752512,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
+    "chat_moderator_role": 767437788475162641,
+	"moderator_role": 569166391891197964,
+	"detention_role": 767436972804538418,
+	"detention_waiting_area_role": 767437105948655666,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,
