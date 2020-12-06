@@ -79,6 +79,14 @@ class Officer:
         return self._has_role(self.bot.settings["recruiter_role"])
 
     @property
+    def is_chat_moderator(self):
+        return self._has_role(self.bot.settings["chat_moderator_role"])
+        
+    @property
+    def is_moderator(self):
+        return self._has_role(self.bot.settings["moderator_role"])
+
+    @property
     def is_trainer(self):
         return self._has_role(self.bot.settings["trainer_role"])
 
