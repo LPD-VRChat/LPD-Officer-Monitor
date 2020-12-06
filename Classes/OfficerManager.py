@@ -108,7 +108,7 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, *args):
+    async def send_db_request(self, query, args=None):
 
         async with self.db_pool.acquire() as conn:
             cur = await conn.cursor()
