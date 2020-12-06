@@ -15,6 +15,12 @@ CREATE TABLE Officers
     started_monitoring_time DATETIME
 );
 
+CREATE TABLE Detainees
+(
+	member_id BIGINT UNSIGNED PRIMARY KEY,
+	date DATETIME
+);
+
 /*CREATE TABLE TimePeriods
 (
 	time_period_id INT PRIMARY KEY AUTO_INCREMENT,
