@@ -6,7 +6,6 @@
 import asyncio
 import traceback
 from datetime import datetime, timezone
-from vrcpy.wss import AWSSClient
 
 # Community
 import aiomysql
@@ -18,50 +17,6 @@ import discord
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error
-
-
-
-
-class AClient(AWSSClient):
-    async def on_friend_location(self, friend, world, location, instance):
-        printd("{} is now in {}.".format(friend.displayName,
-                                        "a private world" if location is None else world.name))
-
-    async def on_friend_offline(self, friend):
-        printd("{} went offline.".format(friend.displayName))
-
-    async def on_friend_active(self, friend):
-        printd("{} is now {}.".format(friend.displayName, friend.state))
-
-    async def on_friend_online(self, friend):
-        printd("{} is now online.".format(friend.displayName))
-
-    async def on_friend_add(self, friend):
-        printd("{} is now your friend.".format(friend.displayName))
-
-    async def on_friend_delete(self, friend):
-        printd("{} is no longer your friend.".format(friend.displayName))
-
-    async def on_friend_update(self, friend):
-        printd("{} has updated their profile/account.".format(friend.displayName))
-
-    async def on_notification(self, notification):
-        printd("Got a {} notification from {}.".format(
-            notification.type, notification.senderUsername))
-
-    async def on_unhandled_event(self, event, content):
-        printd("Recieved unhandled event '{}'.".format(event))
-
-    async def on_connect(self):
-        printd("Connected to wss pipeline.")
-
-    async def on_disconnect(self):
-        printd("Disconnected from wss pipeline.")
-
-    async def wait_loop(self):
-        await self.login("Cap Destructo", "Yams,mos!")
-        while True:
-            await asyncio.sleep(1)
 
 
 class OfficerManager:
@@ -106,8 +61,7 @@ class OfficerManager:
 
         # Set up the automatically running code
         bot.loop.create_task(self.loop())
-        bot.loop.create_task(AClient.wait_loop())
-    
+
     @classmethod
     async def start(cls, bot, db_password, run_before_officer_removal=None):
 
