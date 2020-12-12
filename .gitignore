@@ -111,3 +111,4 @@ venv.bak/
 
 # Local database
 LPD_database*.csv
+output.py
