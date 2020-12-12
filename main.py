@@ -24,7 +24,7 @@ from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
-import VRChatListener
+import Classes.VRChatListener
 
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
