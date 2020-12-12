@@ -7,7 +7,8 @@ loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
 
 def printd(string):
-    string = (str(datetime.now()) + ' - ' + string)
+    timestamp = colored((str(datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")), 'white')
+    string = (timestamp + ' - ' + string)
     print(string)
 
 
@@ -47,7 +48,7 @@ async def on_friend_active(friend_a):
 
 @client.event
 async def on_friend_online(friend_a):
-    printd("{} is now online.".format(colored(friend_a.display_name, 'green')))
+    printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), colored(('online'), 'cyan')))
 
 
 @client.event
