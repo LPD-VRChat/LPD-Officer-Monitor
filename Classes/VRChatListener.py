@@ -22,39 +22,39 @@ async def start(username, password):
 
 
 @client.event
-async def on_friend_location(friend, world, location, instance):
-    print("{} is now in {}.".format(friend.displayName,
-                                    "a private world" if location is None else world.name))
+async def on_friend_location(friend_b, friend_a):
+    print("{} is now in {}.".format(friend_a.display_name,
+                                    "a private world" if friend_a.location is None else friend_a.location))
 
 
 @client.event
-async def on_friend_offline(friend):
-    print("{} went offline.".format(friend.displayName))
+async def on_friend_offline(friend_b, friend_a):
+    print("{} went offline.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_active(friend):
-    print("{} is now {}.".format(friend.displayName, friend.state))
+async def on_friend_active(friend_b, friend_a):
+    print("{} is now {}.".format(friend_a.display_name, friend_a.state))
 
 
 @client.event
-async def on_friend_online(friend):
-    print("{} is now online.".format(friend.displayName))
+async def on_friend_online(friend_b, friend_a):
+    print("{} is now online.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_add(friend):
-    print("{} is now your friend.".format(friend.displayName))
+async def on_friend_add(friend_b, friend_a):
+    print("{} is now your friend.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_delete(friend):
-    print("{} is no longer your friend.".format(friend.displayName))
+async def on_friend_delete(friend_b, friend_a):
+    print("{} is no longer your friend.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_update(friend):
-    print("{} has updated their profile/account.".format(friend.displayName))
+async def on_friend_update(friend_b, friend_a):
+    print("{} has updated their profile/account.".format(friend_A.display_name))
 
 
 @client.event
