@@ -23,7 +23,8 @@ async def start(username, password):
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
-    print("{} is now in {}.".format(friend_a.display_name, friend_a.location))
+    print(friend_a)
+    #print("{} is now in {}.".format(friend_a.display_name, friend_a.location))
     #                                "a private world" if friend_a.location is None else friend_a.location))
 
 
