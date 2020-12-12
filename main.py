@@ -112,7 +112,8 @@ async def on_ready():
     bot.user_manager = await VRChatUserManager.start(bot)
     
     # Start the VRChatListener
-    bot.vrclistener = VRChatListener.start(settings["VRC_Username"], keys["VRC_Password"])
+    print(f"Starting VRChat Listener as 
+    bot.vrclistener = await VRChatListener.start(settings["VRC_Username"], keys["VRC_Password"])
 
     # Mark everything ready
     bot.everything_ready = True
