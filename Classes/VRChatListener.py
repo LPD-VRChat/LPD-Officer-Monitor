@@ -7,8 +7,8 @@ loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
 
 def printd(string):
-    timestamp = (str(datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")), 'white')
-    string = (colored(timestamp, 'white') + ' - ' + string)
+    timestamp = (str(datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")))
+    string = colored(timestamp, 'white') + ' - ' + string
     print(string)
 
 
