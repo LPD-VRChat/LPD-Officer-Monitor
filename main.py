@@ -19,14 +19,12 @@ import commentjson as json
 # Mine
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
 from Classes.VRChatUserManager import VRChatUserManager
-
 from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
-
+import VRChatListener
 
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
@@ -112,6 +110,9 @@ async def on_ready():
 
     # Start the VRChatUserManager
     bot.user_manager = await VRChatUserManager.start(bot)
+    
+    # Start the VRChatListener
+    bot.vrclistener = VRChatListener.start(settings["VRC_Username"], keys["VRC_Password"])
 
     # Mark everything ready
     bot.everything_ready = True

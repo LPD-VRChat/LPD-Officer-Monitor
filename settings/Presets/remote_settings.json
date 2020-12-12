@@ -147,5 +147,8 @@
     "DB_name": "LPD_Officer_Monitor",
     "DB_user": "lpd",
     "DB_host": "localhost",
-    "DB_socket": "/run/mysqld/mysqld.sock"
+    "DB_socket": "/run/mysqld/mysqld.sock",
+    
+    // VRChat
+    "VRC_Username": "Officer Monitor"
 }
