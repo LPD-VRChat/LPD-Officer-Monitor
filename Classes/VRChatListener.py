@@ -27,13 +27,13 @@ async def on_friend_location(friend_b, friend_a):
     #                                "a private world" if friend_a.location is None else friend_a.location))
 
 
-@client.event
-async def on_friend_offline(friend_a):
-    print("{} went offline.".format(friend_a.display_name))
+#@client.event
+#async def on_friend_offline(friend_a):
+#    print("{} went offline.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_active(friend_b, friend_a):
+async def on_friend_active(friend_a):
     print("{} is now {}.".format(friend_a.display_name, friend_a.state))
 
 
@@ -52,15 +52,15 @@ async def on_friend_delete(friend_b, friend_a):
     print("{} is no longer your friend.".format(friend_a.display_name))
 
 
-@client.event
-async def on_friend_update(friend_b, friend_a):
-    print("{} has updated their profile/account.".format(friend_a.display_name))
+#@client.event
+#async def on_friend_update(friend_b, friend_a):
+#    print("{} has updated their profile/account.".format(friend_a.display_name))
 
 
-@client.event
-async def on_notification(notification):
-    print("Got a {} notification from {}.".format(
-        notification.type, notification.senderUsername))
+#@client.event
+#async def on_notification(notification):
+#    print("Got a {} notification from {}.".format(
+#        notification.type, notification.senderUsername))
 
 
 @client.event
