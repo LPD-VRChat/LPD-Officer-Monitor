@@ -15,6 +15,7 @@ import aiomysql
 import discord
 from discord.ext import commands
 import commentjson as json
+from termcolor import colored
 
 # Mine
 from Classes.Officer import Officer
@@ -112,7 +113,7 @@ async def on_ready():
     bot.user_manager = await VRChatUserManager.start(bot)
     
     # Start the VRChatListener
-    print(f"Starting VRChat Listener as 
+    print(f"Starting VRChat Listener as {colored(settings["VRC_Username"], 'green')}")
     bot.vrclistener = await VRChatListener.start(settings["VRC_Username"], keys["VRC_Password"])
 
     # Mark everything ready
