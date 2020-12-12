@@ -64,11 +64,6 @@ async def on_notification(notification):
 
 
 @client.event
-async def on_unhandled_event(event, content):
-    print("Recieved unhandled event '{}'.".format(event))
-
-
-@client.event
 async def on_connect():
     print("Connected to wss pipeline.")
 
