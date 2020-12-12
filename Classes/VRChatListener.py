@@ -3,8 +3,7 @@ import asyncio
 
 loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
-username="Officer Monitor"
-password="LPDpassword18"
+
 
 async def main(username, password):
     await client.login(
