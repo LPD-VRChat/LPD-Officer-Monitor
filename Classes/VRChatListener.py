@@ -54,7 +54,7 @@ async def on_friend_delete(friend_b, friend_a):
 
 @client.event
 async def on_friend_update(friend_b, friend_a):
-    print("{} has updated their profile/account.".format(friend_A.display_name))
+    print("{} has updated their profile/account.".format(friend_a.display_name))
 
 
 @client.event
