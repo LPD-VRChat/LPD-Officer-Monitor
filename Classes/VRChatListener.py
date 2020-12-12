@@ -28,7 +28,7 @@ async def on_friend_location(friend_b, friend_a):
 
 
 @client.event
-async def on_friend_offline(friend_b, friend_a):
+async def on_friend_offline(friend_a):
     print("{} went offline.".format(friend_a.display_name))
 
 
@@ -38,7 +38,7 @@ async def on_friend_active(friend_b, friend_a):
 
 
 @client.event
-async def on_friend_online(friend_b, friend_a):
+async def on_friend_online(friend_a):
     print("{} is now online.".format(friend_a.display_name))
 
 
