@@ -33,7 +33,7 @@ async def on_friend_offline(friend_a):
 
 
 @client.event
-async def on_friend_active(*friend_b, friend_a):
+async def on_friend_active(friend_b, friend_a):
     print("{} is now {}.".format(friend_a.display_name, friend_a.state))
 
 
@@ -43,17 +43,17 @@ async def on_friend_online(friend_a):
 
 
 @client.event
-async def on_friend_add(*friend_b, friend_a):
+async def on_friend_add(friend_b, friend_a):
     print("{} is now your friend.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_delete(*friend_b, friend_a):
+async def on_friend_delete(friend_b, friend_a):
     print("{} is no longer your friend.".format(friend_a.display_name))
 
 
 @client.event
-async def on_friend_update(*friend_b, friend_a):
+async def on_friend_update(friend_b, friend_a):
     print("{} has updated their profile/account.".format(friend_a.display_name))
 
 
