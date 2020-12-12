@@ -8,7 +8,7 @@ client = vrcpy.Client(loop=loop)
 
 def printd(string):
     timestamp = (str(datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")))
-    string = colored(timestamp, 'white') + ' - ' + string
+    string = colored(timestamp, 'dark_goldenrod') + ' - ' + string
     print(string)
 
 
