@@ -156,7 +156,9 @@ class Client:
         logging.info("Getting instance world of id " + world_id)
 
         world = await self.request.call("/worlds/"+world_id)
-        return World(self, world["data"], self.loop)
+        print(world)
+        #return World(self, world["data"], self.loop)
+        return
     
     
     async def fetch_permissions(self, condensed=False):
