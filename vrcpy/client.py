@@ -149,19 +149,14 @@ class Client:
     
     async def fetch_world_via_id(self, world_id):
         '''
-        Gets world object
-
-            world_id, str
-            ID of the world
+        Gets world by ID
+        Returns World object
         '''
 
-        logging.info("Getting world %s" % (world_id))
+        logging.info("Getting instance world of id " + world_id)
 
-        world = await self.request.call("/worlds/%s" % (world_id))
-        #return World(self, world["data"], self.loop)
-        if world["status"] == 404:
-            return      # Some kind of error or something for a private world
-        return World(self, world["data"], obj=None, loop=self.loop)
+        world = await self.request.call("/worlds/"+world_id)
+        return World(self, world["data"], self.loop)
     
     
     async def fetch_permissions(self, condensed=False):
