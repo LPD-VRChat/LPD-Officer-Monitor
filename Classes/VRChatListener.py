@@ -111,5 +111,5 @@ async def add_friend():
     for user in friends_list:
         UserToFriend = client.fetch_user_via_id(user + '/name')
         await UserToFriend.send_friend_request()
-        sleep 60
+        sleep(60)
         
