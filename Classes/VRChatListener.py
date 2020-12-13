@@ -1,7 +1,7 @@
 import vrcpy
 import asyncio
 from termcolor import colored
-from datetime import datetime
+from datetime import datetime, timezone
 loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
 
@@ -34,8 +34,21 @@ async def stop():
 async def on_friend_location(friend_b, friend_a):
     world_name = await client.fetch_world_name_via_id(friend_a.world_id)
     instance_numer = friend_a.instance_id.split('~')[0]
-    printd("{} username {} is now in {}#{}".format(colored(friend_a.display_name, 'green'), friend_a.username, colored(world_name, 'yellow'), instance_numer))
-    #userbot.user_manager.get_discord_by_vrc(friend_a.name)
+    if instance_numer == 'private':
+        world_string = colored('a Private World', yellow)
+    else:
+        world_string = colored(world_name, 'yellow') + '#' + instance_number
+    printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
+    officer_id = userbot.user_manager.get_discord_by_vrc(friend_a.display_name)
+    officer = bot.officer_manager.get_officer(officer_id)
+    if officer.is_on_duty():
+        vrc_name = friend_a.display_name
+        enter_time = datetime.now(timezone.utc)
+        avatar_image_url = friend_a.avatar_image_url
+        allow_avatar_copying = friend_a.allow_avatar_copying
+        #bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})")
+        print('is on duty')
+    
 
 @client.event
 async def on_friend_active(friend_a):
