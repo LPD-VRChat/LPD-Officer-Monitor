@@ -25,7 +25,8 @@ async def main(username, password):
 
 async def start(username, password, Bot):
     loop.create_task(main(username, password))
-    global bot=Bot
+    global bot
+    bot=Bot
 
 async def stop():
     await client.logout()
