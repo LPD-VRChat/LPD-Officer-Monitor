@@ -2,7 +2,6 @@ import vrcpy
 import asyncio
 from termcolor import colored
 from datetime import datetime
-
 loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
 
@@ -24,8 +23,9 @@ async def main(username, password):
     except KeyboardInterrupt:
         await client.logout()
 
-async def start(username, password):
+async def start(username, password, Bot):
     loop.create_task(main(username, password))
+    bot=Bot
 
 async def stop():
     await client.logout()
@@ -34,7 +34,8 @@ async def stop():
 async def on_friend_location(friend_b, friend_a):
     world_name = await client.fetch_world_name_via_id(friend_a.world_id)
     instance_numer = friend_a.instance_id.split('~')[0]
-    printd("{} is now in {}#{}".format(colored(friend_a.display_name, 'green'), colored(world_name, 'yellow'), instance_numer))
+    printd("{} display name {} is now in {}#{}".format(colored(friend_a.dislay_name, 'green'), friend_a.name, colored(world_name, 'yellow'), instance_numer))
+    bot.user_manager.get_discord_by_vrc(friend_a.
 
 @client.event
 async def on_friend_active(friend_a):
