@@ -31,8 +31,9 @@ async def start(username, password):
 @client.event
 async def on_friend_location(friend_b, friend_a):
     try:
-        world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
-        print(world.__dict__)
+        instance = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
+        #print(world.__dict__)
+        print(instance.world_id + ' #' instance.name)
     except:
         print("{} is now in {}".format(colored(friend_a.display_name, 'green'), colored(friend_a.location, 'yellow')))
 
