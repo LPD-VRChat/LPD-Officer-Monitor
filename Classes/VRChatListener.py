@@ -40,14 +40,14 @@ async def on_friend_location(friend_b, friend_a):
     else:
         world_string = colored(world_name, 'yellow') + '#' + instance_number
     printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
-    officer_id = bot.user_manager.get_discord_by_vrc(friend_a.display_name)
-    officer = bot.officer_manager.get_officer(officer_id)
+    officer_id = await bot.user_manager.get_discord_by_vrc(friend_a.display_name)
+    officer = await bot.officer_manager.get_officer(officer_id)
     if officer.is_on_duty:
         vrc_name = friend_a.display_name
         enter_time = datetime.now(timezone.utc)
         avatar_image_url = friend_a.avatar_image_url
         allow_avatar_copying = friend_a.allow_avatar_copying
-        bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
+        await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
         print('is on duty')
     
 
