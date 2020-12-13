@@ -33,7 +33,7 @@ async def stop():
 @client.event
 async def on_friend_location(friend_b, friend_a):
     instance = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
-    world = instance.get_world()
+    world = await instance.get_world()
     print(world['name'])
     
     #print(friend_a.world_id)
