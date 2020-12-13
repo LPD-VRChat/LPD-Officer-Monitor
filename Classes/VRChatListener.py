@@ -47,7 +47,7 @@ async def on_friend_location(friend_b, friend_a):
         enter_time = datetime.now(timezone.utc)
         avatar_image_url = friend_a.avatar_image_url
         allow_avatar_copying = friend_a.allow_avatar_copying
-        await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
+        await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
         print('is on duty')
     
 
