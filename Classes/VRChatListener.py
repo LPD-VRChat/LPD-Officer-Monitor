@@ -34,7 +34,7 @@ async def on_friend_location(friend_b, friend_a):
         world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
         print(world.__dict__)
     except:
-        print("world change")
+        print("{} is now in {}".format(colored(friend_a.display_name, 'green'), colored(friend_a.location, 'yellow')))
 
 @client.event
 async def on_friend_active(friend_a):
