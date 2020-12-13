@@ -27,6 +27,8 @@ async def main(username, password):
 async def start(username, password):
     loop.create_task(main(username, password))
 
+async def stop():
+    await client.logout()
 
 @client.event
 async def on_friend_location(friend_b, friend_a):

@@ -159,6 +159,8 @@ class Client:
 
         world = await self.request.call("/worlds/%s" % (world_id))
         #return World(self, world["data"], self.loop)
+        if world["status"] == 404:
+            return      # Some kind of error or something for a private world
         return World(self, world["data"], obj=None, loop=self.loop)
     
     
