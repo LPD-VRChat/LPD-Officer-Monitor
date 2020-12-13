@@ -34,7 +34,7 @@ async def stop():
 async def on_friend_location(friend_b, friend_a):
     world_name = await client.fetch_world_name_via_id(friend_a.world_id)
     instance_number = friend_a.instance_id.split('~')[0]
-    if instance_numer == 'private':
+    if instance_number == 'private':
         world_string = colored('a Private World', yellow)
     else:
         world_string = colored(world_name, 'yellow') + '#' + instance_number
