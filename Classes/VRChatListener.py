@@ -35,7 +35,7 @@ async def on_friend_location(friend_b, friend_a):
     world_name = await client.fetch_world_name_via_id(friend_a.world_id)
     instance_numer = friend_a.instance_id.split('~')[0]
     printd("{} display name {} is now in {}#{}".format(colored(friend_a.dislay_name, 'green'), friend_a.name, colored(world_name, 'yellow'), instance_numer))
-    bot.user_manager.get_discord_by_vrc(friend_a.
+    #bot.user_manager.get_discord_by_vrc(friend_a.
 
 @client.event
 async def on_friend_active(friend_a):
