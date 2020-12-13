@@ -34,12 +34,8 @@ async def stop():
 async def on_friend_location(friend_b, friend_a):
     instance = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
     world = instance.get_world()
-    if world['name'] == None:
-        worldname = "Private World"
-    else:
-        worldname = world['name']
     print(world)
-    print(worldname)
+    
     #print(friend_a.world_id)
     #print(world.__dict__)
     #print(world.name)
