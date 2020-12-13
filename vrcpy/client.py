@@ -158,7 +158,6 @@ class Client:
         world = await self.request.call("/worlds/"+world_id)
         world_data = world['data']
         world_name = world_data['name']
-        #return World(self, world["data"], self.loop)
         return world_name
     
     
