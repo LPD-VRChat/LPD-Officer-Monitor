@@ -32,7 +32,7 @@ async def stop():
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
-    world = await vrcpy.Instance.get_world(friend_a.world_id)
+    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id).get_world()
     if world == None:
         worldname = "Private World"
     else:
