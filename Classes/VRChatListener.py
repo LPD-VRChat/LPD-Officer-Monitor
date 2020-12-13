@@ -30,9 +30,12 @@ async def start(username, password):
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
+    world = client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
+    location = world.name
+    
     #printd(friend_a.__dict__)  # Used this for diagnosis
     printd("{} is now in {}#{}.".format(colored(friend_a.display_name, 'green'),
-                                       colored(friend_a.location, 'yellow'), friend_a.instance_id))
+                                       colored(location, 'yellow'), friend_a.instance_id))
     #                                "a private world" if friend_a.location is None else friend_a.location))
 
 
