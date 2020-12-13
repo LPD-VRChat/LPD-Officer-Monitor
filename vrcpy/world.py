@@ -226,11 +226,11 @@ class Instance(BaseObject):
             "permanent": {
                 "dict_key": "permanent",
                 "type": bool
-            },
-            "hidden": {
-                "dict_key": "hidden",
-                "type": str
-            }
+            }#,
+            #"hidden": {
+            #    "dict_key": "hidden",
+            #    "type": str
+            #}
         })
 
         self._assign(obj)
