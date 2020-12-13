@@ -34,9 +34,8 @@ async def stop():
 async def on_friend_location(friend_b, friend_a):
     #instance = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
     #print(instance.__dict__)
-    world = await client.fetch_world_via_id(friend_a.world_id)
+    world_name = await client.fetch_world_via_id(friend_a.world_id)
     print(world)
-    print(world['name'])
     
     #print(friend_a.world_id)
     #print(world.__dict__)
@@ -45,6 +44,9 @@ async def on_friend_location(friend_b, friend_a):
 
 @client.event
 async def on_friend_active(friend_a):
+    if friend_a.state == 'online':
+        await on_friend_online(friend_a)
+        return
     printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), friend_a.state))
 
 

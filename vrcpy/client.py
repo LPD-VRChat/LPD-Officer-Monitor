@@ -147,18 +147,19 @@ class Client:
         return Instance(self, instance["data"], self.loop)
 
     
-    async def fetch_world_via_id(self, world_id):
+    async def fetch_world_name_via_id(self, world_id):
         '''
         Gets world by ID
-        Returns World object
+        Returns World name, str
         '''
 
         logging.info("Getting instance world of id " + world_id)
 
         world = await self.request.call("/worlds/"+world_id)
-        print(world)
+        world_data = world['data']
+        world_name = world_data['name']
         #return World(self, world["data"], self.loop)
-        return
+        return world_name
     
     
     async def fetch_permissions(self, condensed=False):
