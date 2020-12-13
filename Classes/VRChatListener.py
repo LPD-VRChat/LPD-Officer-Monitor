@@ -34,12 +34,6 @@ async def on_friend_location(friend_b, friend_a):
         world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
         print(world.__dict__)
 
-    #location = world.name
-    
-    #printd("{} is now in {}#{}.".format(colored(friend_a.display_name, 'green'),
-    #                                   colored(location, 'yellow'), friend_a.instance_id))
-    #                                "a private world" if friend_a.location is None else friend_a.location))
-
 
 #@client.event
 #async def on_friend_offline(friend_a):
