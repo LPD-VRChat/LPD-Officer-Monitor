@@ -30,8 +30,8 @@ async def start(username, password):
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
-    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id).__dict__
-    print(world)
+    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
+    print(world[name])
     #location = world.name
     
     #printd(friend_a.__dict__)  # Used this for diagnosis
