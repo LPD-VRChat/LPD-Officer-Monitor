@@ -30,8 +30,9 @@ async def start(username, password):
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
-    world = client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
-    location = world.name
+    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
+    print(world)
+    #location = world.name
     
     #printd(friend_a.__dict__)  # Used this for diagnosis
     printd("{} is now in {}#{}.".format(colored(friend_a.display_name, 'green'),
@@ -83,3 +84,14 @@ async def on_connect():
 @client.event
 async def on_disconnect():
     printd("Disconnected from wss pipeline.")
+
+
+async def join_user(user_id):
+    user = await client.fetch_user_via_id(user_id)
+    join_link = 'vrchat://launch?' + user.location
+    return join_link
+    
+async def send_invite(user_id):
+    user = await client.fetch_user_via_id(user_id)
+    join_link = 'vrchatL//launch?' + user.location
+    return join_link
