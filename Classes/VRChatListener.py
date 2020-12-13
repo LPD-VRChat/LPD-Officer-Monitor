@@ -30,7 +30,7 @@ async def start(username, password):
 
 @client.event
 async def on_friend_location(friend_b, friend_a):
-    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id)
+    world = await client.fetch_instance_via_id(friend_a.world_id, friend_a.instance_id).__dict__
     print(world)
     #location = world.name
     
