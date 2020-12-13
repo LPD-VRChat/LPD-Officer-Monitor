@@ -88,7 +88,7 @@ async def on_friend_delete(friend_b, friend_a):
 @client.event
 async def on_connect():
     printd("Connected to wss pipeline.")
-    await add_friend()
+    #await add_friend()
 
 
 @client.event
