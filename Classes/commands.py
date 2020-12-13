@@ -639,7 +639,7 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now() - last_activity["time"]).days
+            active_days_ago = (datetime.now(timezone.utc) - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
@@ -713,7 +713,7 @@ class Inactivity(commands.Cog):
 
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         for entry in loa_entries:
-            if entry[2] > datetime.now().date():
+            if entry[2] > datetime.now(timezone.utc).date():
                 if entry[3]: loa_officer_ids.append(entry[0])
             else:
                 await Officer.remove_loa(self.bot, str(entry[4]))
@@ -725,7 +725,7 @@ class Inactivity(commands.Cog):
 
         # Get a date range for our LOAs, and make some dictionaries to work in
         max_inactive_days = bot.settings["max_inactive_days"]
-        oldest_valid = datetime.now() - timedelta(days=max_inactive_days)
+        oldest_valid = datetime.now(timezone.utc) - timedelta(days=max_inactive_days)
         inactive_officers = []
         role_ids = role_id_index(bot.settings)
         officers_to_check = []
