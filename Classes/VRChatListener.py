@@ -32,6 +32,7 @@ async def start(username, password):
 async def on_friend_location(friend_b, friend_a):
     world = await client.fetch_world_via_id(friend_a.world_id)
     print(world)
+    print(world.name)
     #print(friend_a.world_id)
     #print(world.__dict__)
     #print(world.name)
