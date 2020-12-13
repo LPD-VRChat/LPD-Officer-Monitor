@@ -156,6 +156,9 @@ class Client:
         logging.info("Getting instance world of id " + world_id)
 
         world = await self.request.call("/worlds/"+world_id)
+        if world['status'] == '404':
+            world_name = 'Private World'
+            return world_name
         world_data = world['data']
         world_name = world_data['name']
         return world_name
