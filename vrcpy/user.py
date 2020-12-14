@@ -66,10 +66,6 @@ class LimitedUser(BaseObject):
                 "dict_key": "isFriend",
                 "type": bool
             },
-            "status_description": {
-                "dict_key": "statusDescription",
-                "type": str
-            },
             "last_login": {
                 "dict_key": "last_login",
                 "type": str
@@ -79,6 +75,10 @@ class LimitedUser(BaseObject):
         self.optional.update({
             "status": {
                 "dict_key": "status",
+                "type": str
+            },
+            "status_description": {
+                "dict_key": "statusDescription",
                 "type": str
             },
             "bio": {
