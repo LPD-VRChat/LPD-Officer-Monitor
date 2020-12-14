@@ -1,5 +1,6 @@
 import vrcpy
 import asyncio
+import time.sleep as sleep
 from termcolor import colored
 from datetime import datetime, timezone
 loop = asyncio.get_event_loop()
