@@ -36,7 +36,7 @@ class Officer:
             return
         
         # Save the officer's location to the database
-        self.bot.loop.create_task(save_officer_location(officer.id))
+        self.bot.loop.create_task(save_officer_location(self.id))
         
         # Start counting the officers time
         self._on_duty_start_time = time.time()
