@@ -34,7 +34,10 @@ class Officer:
         if self.is_on_duty is True:
             print("WARNING A user is going on duty even though he is already on duty")
             return
-
+        
+        # Save the officer's location to the database
+        await bot.vrclistener.save_officer_location(officer.id)
+        
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
