@@ -78,7 +78,7 @@ async def on_friend_online(friend_a):
 
 
 @client.event
-async def on_friend_add(friend_b, friend_a):
+async def on_friend_add(friend_a):
     printd("{} is now your friend.".format(colored(friend_a.display_name, 'green')))
 
 
