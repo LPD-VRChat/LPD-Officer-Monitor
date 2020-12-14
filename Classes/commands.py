@@ -18,6 +18,7 @@ import discord
 from discord.ext import commands
 import texttable
 import arrow
+import fuzzywuzzy.process
 
 # Mine
 from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
@@ -927,19 +928,37 @@ class Other(commands.Cog):
         )
 
     def get_role_by_name(self, role_name):
+        role_names = []
 
         # Get the role
         for role in self.bot.officer_manager.guild.roles:
+            role_names.append(role.name.strip("| ⠀ "))
             if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        msg = f"The role `{role_name}` was not found.\n Did you mean : "
+        cutoff_score = 75
+        suggest = ()
+        # usually you get something on the first run, sometimes if you write really badly you won't get anything
+        # so i lower the score to get more suggestions
+        while len(suggest) < 1 and len(role_name) > 1 and cutoff_score > 0:
+            suggest = fuzzywuzzy.process.extractBests(
+                role_name, role_names, score_cutoff=cutoff_score
+            )
+            cutoff_score -= 25
+
+        for s in suggest:
+            if " " in s[0]:  # if copy paste, it's better to include quotes
+                msg += f'  `"{s[0]}"`'
+            else:
+                msg += f"  `{s[0]}`"
+        raise errors.GetRoleMembersError(message=msg)
 
     def get_role_members(self, role):
 
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role_name} is empty.")
+            raise errors.GetRoleMembersError(message=f"`{role_name}` is empty.")
 
         # Sort the members
         return sorted(role.members, key=self.get_vrc_name)
