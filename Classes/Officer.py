@@ -36,7 +36,7 @@ class Officer:
             return
         
         # Save the officer's location to the database
-        bot.loop.create_task(bot.vrclistener.save_officer_location(officer.id))
+        self.bot.loop.create_task(self.bot.vrclistener.save_officer_location(officer.id))
         
         # Start counting the officers time
         self._on_duty_start_time = time.time()
