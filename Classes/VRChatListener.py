@@ -123,9 +123,7 @@ async def keep_alive():
         sleep(300)
 
 async def add_officer_as_friend(vrc_name):
-    print(vrc_name)
     user = await client.fetch_user_via_id(vrc_name + '/name')
-    print(user)
     await user.send_friend_request()
 
 
