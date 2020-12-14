@@ -715,7 +715,7 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
     async def link(self, ctx, *args):
