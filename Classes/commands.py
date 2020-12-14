@@ -25,7 +25,7 @@ from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
-
+from Classes.VRChatListener import add_officer_as_friend
 
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
@@ -771,6 +771,9 @@ class VRChatAccoutLink(commands.Cog):
             await ctx.send(
                 "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again."
             )
+            return
+        
+        await add_officer_as_friend(vrchat_name)
 
     @commands.command()
     @checks.is_lpd()
