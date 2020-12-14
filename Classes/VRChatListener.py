@@ -53,7 +53,7 @@ async def on_friend_location(friend_b, friend_a):
     
 async def save_officer_location(officer_id):
     vrc_name = bot.user_manager.get_vrc_by_discord(officer_id)
-    user = client.fetch_user_via_id(vrc_name + '/name')
+    user = await client.fetch_user_via_id(vrc_name + '/name')
     world_name = await client.fetch_world_name_via_id(user.world_id)
     instance_number = user.instance_id
     enter_time = datetime.now(timezone.utc)
