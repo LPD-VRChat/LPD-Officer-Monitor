@@ -17,7 +17,7 @@ async def main(username, password):
         username=username,
         password=password
     )
-    loop.create_task(keep_alive())
+    #loop.create_task(keep_alive())
     try:
         # Start the ws event loop
         await client.start()
