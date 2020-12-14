@@ -1209,7 +1209,7 @@ class Other(commands.Cog):
                     continue
                 # this is cached so it may be incorrect
                 if len(vc.members) > 0 and len(vc.members) == len(vc.voice_states):
-                    channel_name = vc.name if parsed.embed else vc.mention
+                    channel_name = vc.name
                     channel_data[channel_name] = []
                     for member in vc.members:
                         channel_data[channel_name].append(member.mention)
@@ -1258,7 +1258,7 @@ class Other(commands.Cog):
             await ctx.send(None, embed=attend_embed)
 
         else:
-            result = ""
+            result = "Event Host:\nDispatch:\nGroup Leads:\n\n"
             if len(channel_data) == 0:
                 await ctx.send("Communication channels are empty")
                 return
@@ -1266,11 +1266,11 @@ class Other(commands.Cog):
                 result += f"**{channel_name}** :\n"
                 result += "\n".join(channel_data[channel_name])
                 result += "\n\n"
-            await ctx.send(f"```\n{result}```")
+            await ctx.send(f"```{result}```")
 
 
 class Debug(commands.Cog):
-    """yes"""
+    """this class is added only in local environement"""
 
     def __init__(self, bot):
         self.bot = bot
