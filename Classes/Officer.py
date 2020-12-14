@@ -14,7 +14,7 @@ from Classes.errors import MemberNotFoundError
 
 # Mine
 import Classes.extra_functions as ef
-
+from Classes.VRChatListener import save_officer_location
 
 class Officer:
     def __init__(self, user_id, bot):
@@ -36,7 +36,7 @@ class Officer:
             return
         
         # Save the officer's location to the database
-        self.bot.loop.create_task(self.bot.vrclistener.save_officer_location(officer.id))
+        self.bot.loop.create_task(save_officer_location(officer.id))
         
         # Start counting the officers time
         self._on_duty_start_time = time.time()
