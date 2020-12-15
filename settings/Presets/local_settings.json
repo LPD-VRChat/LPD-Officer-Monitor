@@ -35,13 +35,36 @@
     "recruiter_role": 633018289777410068,
     "dev_team_role": 746362203225063454,
     "civilian_role": 723276594935758998,
+	"on_duty_event_host_role": 788384949644427295,
+	"off_duty_event_host_role": 788385176279318540,
     "inactive_role": "LPD_inactive",
     "teams": [
         {
             "id": 746362203225063454,
             "name": "Dev Team",
             "name_id": "dev_team"
-        }
+        },
+        {
+            "id": 788384949644427295,
+            "name": "On Duty Event Host",
+            "name_id": "on_duty_event_host",
+            "has_unlock_all_button": true
+        },
+        {
+            "id": 788385176279318540,
+            "name": "Off Duty Event Host",
+            "name_id": "off_duty_event_host"
+        },
+		{
+            "id": 773997789939761204,
+            "name": "LMT Trainer",
+            "name_id": "lmt_trainer"
+        },
+		{
+            "id": 670305215265636386,
+            "name": "SLRT Trainer",
+            "name_id": "slrt_trainer"
+        },
     ],
     "role_ladder": [
         {
@@ -80,7 +103,7 @@
     
     // Database
     "DB_name": "LPD_Officer_Monitor",
-    "DB_user": "root",
+    "DB_user": "ubuntu",
     "DB_host": "127.0.0.1",
     "DB_socket": "/run/mysqld/mysqld.sock"
 }

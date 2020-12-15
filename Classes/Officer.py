@@ -93,7 +93,15 @@ class Officer:
     @property
     def is_dev_member(self):
         return self._has_role(self.bot.settings["dev_team_role"])
-
+    
+    @property
+    def is_on_duty_event_host(self):
+        return self._has_role(self.bot.settings["on_duty_event_host_role"])
+        
+    @property
+    def is_off_duty_event_host(self):
+        return self._has_role(self.bot.settings["off_duty_event_host_role"])
+    
     # Often used member functions
 
     @property

@@ -36,39 +36,52 @@
     "recruiter_role": 655632175168749600,
     "dev_team_role": 645751942626279460,
     "civilian_role": 659121007923167234,
+	"on_duty_event_host_role": 0,
+	"off_duty_event_host_role": 0,
     "teams": [
         {
-            "id": 0,
+            "id": 645751942626279460,
             "name": "Dev Team",
             "name_id": "dev_team"
         },
         {
-            "id": 0,
+            "id": 654438056656371736,
             "name": "Trainer",
             "name_id": "trainer",
             "has_unlock_all_button": true
         },
         {
-            "id": 0,
+            "id": 663137582317568001,
             "name": "SLRT Trainer",
             "name_id": "slrt_trainer"
         },
         {
-            "id": 0,
+            "id": 684866780283666518,
             "name": "LMT Trainer",
             "name_id": "lmt_trainer"
         },
         {
             "id": 0,
-            "name": "Event Host",
-            "name_id": "event_host",
+            "name": "On Duty Event Host",
+            "name_id": "on_duty_event_host",
             "has_unlock_all_button": true
         },
         {
             "id": 0,
+            "name": "Off Duty Event Host",
+            "name_id": "off_duty_event_host"
+        },
+        {
+            "id": 645680788934754365,
             "name": "Media Production",
             "name_id": "media_production"
-        }
+        },
+		{
+			"id": 730149646130741258,
+			"name": "Programming Team",
+			"name_id": "programming_team"
+		},
+		
     ],
     "role_ladder": [
         {
