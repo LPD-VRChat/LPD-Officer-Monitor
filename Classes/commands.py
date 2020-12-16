@@ -1111,7 +1111,7 @@ class Other(commands.Cog):
         await ctx.channel.send(embed=embed)
     @checks.is_lpd()
     @commands.command()
-    async def join(self, ctx)
+    async def join(self, ctx):
         officer_id = ctx.message.mentions[0].id
         vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
         join_link = join_user(vrc_name)
@@ -1124,7 +1124,7 @@ class Other(commands.Cog):
     
     @checks.is_lpd()
     @commands.command()
-    async def invite(self, ctx)
+    async def invite(self, ctx):
         author_id = ctx.message.author.id
         vrc_name = self.bot.user_manager.get_vrc_by_discord(author_id)
         join_link = await join_user(vrc_name)
