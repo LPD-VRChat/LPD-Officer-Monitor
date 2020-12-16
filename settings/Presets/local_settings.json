@@ -46,13 +46,13 @@
         },
         {
             "id": 788384949644427295,
-            "name": "On Duty Event Host",
+            "name": "On-Duty Event Host",
             "name_id": "on_duty_event_host",
             "has_unlock_all_button": true
         },
         {
             "id": 788385176279318540,
-            "name": "Off Duty Event Host",
+            "name": "Off-Duty Event Host",
             "name_id": "off_duty_event_host"
         },
 		{
