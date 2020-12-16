@@ -25,7 +25,7 @@ from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
-from Classes.VRChatListener import add_officer_as_friend
+from Classes.VRChatListener import add_officer_as_friend, join_user
 
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
@@ -1109,3 +1109,16 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+    @checks.is_lpd()
+    @commands.command()
+    async def join(self, ctx)
+        officer_id = ctx.message.mentions[0].id
+        vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
+        join_link = join_user(vrc_name)
+        if join_link == "This user is in a Private World.""
+            string = f"ctx.message.mentions[0]} is in a Private World.}"
+        else:
+            string = f"Join {ctx.message.mention[0]} here: {join_link}"
+        
+        await ctx.channel.send(string)
+        
