@@ -41,7 +41,10 @@ async def on_friend_location(friend_b, friend_a):
     else:
         world_string = colored(world_name, 'yellow') + '#' + instance_number
     printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
-    officer_id = bot.user_manager.get_discord_by_vrc(friend_a.display_name)
+    try:
+        officer_id = bot.user_manager.get_discord_by_vrc(friend_a.display_name)
+    except:
+        return
     officer = bot.officer_manager.get_officer(officer_id)
     if officer.is_on_duty:
         vrc_name = friend_a.display_name
