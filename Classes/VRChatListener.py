@@ -101,12 +101,9 @@ async def on_disconnect():
 
 async def join_user(officer_id):
     user = await client.fetch_user_via_id(officer_id + '/name')
+    if user.instance_id.split('~')[0] == 'private':
+        return "This user is in a Private World."
     join_link = 'vrchat://launch?' + user.location
-    return join_link
-    
-async def send_invite(officer_id):
-    user = await client.fetch_user_via_id(officer_id + '/name')
-    join_link = 'vrchatL//launch?' + user.location
     return join_link
 
 async def keep_alive():
