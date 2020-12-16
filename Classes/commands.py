@@ -1116,7 +1116,7 @@ class Other(commands.Cog):
         vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
         join_link = join_user(vrc_name)
         if join_link == "This user is in a Private World.":
-            string = f"ctx.message.mentions[0]} is in a Private World.}"
+            string = f"{ctx.message.mentions[0]} is in a Private World."
         else:
             string = f"Join {ctx.message.mention[0]} here: {join_link}"
         await ctx.message.delete()
