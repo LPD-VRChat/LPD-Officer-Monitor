@@ -1,0 +1,14 @@
+#dispatch-log - automatically generate log entries using VRC locations of the squadmembers.
+  Use the location with the greatest number of squadmembers in it (just in case the squad is split).
+  Automatically insert Squad name, Location, and Backup Required type (specified as an argument to the command).
+  
+  
+Online Dispatch Portal - have a #dispatch-bot-channel to request a one-time password from the bot (must have dispatch role to view channel)
+  Automatically populate lists in the portal with officers in VCs, as well as Squad locations. Dispatch Portal should allow Dispatch to send
+  invites to a squad to bring them into the same world as a squad in need of support. Dispatch Portal should have the ability to create a
+  dispatch log for a squad. Perhaps in the future, implement integration with Discord's login, allowing users to login to the Portal using their
+  Discord account, assuming they have the Dispatch role.
+  
+#mugshots - use recent worlds of the squad making the arrest to determine what world an arrest was made in. User menus.py to ask the arresting
+  officer if the bot has the correct world, and log it in a database. We can use this to get statistics on which worlds give good interactions,
+  and which Officers prefer which worlds.
