@@ -1140,7 +1140,7 @@ class Other(commands.Cog):
         else:
             string = join_link
         await ctx.message.delete()
-        await ctx.message.send(string)
+        await ctx.channel.send(string)
         
     @checks.is_lpd()
     @commands.command()
@@ -1153,4 +1153,4 @@ class Other(commands.Cog):
                 string = f"{string}{target.mention} is in {location}\n"
             else:
                 string = f"{string}{target.mention} is not on duty"
-        await ctx.message.send(string)
+        await ctx.channel.send(string)
