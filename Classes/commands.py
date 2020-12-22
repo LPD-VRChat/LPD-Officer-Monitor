@@ -721,6 +721,11 @@ class VRChatAccoutLink(commands.Cog):
     async def link(self, ctx, vrchat_name):
         r"""
         This command is used to tell the bot your VRChat name.
+        
+        When you successfully link your VRChat account with the bot,
+        you will receive a friend request from LPD Officer Monitor.
+        Please accept this friend request as soon as possible, to
+        ensure the most accurate logging of on-duty time.
 
         This information is used for detecting if you are in
         the LPD when entering the LPD Station. To use the
@@ -765,7 +770,7 @@ class VRChatAccoutLink(commands.Cog):
         if confirm:
             await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink"
+                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink\nPlease check your VRChat incoming friend requests for a request from `{settings['VRC_Username']}`. This will ensure correct logging of on-duty time."
             )
         else:
             await ctx.send(
@@ -1109,6 +1114,8 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+
     @checks.is_lpd()
     @commands.command()
     async def join(self, ctx):
