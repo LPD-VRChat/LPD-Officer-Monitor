@@ -58,6 +58,7 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.location = ''
 
     async def remove(self):
 

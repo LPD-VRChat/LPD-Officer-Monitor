@@ -1125,7 +1125,7 @@ class Other(commands.Cog):
         if join_link == "This user is in a Private World.":
             string = f"{ctx.message.mentions[0]} is in a Private World."
         else:
-            string = f"Join {ctx.message.mention[0]} here: {join_link}"
+            string = f"Join {ctx.message.mentions[0]} here: {join_link}"
         await ctx.message.delete()
         await ctx.channel.send(string)
     
