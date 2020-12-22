@@ -1151,4 +1151,6 @@ class Other(commands.Cog):
             if officer.is_on_duty:
                 location = officer.location
                 string = f"{string}{target.mention} is in {location}\n"
+            else:
+                string = f"{string}{target.mention} is not on duty"
         await ctx.message.send(string)
