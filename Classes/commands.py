@@ -1141,3 +1141,14 @@ class Other(commands.Cog):
             string = join_link
         await ctx.message.delete()
         await ctx.message.send(string)
+        
+    @checks.is_lpd()
+    @commands.command()
+    async def whereis(self, ctx):
+        string = ''
+        for target in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(target.id)
+            if officer.is_on_duty:
+                location = officer.location
+                string = f"{string}{target.mention} is in {location}\n"
+        await ctx.message.send(string)
