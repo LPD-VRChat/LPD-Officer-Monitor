@@ -100,7 +100,7 @@ async def on_friend_delete(friend_b, friend_a):
 async def on_connect():
     printd("Connected to wss pipeline.")
     #await add_friend()
-    await keep_alive()
+    keep_alive()
 
 
 @client.event
@@ -117,10 +117,10 @@ async def join_user(vrc_name):
     join_link = 'vrchat://launch?' + user.location
     return join_link
 
-async def keep_alive():
+sync def keep_alive():
     printd('Updating the bot account in cache to keep VRChat websocket alive...')
     me = await client.fetch_me()
-    loop.call_later(300, await keep_alive())
+    loop.call_later(300, keep_alive())
 
 async def add_officer_as_friend(vrc_name):
     user = await client.fetch_user_via_id(vrc_name + '/name')
