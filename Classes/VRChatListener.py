@@ -3,6 +3,8 @@ import asyncio
 from time import sleep as sleep
 from termcolor import colored
 from datetime import datetime, timezone
+from discord.ext import tasks
+
 loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
 
@@ -100,8 +102,7 @@ async def on_friend_delete(friend_b, friend_a):
 async def on_connect():
     printd("Connected to wss pipeline.")
     #await add_friend()
-    loop.run_in_executor(keep_alive())
-
+    my_task.start()
 
 @client.event
 async def on_disconnect():
@@ -117,12 +118,10 @@ async def join_user(vrc_name):
     join_link = 'vrchat://launch?' + user.location
     return join_link
 
-
-def keep_alive():
-    while True:
-        printd('Updating the bot account in cache to keep VRChat websocket alive...')
-        #me = await client.fetch_me()
-        sleep(10)
+@tasks.loop(seconds=10)
+async def keep_alive():
+    printd('Updating the bot account in cache to keep VRChat websocket alive...')
+    #me = await client.fetch_me()
 
 async def add_officer_as_friend(vrc_name):
     user = await client.fetch_user_via_id(vrc_name + '/name')
