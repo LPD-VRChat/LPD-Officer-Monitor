@@ -1151,9 +1151,9 @@ class Other(commands.Cog):
         for target in ctx.message.mentions:
             officer = self.bot.officer_manager.get_officer(target.id)
             if officer.is_on_duty:
-                print('THEY ON DUTY')
+                
                 location = officer.location
-                print(location)
+                
                 string = f"{string}{target.mention} is in {location}\n"
             else:
                 string = f"{string}{target.mention} is not on duty"
