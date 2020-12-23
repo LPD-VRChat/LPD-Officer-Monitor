@@ -4,6 +4,7 @@
 
 # Standard
 import asyncio
+import nest_asyncio
 import math
 import time
 from datetime import datetime
@@ -15,6 +16,9 @@ from Classes.errors import MemberNotFoundError
 # Mine
 import Classes.extra_functions as ef
 from Classes.VRChatListener import save_officer_location
+
+nest_asyncio.apply()
+
 
 class Officer:
     def __init__(self, user_id, bot):
@@ -38,7 +42,8 @@ class Officer:
         
         # Save the officer's location to the database
         task = self.bot.loop.create_task(save_officer_location(self.id))
-        self.location = task.result()
+        self.location = self.bot.loop.run_until_complete(task)
+        
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True

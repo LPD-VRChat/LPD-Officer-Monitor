@@ -1,9 +1,12 @@
 import vrcpy
 import asyncio
+import nest_asyncio
 from time import sleep as sleep
 from termcolor import colored
 from datetime import datetime, timezone
 from discord.ext import tasks
+
+nest_asyncio.apply()
 
 loop = asyncio.get_event_loop()
 client = vrcpy.Client(loop=loop)
