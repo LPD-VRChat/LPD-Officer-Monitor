@@ -1124,14 +1124,10 @@ class Other(commands.Cog):
         join_link = await join_user(vrc_name)
         if join_link == "This user is in a Private World.":
             string = f"{ctx.message.mentions[0]} is in a Private World."
-            await ctx.message.delete()
-            await ctx.channel.send(string)
         else:
-            #string = f"Join {ctx.message.mentions[0]} [here]({join_link})"
-            embed=discord.Embed()
-            embed.description = f"Join {ctx.message.mentions[0]} [here]({join_link})"
-            await ctx.message.delete()
-            await ctx.channel.send(embed=embed)
+            string = f"Join {ctx.message.mentions[0]} [here]({join_link})"
+        await ctx.message.delete()
+        await ctx.channel.send(string)
     
     @checks.is_lpd()
     @commands.command()
@@ -1141,14 +1137,10 @@ class Other(commands.Cog):
         join_link = await join_user(vrc_name)
         if join_link == "This user is in a Private World.":
             string = "Could not generate an invite link for your location. It appears that you are in a Private World, or have your status set to Red or Orange."
-            await ctx.message.delete()
-            await ctx.channel.send(string)
         else:
-            #string = f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here]({join_link})"
-            embed=discord.Embed()
-            embed.description = f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here]({join_link})"
-            await ctx.message.delete()
-            await ctx.channel.send(embed=embed)
+            string = f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here]({join_link})"
+        await ctx.message.delete()
+        await ctx.channel.send(string)
         
         
         
