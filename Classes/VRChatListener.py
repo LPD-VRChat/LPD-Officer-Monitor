@@ -1,5 +1,6 @@
 import vrcpy
 import asyncio
+import re
 from time import sleep as sleep
 from termcolor import colored
 from datetime import datetime, timezone
@@ -71,7 +72,9 @@ async def save_officer_location(officer_id):
     enter_time = datetime.now(timezone.utc)
     avatar_image_url = user.avatar_image_url
     allow_avatar_copying = user.allow_avatar_copying
-    await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
+    request_string = f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})"
+    request_string = re.escape(request_string)
+    await bot.officer_manager.send_db_request(request_string, None)
     location = f"{world_name} #{instance_number}"
     return location
 
