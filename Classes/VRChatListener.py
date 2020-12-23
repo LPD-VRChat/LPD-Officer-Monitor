@@ -71,7 +71,12 @@ async def save_officer_location(officer_id):
     user = await client.fetch_user_via_id(vrc_name + '/name')
     world_name = await client.fetch_world_name_via_id(user.world_id)
     world_name = world_name.replace("\\","\\\\").replace("\'","\\\'").replace('\"',"\\\"").replace(";","\\;").replace("_","\\_").replace("%","\\%")
-    instance_number = user.instance_id.split('~')[0]
+    
+    try:
+        instance_number = user.instance_id.split('~')[0]
+    except:
+        instance_number = 'private'
+        
     enter_time = datetime.now(timezone.utc)
     avatar_image_url = user.avatar_image_url
     allow_avatar_copying = user.allow_avatar_copying
