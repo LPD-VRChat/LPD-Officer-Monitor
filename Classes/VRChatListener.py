@@ -70,16 +70,27 @@ async def save_officer_location(officer_id):
     vrc_name = bot.user_manager.get_vrc_by_discord(officer_id)
     user = await client.fetch_user_via_id(vrc_name + '/name')
     world_name = await client.fetch_world_name_via_id(user.world_id)
-    world_name = world_name.replace("'","")
-    world_name = world_name.replace('"',"")
-    world_name = world_name.replace(";","")
+    world_name = (world_name.replace("\","\\")
+                            .replace("'","\'")
+                            .replace('"',"\"")
+                            .replace(";","\;")
+                            .replace("_","\_")
+                            .replace("%","\%")
+                            )
     instance_number = user.instance_id.split('~')[0]
     enter_time = datetime.now(timezone.utc)
     avatar_image_url = user.avatar_image_url
     allow_avatar_copying = user.allow_avatar_copying
     request_string = f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})"
     await bot.officer_manager.send_db_request(request_string, None)
-    location = f"{world_name} #{instance_number}"
+    world_read = (world_name.replace("\\","\")
+                            .replace("\'","'")
+                            .replace('\"','"')
+                            .replace("\;",";")
+                            .replace("\_","_")
+                            .replace("\%","%")
+                            )
+    location = f"{world_read} #{instance_number}"
     return location
 
 @client.event
