@@ -102,13 +102,11 @@ async def on_friend_delete(friend_b, friend_a):
 async def on_connect():
     printd("Connected to wss pipeline.")
     #await add_friend()
-    keep_alive.start()
+    keep_alive.start()      # This is neccessary to keep the websocket open
 
 @client.event
 async def on_disconnect():
     printd("Disconnected from wss pipeline.")
-
-
 
 
 async def join_user(vrc_name):
