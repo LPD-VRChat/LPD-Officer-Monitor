@@ -1123,9 +1123,9 @@ class Other(commands.Cog):
         vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
         join_link = await join_user(vrc_name)
         if join_link == "This user is in a Private World.":
-            string = f"{ctx.message.mentions[0]} is in a Private World."
+            string = f"{ctx.message.mentions[0].mention} is in a Private World."
         else:
-            string = f"Join {ctx.message.mentions[0]} [here]({join_link})"
+            string = f"Join {ctx.message.mentions[0].mention} [here]({join_link})"
         await ctx.message.delete()
         await ctx.channel.send(string)
     
@@ -1138,7 +1138,7 @@ class Other(commands.Cog):
         if join_link == "This user is in a Private World.":
             string = "Could not generate an invite link for your location. It appears that you are in a Private World, or have your status set to Red or Orange."
         else:
-            string = f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here]({join_link})"
+            string = f"{ctx.message.mentions[0].mention} please join {ctx.message.author.mention} [here]({join_link})"
         await ctx.message.delete()
         await ctx.channel.send(string)
         
