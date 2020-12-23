@@ -1126,7 +1126,7 @@ class Other(commands.Cog):
             string = f"{ctx.message.mentions[0]} is in a Private World."
             await ctx.channel.send(string)
         else:
-            string = discord.Embed(title=f"Join {ctx.message.mentions[0]}", description='f"Join {ctx.message.mentions[0]} [here]({join_link})"', color=0x00ff00)
+            string = discord.Embed(title=f"Join {ctx.message.mentions[0]}", description=f"Join {ctx.message.mentions[0]} [here]({join_link})", color=0x00ff00)
             await ctx.channel.send(embed=string)
         await ctx.message.delete()
         
@@ -1141,7 +1141,7 @@ class Other(commands.Cog):
             string = "Could not generate an invite link for your location. It appears that you are in a Private World, or have your status set to Red or Orange."
             await ctx.channel.send(string)
         else:
-            string = discord.Embed(title=f"Join {ctx.message.author.mention}", description='f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here[({join_link})"', color=0x00ff00)
+            string = discord.Embed(title=f"Join {ctx.message.author.mention}", description=f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here]({join_link})", color=0x00ff00)
             await ctx.channel.send(embed=string)
         await ctx.message.delete()
         
