@@ -117,7 +117,7 @@ async def join_user(vrc_name):
     join_link = 'vrchat://launch?' + user.location
     return join_link
 
-sync def keep_alive():
+def keep_alive():
     printd('Updating the bot account in cache to keep VRChat websocket alive...')
     me = await client.fetch_me()
     loop.call_later(300, keep_alive())
