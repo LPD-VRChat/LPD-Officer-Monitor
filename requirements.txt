@@ -8,3 +8,4 @@ aiomysql
 git+https://github.com/Rapptz/discord-ext-menus
 aiohttp>=3.6.0
 vrcpy[aquick]
+nest_asyncio
