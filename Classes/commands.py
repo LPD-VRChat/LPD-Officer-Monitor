@@ -1127,7 +1127,7 @@ class Other(commands.Cog):
             await ctx.channel.send(string)
         else:
             string = discord.Embed(title=f"Join {ctx.message.mentions[0]}", description='', color=0x00ff00)
-            string.add_field(name='', value=f"Join {ctx.message.mentions[0]} [here]({join_link})", inline=False)
+            string.add_field(name='Join Link', value=f"Join {ctx.message.mentions[0]} [here]({join_link})", inline=False)
             await ctx.channel.send(embed=string)
         await ctx.message.delete()
         
@@ -1143,7 +1143,7 @@ class Other(commands.Cog):
             await ctx.channel.send(string)
         else:
             string = discord.Embed(title=f"Join {ctx.message.author.mention}", description='', color=0x00ff00)
-            string.add_field(name='', value=f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here[({join_link})", inline=False)
+            string.add_field(name='Join Link', value=f"{ctx.message.mentions[0]} please join {ctx.message.author.mention} [here[({join_link})", inline=False)
             await ctx.channel.send(embed=string)
         await ctx.message.delete()
         
