@@ -100,7 +100,7 @@ async def on_friend_delete(friend_b, friend_a):
 async def on_connect():
     printd("Connected to wss pipeline.")
     #await add_friend()
-    await keep_alive()
+    loop.create_task(keep_alive())
 
 
 @client.event
