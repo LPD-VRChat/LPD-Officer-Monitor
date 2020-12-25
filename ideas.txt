@@ -12,3 +12,4 @@ Online Dispatch Portal - have a #dispatch-bot-channel to request a one-time pass
 #mugshots - use recent worlds of the squad making the arrest to determine what world an arrest was made in. User menus.py to ask the arresting
   officer if the bot has the correct world, and log it in a database. We can use this to get statistics on which worlds give good interactions,
   and which Officers prefer which worlds.
+			############### IN PROGRESS #################

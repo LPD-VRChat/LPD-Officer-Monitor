@@ -1,7 +1,9 @@
 # Standard
 import discord
 from io import StringIO, BytesIO
-
+from statistics import mode as mode
+from Classes.menus import Confirm
+from datetime import datetime
 # Community
 import commentjson as json
 
@@ -113,3 +115,65 @@ def get_role_name_by_id(settings, bad_role):
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
+
+def process_mugshot(ctx, bot)
+    """
+    Process a mugshot and identify what world it was in
+    """
+    
+    voice_channel = ctx.message.author.voice.voice_channel
+    officer_id = ctx.message.author.id
+    content = ctx.message.clean_content
+    jump_url = ctx.message.jump_url
+    
+    world_list = []
+    
+    for user in voice_channel.members:
+        request_string = f"SELECT world_name from VRChatActivity WHERE officer_id = {user.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {user.id})"
+            
+        world_list.append(await bot.officer_manager.send_db_request(request_string, None))
+        
+    arrest_world = mode(world_list)
+    
+    criminal_name = content.split('\n', 2)[0].split(' ')[1:]
+    error1 = ''
+    error2 = ''
+    
+    result = await Confirm(f"It looks like you arrested `{criminal_name}` in `{arrest_world}`... Is this correct?").prompt(ctx)
+    
+    if result:
+        pass
+    
+    else:
+    
+        result2 = await Confirm("Was the criminal's name correct?").prompt(ctx)
+        
+        if result2:
+            pass
+        
+        else:
+            error1 = 'CRIMINAL_NAME_ERROR'
+            await ctx.channel.send("Notifying the Programming Team about this bug: ERROR_TYPE: {error1}", delete_after=15)
+            
+        
+        result3 = await Confirm("Was the world name correct?").prompt(ctx)
+        
+        if result3 and result2:
+            pass
+        
+        else:
+            error2 = 'WORLD_NAME_ERROR'
+            await ctx.channel.send("Notifying the Programming Team about this bug: ERROR_TYPE: {error2}", delete_after=15)
+    
+    error = error1 + ', ' + error2
+    
+    if error1 == '' and error2 == '':
+        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        request_string = f"INSERT INTO Mugshots (officer_id, world_name, criminal_name, datetime) VALUES ({officer_id}, '{arrest_world}', '{criminal_name}', '{now}')"
+        await ctx.channel.send("Okie Dokie. We'll save it.", delete_after=15)
+        await bot.officer_manager.send_db_request(request_string, None)
+    
+    else:
+        cap_destructo = await bot.get_user_info(249404332447891456)
+        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world)\n    Processed criminal name: {criminal_name}")
+  

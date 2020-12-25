@@ -20,6 +20,7 @@
     "error_log_channel": 670751809538752512,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
+	"mugshot_channel": 792045947508228106,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,

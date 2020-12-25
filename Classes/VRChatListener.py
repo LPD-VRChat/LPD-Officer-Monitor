@@ -62,7 +62,8 @@ async def on_friend_location(friend_b, friend_a):
         enter_time = datetime.now(timezone.utc)
         avatar_image_url = friend_a.avatar_image_url
         allow_avatar_copying = friend_a.allow_avatar_copying
-        await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
+        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        await bot.officer_manager.send_db_request(f"INSERT INTO VRChatActivity (datetime, officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ('{now}', {officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})", None)
         print('is on duty')
     
 
@@ -80,7 +81,8 @@ async def save_officer_location(officer_id):
     enter_time = datetime.now(timezone.utc)
     avatar_image_url = user.avatar_image_url
     allow_avatar_copying = user.allow_avatar_copying
-    request_string = f"INSERT INTO VRChatActivity (officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ({officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})"
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    request_string = f"INSERT INTO VRChatActivity (datetime, officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ('{now}', {officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})"
     await bot.officer_manager.send_db_request(request_string, None)
     world_read = world_name.replace("\\\\","\\").replace("\\\'","\'").replace('\\\"','\"').replace("\\;",";").replace("\\_","_").replace("\\%","%")
     location = f"{world_read} #{instance_number}"
