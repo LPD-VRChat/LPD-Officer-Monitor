@@ -116,7 +116,7 @@ def get_role_name_by_id(settings, bad_role):
         if entry["id"] == bad_role:
             return entry["name"]
 
-def process_mugshot(ctx, bot)
+async def process_mugshot(ctx, bot):
     """
     Process a mugshot and identify what world it was in
     """
@@ -175,5 +175,5 @@ def process_mugshot(ctx, bot)
     
     else:
         cap_destructo = await bot.get_user_info(249404332447891456)
-        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world)\n    Processed criminal name: {criminal_name}")
+        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world}\n    Processed criminal name: {criminal_name}")
   
