@@ -121,7 +121,7 @@ async def process_mugshot(ctx, bot):
     Process a mugshot and identify what world it was in
     """
     
-    voice_channel = ctx.message.author.voice.voice_channel
+    voice_channel = ctx.message.author.voice.channel
     officer_id = ctx.message.author.id
     content = ctx.message.clean_content
     jump_url = ctx.message.jump_url
