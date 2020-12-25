@@ -23,7 +23,7 @@ from Classes.OfficerManager import OfficerManager
 from Classes.VRChatUserManager import VRChatUserManager
 from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file
+from Classes.extra_functions import handle_error, get_settings_file, process_mugshot
 import Classes.errors as errors
 import Classes.VRChatListener as VRChatListener
 
@@ -136,6 +136,9 @@ async def on_message(message):
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
+        
+    if message.channel.id in bot.settings["mugshot_channel"]":
+        await process_mugshot(ctx, bot)
 
     # Archive the message
     if (
