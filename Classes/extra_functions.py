@@ -140,7 +140,7 @@ async def process_mugshot(ctx, bot):
     
     criminal_name_list = content.split('\n', 1)[0].split(' ')[1:]
     criminal_name = ' '.join(criminal_name_list)
-    arrest_world = mode(world_list)[0]
+    arrest_world = mode(world_list)[0][0]
     
     error1 = ''
     error2 = ''
