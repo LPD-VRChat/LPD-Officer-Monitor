@@ -137,9 +137,11 @@ async def process_mugshot(ctx, bot):
             
         world_list.append(await bot.officer_manager.send_db_request(request_string, None))
         
-    arrest_world = mode(world_list)
     
-    criminal_name = content.split('\n', 1)[0].split(' ')[1:]
+    criminal_name_list = content.split('\n', 1)[0].split(' ')[1:]
+    criminal_name = ' '.join(criminal_name_list)
+    arrest_world = mode(world_list)[0]
+    
     error1 = ''
     error2 = ''
     
