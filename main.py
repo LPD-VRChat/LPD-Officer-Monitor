@@ -137,7 +137,7 @@ async def on_message(message):
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
         
-    if message.channel.id in bot.settings["mugshot_channel"]":
+    if message.channel.id in bot.settings["mugshot_channel"]:
         await process_mugshot(ctx, bot)
 
     # Archive the message
