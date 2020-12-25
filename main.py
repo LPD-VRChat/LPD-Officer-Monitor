@@ -138,6 +138,7 @@ async def on_message(message):
         await bot.process_commands(message)
         
     if message.channel.id == bot.settings["mugshot_channel"]:
+        ctx = await bot.get_context(message)
         await process_mugshot(ctx, bot)
 
     # Archive the message
