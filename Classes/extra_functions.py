@@ -121,7 +121,11 @@ async def process_mugshot(ctx, bot):
     Process a mugshot and identify what world it was in
     """
     
-    voice_channel = ctx.message.author.voice.channel
+    try:
+        voice_channel = ctx.message.author.voice.channel
+    except:
+        await ctx.channel.send("ERROR: You don't seem to be in a voice channel. Please be in a voice channel when posing a mugshot.", delete_after=15)
+        return
     officer_id = ctx.message.author.id
     content = ctx.message.clean_content
     jump_url = ctx.message.jump_url
@@ -153,7 +157,7 @@ async def process_mugshot(ctx, bot):
         
         else:
             error1 = 'CRIMINAL_NAME_ERROR'
-            await ctx.channel.send("Notifying the Programming Team about this bug: ERROR_TYPE: {error1}", delete_after=15)
+            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error1}", delete_after=15)
             
         
         result3 = await Confirm("Was the world name correct?").prompt(ctx)
@@ -163,7 +167,7 @@ async def process_mugshot(ctx, bot):
         
         else:
             error2 = 'WORLD_NAME_ERROR'
-            await ctx.channel.send("Notifying the Programming Team about this bug: ERROR_TYPE: {error2}", delete_after=15)
+            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error2}", delete_after=15)
     
     error = error1 + ', ' + error2
     
@@ -174,6 +178,8 @@ async def process_mugshot(ctx, bot):
         await bot.officer_manager.send_db_request(request_string, None)
     
     else:
-        cap_destructo = await bot.get_user_info(249404332447891456)
+        cap_destructo = bot.get_guild(bot.settings["Server_ID"]).get_member(
+                249404332447891456
+            )
         await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world}\n    Processed criminal name: {criminal_name}")
   
