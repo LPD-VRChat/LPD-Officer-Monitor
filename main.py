@@ -126,7 +126,9 @@ async def on_message(message):
         return
 
     # Private message are ignored
-    if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel):
+    if isinstance(message.channel, discord.DMChannel) or isinstance(
+        message.channel, discord.GroupChannel
+    ):
         await message.channel.send("I'm just a robot")
         return
 
@@ -136,7 +138,8 @@ async def on_message(message):
 
     # If the message was sent in the #leave-of-absence channel, process it
     if message.channel.id == bot.settings["leave_of_absence_channel"]:
-        await Officer.process_loa(bot, message)
+        officer = bot.officer_manager.get_officer(message.author.id)
+        await officer.process_loa(message)
 
     # Archive the message
     if (
@@ -245,7 +248,8 @@ async def on_error(event, *args, **kwargs):
 async def on_raw_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
         await Officer.remove_loa(bot, payload.message_id)
-    
+
+
 @bot.event
 async def on_raw_bulk_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
@@ -278,8 +282,6 @@ async def on_command_error(ctx, exception):
             exception_string,
             "".join(traceback.format_exception(None, exception, None)),
         )
-
-
 
 
 # ====================

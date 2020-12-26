@@ -60,31 +60,34 @@ class Officer:
 
         # Remove itself
         await self.bot.officer_manager.remove_officer(self.id)
-        
-    async def save_loa(bot, officer_id, date_start, date_end, reason, request_id):
+
+    async def save_loa(self, date_start, date_end, reason, request_id):
         """
         Pass all 5 required fields to save_loa()
         If record with matching officer_id is found,
         record will be updated with new dates and reason.
         """
-        
-        await bot.officer_manager.send_db_request(f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({officer_id},'{date_start}','{date_end}','{reason}',{request_id})")
-      
+
+        await self.bot.officer_manager.send_db_request(
+            f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({self.id},'{date_start}','{date_end}','{reason}',{request_id})"
+        )
+
     async def remove_loa(bot, request_id):
         """
         Delete the specified Leave of Absence
         """
-        
-        await bot.officer_manager.send_db_request(f"DELETE FROM LeaveTimes WHERE request_id = {request_id}")
+
+        await bot.officer_manager.send_db_request(
+            f"DELETE FROM LeaveTimes WHERE request_id = {request_id}"
+        )
 
     async def return_loa(bot):
-        loa_entries = await bot.officer_manager.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes')
+        loa_entries = await bot.officer_manager.send_db_request(
+            "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
+        )
         return loa_entries
-        
-    async def process_loa(bot, message):
-    
-        # Try and parse the message to get a useful date range
-        officer_id = message.author.id
+
+    async def process_loa(self, message):
         try:
             date_range = message.content.split(":")[0]
             date_a = date_range.split("-")[0]
@@ -114,34 +117,38 @@ class Officer:
             )
             int(date_start[0])
             int(date_end[0])
-            
-            if type(date_start[1]) != 'str':
+
+            if type(date_start[1]) != "str":
                 int(date_start[1])
             else:
                 date_start[1] = date_start[1].upper()[0:3]
                 date_start[1] = months[date_start[1]]
-    
-            if type(date_end[1]) != 'str':
+
+            if type(date_end[1]) != "str":
                 int(date_end[1])
             else:
                 date_end[1] = date_end[1].upper()[0:3]
                 date_end[1] = months[date_end[1]]
-      
+
         except (TypeError, ValueError, KeyError, IndexError):
             # If all of that failed, let the user know with an autodeleting message
             await message.channel.send(
                 message.author.mention
                 + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
                 delete_after=10,
-                )
+            )
             await message.delete()
             return
-    
-        
+
         date_start = [int(i) for i in date_start]
         date_end = [int(i) for i in date_end]
-    
-        if date_start[1] < 1 or date_start[1] > 12 or date_end[1] < 1 or date_end[1] > 12:
+
+        if (
+            date_start[1] < 1
+            or date_start[1] > 12
+            or date_end[1] < 1
+            or date_end[1] > 12
+        ):
             # If the month isn't 1-12, let the user know they dumb
             await message.channel.send(
                 message.author.mention + " There are only 12 months in a year.",
@@ -149,7 +156,7 @@ class Officer:
             )
             await message.delete()
             return
-    
+
         # Convert our separate data into a usable datetime
         date_start_complex = (
             str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
@@ -159,7 +166,7 @@ class Officer:
         )
         date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
         date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
-    
+
         if date_end > date_start + dt.timedelta(
             weeks=+12
         ) or date_end < date_start + dt.timedelta(weeks=+4):
@@ -171,11 +178,11 @@ class Officer:
             )
             await message.delete()
             return
-    
+
         # Fire the script to save the entry
         request_id = message.id
-        await Officer.save_loa(bot, officer_id, date_start, date_end, reason, request_id)
-        await message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+        await self.save_loa(date_start, date_end, reason, request_id)
+        await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
     # ====================
     # properties
