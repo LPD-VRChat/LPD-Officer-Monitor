@@ -195,7 +195,7 @@ async def process_mugshot(ctx, bot):
     
     error = error1 + ', ' + error2 + ', ' + error3
     
-    if error1 == '' and error2 == '' and error3 = '':
+    if error1 == '' and error2 == '' and error3 == '':
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         request_string = f"INSERT INTO Mugshots (officer_id, world_name, criminal_name, datetime, crime, officers_involved) VALUES ({officer_id}, '{arrest_world}', '{criminal_name}', '{now}', '{crime}', '{officers_involved}')"
         await ctx.channel.send("Okie Dokie. We'll save it.", delete_after=15)
