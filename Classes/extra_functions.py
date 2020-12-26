@@ -142,10 +142,23 @@ async def process_mugshot(ctx, bot):
     criminal_name = ' '.join(criminal_name_list)
     arrest_world = mode(world_list)[0][0]
     
+    arresting_officers = ctx.message.mentions
+    if ctx.message.author not in arresting_officers:
+        arresting_officers = arresting_officers.append(ctx.message.author)
+        
+    crime = content.split('\n', 1)[1].split(' ')[1:]
+    
+    officers_involved = ''
+    for mentioned in arresting_officers:
+        officers_involved = f"{officers_involved}{mentioned.id},"
+    
+    
+    
     error1 = ''
     error2 = ''
+    error3 = ''
     
-    result = await Confirm(f"It looks like you arrested `{criminal_name}` in `{arrest_world}`... Is this correct?").prompt(ctx)
+    result = await Confirm(f"It looks like you arrested `{criminal_name}` in `{arrest_world}` for `{crime}`... Is this correct?").prompt(ctx)
     
     if result:
         pass
@@ -171,11 +184,20 @@ async def process_mugshot(ctx, bot):
             error2 = 'WORLD_NAME_ERROR'
             await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error2}", delete_after=15)
     
-    error = error1 + ', ' + error2
+        result4 = await Confirm("Was the crime correct?").prompt(ctx)
+        
+        if result2 and result3 and result4:
+            pass
+            
+        else:
+            error3 = 'CRIME_ERROR'
+            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error3}", delete_after=15)
     
-    if error1 == '' and error2 == '':
+    error = error1 + ', ' + error2 + ', ' + error3
+    
+    if error1 == '' and error2 == '' and error3 = '':
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        request_string = f"INSERT INTO Mugshots (officer_id, world_name, criminal_name, datetime) VALUES ({officer_id}, '{arrest_world}', '{criminal_name}', '{now}')"
+        request_string = f"INSERT INTO Mugshots (officer_id, world_name, criminal_name, datetime, crime, officers_involved) VALUES ({officer_id}, '{arrest_world}', '{criminal_name}', '{now}', '{crime}', '{officers_involved}')"
         await ctx.channel.send("Okie Dokie. We'll save it.", delete_after=15)
         await bot.officer_manager.send_db_request(request_string, None)
     
@@ -183,5 +205,5 @@ async def process_mugshot(ctx, bot):
         cap_destructo = bot.get_guild(bot.settings["Server_ID"]).get_member(
                 249404332447891456
             )
-        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world}\n    Processed criminal name: {criminal_name}")
+        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world}\n    Processed criminal name: {criminal_name}\n    Processed crime: {crime}\n    Processed Officer IDs involved: {officers_involved}")
   
