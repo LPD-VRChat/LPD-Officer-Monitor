@@ -139,7 +139,7 @@ async def process_mugshot(ctx, bot):
         world_list.append(await bot.officer_manager.send_db_request(request_string, None))
         
     
-    criminal_name_list = content.split('\n', 1)[0].split(' ')[1:]
+    criminal_name_list = content.split('\n')[0].split(' ')[1:]
     criminal_name = ' '.join(criminal_name_list)
     arrest_world = mode(world_list)[0][0]
     
@@ -147,7 +147,7 @@ async def process_mugshot(ctx, bot):
     if ctx.message.author not in arresting_officers:
         arresting_officers = arresting_officers.append(ctx.message.author)
         
-    crime_list = content.split('\n', 1)[1].split(' ')[1:]
+    crime_list = content.split('\n')[1].split(' ')[1:]
     crime = ' '.join(crime_list)
     
     officers_involved = ''
