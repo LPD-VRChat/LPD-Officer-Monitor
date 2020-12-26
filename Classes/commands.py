@@ -1185,6 +1185,8 @@ class Other(commands.Cog):
             print(officers_involved_list)
             
             for officer_id in officers_involved_list:
+                if officer_id == '':
+                    continue
                 print(officer_id)
                 officers_involved.append(int(float(officer_id)))
             
