@@ -126,6 +126,7 @@ async def process_mugshot(ctx, bot):
     except:
         await ctx.channel.send("ERROR: You don't seem to be in a voice channel. Please be in a voice channel when posing a mugshot.", delete_after=15)
         return
+        
     officer_id = ctx.message.author.id
     content = ctx.message.clean_content
     jump_url = ctx.message.jump_url
@@ -146,7 +147,8 @@ async def process_mugshot(ctx, bot):
     if ctx.message.author not in arresting_officers:
         arresting_officers = arresting_officers.append(ctx.message.author)
         
-    crime = content.split('\n', 1)[1].split(' ')[1:]
+    crime_list = content.split('\n', 1)[1].split(' ')[1:]
+    crime = ' '.join(crime_list)
     
     officers_involved = ''
     for mentioned in arresting_officers:
