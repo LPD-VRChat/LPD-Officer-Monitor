@@ -133,12 +133,12 @@ async def process_mugshot(ctx, bot):
     
     world_list = []
     
-    for user in voice_channel.members:
-        request_string = f"SELECT world_name from VRChatActivity WHERE officer_id = {user.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {user.id})"
-            
-        world_list.append(await bot.officer_manager.send_db_request(request_string, None))
+    #for user in voice_channel.members:
+    #    request_string = f"SELECT world_name from VRChatActivity WHERE officer_id = {user.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {user.id})"
+    #        
+    #    world_list.append(await bot.officer_manager.send_db_request(request_string, None))
         
-    
+    world_list.append(await bot.officer_manager.send_db_request(f"SELECT world_name from VRChatActivity WHERE officer_id = {ctx.message.author.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {ctx.message.author.id})", None))
     criminal_name_list = content.split('\n')[0].split(' ')[1:]
     criminal_name = ' '.join(criminal_name_list)
     arrest_world = mode(world_list)[0][0]
