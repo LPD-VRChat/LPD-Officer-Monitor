@@ -1164,6 +1164,6 @@ class Other(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     async def mug_stats(self, ctx):
-        mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots group by officer_id", None)
+        mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
         
         print(mugshots)
