@@ -1181,7 +1181,7 @@ class Other(commands.Cog):
             criminal_name = mugshot[2]
             officers_involved_string = mugshot[5]
             
-            officers_involved_list = officers_involved_string.split(,)
+            officers_involved_list = officers_involved_string.split(',')
             officers_involved = []
             
             for officer_id in officers_involved_list:
