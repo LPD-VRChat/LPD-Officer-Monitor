@@ -121,11 +121,11 @@ async def process_mugshot(ctx, bot):
     Process a mugshot and identify what world it was in
     """
     
-    try:
-        voice_channel = ctx.message.author.voice.channel
-    except:
-        await ctx.channel.send("ERROR: You don't seem to be in a voice channel. Please be in a voice channel when posing a mugshot.", delete_after=15)
-        return
+    #try:
+    #    voice_channel = ctx.message.author.voice.channel
+    #except:
+    #    await ctx.channel.send("ERROR: You don't seem to be in a voice channel. Please be in a voice channel when posing a mugshot.", delete_after=15)
+    #    return
         
     officer_id = ctx.message.author.id
     content = ctx.message.clean_content
