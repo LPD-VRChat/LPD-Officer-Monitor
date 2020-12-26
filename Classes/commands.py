@@ -1175,7 +1175,7 @@ class Other(commands.Cog):
             statistics_dict[officer.id] = 0
             
         
-        for mugshot in mugshot
+        for mugshot in mugshot:
             arresting_officer_id = mugshot[0]
             world_name = mugshot[1]
             criminal_name = mugshot[2]
