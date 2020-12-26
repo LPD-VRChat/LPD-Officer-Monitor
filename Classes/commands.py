@@ -1182,12 +1182,10 @@ class Other(commands.Cog):
             
             officers_involved_list = officers_involved_string.split(',')
             officers_involved = []
-            print(officers_involved_list)
-            
+                        
             for officer_id in officers_involved_list:
                 if officer_id == '':
                     continue
-                print(officer_id)
                 officers_involved.append(int(float(officer_id)))
             
             if arresting_officer_id not in officers_involved:
@@ -1198,5 +1196,5 @@ class Other(commands.Cog):
                 statistics_dict[str(officer_id)] += 1
                 
                 
-                
-        print(statistics_dict)
+        output = sorted(statistics_dict.items(), key=lambda x: x[1]) 
+        print(output)
