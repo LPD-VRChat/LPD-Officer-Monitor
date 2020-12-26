@@ -1185,7 +1185,8 @@ class Other(commands.Cog):
             officers_involved = []
             
             for officer_id in officers_involved_list:
-                officers_involved.append(int(officer_id))
+                print(officer_id)
+                officers_involved.append(int(officer_id)
             
             if arresting_officer_id not in officers_involved:
                 officers_involved.append(arresting_officer_id)
