@@ -1172,7 +1172,7 @@ class Other(commands.Cog):
         all_officers = self.bot.officer_manager.all_officers
         
         for officer in all_officers:
-            statistics_dict[officer.id] = 0
+            statistics_dict[str(officer.id)] = 0
             
         
         for mugshot in mugshot:
@@ -1192,7 +1192,7 @@ class Other(commands.Cog):
                 
                 
             for officer_id in officers_involved:
-                statistics_dict[officer_id] += 1
+                statistics_dict[str(officer_id)] += 1
                 
                 
                 
