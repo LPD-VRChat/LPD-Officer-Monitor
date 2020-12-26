@@ -1165,5 +1165,35 @@ class Other(commands.Cog):
     @commands.command()
     async def mug_stats(self, ctx):
         mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
-        
         print(mugshots)
+        
+        statistics_dict = []
+        
+        all_officers = self.bot.officer_manager.all_officers
+        
+        for officer in all_officers:
+            statistics_dict[officer.id] = 0
+            
+        
+        for mugshot in mugshot
+            arresting_officer_id = mugshot[0]
+            world_name = mugshot[1]
+            criminal_name = mugshot[2]
+            officers_involved_string = mugshot[5]
+            
+            officers_involved_list = officers_involved_string.split(,)
+            officers_involved = []
+            
+            for officer_id in officers_involved_list:
+                officers_involved.append(int(officer_id))
+            
+            if arresting_officer_id not in officers_involved:
+                officers_involved.append(arresting_officer_id)
+                
+                
+            for officer_id in officers_involved:
+                statistics_dict[officer_id] += 1
+                
+                
+                
+        print(statistics_dict)
