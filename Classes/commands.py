@@ -1199,8 +1199,9 @@ class Other(commands.Cog):
         sorted_stats = sorted(statistics_dict.items(), key=lambda x: x[1], reverse=True)
         stat_embed = discord.Embed(title="Arrest Statistics", colour=discord.Colour.from_rgb(255, 255, 0))
         
-        for officer_id in sorted_stats:
-            officer = self.bot.officer_manager.get_officer(int(officer_id[0]))
-            stat_embed.add_field(name=officer.display_name + ":", value=sorted_stats[officer_id])
+        for entry in sorted_stats:
+            officer_id = entry[0]
+            officer = self.bot.officer_manager.get_officer(int(officer_id))
+            stat_embed.add_field(name=officer.display_name + ":", value=entry[1])
         
         await ctx.channel.send(embed=stat_embed)
