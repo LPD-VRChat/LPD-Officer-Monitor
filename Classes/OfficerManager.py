@@ -244,6 +244,15 @@ class OfficerManager:
                 traceback.format_exc(),
             )
 
+        # Get display name for the Officer to be removed
+        member = self.guild.get_member(officer_id)
+        
+        if member == None:
+            member_name = ''
+        else:
+            member_name = member.display_name + ' '
+        
+        
         await self.send_db_request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
@@ -264,6 +273,7 @@ class OfficerManager:
 
         msg_string = (
             "WARNING: "
+            + member_name
             + str(officer_id)
             + " has been removed from the LPD Officer Monitor"
         )
