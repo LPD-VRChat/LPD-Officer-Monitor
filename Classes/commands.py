@@ -1167,7 +1167,7 @@ class Other(commands.Cog):
         mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
         print(mugshots)
         
-        statistics_dict = []
+        statistics_dict = {}
         
         all_officers = self.bot.officer_manager.all_officers
         
