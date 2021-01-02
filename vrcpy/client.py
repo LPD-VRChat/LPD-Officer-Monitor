@@ -157,6 +157,9 @@ class Client:
         if world_id == 'private':
             world_name = 'Private World'
             return world_name
+        if world_id == 'offline':
+            world_name = 'Unknown World'
+            return world_name
         world = await self.request.call("/worlds/"+world_id)
         world_data = world['data']
         world_name = world_data['name']
