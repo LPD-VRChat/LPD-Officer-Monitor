@@ -117,24 +117,24 @@ async def on_friend_active(friend_a):
     # Debug output
     #printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), friend_a.state))
 
-
+"""
 @client.event
 async def on_friend_online(friend_a):
-        # Debug output
+    # Debug output
     #printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), colored('online', 'cyan')))
 
 
 @client.event
 async def on_friend_add(friend_a):
-        # Debug output
+    # Debug output
     #printd("{} is now your friend.".format(colored(friend_a.display_name, 'green')))
 
 
 @client.event
 async def on_friend_delete(friend_b, friend_a):
-        # Debug output
+    # Debug output
     #printd("{} is no longer your friend.".format(colored(friend_a.display_name, 'green')))
-
+"""
 
 @client.event
 async def on_connect():
