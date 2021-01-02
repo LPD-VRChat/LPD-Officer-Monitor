@@ -67,7 +67,13 @@ class VRChatUserManager:
         return string
 
     async def add_user(self, discord_id, vrchat_name):
-        await self.remove_user(discord_id)
+        
+        # Detect if we're replacing an existing link
+        for user in self.all_users:
+            if user[0] == discord_id and user[1] != vrchat_name:
+                await self.update_user(discord_id, vrchat_name)
+                return
+        #await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
         vrchat_name = self.vrc_name_format(vrchat_name)
@@ -85,7 +91,23 @@ class VRChatUserManager:
             """,
             (discord_id, vrchat_name),
         )
+        
+    async def update_user(self, discord_id, vrchat_name):
+    
+        vrchat_name = self.vrc_name_format(vrchat_name)
+        self.all_users = [x for x in self.all_users if x[0] != discord_id]
+        
+        # Add to the cache
+        self.all_users.append([discord_id, vrchat_name])
 
+        # Add to the permanent DB
+        await self.bot.officer_manager.send_db_request(f"SET FOREIGN_KEY_CHECKS=0;")
+        await self.bot.officer_manager.send_db_request(f"UPDATE VRChatActivity WHERE officer_id = {discord_id} SET vrc_name = '{vrc_name}'")
+        await self.bot.officer_manager.send_db_request(f"UPDATE VRChatNames WHERE officer_id = {discord_id} SET vrc_name = '{vrc_name}'")
+        await self.bot.officer_manager.send_db_request(f"SET FOREIGN_KEY_CHECKS=1;")
+        
+        
+        
     async def remove_user(self, discord_id):
 
         # Remove from the cache

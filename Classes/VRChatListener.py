@@ -127,7 +127,10 @@ async def on_connect():
 @client.event
 async def on_disconnect():
     printd("Disconnected from wss pipeline.")
-
+    keep_alive.stop()
+    await client.logout()
+    loop.create_task(main(username, password))
+    
 
 async def join_user(vrc_name):
     user = await client.fetch_user_via_id(vrc_name + '/name')
@@ -142,6 +145,12 @@ async def keep_alive():
     me = await client.fetch_me()
 
 async def add_officer_as_friend(vrc_name):
+    already_friends = False
+    for user in client.friends:
+        if user.display_name == vrc_name:
+            already_friends = True
+            break
+    if already_friends: return
     user = await client.fetch_user_via_id(vrc_name + '/name')
     await user.send_friend_request()
 
