@@ -93,6 +93,9 @@ class VRChatUserManager:
 
         # Remove from the permanent DB
         await self.bot.officer_manager.send_db_request(
+            "DELETE FROM VRChatActivity WHERE officer_id = %s", (discord_id)
+        )
+        await self.bot.officer_manager.send_db_request(
             "DELETE FROM VRChatNames WHERE officer_id = %s", (discord_id)
         )
 
