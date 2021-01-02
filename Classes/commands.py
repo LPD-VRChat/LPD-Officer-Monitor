@@ -770,7 +770,7 @@ class VRChatAccoutLink(commands.Cog):
         if confirm:
             await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink\nPlease check your VRChat incoming friend requests for a request from `{settings['VRC_Username']}`. This will ensure correct logging of on-duty time."
+                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink\nPlease check your VRChat incoming friend requests for a request from `{self.bot.settings['VRC_Username']}`. This will ensure correct logging of on-duty time."
             )
         else:
             await ctx.send(
