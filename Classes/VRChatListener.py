@@ -47,7 +47,9 @@ async def on_friend_location(friend_b, friend_a):
         world_string = colored('a Private World', 'yellow')
     else:
         world_string = colored(world_name, 'yellow') + '#' + instance_number
-    printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
+    
+    # Debug output
+    #printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
     
     
     try:
@@ -112,22 +114,26 @@ async def on_friend_active(friend_a):
     if friend_a.state == 'online':
         await on_friend_online(friend_a)
         return
-    printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), friend_a.state))
+    # Debug output
+    #printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), friend_a.state))
 
 
 @client.event
 async def on_friend_online(friend_a):
-    printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), colored('online', 'cyan')))
+        # Debug output
+    #printd("{} is now {}.".format(colored(friend_a.display_name, 'green'), colored('online', 'cyan')))
 
 
 @client.event
 async def on_friend_add(friend_a):
-    printd("{} is now your friend.".format(colored(friend_a.display_name, 'green')))
+        # Debug output
+    #printd("{} is now your friend.".format(colored(friend_a.display_name, 'green')))
 
 
 @client.event
 async def on_friend_delete(friend_b, friend_a):
-    printd("{} is no longer your friend.".format(colored(friend_a.display_name, 'green')))
+        # Debug output
+    #printd("{} is no longer your friend.".format(colored(friend_a.display_name, 'green')))
 
 
 @client.event
