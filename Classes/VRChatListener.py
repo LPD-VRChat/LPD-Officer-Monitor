@@ -69,6 +69,13 @@ async def on_friend_location(friend_b, friend_a):
 
 async def save_officer_location(officer_id):
     vrc_name = bot.user_manager.get_vrc_by_discord(officer_id)
+    if vrc_name == None:
+        officer = bot.officer_manager.get_officer(officer_id)
+        error_string = f"WARNING: {officer.mention} has not linked their VRChat Account to the bot."
+        error_log_channel = self.bot.get_channel(self.bot.settings["error_log_channel"])
+        error_log_channel.send(error_string)
+        printd(error_string)
+        return "VRChat Name not registered"
     user = await client.fetch_user_via_id(vrc_name + '/name')
     world_name = await client.fetch_world_name_via_id(user.world_id)
     world_name = world_name.replace("\\","\\\\").replace("\'","\\\'").replace('\"',"\\\"").replace(";","\\;").replace("_","\\_").replace("%","\\%")
