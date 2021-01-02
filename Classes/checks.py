@@ -77,6 +77,20 @@ def is_application_channel():
     return commands.check(predicate)
 
 
+def is_team_bot_channel():
+    def predicate(ctx):
+        if (
+            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
+            and ctx.message.channel.id != ctx.bot.settings["team_bot_channel"]
+        ):
+            raise errors.WrongChannelError(
+                "This command only works in the team bot channel."
+            )
+        return True
+
+    return commands.check(predicate)
+
+
 def is_recruiter():
     def predicate(ctx):
         officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
@@ -84,5 +98,16 @@ def is_recruiter():
             return True
         else:
             raise errors.NotForYouError("This command is only for LPD Recruiters.")
+
+    return commands.check(predicate)
+
+
+def is_dev_team():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_dev_member:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for the LPD Dev Team.")
 
     return commands.check(predicate)

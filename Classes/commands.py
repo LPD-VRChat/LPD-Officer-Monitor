@@ -849,8 +849,8 @@ class VRChatAccoutLink(commands.Cog):
             )
 
     @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     async def lvn(self, ctx):
         """
         This command is used to get the VRChat names of the people that are LPD Officers.
@@ -1008,8 +1008,8 @@ class Other(commands.Cog):
 
         return string
 
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
@@ -1147,7 +1147,6 @@ class Other(commands.Cog):
 
             match = pattern.findall(role.name)
             if match:
-                print(match)
                 name = "".join(match[0][1]) + "s"
             else:
                 name = role.name

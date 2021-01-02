@@ -22,7 +22,7 @@ async def send_long(channel, string, code_block=False):
 
     # Add a code block around the string if needed.
     if code_block:
-        input_string_list = ("```" + string + "```").splitlines()
+        input_string_list = ("```\n" + string + "\n```").splitlines()
     else:
         input_string_list = string.splitlines()
 
