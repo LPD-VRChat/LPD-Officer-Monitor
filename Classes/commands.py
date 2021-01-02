@@ -1,4 +1,5 @@
 # Standard
+import csv
 import sys
 from copy import deepcopy
 import argparse
@@ -19,7 +20,13 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
+from Classes.extra_functions import (
+    send_long,
+    handle_error,
+    get_rank_id,
+    has_role,
+    send_str_as_file,
+)
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
@@ -489,7 +496,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -593,7 +600,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -686,6 +693,48 @@ class Time(commands.Cog):
         await ctx.send(
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def time_to_1_csv(self, ctx):
+        """
+        This command converts the time to the LPD Officer Monitor 1.0s csv format and
+        sends it throguh discord.
+        """
+        await ctx.send("Please give me some time, this may take several minutes.")
+
+        # This opens a virtual file in memory that can be written to by the CSV module
+        with StringIO() as virtual_bot_1_time_file:
+            csv_writer = csv.writer(virtual_bot_1_time_file)
+            for officer in self.bot.officer_manager.all_officers:
+
+                # Get the last active time for the officer
+                last_active_time_datetime = (
+                    await officer.get_last_activity(
+                        self.bot.settings["monitored_channels"]
+                    )
+                )["time"]
+                last_active_time = (
+                    last_active_time_datetime - datetime(1970, 1, 1)
+                ).total_seconds()
+                if last_active_time is None:
+                    last_active_time = 0
+
+                # Get the patrol time
+                to_time = datetime.now(tz=timezone.utc)
+                from_time = to_time - timedelta(28)
+                patrol_time = await officer.get_time(from_time, to_time)
+
+                # Add both to the CSV file
+                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+
+            await send_str_as_file(
+                channel=ctx.channel,
+                file_data=virtual_bot_1_time_file.getvalue(),
+                filename="LPD_database.csv",
+                msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
+            )
 
 
 class VRChatAccoutLink(commands.Cog):
@@ -1065,7 +1114,9 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(
+                    f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role
