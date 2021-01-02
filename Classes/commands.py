@@ -770,15 +770,18 @@ class VRChatAccoutLink(commands.Cog):
         if confirm:
             await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink\nPlease check your VRChat incoming friend requests for a request from `{self.bot.settings['VRC_Username']}`. This will ensure correct logging of on-duty time."
+                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command `=unlink`"
             )
         else:
             await ctx.send(
-                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again."
+                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command `=link` again."
             )
             return
         
-        await add_officer_as_friend(vrchat_name)
+        already_friends = await add_officer_as_friend(vrchat_name)
+        if not already_friends:
+            await ctx.send(f"Please check your VRChat incoming friend requests for a request from `{self.bot.settings['VRC_Username']}`. This will ensure correct logging of on-duty time.")
+
 
     @commands.command()
     @checks.is_lpd()
