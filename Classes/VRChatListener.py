@@ -49,8 +49,12 @@ async def on_friend_location(friend_b, friend_a):
         world_string = colored(world_name, 'yellow') + '#' + instance_number
     printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
     
+    
     try:
         officer_id = bot.user_manager.get_discord_by_vrc(friend_a.display_name)
+    except:
+        officer_id = None
+        
     if officer_id == None:
         print(f"The bot is friends with someone who is not in the VRChatNames table...")
         return
