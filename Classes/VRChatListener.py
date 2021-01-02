@@ -86,7 +86,7 @@ async def save_officer_location(officer_id):
         printd(error_string)
         return "VRChat Name not registered"
     
-    user = await client.fetch_user_via_id(vrc_name + '/name')\
+    user = await client.fetch_user_via_id(vrc_name + '/name')
     print(user.display_name)
     print(user.world_id)
     world_name = await client.fetch_world_name_via_id(user.world_id)
