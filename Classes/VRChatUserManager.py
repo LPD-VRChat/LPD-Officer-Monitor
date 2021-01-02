@@ -84,7 +84,7 @@ class VRChatUserManager:
         # Add to the permanent DB
         await self.bot.officer_manager.send_db_request(
             """
-            INSERT INTO 
+            REPLACE INTO 
                 VRChatNames(officer_id, vrc_name)
             VALUES
                 (%s, %s);
