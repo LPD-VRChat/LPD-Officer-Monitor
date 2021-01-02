@@ -42,20 +42,24 @@ async def on_friend_location(friend_b, friend_a):
     world_name = await client.fetch_world_name_via_id(friend_a.world_id)
     instance_number = friend_a.instance_id.split('~')[0]
     location = f"{world_name} #{instance_number}"
+    
     if instance_number == 'private':
         world_string = colored('a Private World', 'yellow')
     else:
         world_string = colored(world_name, 'yellow') + '#' + instance_number
     printd("{} is now in {}".format(colored(friend_a.display_name, 'green'), world_string))
+    
     try:
         officer_id = bot.user_manager.get_discord_by_vrc(friend_a.display_name)
-    except:
+    if officer_id == None:
         print(f"The bot is friends with someone who is not in the VRChatNames table...")
         return
+    
     officer = bot.officer_manager.get_officer(officer_id)
     if officer == None:
         print(f"Couldn't find Officer {friend_a.display_name} in the LPD, but they're in the VRChatNames table...")
         return
+    
     officer.location = location
     if officer.is_on_duty:
         vrc_name = friend_a.display_name
@@ -69,6 +73,7 @@ async def on_friend_location(friend_b, friend_a):
 
 async def save_officer_location(officer_id):
     vrc_name = bot.user_manager.get_vrc_by_discord(officer_id)
+    
     if vrc_name == None:
         officer = bot.officer_manager.get_officer(officer_id)
         error_string = f"WARNING: {officer.mention} has not linked their VRChat Account to the bot."
@@ -76,9 +81,14 @@ async def save_officer_location(officer_id):
         error_log_channel.send(error_string)
         printd(error_string)
         return "VRChat Name not registered"
-    user = await client.fetch_user_via_id(vrc_name + '/name')
+    
+    user = await client.fetch_user_via_id(vrc_name + '/name')\
+    print(user.display_name)
+    print(user.world_id)
     world_name = await client.fetch_world_name_via_id(user.world_id)
+    print(world_name)
     world_name = world_name.replace("\\","\\\\").replace("\'","\\\'").replace('\"',"\\\"").replace(";","\\;").replace("_","\\_").replace("%","\\%")
+    print(world_name)
     
     try:
         instance_number = user.instance_id.split('~')[0]
@@ -89,8 +99,10 @@ async def save_officer_location(officer_id):
     avatar_image_url = user.avatar_image_url
     allow_avatar_copying = user.allow_avatar_copying
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    
     request_string = f"INSERT INTO VRChatActivity (datetime, officer_id, vrc_name, world_name, instance_number, enter_time, avatar_image_url, allow_avatar_copying) VALUES ('{now}', {officer_id}, '{vrc_name}', '{world_name}', '{instance_number}', '{enter_time}', '{avatar_image_url}', {allow_avatar_copying})"
     await bot.officer_manager.send_db_request(request_string, None)
+    
     world_read = world_name.replace("\\\\","\\").replace("\\\'","\'").replace('\\\"','\"').replace("\\;",";").replace("\\_","_").replace("\\%","%")
     location = f"{world_read} #{instance_number}"
     return location
