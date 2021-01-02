@@ -150,7 +150,7 @@ async def add_officer_as_friend(vrc_name):
         if user.display_name == vrc_name:
             already_friends = True
             break
-    if already_friends: return
+    if already_friends: return already_friends
     user = await client.fetch_user_via_id(vrc_name + '/name')
     await user.send_friend_request()
     return already_friends
