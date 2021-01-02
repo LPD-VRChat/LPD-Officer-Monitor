@@ -87,12 +87,8 @@ async def save_officer_location(officer_id):
         return "VRChat Name not registered"
     
     user = await client.fetch_user_via_id(vrc_name + '/name')
-    print(user.display_name)
-    print(user.world_id)
     world_name = await client.fetch_world_name_via_id(user.world_id)
-    print(world_name)
     world_name = world_name.replace("\\","\\\\").replace("\'","\\\'").replace('\"',"\\\"").replace(";","\\;").replace("_","\\_").replace("%","\\%")
-    print(world_name)
     
     try:
         instance_number = user.instance_id.split('~')[0]
