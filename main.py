@@ -225,7 +225,7 @@ async def on_member_update(before, after):
 async def on_member_remove(member):
     if bot.officer_manager.is_officer(member):
         await bot.officer_manager.remove_officer(
-            member.id, reason="this person left the server."
+            member.id, reason="this person left the server.", display_name=member.display_name
         )
 
 

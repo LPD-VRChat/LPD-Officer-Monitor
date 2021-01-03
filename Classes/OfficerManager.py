@@ -231,7 +231,7 @@ class OfficerManager:
         # Return the officer
         return new_officer
 
-    async def remove_officer(self, officer_id, reason=None):
+    async def remove_officer(self, officer_id, reason=None, display_name=None):
 
         # Run the function that needs to run before the officer removal
         try:
@@ -245,12 +245,10 @@ class OfficerManager:
             )
 
         # Get display name for the Officer to be removed
-        member = self.guild.get_member(officer_id)
-        
-        if member == None:
+        if display_name == None:
             member_name = ''
         else:
-            member_name = member.display_name + ' '
+            member_name = display_name + ' '
         
         
         await self.send_db_request(
