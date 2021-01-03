@@ -122,8 +122,8 @@ class Officer:
             if type(date_start[1]) != "str":
                 int(date_start[1])
             else:
+                print(date_start[1].upper())
                 date_start[1] = date_start[1].upper()[0:2]
-                print(date_start[1])
                 date_start[1] = months[date_start[1]]
             
             if type(date_end[1]) != "str":
