@@ -122,7 +122,6 @@ class Officer:
                 int(date_start[1])
             else:
                 date_start[1] = date_start[1].upper()[0:3]
-                print(date_start[1])
                 date_start[1] = months[date_start[1]]
 
             if not isinstance(date_end[1], str):
