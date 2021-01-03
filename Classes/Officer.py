@@ -157,7 +157,8 @@ class Officer:
             )
             await message.delete()
             return
-
+        
+        
         # Convert our separate data into a usable datetime
         date_start_complex = (
             str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
@@ -165,8 +166,17 @@ class Officer:
         date_end_complex = (
             str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
         )
-        date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
-        date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+        
+        try:
+            date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
+            date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+        except ValueError:
+            await message.channel.send(
+                message.author.mention + " Unfortunately, that day does not exist in the month you specified.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
 
         if date_end > date_start + dt.timedelta(
             weeks=+12
