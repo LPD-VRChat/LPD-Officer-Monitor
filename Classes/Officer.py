@@ -89,25 +89,18 @@ class Officer:
 
     async def process_loa(self, message):
         try:
-            print('eeeeeeeeeeeeeeeeeeeeeeeee')
             date_range = message.content.split(":")[0]
-            print(date_range)
             date_a = date_range.split("-")[0]
-            print(date_a)
             date_b = date_range.split("-")[1]
-            print(date_b)
             date_start = ["", "", ""]
             date_end = ["", "", ""]
             date_start[0] = date_a.split("/")[0].strip()
             date_start[1] = date_a.split("/")[1].strip()
             date_start[2] = date_a.split("/")[2].strip()
-            print(date_start)
             date_end[0] = date_b.split("/")[0].strip()
             date_end[1] = date_b.split("/")[1].strip()
             date_end[2] = date_b.split("/")[2].strip()
-            print(date_end)
             reason = message.content.split(":")[1].strip()
-            print(reason)
             months = dict(
                 JAN=1,
                 FEB=2,
@@ -122,19 +115,20 @@ class Officer:
                 NOV=11,
                 DEC=12,
             )
+            
             int(date_start[0])
             int(date_end[0])
 
             if type(date_start[1]) != "str":
                 int(date_start[1])
             else:
-                date_start[1] = date_start[1].upper()[0:3]
+                date_start[1] = date_start[1].upper()[0:2]
                 date_start[1] = months[date_start[1]]
 
             if type(date_end[1]) != "str":
                 int(date_end[1])
             else:
-                date_end[1] = date_end[1].upper()[0:3]
+                date_end[1] = date_end[1].upper()[0:2]
                 date_end[1] = months[date_end[1]]
 
         except (TypeError, ValueError, KeyError, IndexError):
