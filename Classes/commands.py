@@ -764,10 +764,10 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
-    async def link(self, ctx, vrchat_name):
+    async def link(self, ctx, *args):
         r"""
         This command is used to tell the bot your VRChat name.
 
@@ -784,6 +784,25 @@ class VRChatAccoutLink(commands.Cog):
         copy your VRChat name from the debug console in the LPD Station. The
         debug console can be enabled with a button under the front desk.
         """
+
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("name", nargs="+")
+        parser.add_argument("-s", "--skip", action="store_true")
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("link", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        # if use spaces without quotes, won't add space if only one
+        vrchat_name = " ".join(parsed.name)
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -807,14 +826,22 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
+        # Format the VRChat name if that was asked for
+        if parsed.skip:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+
         # Confirm the VRC name
         confirm = await Confirm(
-            f"Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
+            f"Are you sure `{vrchat_formated_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
         ).prompt(ctx)
         if confirm:
-            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await self.bot.user_manager.add_user(
+                ctx.author.id, vrchat_name, parsed.skip
+            )
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink"
+                f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
             )
         else:
             await ctx.send(
