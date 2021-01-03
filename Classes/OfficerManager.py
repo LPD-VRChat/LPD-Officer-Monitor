@@ -246,9 +246,9 @@ class OfficerManager:
 
         # Get display name for the Officer to be removed
         if display_name == None:
-            member_name = ''
+            member_name = str(officer_id)
         else:
-            member_name = display_name + ' '
+            member_name = display_name + '(' + str(officer_id) + ')'
         
         
         await self.send_db_request(
@@ -272,7 +272,6 @@ class OfficerManager:
         msg_string = (
             "WARNING: "
             + member_name
-            + '(' + str(officer_id) + ')'
             + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:
