@@ -70,7 +70,7 @@ class VRChatUserManager:
         await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
-        if skip_format_name:
+        if not skip_format_name:
             vrchat_name = self.vrc_name_format(vrchat_name)
 
         # Add to the cache

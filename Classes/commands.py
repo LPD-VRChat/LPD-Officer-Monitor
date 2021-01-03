@@ -489,7 +489,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -593,7 +593,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -777,9 +777,11 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
-        vrchat_formated_name = self.bot.user_manager.vrc_name_format(
-            vrchat_name, parsed.skip
-        )
+        # Format the VRChat name if that was asked for
+        if parsed.skip:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
 
         # Confirm the VRC name
         confirm = await Confirm(
@@ -787,7 +789,7 @@ class VRChatAccoutLink(commands.Cog):
         ).prompt(ctx)
         if confirm:
             await self.bot.user_manager.add_user(
-                ctx.author.id, vrchat_formated_name, parsed.skip
+                ctx.author.id, vrchat_name, parsed.skip
             )
             await ctx.send(
                 f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
