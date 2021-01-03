@@ -107,7 +107,7 @@ class Officer:
             date_end[2] = date_b.split("/")[2].strip()
             print(date_end)
             reason = message.content.split(":")[1].strip()
-            print(reaason)
+            print(reason)
             months = dict(
                 JAN=1,
                 FEB=2,
