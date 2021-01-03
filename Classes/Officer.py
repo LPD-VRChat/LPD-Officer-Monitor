@@ -169,9 +169,9 @@ class Officer:
         try:
             date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
             date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
-        except ValueError:
+        except (ValueError, TypeError):
             await message.channel.send(
-                message.author.mention + " Unfortunately, that day does not exist in the month you specified.",
+                message.author.mention + " There was a problem with your day. Please use a valid day number.",
                 delete_after=10,
             )
             await message.delete()

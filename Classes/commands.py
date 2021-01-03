@@ -700,7 +700,7 @@ class Inactivity(commands.Cog):
     # Mark Officers inactive after running =list_inactive
     async def mark_inactive(self, ctx):
         """
-        This command lists Inactive OFficers, and prompts the user to mark them with the LPD_inactive role.
+        This command lists inactive officers, and prompts the user to mark them with the LPD_inactive role.
         """
 
         bot = self.bot
