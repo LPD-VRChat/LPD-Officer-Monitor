@@ -217,7 +217,7 @@ async def on_member_update(before, after):
     # Member has left the LPD
     elif officer_before is True and officer_after is False:
         await bot.officer_manager.remove_officer(
-            before.id, reason="this person does not have the LPD role anymore"
+            before.id, reason="this person does not have the LPD role anymore", display_name=after.display_name
         )
 
 
