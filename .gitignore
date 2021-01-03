@@ -113,3 +113,4 @@ venv.bak/
 LPD_database*.csv
 output.py
 .vs/slnx.sqlite
+.vs/LPD-Officer-Monitor/v16/.suo
