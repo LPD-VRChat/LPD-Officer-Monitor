@@ -1119,6 +1119,14 @@ class Other(commands.Cog):
         await ctx.channel.send(embed=embed)
 
 
+
+class VRChatIntegration(commands.Cog):
+    """Here are all the commands regarding VRChat in-game integration."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.dark_blue()
+        
     @checks.is_lpd()
     @commands.command()
     async def join(self, ctx):

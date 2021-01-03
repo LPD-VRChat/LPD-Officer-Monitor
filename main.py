@@ -21,7 +21,7 @@ from termcolor import colored
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
 from Classes.VRChatUserManager import VRChatUserManager
-from Classes.commands import Time, VRChatAccoutLink, Applications, Other
+from Classes.commands import Time, VRChatAccoutLink, Applications, Other, VRChatIntegration
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file, process_mugshot
 import Classes.errors as errors
@@ -281,7 +281,7 @@ bot.add_cog(Time(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
-
+bot.add_cog(VRChatIntegration(bot))
 
 # ====================
 # Start
