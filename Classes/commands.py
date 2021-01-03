@@ -1128,8 +1128,10 @@ class VRChatIntegration(commands.Cog):
         self.color = discord.Color.dark_blue()
         
     @checks.is_lpd()
-    @commands.command()
+    @commands.command(usage="@Officer_name")
     async def join(self, ctx):
+        """ This command generates a VRChat join link to the mentioned Officer's current location."""
+
         officer_id = ctx.message.mentions[0].id
         vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
         join_link = await join_user(vrc_name)
@@ -1143,6 +1145,8 @@ class VRChatIntegration(commands.Cog):
     @checks.is_lpd()
     @commands.command()
     async def invite(self, ctx):
+        """This command generates a VRChat join linke to your current location."""
+
         author_id = ctx.message.author.id
         vrc_name = self.bot.user_manager.get_vrc_by_discord(author_id)
         join_link = await join_user(vrc_name)
@@ -1156,8 +1160,10 @@ class VRChatIntegration(commands.Cog):
         
         
     @checks.is_lpd()
-    @commands.command()
+    @commands.command(usage="@Officer_name")
     async def whereis(self, ctx):
+        """This command gets the current location of the mentioned on-duty Officers."""
+        
         string = ''
         for target in ctx.message.mentions:
             officer = self.bot.officer_manager.get_officer(target.id)
@@ -1175,6 +1181,8 @@ class VRChatIntegration(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     async def mug_stats(self, ctx):
+        """This command returns Mugshot statistics since the bot started monitoring them."""
+        
         mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
                 
         statistics_dict = {}
