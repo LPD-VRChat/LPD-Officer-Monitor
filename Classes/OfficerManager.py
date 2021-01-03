@@ -272,7 +272,7 @@ class OfficerManager:
         msg_string = (
             "WARNING: "
             + member_name
-            + str(officer_id)
+            + '(' + str(officer_id) + ')'
             + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:
