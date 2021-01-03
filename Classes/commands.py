@@ -734,8 +734,11 @@ class Inactivity(commands.Cog):
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
                 last_activity = last_activity["time"]
-                if last_activity < oldest_valid:
-                    inactive_officers.append(officer)
+                try:
+                    if last_activity < oldest_valid:
+                        inactive_officers.append(officer)
+                except:
+                    await ctx.channel.send("There was a problem with the activity times. Make sure that there are officers with patrol times", delete_after=10)
         
         
         role = self.bot.officer_manager.guild.get_role(
