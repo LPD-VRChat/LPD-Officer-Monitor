@@ -101,36 +101,36 @@ class Officer:
             date_end[1] = date_b.split("/")[1].strip()
             date_end[2] = date_b.split("/")[2].strip()
             reason = message.content.split(":")[1].strip()
-            months = dict(
-                JAN=1,
-                FEB=2,
-                MAR=3,
-                APR=4,
-                MAY=5,
-                JUN=6,
-                JUL=7,
-                AUG=8,
-                SEP=9,
-                OCT=10,
-                NOV=11,
-                DEC=12,
-            )
-            
+            months = {
+                "JAN": 1,
+                "FEB": 2,
+                "MAR": 3,
+                "APR": 4,
+                "MAY": 5,
+                "JUN": 6,
+                "JUL": 7,
+                "AUG": 8,
+                "SEP": 9,
+                "OCT": 10,
+                "NOV": 11,
+                "DEC": 12
+            }
             int(date_start[0])
             int(date_end[0])
-            
-            if type(date_start[1]) != "str":
+
+            if not isinstance(date_start[1], str):
                 int(date_start[1])
             else:
-                date_start[1] = date_start[1].upper()[0:2]
+                date_start[1] = date_start[1].upper()[0:3]
+                print(date_start[1])
                 date_start[1] = months[date_start[1]]
-            
-            if type(date_end[1]) != "str":
+
+            if not isinstance(date_end[1], str):
                 int(date_end[1])
             else:
-                date_end[1] = date_end[1].upper()[0:2]
+                date_end[1] = date_end[1].upper()[0:3]
                 date_end[1] = months[date_end[1]]
-            
+
         except (TypeError, ValueError, KeyError, IndexError):
             # If all of that failed, let the user know with an autodeleting message
             await message.channel.send(
