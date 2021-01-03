@@ -118,27 +118,20 @@ class Officer:
             
             int(date_start[0])
             int(date_end[0])
-            print(date_start[1])
-            print(date_end[1])
-
+            
             if type(date_start[1]) != "str":
                 int(date_start[1])
             else:
                 date_start[1] = date_start[1].upper()[0:2]
+                print(date_start[1])
                 date_start[1] = months[date_start[1]]
             
-            print(date_start[1])
-            print(date_end[1])
-
             if type(date_end[1]) != "str":
                 int(date_end[1])
             else:
                 date_end[1] = date_end[1].upper()[0:2]
                 date_end[1] = months[date_end[1]]
-                
-            print(date_start[1])
-            print(date_end[1])
-
+            
         except (TypeError, ValueError, KeyError, IndexError):
             # If all of that failed, let the user know with an autodeleting message
             await message.channel.send(
