@@ -9,7 +9,6 @@ import time
 import math
 import traceback
 import json
-#import aiomysql
 import asyncio
 
 # Community
@@ -730,26 +729,6 @@ class Inactivity(commands.Cog):
         role_ids = role_id_index(bot.settings)
         officers_to_check = []
         guild = self.bot.officer_manager.guild
-        
-        
-        '''
-        for member in guild.members:
-            for role in member.roles:
-                if (
-                    role.id in role_ids
-                    and member.id not in loa_officer_ids
-                    and member not in officers_to_check
-                ):
-                    officers_to_check.append(member)
-                    officer = self.bot.officer_manager.get_officer(member.id)
-                    last_activity = await officer.get_last_activity(
-                        ctx.bot.officer_manager.all_monitored_channels
-                    )
-                    last_activity = last_activity["time"]
-                    # If they've gone past the inactivity limit, add them to the list
-                    if last_activity < oldest_valid:
-                        inactive_officers.append(member)
-        '''
         
         for officer in self.bot.officer_manager.all_officers:
             if officer.id not in loa_officer_ids:
