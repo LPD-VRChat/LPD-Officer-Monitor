@@ -89,6 +89,7 @@ class Officer:
 
     async def process_loa(self, message):
         try:
+            print('eeeeeeeeeeeeeeeeeeeeeeeee')
             date_range = message.content.split(":")[0]
             print(date_range)
             date_a = date_range.split("-")[0]
