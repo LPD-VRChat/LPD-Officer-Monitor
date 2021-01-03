@@ -712,7 +712,7 @@ class Inactivity(commands.Cog):
 
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         for entry in loa_entries:
-            if entry[2] > datetime.now(timezone.utc).date():
+            if entry[2] > datetime.utcnow().date():
                 if entry[3]: loa_officer_ids.append(entry[0])
             else:
                 await Officer.remove_loa(self.bot, str(entry[4]))
@@ -724,7 +724,7 @@ class Inactivity(commands.Cog):
 
         # Get a date range for our LOAs, and make some dictionaries to work in
         max_inactive_days = bot.settings["max_inactive_days"]
-        oldest_valid = datetime.now(timezone.utc) - timedelta(days=max_inactive_days)
+        oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
         role_ids = role_id_index(bot.settings)
         officers_to_check = []
