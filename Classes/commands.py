@@ -5,7 +5,7 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone, time
+from datetime import datetime, timedelta, timezone
 import time
 import math
 import traceback
