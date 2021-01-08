@@ -83,7 +83,7 @@ async def save_officer_location(officer_id):
     if vrc_name == None:
         officer = bot.officer_manager.get_officer(officer_id)
         error_string = f"WARNING: {officer.mention} has not linked their VRChat Account to the bot."
-        error_log_channel = self.bot.get_channel(self.bot.settings["error_log_channel"])
+        error_log_channel = bot.get_channel(bot.settings["error_log_channel"])
         error_log_channel.send(error_string)
         printd(error_string)
         return "VRChat Name not registered"
