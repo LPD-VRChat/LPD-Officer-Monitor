@@ -23,7 +23,7 @@ class OfficerManager:
     def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
         self._before_officer_removal = run_before_officer_removal
-        self.all_officer_ids = bot.sql.all_officer_ids
+        self.all_officer_ids = all_officer_ids
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
