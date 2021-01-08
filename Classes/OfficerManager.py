@@ -67,7 +67,7 @@ class OfficerManager:
 
         # Fetch all the officers from the database
         try:
-            result = self.bot.sql.request("SELECT officer_id FROM Officers")
+            result = bot.sql.request("SELECT officer_id FROM Officers")
             
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
