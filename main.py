@@ -61,6 +61,7 @@ bot = commands.Bot(
 )  # 10/12/2020 - Destructo added intents
 bot.settings = settings
 bot.officer_manager = None
+bot.sql = None
 bot.everything_ready = False
 
 
