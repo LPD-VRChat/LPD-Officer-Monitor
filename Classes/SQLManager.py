@@ -42,24 +42,9 @@ class SQLManager:
                 autocommit=True,
             )
 
-        # Fetch all the officers from the database
-        try:
-            async with db_pool.acquire() as conn:
-                cur = await conn.cursor()
-                await cur.execute("SELECT officer_id FROM Officers")
-                result = await cur.fetchall()
-                await cur.close()
-        except Exception as error:
-            print("ERROR failed to fetch officers from database:")
-            print(error)
-            print("Shutting down...")
-            exit()
-
-        self.all_officer_ids = (x[0] for x in result)
-
+        
         return cls(
             db_pool,
-            (x[0] for x in result),
             bot,
         )
 
