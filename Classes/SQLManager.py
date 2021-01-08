@@ -11,7 +11,7 @@ import aiomysql
 from pymysql import err as mysql_errors
 
 class SQLManager:
-    def __init__(self, db_pool, all_officer_ids, bot):
+    def __init__(self, db_pool, bot):
         self.bot = bot
         self.db_pool = db_pool
 
