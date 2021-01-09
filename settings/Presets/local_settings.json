@@ -1,7 +1,7 @@
 {
     "Server_ID": 566315650864381953,
     "max_inactive_days": 28,
-    "bot_prefix": "=",
+    "bot_prefix": "~",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
     "name_separator": ";",
@@ -20,6 +20,7 @@
     "error_log_channel": 670751809538752512,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
+	"mugshot_channel": 792045947508228106,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,
@@ -80,7 +81,10 @@
     
     // Database
     "DB_name": "LPD_Officer_Monitor",
-    "DB_user": "root",
+    "DB_user": "ubuntu",
     "DB_host": "127.0.0.1",
-    "DB_socket": "/run/mysqld/mysqld.sock"
+    "DB_socket": "/run/mysqld/mysqld.sock",
+    
+    // VRChat
+    "VRC_Username": "Officer Monitor"
 }

@@ -19,9 +19,8 @@ import commentjson as json
 # Mine
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
+from Classes.SQLManager import SQLManager
 from Classes.VRChatUserManager import VRChatUserManager
-
 from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
@@ -61,6 +60,7 @@ bot = commands.Bot(
 )  # 10/12/2020 - Destructo added intents
 bot.settings = settings
 bot.officer_manager = None
+bot.sql = None
 bot.everything_ready = False
 
 
@@ -100,18 +100,25 @@ async def on_ready():
     if bot.officer_manager is not None:
         return
 
+    if bot.sql is not None:
+        return
+
     # Create the function to run before officer removal
     async def before_officer_removal(bot, officer_id):
         await bot.user_manager.remove_user(officer_id)
 
-    # Start the officer manager
-    print("Starting officer manager")
-    bot.officer_manager = await OfficerManager.start(
-        bot, keys["SQL_Password"], run_before_officer_removal=before_officer_removal
-    )
+    # Start the SQL Manager
+    print("Starting SQL Manager...")
+    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
+    
+    # Start the officer Manager
+    print("Starting Officer Manager...")
+    bot.officer_manager = await OfficerManager.start(bot, run_before_officer_removal=before_officer_removal)
 
     # Start the VRChatUserManager
+    print("Starting VRChat User Manager")
     bot.user_manager = await VRChatUserManager.start(bot)
+    
 
     # Mark everything ready
     bot.everything_ready = True
@@ -133,7 +140,7 @@ async def on_message(message):
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
-
+    
     # Archive the message
     if (
         message.channel.category_id
@@ -274,7 +281,6 @@ bot.add_cog(Time(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
-
 
 # ====================
 # Start

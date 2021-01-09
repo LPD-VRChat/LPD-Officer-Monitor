@@ -20,10 +20,10 @@ from Classes.extra_functions import handle_error
 
 
 class OfficerManager:
-    def __init__(self, db_pool, all_officer_ids, bot, run_before_officer_removal=None):
+    def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
-        self.db_pool = db_pool
         self._before_officer_removal = run_before_officer_removal
+        self.all_officer_ids = all_officer_ids
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -63,38 +63,12 @@ class OfficerManager:
         bot.loop.create_task(self.loop())
 
     @classmethod
-    async def start(cls, bot, db_password, run_before_officer_removal=None):
-
-        # Setup database
-        try:
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-                unix_socket=bot.settings["DB_socket"],
-            )
-        except (KeyError, mysql_errors.OperationalError):
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-            )
+    async def start(cls, bot, run_before_officer_removal=None):
 
         # Fetch all the officers from the database
         try:
-            async with db_pool.acquire() as conn:
-                cur = await conn.cursor()
-                await cur.execute("SELECT officer_id FROM Officers")
-                result = await cur.fetchall()
-                await cur.close()
+            result = await bot.sql.request("SELECT officer_id FROM Officers")
+            
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
             print(error)
@@ -102,28 +76,14 @@ class OfficerManager:
             exit()
 
         return cls(
-            db_pool,
             (x[0] for x in result),
             bot,
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args):
+    async def send_db_request(self, query, args=None):
 
-        async with self.db_pool.acquire() as conn:
-            cur = await conn.cursor()
-
-            await cur.execute(query, args)
-            result = await cur.fetchall()
-
-            await cur.close()
-
-        try:
-            if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
-                return None
-        except IndexError:
-            return None
-
+        result = await self.bot.sql.request(query, args)
         return result
 
     # =====================
@@ -244,6 +204,7 @@ class OfficerManager:
                 traceback.format_exc(),
             )
 
+        
         await self.send_db_request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
