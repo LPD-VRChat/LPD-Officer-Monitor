@@ -1,11 +1,11 @@
 [
   {
-    "version": "2.1-alpha1",
+    "version": "2.0.1",
     "developer": "hrolfurgylfa",
     "contributors": [
       "CaptainDestructo",
-      "50thomatoes50",
-      "viperwater"
-    ]
+      "50thomatoes50"
+    ],
+    "update_description": "Added SQL Manager to handle database requests"
   }
 ]

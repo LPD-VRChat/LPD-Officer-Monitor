@@ -46,33 +46,7 @@ DROP TABLE IF EXISTS VRChatNames;
 CREATE TABLE VRChatNames
 (
 	officer_id BIGINT UNSIGNED PRIMARY KEY,
-    vrc_name VARCHAR(255) UNIQUE,
+    vrc_name VARCHAR(255),
     
     CONSTRAINT officer_id_FK_VRC_NAMES FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
-);
-
-CREATE TABLE VRChatActivity
-(
-    datetime TIMESTAMP,
-	officer_id BIGINT UNSIGNED,
-    vrc_name VARCHAR(255),
-    world_name TEXT,
-    instance_number TINYTEXT,
-    enter_time TIMESTAMP,
-    exit_time TIMESTAMP,
-    avatar_image_url MEDIUMTEXT,
-    allow_avatar_copying BOOLEAN,
-	    
-    CONSTRAINT officer_id_FK_VRC_ACTIVITY FOREIGN KEY (officer_id) REFERENCES Officers(officer_id),
-    CONSTRAINT vrc_name_FK_VRC_ACTIVITY FOREIGN KEY (vrc_name) REFERENCES VRChatNames(vrc_name)
-);
-
-CREATE TABLE Mugshots
-(
-	officer_id BIGINT UNSIGNED,
-	world_name TEXT,
-	criminal_name TEXT,
-	datetime TIMESTAMP,
-	
-	CONSTRAINT officer_id_FK_MUGSHOTS FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );

@@ -15,18 +15,17 @@ import aiomysql
 import discord
 from discord.ext import commands
 import commentjson as json
-from termcolor import colored
 
 # Mine
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
 from Classes.SQLManager import SQLManager
 from Classes.VRChatUserManager import VRChatUserManager
-from Classes.commands import Time, VRChatAccoutLink, Applications, Other, VRChatIntegration
+from Classes.commands import Time, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, process_mugshot
+from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
-import Classes.VRChatListener as VRChatListener
+
 
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
@@ -120,9 +119,6 @@ async def on_ready():
     print("Starting VRChat User Manager")
     bot.user_manager = await VRChatUserManager.start(bot)
     
-    # Start the VRChatListener
-    print(f'Starting VRChat Listener as {colored(settings["VRC_Username"], "green")}')
-    bot.vrclistener = await VRChatListener.start(settings["VRC_Username"], keys["VRC_Password"], bot)
 
     # Mark everything ready
     bot.everything_ready = True
@@ -144,11 +140,7 @@ async def on_message(message):
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
-        
-    if message.channel.id == bot.settings["mugshot_channel"]:
-        ctx = await bot.get_context(message)
-        await process_mugshot(ctx, bot)
-
+    
     # Archive the message
     if (
         message.channel.category_id
@@ -289,7 +281,6 @@ bot.add_cog(Time(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
-bot.add_cog(VRChatIntegration(bot))
 
 # ====================
 # Start

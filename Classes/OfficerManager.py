@@ -206,19 +206,10 @@ class OfficerManager:
 
         
         await self.send_db_request(
-            "DELETE FROM VRChatActivity WHERE officer_id = %s", (officer_id)
-        )
-        await self.send_db_request(
-            "DELETE FROM Mugshots WHERE officer_id = %s", (officer_id)
-        )
-        await self.send_db_request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
         await self.send_db_request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
-        )
-        await self.send_db_request(
-            "DELETE FROM VRChatNames WHERE officer_id = %s", (officer_id)
         )
         await self.send_db_request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)

@@ -1,10 +1,11 @@
 # Standard
+import csv
 import sys
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone, time
+from datetime import datetime, timedelta, timezone
 import time
 import math
 import traceback
@@ -19,13 +20,19 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
+from Classes.extra_functions import (
+    send_long,
+    handle_error,
+    get_rank_id,
+    has_role,
+    send_str_as_file,
+)
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
-from Classes.VRChatListener import add_officer_as_friend, join_user
+
 
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
@@ -489,7 +496,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -593,7 +600,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -687,6 +694,48 @@ class Time(commands.Cog):
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def time_to_1_csv(self, ctx):
+        """
+        This command converts the time to the LPD Officer Monitor 1.0s csv format and
+        sends it throguh discord.
+        """
+        await ctx.send("Please give me some time, this may take several minutes.")
+
+        # This opens a virtual file in memory that can be written to by the CSV module
+        with StringIO() as virtual_bot_1_time_file:
+            csv_writer = csv.writer(virtual_bot_1_time_file)
+            for officer in self.bot.officer_manager.all_officers:
+
+                # Get the last active time for the officer
+                last_active_time_datetime = (
+                    await officer.get_last_activity(
+                        self.bot.settings["monitored_channels"]
+                    )
+                )["time"]
+                last_active_time = (
+                    last_active_time_datetime - datetime(1970, 1, 1)
+                ).total_seconds()
+                if last_active_time is None:
+                    last_active_time = 0
+
+                # Get the patrol time
+                to_time = datetime.now(tz=timezone.utc)
+                from_time = to_time - timedelta(28)
+                patrol_time = await officer.get_time(from_time, to_time)
+
+                # Add both to the CSV file
+                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+
+            await send_str_as_file(
+                channel=ctx.channel,
+                file_data=virtual_bot_1_time_file.getvalue(),
+                filename="LPD_database.csv",
+                msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
+            )
+
 
 class VRChatAccoutLink(commands.Cog):
     """This stores all the VRChatAccoutLink commands."""
@@ -715,17 +764,12 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
-    async def link(self, ctx, vrchat_name):
+    async def link(self, ctx, *args):
         r"""
         This command is used to tell the bot your VRChat name.
-        
-        When you successfully link your VRChat account with the bot,
-        you will receive a friend request from LPD Officer Monitor.
-        Please accept this friend request as soon as possible, to
-        ensure the most accurate logging of on-duty time.
 
         This information is used for detecting if you are in
         the LPD when entering the LPD Station. To use the
@@ -740,6 +784,25 @@ class VRChatAccoutLink(commands.Cog):
         copy your VRChat name from the debug console in the LPD Station. The
         debug console can be enabled with a button under the front desk.
         """
+
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("name", nargs="+")
+        parser.add_argument("-s", "--skip", action="store_true")
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("link", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        # if use spaces without quotes, won't add space if only one
+        vrchat_name = " ".join(parsed.name)
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -763,25 +826,27 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
+        # Format the VRChat name if that was asked for
+        if parsed.skip:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+
         # Confirm the VRC name
         confirm = await Confirm(
-            f"Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
+            f"Are you sure `{vrchat_formated_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
         ).prompt(ctx)
         if confirm:
-            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await self.bot.user_manager.add_user(
+                ctx.author.id, vrchat_name, parsed.skip
+            )
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command `=unlink`"
+                f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
             )
         else:
             await ctx.send(
-                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command `=link` again."
+                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again."
             )
-            return
-        
-        already_friends = await add_officer_as_friend(vrchat_name)
-        if not already_friends:
-            await ctx.send(f"Please check your VRChat incoming friend requests for a request from `{self.bot.settings['VRC_Username']}`. This will ensure correct logging of on-duty time.")
-
 
     @commands.command()
     @checks.is_lpd()
@@ -1076,7 +1141,9 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(
+                    f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role
@@ -1117,110 +1184,3 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
-
-
-
-class VRChatIntegration(commands.Cog):
-    """Here are all the commands regarding VRChat in-game integration."""
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.color = discord.Color.dark_blue()
-        
-    @checks.is_lpd()
-    @commands.command(usage="@Officer_name")
-    async def join(self, ctx):
-        """ This command generates a VRChat join link to the mentioned Officer's current location."""
-
-        officer_id = ctx.message.mentions[0].id
-        vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
-        join_link = await join_user(vrc_name)
-        if join_link == "This user is in a Private World.":
-            string = f"{ctx.message.mentions[0].mention} is in a Private World."
-        else:
-            string = f"Join {ctx.message.mentions[0].mention} {join_link}"
-        await ctx.message.delete()
-        await ctx.channel.send(string)
-    
-    @checks.is_lpd()
-    @commands.command()
-    async def invite(self, ctx):
-        """This command generates a VRChat join linke to your current location."""
-
-        author_id = ctx.message.author.id
-        vrc_name = self.bot.user_manager.get_vrc_by_discord(author_id)
-        join_link = await join_user(vrc_name)
-        if join_link == "This user is in a Private World.":
-            string = "Could not generate an invite link for your location. It appears that you are in a Private World, or have your status set to Red or Orange."
-        else:
-            string = f"{ctx.message.mentions[0].mention} please join {ctx.message.author.mention} {join_link}"
-        await ctx.message.delete()
-        await ctx.channel.send(string)
-        
-        
-        
-    @checks.is_lpd()
-    @commands.command(usage="@Officer_name")
-    async def whereis(self, ctx):
-        """This command gets the current location of the mentioned on-duty Officers."""
-        
-        string = ''
-        for target in ctx.message.mentions:
-            officer = self.bot.officer_manager.get_officer(target.id)
-            if officer.is_on_duty:
-                
-                location = officer.location
-                
-                string = f"{string}{target.mention} is in {location}\n"
-            else:
-                string = f"{string}{target.mention} is not on duty"
-        await ctx.channel.send(string)
-        
-    
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    @commands.command()
-    async def mug_stats(self, ctx):
-        """This command returns Mugshot statistics since the bot started monitoring them."""
-        
-        mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
-                
-        statistics_dict = {}
-        
-        all_officers = self.bot.officer_manager.all_officers
-        
-        for officer in all_officers:
-            statistics_dict[str(officer.id)] = 0
-            
-        
-        for mugshot in mugshots:
-            arresting_officer_id = mugshot[0]
-            world_name = mugshot[1]
-            criminal_name = mugshot[2]
-            officers_involved_string = mugshot[5]
-            
-            officers_involved_list = officers_involved_string.split(',')
-            officers_involved = []
-                        
-            for officer_id in officers_involved_list:
-                if officer_id == '':
-                    continue
-                officers_involved.append(int(float(officer_id)))
-            
-            if arresting_officer_id not in officers_involved:
-                officers_involved.append(arresting_officer_id)
-                
-                
-            for officer_id in officers_involved:
-                statistics_dict[str(officer_id)] += 1
-                
-                
-        sorted_stats = sorted(statistics_dict.items(), key=lambda x: x[1], reverse=True)
-        stat_embed = discord.Embed(title="Arrest Statistics", colour=discord.Colour.from_rgb(255, 255, 0))
-        
-        for entry in sorted_stats:
-            officer_id = entry[0]
-            officer = self.bot.officer_manager.get_officer(int(officer_id))
-            stat_embed.add_field(name=officer.display_name + ":", value=entry[1])
-        
-        await ctx.channel.send(embed=stat_embed)

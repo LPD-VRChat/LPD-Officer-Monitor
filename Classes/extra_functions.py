@@ -1,9 +1,8 @@
 # Standard
+from typing import Optional
 import discord
 from io import StringIO, BytesIO
-from statistics import mode as mode
-from Classes.menus import Confirm
-from datetime import datetime
+
 # Community
 import commentjson as json
 
@@ -32,13 +31,13 @@ async def send_long(channel, string, code_block=False):
 
         # If the line is longer that 2000, send it as a file and exit.
         if len(line) > 2000:
-            with StringIO(string) as error_file_sio:
-                with BytesIO(error_file_sio.read().encode("utf8")) as error_file:
-                    await channel.send(
-                        "The output is too big to fit in a discord message so it is insted in a file.",
-                        file=discord.File(error_file, filename="long_output.txt"),
-                    )
-                    return
+            await send_str_as_file(
+                channel=channel,
+                file_data=string,
+                filename="long_output.txt",
+                msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+            )
+            return
 
         # Calculate the output length
         #            Previous output            \n   this line   the backticks if that is enabled
@@ -98,7 +97,6 @@ def has_role(role_list, role_id):
     return len([x for x in role_list if x.id == role_id]) > 0
 
 
-
 def role_id_index(settings):
     """
     Process the role_ladder into a usable list when called
@@ -108,6 +106,7 @@ def role_id_index(settings):
         role_id_ladder.append(entry["id"])
     return role_id_ladder
 
+
 def get_role_name_by_id(settings, bad_role):
     """
     Identify a role's expected name by its ID
@@ -116,96 +115,15 @@ def get_role_name_by_id(settings, bad_role):
         if entry["id"] == bad_role:
             return entry["name"]
 
-async def process_mugshot(ctx, bot):
-    """
-    Process a mugshot and identify what world it was in
-    """
-    
-    #try:
-    #    voice_channel = ctx.message.author.voice.channel
-    #except:
-    #    await ctx.channel.send("ERROR: You don't seem to be in a voice channel. Please be in a voice channel when posing a mugshot.", delete_after=15)
-    #    return
-        
-    officer_id = ctx.message.author.id
-    content = ctx.message.clean_content
-    jump_url = ctx.message.jump_url
-    
-    world_list = []
-    
-    #for user in voice_channel.members:
-    #    request_string = f"SELECT world_name from VRChatActivity WHERE officer_id = {user.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {user.id})"
-    #        
-    #    world_list.append(await bot.officer_manager.send_db_request(request_string, None))
-        
-    world_list.append(await bot.officer_manager.send_db_request(f"SELECT world_name from VRChatActivity WHERE officer_id = {ctx.message.author.id} AND datetime = (SELECT MAX(datetime) FROM VRChatActivity WHERE officer_id = {ctx.message.author.id})", None))
-    criminal_name_list = content.split('\n')[0].split(' ')[1:]
-    criminal_name = ' '.join(criminal_name_list)
-    arrest_world = mode(world_list)[0][0]
-    
-    arresting_officers = ctx.message.mentions
-    if ctx.message.author not in arresting_officers:
-        arresting_officers = arresting_officers.append(ctx.message.author)
-        
-    crime_list = content.split('\n')[1].split(' ')[1:]
-    crime = ' '.join(crime_list)
-    
-    officers_involved = ''
-    for mentioned in arresting_officers:
-        officers_involved = f"{officers_involved}{mentioned.id},"
-    
-    
-    
-    error1 = ''
-    error2 = ''
-    error3 = ''
-    
-    result = await Confirm(f"It looks like you arrested `{criminal_name}` in `{arrest_world}` for `{crime}`... Is this correct?").prompt(ctx)
-    
-    if result:
-        pass
-    
-    else:
-    
-        result2 = await Confirm("Was the criminal's name correct?").prompt(ctx)
-        
-        if result2:
-            pass
-        
-        else:
-            error1 = 'CRIMINAL_NAME_ERROR'
-            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error1}", delete_after=15)
-            
-        
-        result3 = await Confirm("Was the world name correct?").prompt(ctx)
-        
-        if result3 and result2:
-            pass
-        
-        else:
-            error2 = 'WORLD_NAME_ERROR'
-            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error2}", delete_after=15)
-    
-        result4 = await Confirm("Was the crime correct?").prompt(ctx)
-        
-        if result2 and result3 and result4:
-            pass
-            
-        else:
-            error3 = 'CRIME_ERROR'
-            await ctx.channel.send(f"Notifying the Programming Team about this bug: ERROR_TYPE: {error3}", delete_after=15)
-    
-    error = error1 + ', ' + error2 + ', ' + error3
-    
-    if error1 == '' and error2 == '' and error3 == '':
-        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        request_string = f"INSERT INTO Mugshots (officer_id, world_name, criminal_name, datetime, crime, officers_involved) VALUES ({officer_id}, '{arrest_world}', '{criminal_name}', '{now}', '{crime}', '{officers_involved}')"
-        await ctx.channel.send("Okie Dokie. We'll save it.", delete_after=15)
-        await bot.officer_manager.send_db_request(request_string, None)
-    
-    else:
-        cap_destructo = bot.get_guild(bot.settings["Server_ID"]).get_member(
-                249404332447891456
-            )
-        await cap_destructo.send(f"Hi Captain Destructo. Looks like there was an issue with processing a mugshot. Here's the jump_url: {jump_url}\n    ERROR: {error}\n    Processed world name: {arrest_world}\n    Processed criminal name: {criminal_name}\n    Processed crime: {crime}\n    Processed Officer IDs involved: {officers_involved}")
-  
+
+async def send_str_as_file(
+    channel: discord.TextChannel,
+    file_data: str,
+    filename: Optional[str] = None,
+    msg_content: Optional[str] = None,
+) -> None:
+    with BytesIO(file_data.encode("utf8")) as error_file:
+        await channel.send(
+            msg_content,
+            file=discord.File(error_file, filename=filename),
+        )
