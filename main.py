@@ -116,7 +116,7 @@ async def on_ready():
     bot.officer_manager = await OfficerManager.start(bot, run_before_officer_removal=before_officer_removal)
 
     # Start the VRChatUserManager
-    print("Starting VRChat User Manager")
+    print("Starting VRChat User Manager...")
     bot.user_manager = await VRChatUserManager.start(bot)
     
 
