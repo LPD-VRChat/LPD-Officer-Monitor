@@ -157,7 +157,7 @@ async def on_message(message):
 
     if message.author.id == 249404332447891456: #530227944577171477:
         _4Water = bot.get_emoji(693582980492558397)
-        await message.add_reaction(emoji)
+        await message.add_reaction(_4Water)
 
 
 @bot.event
