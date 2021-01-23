@@ -156,8 +156,7 @@ async def on_message(message):
         await ctx.channel.send('\N{EYES}')
 
     if message.author.id == 249404332447891456: #530227944577171477:
-        _4Water = discord.utils.get(bot.emojis, name='4Water')
-        await message.add_reaction(_4Water)
+        await message.add_reaction(693582980492558397)
 
 
 @bot.event
