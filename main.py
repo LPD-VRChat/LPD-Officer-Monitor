@@ -152,7 +152,7 @@ async def on_message(message):
             await officer.log_message_activity(message)
 
     if '\N{EYES}' in message.content:
-        await ctx.channel.send('\N{EYES}')
+        await message.ctx.channel.send('\N{EYES}')
 
 
 @bot.event
