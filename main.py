@@ -161,7 +161,7 @@ async def on_message(message):
             await message.add_reaction("<4Water:693582980492558397>")
         except HTTPException:
             ctx = await bot.get_context(message)
-            await message.add_reaction("\N{SWEAT_DROPS}")
+            await message.add_reaction("\U0001F4A6")
 
 
 @bot.event
