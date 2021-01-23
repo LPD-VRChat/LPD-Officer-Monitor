@@ -13,6 +13,7 @@ import argparse
 # Community
 import aiomysql
 import discord
+from discord.errors import HTTPException
 from discord.ext import commands
 import commentjson as json
 
@@ -156,7 +157,11 @@ async def on_message(message):
         await ctx.channel.send('\N{EYES}')
 
     if message.author.id == 249404332447891456: #530227944577171477:
-        await message.add_reaction("<4Water:693582980492558397>")
+        try:
+            await message.add_reaction("<4Water:693582980492558397>")
+        except HTTPException:
+            ctx = await bot.get_context(message)
+            await message.add_reaction("\N{SWEAT DROPS}")
 
 
 @bot.event
