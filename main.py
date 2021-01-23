@@ -151,6 +151,9 @@ async def on_message(message):
         if officer:
             await officer.log_message_activity(message)
 
+    if '\N{EYES}' in message.content:
+        await ctx.channel.send('\N{EYES}')
+
 
 @bot.event
 async def on_voice_state_update(member, before, after):
