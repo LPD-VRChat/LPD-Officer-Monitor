@@ -41,9 +41,7 @@ parser.add_argument("-s", "--server", action="store_true")
 parser.add_argument("-l", "--local", action="store_true")
 args = parser.parse_args()
 
-global _eyes_response_last_sent
 _eyes_response_last_sent = time.time() - 90
-
 
 # ====================
 # Global Variables
@@ -155,7 +153,7 @@ async def on_message(message):
         if officer:
             await officer.log_message_activity(message)
 
-    if '\N{EYES}' in message.content and time.time() - _eyes_response_last_sent > 60:
+    if '\N{EYES}' in message.content and (time.time() - _eyes_response_last_sent > 60 or _eyes_response_last_sent == None):
         ctx = await bot.get_context(message)
         await ctx.channel.send('\N{EYES}')
         _eyes_response_last_sent = time.time()
