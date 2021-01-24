@@ -152,9 +152,10 @@ async def on_message(message):
         if officer:
             await officer.log_message_activity(message)
 
-    if '\N{EYES}' in message.content:
+    if '\N{EYES}' in message.content and time.time() - _eyes_response_last_sent > 60:
         ctx = await bot.get_context(message)
         await ctx.channel.send('\N{EYES}')
+        _eyes_response_last_sent = time.time()
 
     if message.author.id == 530227944577171477:
         try:
