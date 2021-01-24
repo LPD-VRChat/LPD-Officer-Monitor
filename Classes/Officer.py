@@ -49,10 +49,6 @@ class Officer:
             return
 
         print(f"{self.discord_name} is moving to {squad}")
-
-        # Start counting the officers time
-        self._on_duty_start_time = time.time()
-        self.is_on_duty = True
         self.squad = squad
     
     async def go_off_duty(self):
