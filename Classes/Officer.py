@@ -10,6 +10,7 @@ from datetime import datetime
 
 # Community
 from discord import Member
+from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
 
 # Mine
@@ -25,20 +26,35 @@ class Officer:
 
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = ""
 
-    def go_on_duty(self):
-
-        print(f"{self.discord_name} is going on duty")
-
+    def go_on_duty(self, squad):
+        
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
             print("WARNING A user is going on duty even though he is already on duty")
             return
+        
+        print(f"{self.discord_name} is going on duty in {squad}")
+        # Start counting the officers time
+        self._on_duty_start_time = time.time()
+        self.is_on_duty = True
+        self.squad = squad
+
+    def update_squad(self, squad):
+
+        # Print an error if the user is going on duty even though he is already on duty
+        if self.is_on_duty is False:
+            print("WARNING Tried to update squad for a user not on duty")
+            return
+
+        print(f"{self.discord_name} is moving to {squad}")
 
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
-
+        self.squad = squad
+    
     async def go_off_duty(self):
 
         print(f"{self.discord_name} is going off duty")
@@ -54,6 +70,7 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = ""
 
     async def remove(self):
 
