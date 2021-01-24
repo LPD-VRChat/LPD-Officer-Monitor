@@ -129,7 +129,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # print("on_message")
-
+    
     # Early out if message from the bot itself
     if message.author.bot:
         return
@@ -153,10 +153,12 @@ async def on_message(message):
         if officer:
             await officer.log_message_activity(message)
 
-    if '\N{EYES}' in message.content and (_eyes_response_last_sent == None or time.time() - _eyes_response_last_sent > 60):
-        ctx = await bot.get_context(message)
-        await ctx.channel.send('\N{EYES}')
-        _eyes_response_last_sent = time.time()
+    if '\N{EYES}' in message.content:
+        global _eyes_response_last_sent
+        if _eyes_response_last_sent == None or time.time() - _eyes_response_last_sent > 60:
+            ctx = await bot.get_context(message)
+            await ctx.channel.send('\N{EYES}')
+            _eyes_response_last_sent = time.time()
 
     if message.author.id == 530227944577171477:
         try:
