@@ -80,7 +80,7 @@
     
     // Database
     "DB_name": "LPD_Officer_Monitor",
-    "DB_user": "root",
+    "DB_user": "ubuntu",
     "DB_host": "127.0.0.1",
     "DB_socket": "/run/mysqld/mysqld.sock"
 }
