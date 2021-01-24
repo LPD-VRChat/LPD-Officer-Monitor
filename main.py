@@ -153,19 +153,19 @@ async def on_message(message):
         if officer:
             await officer.log_message_activity(message)
 
-    if '\N{EYES}' in message.content:
+    if '\N{EYES}' in message.content:                                                                   # If :eyes: is in the message
         global _eyes_response_last_sent
-        if _eyes_response_last_sent == None or time.time() - _eyes_response_last_sent > 60:
+        if _eyes_response_last_sent == None or time.time() - _eyes_response_last_sent > 60:             # And we haven't sent it in the last 60 seconds
             ctx = await bot.get_context(message)
-            await ctx.channel.send('\N{EYES}')
-            _eyes_response_last_sent = time.time()
+            await ctx.channel.send('\N{EYES}')                                                          # Send :eyes: in the chat
+            _eyes_response_last_sent = time.time()                                                      # And update the timer
 
-    if message.author.id == 530227944577171477:
+    if message.author.id == 530227944577171477:                                                         # This is 4's UID
         try:
-            await message.add_reaction("<4Water:693582980492558397>")
-        except HTTPException:
+            await message.add_reaction("<4Water:693582980492558397>")                                   # React with the 4Water emote
+        except HTTPException:                                                                           # If for some reason we can't get that emote 
             ctx = await bot.get_context(message)
-            await message.add_reaction("\U0001F4A6")
+            await message.add_reaction("\U0001F4A6")                                                    # React with :sweat_drops:
 
 
 @bot.event
