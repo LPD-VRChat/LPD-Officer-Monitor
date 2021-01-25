@@ -32,7 +32,7 @@ class Officer:
         
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
-            print("WARNING A user is going on duty even though he is already on duty")
+            print("WARNING: A user is going on duty even though he is already on duty...")
             return
         
         print(f"{self.discord_name} is going on duty in {squad}")
@@ -45,7 +45,7 @@ class Officer:
 
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is False:
-            print("WARNING Tried to update squad for a user not on duty")
+            print("WARNING: Tried to update squad for a user not on duty...")
             return
 
         print(f"{self.discord_name} is moving to {squad}")
@@ -57,7 +57,7 @@ class Officer:
 
         # Print an error if the user is going off duty even though he is already off duty
         if self.is_on_duty is False:
-            print("WARNING A user is going off duty even though he isn't on duty")
+            print("WARNING: A user is going off duty even though he isn't on duty...")
             return
 
         # Calculate the on duty time and store it
