@@ -28,28 +28,28 @@ class Officer:
         self.is_on_duty = False
         self.squad = ""
 
-    def go_on_duty(self, squad):
+    def go_on_duty(self):
         
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
             print("WARNING: A user is going on duty even though he is already on duty...")
             return
         
-        print(f"{self.discord_name} is going on duty in {squad}")
+        print(f"{self.discord_name} is going on duty in {self.member.voice.channel.name}")
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
-        self.squad = squad
+        self.squad = self.member.voice.channel.name
 
-    def update_squad(self, squad):
+    def update_squad(self):
 
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is False:
             print("WARNING: Tried to update squad for a user not on duty...")
             return
 
-        print(f"{self.discord_name} is moving to {squad}")
-        self.squad = squad
+        print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
+        self.squad = self.member.voice.channel.name
     
     async def go_off_duty(self):
 

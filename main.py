@@ -166,7 +166,7 @@ async def on_voice_state_update(member, before, after):
         # An LPD Officer entered any voice channel
         if after.channel.category_id == bot.settings["on_duty_category"]:
             # An LPD Officer is going on duty
-            officer.go_on_duty(member.voice.channel.name)
+            officer.go_on_duty()
         return
     elif after.channel is None:
         # An LPD Officer left any voice channel
@@ -181,10 +181,10 @@ async def on_voice_state_update(member, before, after):
         and after.channel.category_id == bot.settings["on_duty_category"]
     ):
         # An Officer moved between monitored voice channels
-        officer.update_squad(member.voice.channel.name)
+        officer.update_squad()
     elif after.channel.category_id == bot.settings["on_duty_category"]:
         # The officer moved from a voice channel that is not monitored to one that is monitored
-        officer.go_on_duty(member.voice.channel.name)
+        officer.go_on_duty()
     elif before.channel.category_id == bot.settings["on_duty_category"]:
         # The officer moved from a monitored voice channel to another one witch is not monitored
         await officer.go_off_duty()
