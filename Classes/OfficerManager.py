@@ -82,6 +82,7 @@ class OfficerManager:
         )
 
     async def send_db_request(self, query, args=None):
+        """This function is being deprecated in favor of self.bot.sql.request()"""
 
         result = await self.bot.sql.request(query, args)
         return result
@@ -141,12 +142,15 @@ class OfficerManager:
     # =====================
 
     def get_officer(self, officer_id):
+        """Returns Officer object from Officer ID"""
+
         for officer in self._all_officers:
             if officer.id == officer_id:
                 return officer
         return None
 
     async def create_officer(self, officer_id, issue=None):
+        """Attempts to create Officer object from given Officer ID"""
 
         # Add the officer to the database
         try:
@@ -239,6 +243,8 @@ class OfficerManager:
     # ====================
 
     async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
+        """Returns list of most active officers between given dates, up to optionally specified limit"""
+        
         db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
@@ -255,6 +261,8 @@ class OfficerManager:
         return await self.bot.sql.request(db_request, arg_list)
 
     def is_officer(self, member):
+        """Returns true if specified member object has and of the LPD roles"""
+
         if member is None:
             return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
@@ -265,6 +273,8 @@ class OfficerManager:
         return False
 
     def is_monitored(self, member_id):
+        """Returns true if specified member ID matches an officer ID in memory"""
+
         for officer in self._all_officers:
             if officer.id == member_id:
                 return True
@@ -287,6 +297,8 @@ class OfficerManager:
     # ====================
 
     def get_settings_role(self, name_id):
+        """Returns a role object for given name_id"""
+
         for role in self.bot.settings["role_ladder"]:
             if role["name_id"] == name_id:
                 return role

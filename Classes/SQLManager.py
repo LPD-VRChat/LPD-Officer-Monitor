@@ -49,6 +49,13 @@ class SQLManager:
         )
 
     async def request(self, query, args=None):
+        """Send a SQL request to the database.
+        
+        Usage: self.bot.sql.request(SQL_STRING)
+               self.bot.sql.request(SQL_STRING, args=whatever)
+
+        Use this function instead of officer_manager.send_db_request
+        """
 
         async with self.db_pool.acquire() as conn:
             cur = await conn.cursor()
