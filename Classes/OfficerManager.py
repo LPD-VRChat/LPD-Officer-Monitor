@@ -58,6 +58,7 @@ class OfficerManager:
                 if new_officer.member.voice is not None:
                     if new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
                         print(f'Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now...')
+                        print(new_officer)
                         new_officer.go_on_duty()
                         self._number_officers_on_duty_at_launch += 1
 
