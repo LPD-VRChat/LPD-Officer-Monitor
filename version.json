@@ -1,0 +1,11 @@
+[
+    {
+      "version": "2.0.1",
+      "developer": "hrolfurgylfa",
+      "contributors": [
+        "CaptainDestructo",
+        "50thomatoes50"
+      ],
+      "update_description": "Adds Officer.squad property, which contains the VC name the officer is in when on duty. Null when off duty."
+    }
+  ]
