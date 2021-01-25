@@ -55,7 +55,7 @@ class OfficerManager:
                 )
                 
                 # Check to see if the officer is in an on duty VC, and if so put a message in stdout and increment counter
-                if new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
+                if new_officer.member.voice.channel.category_id is not None and new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
                     print(f'Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now...')
                     new_officer.go_on_duty
                     self._number_officers_on_duty_at_launch += 1
