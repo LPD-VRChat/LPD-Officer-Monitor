@@ -151,7 +151,7 @@ class OfficerManager:
         # Add the officer to the database
         try:
             try:
-                await self.send_db_request(
+                await self.bot.sql.request(
                     "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
                     (officer_id, datetime.now(timezone.utc)),
                 )
@@ -205,13 +205,13 @@ class OfficerManager:
             )
 
         
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
 
@@ -252,7 +252,7 @@ class OfficerManager:
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
-        return await self.send_db_request(db_request, arg_list)
+        return await self.bot.sql.request(db_request, arg_list)
 
     def is_officer(self, member):
         if member is None:
