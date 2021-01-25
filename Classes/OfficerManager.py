@@ -44,6 +44,7 @@ class OfficerManager:
         # Add all the officers to the list
         self._all_officers = []
         self._officers_needing_removal = []
+        self._number_officers_on_duty_at_launch = 0
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
             try:
@@ -52,13 +53,25 @@ class OfficerManager:
                 print(
                     f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager."
                 )
+                
+                # Check to see if the officer is in an on duty VC, and if so put a message in stdout and increment counter
+                if new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
+                    print(f'Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now...')
+                    new_officer.go_on_duty
+                    self._number_officers_on_duty_at_launch += 1
+
             except MemberNotFoundError:
                 print(
                     f"The officer with the ID {officer_id} was not found in the server. The officer will be removed in a moment."
                 )
                 self._officers_needing_removal.append(officer_id)
-        print(f"Officers needing removal: {self._officers_needing_removal}")
 
+        print(f"Officers needing removal: {self._officers_needing_removal}")
+        
+        # If there were officers on duty when the OfficerManager started, put a warning in stdout
+        if self._number_officers_on_duty_at_launch > 0:
+            print(f'WARNING: It looks like there were {self._number_officers_on_duty_at_launch} officers on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted.')
+        
         # Set up the automatically running code
         bot.loop.create_task(self.loop())
 
