@@ -42,7 +42,9 @@ class SQLManager:
                 autocommit=True,
             )
 
-        
+        # Set the time zone for the session to UTC as an extra measure of safety.
+        await self.request("SET time_zone = '+0:00';")
+
         return cls(
             db_pool,
             bot,
