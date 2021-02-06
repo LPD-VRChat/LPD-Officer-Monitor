@@ -1119,14 +1119,11 @@ class Other(commands.Cog):
         detainees = ctx.message.mentions
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
-        
-        odd_role = self.bot.officer_manager.guild.get_role(566315650864381953)
-        print(odd_role.name)
-        
+                
         for user in detainees:
             user_role_ids = ""
             for role in user.roles:
-
+                if role.name == '@everyone': continue
                 user_role_ids = f"{role.id},{user_role_ids}"
                 print(role.id)
                 await user.remove_roles(role)
