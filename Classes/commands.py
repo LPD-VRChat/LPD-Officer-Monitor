@@ -1168,7 +1168,7 @@ class Other(commands.Cog):
         
         string = f"{string} from detention."
         if send_string == 1: await ctx.channel.send(string, delete_after=10)
-        else: await ctx.channel.send("Please mention the users you wish to release from detention.", delete_after=10)                    
+        else: await ctx.channel.send("Please mention valid users you wish to release from detention.", delete_after=10)                    
 
 
     @checks.is_chat_moderator()
@@ -1186,9 +1186,9 @@ class Other(commands.Cog):
             await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
             old_strikes = await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}")
             for date in old_strikes:
-                if date > datetime.utcnow() - timedelta(days=14):
+                if date[0] > datetime.utcnow() - timedelta(days=14):
                     old_strikes.remove(date)
-                    await self.bot.officer_manager.send_db_request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date}'")
+                    await self.bot.officer_manager.send_db_request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'")
                     continue
             if len(old_strikes) >= 3:
                 users_detained.append(user.mention)
