@@ -938,7 +938,7 @@ class Other(commands.Cog):
 
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role_name} is empty.")
+            raise errors.GetRoleMembersError(message=f"{role.name} is empty.")
 
         # Sort the members
         return sorted(role.members, key=self.get_vrc_name)
@@ -1184,7 +1184,7 @@ class Other(commands.Cog):
         users_detained = []
         for user in ctx.message.mentions:
             await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
-            old_strikes = await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}")
+            old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
             for date in old_strikes:
                 if date[0] > datetime.utcnow() - timedelta(days=14):
                     old_strikes.remove(date)
