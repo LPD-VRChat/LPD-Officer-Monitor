@@ -1120,6 +1120,8 @@ class Other(commands.Cog):
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
         
+        odd_role = self.bot.officer_manager.guild.get_role(566315650864381953)
+        print(odd_role)
         
         for user in detainees:
             user_role_ids = ""
