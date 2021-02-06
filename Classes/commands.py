@@ -1119,7 +1119,8 @@ class Other(commands.Cog):
         detainees = ctx.message.mentions
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
-                
+        detainee_mentions = ""
+
         for user in detainees:
             user_role_ids = ""
             for role in user.roles:
@@ -1128,9 +1129,10 @@ class Other(commands.Cog):
                 await user.remove_roles(role)
             await user.add_roles(detention_role)
             await user.add_roles(detention_waiting_area_role)
+            detainee_mentions = f"{detainee_mentions}{user.mention}"
             await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
-        await ctx.channel.send(f"Moved {ctx.message.mentions} to detention.")
+        await ctx.channel.send(f"Moved {detainee_mentions} to detention.")
         
         
     @checks.is_moderator()
@@ -1161,6 +1163,7 @@ class Other(commands.Cog):
             if remove_from_db == 1:
                 user_role_list = list(await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
                 for role_id in user_role_list[0][0].split(','):
+                    if role_id == '': continue
                     await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
                 await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
                 remove_from_db = 0
@@ -1203,5 +1206,5 @@ class Other(commands.Cog):
                 await user.add_roles(detention_waiting_area_role)
                 await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
-        await ctx.channel.send(f"{strikee_mentions} have all received a strike against their record.")
-        if len(users_detained) > 0: await ctx.channel.send(f"{users_detained} have received 3 strikes in the last two weeks and have been sent to detention.")
+        await ctx.channel.send(f"{strikee_mentions} received a strike against their record.")
+        if len(users_detained) > 0: await ctx.channel.send(f"{users_detained} received 3 strikes in the last two weeks and will be sent to detention.")
