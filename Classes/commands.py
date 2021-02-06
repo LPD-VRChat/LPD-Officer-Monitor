@@ -1196,6 +1196,7 @@ class Other(commands.Cog):
                 users_detained = f"{users_detained}{user.mention}"
                 user_role_ids = ""
                 for role in user.roles:
+                    if role.name == '@everyone': continue
                     user_role_ids = f"{role.id},{user_role_ids}"
                     await user.remove_roles(role)
                 await user.add_roles(detention_role)
