@@ -1125,7 +1125,8 @@ class Other(commands.Cog):
             user_role_ids = ""
             for role in user.roles:
                 user_role_ids = f"{role.id},{user_role_ids}"
-            await user.remove_roles(user.roles)
+                print(role.id)
+                await user.remove_roles(role)
             await user.add_roles(detention_role)
             await user.add_roles(detention_waiting_area_role)
             await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
