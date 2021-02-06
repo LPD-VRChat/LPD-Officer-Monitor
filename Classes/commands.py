@@ -1184,7 +1184,7 @@ class Other(commands.Cog):
         users_detained = []
         strikee_mentions = []
         for user in ctx.message.mentions:
-            await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
+            await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date, entry_number) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}', 0)")
             strikee_mentions.append(user.mention)
             old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
             for date in old_strikes:
