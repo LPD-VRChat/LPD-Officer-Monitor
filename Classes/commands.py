@@ -1160,7 +1160,7 @@ class Other(commands.Cog):
                     await user.remove_roles(detention_waiting_area_role)
             if remove_from_db == 1:
                 user_role_list = list(await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
-                for role_id in user_role_list[0].split(','):
+                for role_id in user_role_list[0][0].split(','):
                     await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
                 await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
                 remove_from_db = 0
