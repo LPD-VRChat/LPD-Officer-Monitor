@@ -1121,11 +1121,12 @@ class Other(commands.Cog):
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
         
         odd_role = self.bot.officer_manager.guild.get_role(566315650864381953)
-        print(odd_role)
+        print(odd_role.name)
         
         for user in detainees:
             user_role_ids = ""
             for role in user.roles:
+
                 user_role_ids = f"{role.id},{user_role_ids}"
                 print(role.id)
                 await user.remove_roles(role)
