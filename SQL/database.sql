@@ -63,5 +63,6 @@ CREATE TABLE UserStrikes
 (
     member_id BIGINT UNSIGNED,
     reason TEXT,
-    date DATETIME
+    date DATETIME,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT
 );
