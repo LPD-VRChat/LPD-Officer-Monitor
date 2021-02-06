@@ -1125,7 +1125,6 @@ class Other(commands.Cog):
             for role in user.roles:
                 if role.name == '@everyone': continue
                 user_role_ids = f"{role.id},{user_role_ids}"
-                print(role.id)
                 await user.remove_roles(role)
             await user.add_roles(detention_role)
             await user.add_roles(detention_waiting_area_role)
@@ -1160,7 +1159,7 @@ class Other(commands.Cog):
                     remove_from_db = 1
                     await user.remove_roles(detention_waiting_area_role)
             if remove_from_db == 1:
-                user_role_list = await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}")
+                user_role_list = list(await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
                 for role_id in user_role_list.split(','):
                     await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
                 await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
