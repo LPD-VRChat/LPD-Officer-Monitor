@@ -1181,13 +1181,11 @@ class Other(commands.Cog):
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
 
-        users_detained = []
-        strikee_mentions = []
+        users_detained = ""
+        strikee_mentions = ""
         for user in ctx.message.mentions:
-            print(user)
-            await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date, entry_number) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}', 0)")
-            print('hiiii')
-            strikee_mentions.append(user.mention[0])
+            print(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
+            strikee_mentions = f"{strikee_mentions}{user.mention}"
             old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
             for date in old_strikes:
                 if date[0] > datetime.utcnow() - timedelta(days=14):
@@ -1195,7 +1193,7 @@ class Other(commands.Cog):
                     await self.bot.officer_manager.send_db_request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'")
                     continue
             if len(old_strikes) >= 3:
-                users_detained.append(user.mention[0])
+                users_detained = f"{users_detained}{user.mention}"
                 user_role_ids = ""
                 for role in user.roles:
                     user_role_ids = f"{role.id},{user_role_ids}"
