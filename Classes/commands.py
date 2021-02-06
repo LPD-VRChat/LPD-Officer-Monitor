@@ -1187,6 +1187,7 @@ class Other(commands.Cog):
             await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
             strikee_mentions = f"{strikee_mentions}{user.mention}"
             old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
+            print(old_strikes)
             for date in old_strikes:
                 if date[0] > datetime.utcnow() - timedelta(days=14):
                     old_strikes.remove(date)
