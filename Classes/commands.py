@@ -1112,36 +1112,26 @@ class Other(commands.Cog):
     # Put a user in detention
     async def detain(self, ctx):
         """
-        This command places a non-LPD user in detention by assigning the Detention and Detention Waiting Area roles.
+        This command places a user in detention by assigning the Detention and Detention Waiting Area roles.
         Chat moderators may use this to effectively temp ban a user without having the ban permission.
+        This command should only be used when the severity of violation is extreme. Use strike when possible.
         """
         detainees = ctx.message.mentions
-        role_ids = role_id_index(self.bot.settings)
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
         
-        string = 'Moving'
-        send_string = 0
-        # First, check and see if the mentioned users are in the LPD. If they are, let the mod know what's up
-        random_variable = 0
+        
         for user in detainees:
-            next_user = 0
+            user_role_ids = ""
             for role in user.roles:
-                if next_user == 0:
-                    if role.id in role_ids:
-                        await ctx.channel.send(f"{user.mention} is an LPD member. This command has no effect on Officers, and is meant for use on the public.", delete_after=10)
-                        next_user = 1
-                        random_variable = 1
-            if next_user == 1: continue
-            else: send_string = 1
+                user_role_ids = f"{role.id},{user_role_ids}"
+                await user.remove_roles(role)
             await user.add_roles(detention_role)
             await user.add_roles(detention_waiting_area_role)
-            await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (`member_id`,`date`) VALUES ({user.id},'{datetime.now()}')")
-            string = f"{string} {user.mention}"
+            await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+
+        await ctx.channel.send(f"Moved {ctx.message.mentions} to detention.")
         
-        string = f"{string} to the detention area."
-        if send_string == 1: await ctx.channel.send(string, delete_after=10)
-        if send_string == 0 and random_variable == 0: await ctx.channel.send("Please mention the users you would like to detain.", delete_after=10)
         
     @checks.is_moderator()
     @commands.command()
@@ -1156,19 +1146,59 @@ class Other(commands.Cog):
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
         string = 'Removing'
         send_string = 0
-        
+
         for user in detainees:
+            remove_from_db = 0
             for role in user.roles:
                 if role.id == detention_role.id:
                     send_string = 1
+                    remove_from_db = 1
                     await user.remove_roles(detention_role)
                 if role.id == detention_waiting_area_role.id:
                     send_string = 1
+                    remove_from_db = 1
                     await user.remove_roles(detention_waiting_area_role)
-                if role.id == detention_role.id or role.id == detention_waiting_area_role.id:
-                    await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
-            string = f"{string} {user.mention}"
+            if remove_from_db == 1:
+                user_role_list = await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}")
+                for role_id in user_role_list.split(','):
+                    await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
+                await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
+                remove_from_db = 0
+                string = f"{string} {user.mention}"
         
         string = f"{string} from detention."
         if send_string == 1: await ctx.channel.send(string, delete_after=10)
         else: await ctx.channel.send("Please mention the users you wish to release from detention.", delete_after=10)                    
+
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    async def strike(self, ctx):
+        """
+        This command issues a warning strike to the user(s) mentioned. After receiving 3 strikes, a user will automatically be detained.
+        """
+
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+
+        users_detained = []
+        for user in ctx.message.mentions:
+            await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
+            old_strikes = await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}")
+            for date in old_strikes:
+                if date > datetime.utcnow() - timedelta(days=14):
+                    old_strikes.remove(date)
+                    await self.bot.officer_manager.send_db_request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date}'")
+                    continue
+            if len(old_strikes) >= 3:
+                users_detained.append(user.mention)
+                user_role_ids = ""
+                for role in user.roles:
+                    user_role_ids = f"{role.id},{user_role_ids}"
+                    await user.remove_roles(role)
+                await user.add_roles(detention_role)
+                await user.add_roles(detention_waiting_area_role)
+                await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+
+        await ctx.channel.send(f"{ctx.message.mentions} have all received a strike against their record.")
+        if len(users_detained) > 0: await ctx.channel.send(f"{users_detained} have received 3 strikes in the last two weeks and have been sent to detention.")
