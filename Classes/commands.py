@@ -706,7 +706,7 @@ class Inactivity(commands.Cog):
         bot = self.bot
 
         # Get all fields from LeaveTimes
-        loa_entries = await Officer.return_loa(self.bot)
+        loa_entries = await self.bot.officer_manager.return_loa()
 
         loa_officer_ids = []
 
@@ -715,7 +715,7 @@ class Inactivity(commands.Cog):
             if entry[2] > datetime.utcnow().date():
                 if entry[3]: loa_officer_ids.append(entry[0])
             else:
-                await Officer.remove_loa(self.bot, str(entry[4]))
+                await self.bot.officer_manager.remove_loa(str(entry[4]))
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
@@ -727,8 +727,7 @@ class Inactivity(commands.Cog):
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
         role_ids = role_id_index(bot.settings)
-        officers_to_check = []
-        guild = self.bot.officer_manager.guild
+        
         
         for officer in self.bot.officer_manager.all_officers:
             if officer.id not in loa_officer_ids:
@@ -747,7 +746,7 @@ class Inactivity(commands.Cog):
         for member in inactive_officers:
             confirm = await Confirm(f'Do you want to mark {member.mention} as LPD Inactive?').prompt(ctx)
             if confirm:
-                await member.add_roles(role)
+                await member.member.add_roles(role)
                 await ctx.channel.send(f'{member.mention} has been marked LPD_inactive')
             else:
                 await ctx.channel.send(f'{member.mention} will have their inactivity reevaluated at a later date.')

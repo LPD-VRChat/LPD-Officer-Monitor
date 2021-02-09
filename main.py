@@ -17,9 +17,7 @@ from discord.ext import commands
 import commentjson as json
 
 # Mine
-from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
 from Classes.VRChatUserManager import VRChatUserManager
 
 from Classes.commands import Time, Inactivity, VRChatAccoutLink, Applications, Other
@@ -247,14 +245,14 @@ async def on_error(event, *args, **kwargs):
 @bot.event
 async def on_raw_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
-        await Officer.remove_loa(bot, payload.message_id)
+        await bot.officer_manager.remove_loa(payload.message_id)
 
 
 @bot.event
 async def on_raw_bulk_message_delete(payload):
     if payload.channel_id == bot.settings["leave_of_absence_channel"]:
         for message_id in payload.message_ids:
-            await Officer.remove_loa(bot, message_id)
+            await bot.officer_manager.remove_loa(message_id)
 
 
 @bot.event

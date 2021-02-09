@@ -341,3 +341,22 @@ class OfficerManager:
             if role["name_id"] == name_id:
                 return role
         raise ValueError(f"{name_id} not found in bot.settings")
+
+    
+
+    async def remove_loa(self, request_id):
+        """
+        Delete the specified Leave of Absence
+        """
+
+        await self.send_db_request(
+            f"DELETE FROM LeaveTimes WHERE request_id = {request_id}"
+        )
+
+    async def return_loa(self):
+        loa_entries = await self.send_db_request(
+            "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
+        )
+        return loa_entries
+
+    

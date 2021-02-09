@@ -61,32 +61,6 @@ class Officer:
         # Remove itself
         await self.bot.officer_manager.remove_officer(self.id)
 
-    async def save_loa(self, date_start, date_end, reason, request_id):
-        """
-        Pass all 5 required fields to save_loa()
-        If record with matching officer_id is found,
-        record will be updated with new dates and reason.
-        """
-
-        await self.bot.officer_manager.send_db_request(
-            f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({self.id},'{date_start}','{date_end}','{reason}',{request_id})"
-        )
-
-    async def remove_loa(bot, request_id):
-        """
-        Delete the specified Leave of Absence
-        """
-
-        await bot.officer_manager.send_db_request(
-            f"DELETE FROM LeaveTimes WHERE request_id = {request_id}"
-        )
-
-    async def return_loa(bot):
-        loa_entries = await bot.officer_manager.send_db_request(
-            "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
-        )
-        return loa_entries
-
     async def process_loa(self, message):
         try:
             date_range = message.content.split(":")[0]
@@ -193,7 +167,18 @@ class Officer:
         request_id = message.id
         await self.save_loa(date_start, date_end, reason, request_id)
         await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+    
+    async def save_loa(self, date_start, date_end, reason, request_id):
+        """
+        Pass all 5 required fields to save_loa()
+        If record with matching officer_id is found,
+        record will be updated with new dates and reason.
+        """
 
+        await self.bot.officer_manager.send_db_request(
+            f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({self.id},'{date_start}','{date_end}','{reason}',{request_id})"
+        )
+    
     # ====================
     # properties
     # ====================
