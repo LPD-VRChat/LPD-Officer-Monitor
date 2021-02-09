@@ -20,7 +20,8 @@ import Classes.extra_functions as ef
 class Officer:
     def __init__(self, user_id, bot):
         self.bot = bot
-        self.member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
+        self.member = bot.get_guild(
+            bot.settings["Server_ID"]).get_member(user_id)
         if self.member == None:
             raise MemberNotFoundError()
 
@@ -130,22 +131,23 @@ class Officer:
             )
             await message.delete()
             return
-        
-        
+
         # Convert our separate data into a usable datetime
         date_start_complex = (
-            str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
+            str(date_start[0]) + "/" +
+            str(date_start[1]) + "/" + str(date_start[2])
         )
         date_end_complex = (
             str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
         )
-        
+
         try:
             date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
             date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
         except (ValueError, TypeError):
             await message.channel.send(
-                message.author.mention + " There was a problem with your day. Please use a valid day number.",
+                message.author.mention +
+                " There was a problem with your day. Please use a valid day number.",
                 delete_after=10,
             )
             await message.delete()
@@ -153,11 +155,11 @@ class Officer:
 
         if date_end > date_start + dt.timedelta(
             weeks=+12
-        ) or date_end < date_start + dt.timedelta(weeks=+4):
+        ) or date_end < date_start + dt.timedelta(weeks=+3):
             # If more than 12 week LOA, inform user
             await message.channel.send(
                 message.author.mention
-                + " Leaves of Absence are limited to 4-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
+                + " Leaves of Absence are limited to 3-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
                 delete_after=10,
             )
             await message.delete()
@@ -167,7 +169,7 @@ class Officer:
         request_id = message.id
         await self.save_loa(date_start, date_end, reason, request_id)
         await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
-    
+
     async def save_loa(self, date_start, date_end, reason, request_id):
         """
         Pass all 5 required fields to save_loa()
@@ -176,9 +178,10 @@ class Officer:
         """
 
         await self.bot.officer_manager.send_db_request(
-            f"REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES ({self.id},'{date_start}','{date_end}','{reason}',{request_id})"
+            "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
+            (self.id, date_start, date_end, reason, request_id)
         )
-    
+
     # ====================
     # properties
     # ====================
@@ -278,7 +281,8 @@ class Officer:
         from_db_time = from_datetime_object.strftime(
             self.bot.settings["db_time_format"]
         )
-        to_db_time = to_datetime_object.strftime(self.bot.settings["db_time_format"])
+        to_db_time = to_datetime_object.strftime(
+            self.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
         result = await self.bot.officer_manager.send_db_request(

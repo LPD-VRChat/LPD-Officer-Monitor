@@ -1,11 +1,10 @@
 {
     "Server_ID": 566315650864381953,
-    "max_inactive_days": 21,
+    "max_inactive_days": 28,
     "bot_prefix": "!",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
     "name_separator": ";",
-    
     // Channels
     "monitored_channels": {
         "ignored_categories": [
@@ -24,7 +23,6 @@
         708117281376305232,
         723234394524876882
     ],
-    
     // Roles
     "lpd_role": 655133459714670592,
     "trainer_role": 655128037993742337,
@@ -70,11 +68,9 @@
             "is_admin": true
         }
     ],
-    
     // On duty
     "on_duty_category": 599764719212953610,
     "on_duty_role": 581553952550551564,
-    
     // Database
     "DB_name": "LPD_Officer_Monitor",
     "DB_user": "root",

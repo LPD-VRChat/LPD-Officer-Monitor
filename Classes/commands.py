@@ -27,6 +27,7 @@ import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
 
+
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
 
@@ -144,7 +145,8 @@ class Time(commands.Cog):
             embed = discord.Embed(description="Latest activity")
 
         # Set the author of the embed
-        embed.set_author(name=officer.display_name, icon_url=officer.member.avatar_url)
+        embed.set_author(name=officer.display_name,
+                         icon_url=officer.member.avatar_url)
 
         # Return the embed if their are no results to add
         if not time_results:
@@ -309,7 +311,8 @@ class Time(commands.Cog):
         # ====================
 
         try:
-            time_text, from_datetime, to_datetime = self.parse_days_date_input(parsed)
+            time_text, from_datetime, to_datetime = self.parse_days_date_input(
+                parsed)
         except ValueError as error:
             ctx.send(error)
             return
@@ -325,7 +328,8 @@ class Time(commands.Cog):
             time_seconds = await officer.get_time(from_datetime, to_datetime)
 
             # Print the results out
-            out_string += "\n" + self.seconds_to_string(time_seconds, multi_line=True)
+            out_string += "\n" + \
+                self.seconds_to_string(time_seconds, multi_line=True)
             await ctx.send(out_string)
 
         else:
@@ -342,7 +346,7 @@ class Time(commands.Cog):
             table.header(["From      ", "To        ", "hr:min:sec"])
 
             # This is a lambda to add the discord code block on the table to keep it monospace
-            draw_table = lambda table: "```\n" + table.draw() + "\n```"
+            def draw_table(table): return "```\n" + table.draw() + "\n```"
 
             # Loop through all the patrols to add them to a string and send them
             for patrol in all_patrols:
@@ -462,7 +466,8 @@ class Time(commands.Cog):
 
         # Parse the day input
         try:
-            time_text, from_datetime, to_datetime = self.parse_days_date_input(parsed)
+            time_text, from_datetime, to_datetime = self.parse_days_date_input(
+                parsed)
         except ValueError as error:
             ctx.send(error)
             return
@@ -531,7 +536,8 @@ class Time(commands.Cog):
             out_str = "\n".join(
                 (
                     f"Recruits that have been active for {required_hours} hours in the last 28 days:",
-                    "\n".join(f"@{x.discord_name}" for x in all_officers_for_promotion),
+                    "\n".join(
+                        f"@{x.discord_name}" for x in all_officers_for_promotion),
                 )
             )
             await send_long(ctx.channel, out_str)
@@ -638,7 +644,8 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now(timezone.utc) - last_activity["time"]).days
+            active_days_ago = (datetime.now(timezone.utc) -
+                               last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
@@ -650,7 +657,8 @@ class Time(commands.Cog):
             return
 
         # Make sure the user is sure again
-        officers_to_remove_str = "\n".join((x.mention for x in officers_to_remove))
+        officers_to_remove_str = "\n".join(
+            (x.mention for x in officers_to_remove))
         await send_long(
             ctx.channel,
             f"Here is everyone that will be removed:\n{officers_to_remove_str}",
@@ -687,6 +695,7 @@ class Time(commands.Cog):
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
 
+
 class Inactivity(commands.Cog):
     """Here are all the commands relating to Leaves of Absence and Inactivity"""
 
@@ -713,7 +722,8 @@ class Inactivity(commands.Cog):
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         for entry in loa_entries:
             if entry[2] > datetime.utcnow().date():
-                if entry[3]: loa_officer_ids.append(entry[0])
+                if entry[3]:
+                    loa_officer_ids.append(entry[0])
             else:
                 await self.bot.officer_manager.remove_loa(str(entry[4]))
 
@@ -727,8 +737,7 @@ class Inactivity(commands.Cog):
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
         role_ids = role_id_index(bot.settings)
-        
-        
+
         for officer in self.bot.officer_manager.all_officers:
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(ctx.bot.officer_manager.all_monitored_channels)
@@ -738,8 +747,7 @@ class Inactivity(commands.Cog):
                         inactive_officers.append(officer)
                 except:
                     await ctx.channel.send("There was a problem with the activity times. Make sure that there are officers with patrol times", delete_after=10)
-        
-        
+
         role = self.bot.officer_manager.guild.get_role(
             self.bot.settings["inactive_role"]
         )
@@ -750,10 +758,8 @@ class Inactivity(commands.Cog):
                 await ctx.channel.send(f'{member.mention} has been marked LPD_inactive')
             else:
                 await ctx.channel.send(f'{member.mention} will have their inactivity reevaluated at a later date.')
-            
+
         inactive_officers = []
-
-
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
@@ -773,12 +779,12 @@ class Inactivity(commands.Cog):
             if len(string) > 1000:
                 await ctx.channel.send(string)
                 string = ''
-        
-        if i == 0: string = "There are no Leaves of Absence on file at this time."
-        await ctx.channel.send(string)                
-        
-        
-        
+
+        if i == 0:
+            string = "There are no Leaves of Absence on file at this time."
+        await ctx.channel.send(string)
+
+
 class VRChatAccoutLink(commands.Cog):
     """This stores all the VRChatAccoutLink commands."""
 
@@ -838,7 +844,8 @@ class VRChatAccoutLink(commands.Cog):
             return
 
         # If the officer already has a registered account
-        previous_vrchat_name = self.bot.user_manager.get_vrc_by_discord(ctx.author.id)
+        previous_vrchat_name = self.bot.user_manager.get_vrc_by_discord(
+            ctx.author.id)
         if previous_vrchat_name:
             confirm = await Confirm(
                 f"You already have a VRChat account registered witch is `{previous_vrchat_name}`, do you want to replace that account?"
@@ -1006,7 +1013,6 @@ class Applications(commands.Cog):
                 await message.delete()
 
 
-
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
@@ -1014,7 +1020,8 @@ class Other(commands.Cog):
         self.bot = bot
         self.color = discord.Color.dark_magenta()
         self.get_vrc_name = (
-            lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
+            lambda x: self.bot.user_manager.get_vrc_by_discord(
+                x.id) or x.display_name
         )
 
     def get_role_by_name(self, role_name):
@@ -1024,7 +1031,8 @@ class Other(commands.Cog):
             if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        raise errors.GetRoleMembersError(
+            message=f"The role {role_name} was not found.")
 
     def get_role_members(self, role):
 
@@ -1189,16 +1197,15 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = "".join(match[0][1]) + "s"
-                
+
             else:
                 name = role.name
-            
+
             """
             elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
                 name = 'Cadets'
             Leaving this here for future use if needed.
             """
-            
 
             embed.add_field(
                 name=name + ":", value=number_of_officers_with_each_role[role]

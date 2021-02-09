@@ -28,7 +28,8 @@ class OfficerManager:
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
         if self.guild is None:
-            print("ERROR Guild with ID", bot.settings["Server_ID"], "not found")
+            print("ERROR Guild with ID",
+                  bot.settings["Server_ID"], "not found")
             print("Shutting down...")
             exit()
 
@@ -108,7 +109,8 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args=None):  # 10/13/2020 - Destructo set args default None for compatibility
+    # 10/13/2020 - Destructo set args default None for compatibility
+    async def send_db_request(self, query, args=None):
 
         async with self.db_pool.acquire() as conn:
             cur = await conn.cursor()
@@ -126,16 +128,13 @@ class OfficerManager:
 
         return result
 
-
     async def get_loa(self):
         """
         Get the list of Leaves of Absence from the database
         """
-        
+
         loa_entries = await self.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes')
         return loa_entries
-
-
 
     # =====================
     #    Loop
@@ -256,7 +255,8 @@ class OfficerManager:
             )
 
         await self.send_db_request(
-            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
+            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (
+                officer_id)
         )
         await self.send_db_request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
@@ -342,15 +342,14 @@ class OfficerManager:
                 return role
         raise ValueError(f"{name_id} not found in bot.settings")
 
-    
-
     async def remove_loa(self, request_id):
         """
         Delete the specified Leave of Absence
         """
 
         await self.send_db_request(
-            f"DELETE FROM LeaveTimes WHERE request_id = {request_id}"
+            "DELETE FROM LeaveTimes WHERE request_id = %s",
+            (request_id)
         )
 
     async def return_loa(self):
@@ -358,5 +357,3 @@ class OfficerManager:
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
         return loa_entries
-
-    
