@@ -354,7 +354,7 @@ class OfficerManager:
                 pass
             else:
                 old_msg_id = entry[4]
-                officer = await self.get_officer(entry[0])
+                officer = self.get_officer(entry[0])
                 if officer == None:
                     pass
                 else:
