@@ -743,8 +743,6 @@ class Inactivity(commands.Cog):
                 except:
                     await ctx.channel.send("There was a problem with the activity times. Make sure that there are officers with patrol times", delete_after=10)
 
-        print(inactive_officers)
-        print(len(inactive_officers))
         if len(inactive_officers) == 0:
             await ctx.channel.send("There are no inactive officers found without a leave of absence.")
             return
@@ -753,7 +751,7 @@ class Inactivity(commands.Cog):
             self.bot.settings["inactive_role"]
         )
 
-        if " -i " in ctx.message.content:
+        if "-i" in ctx.message.content:
             for officer in inactive_officers:
                 confirm = await Confirm(f'Do you want to mark {officer.member.mention} as LPD Inactive?').prompt(ctx)
                 if confirm:
@@ -764,6 +762,7 @@ class Inactivity(commands.Cog):
         else:
             output_string = ""
             for officer in inactive_officers:
+                print(officer.member.id)
                 string = f"{output_string}{officer.member.mention}"
             confirm = await Confirm(f"Do you want to mark these officers inactive? {output_string}").prompt(ctx)
             if confirm:
