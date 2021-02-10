@@ -128,14 +128,6 @@ class OfficerManager:
 
         return result
 
-    async def get_loa(self):
-        """
-        Get the list of Leaves of Absence from the database
-        """
-
-        loa_entries = await self.send_db_request('SELECT officer_id, date(date_start), date(date_end), reason, request_id, approved FROM LeaveTimes')
-        return loa_entries
-
     # =====================
     #    Loop
     # =====================
@@ -352,8 +344,16 @@ class OfficerManager:
             (request_id)
         )
 
-    async def return_loa(self):
+    async def get_loa(self):
         loa_entries = await self.send_db_request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
+
+        for entry in loa_entries:
+            if entry[2] > datetime.utcnow().date():
+                pass
+            else:
+                await self.remove_loa(str(entry[4]))
+                loa_entries.remove(entry)
+
         return loa_entries
