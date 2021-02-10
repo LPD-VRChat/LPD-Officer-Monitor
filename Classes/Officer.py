@@ -226,6 +226,10 @@ class Officer:
     def is_slrt_trained(self):
         return not self._has_role(self.bot.settings["slrt_trained_role"])
 
+    @property
+    def is_dev_member(self):
+        return self._has_role(self.bot.settings["dev_team_role"])
+
     # Often used member functions
 
     @property

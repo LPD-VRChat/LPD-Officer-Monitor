@@ -1,10 +1,11 @@
 # Standard
+import csv
 import sys
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone, time
+from datetime import datetime, timedelta, timezone
 import time
 import math
 import traceback
@@ -18,9 +19,13 @@ import texttable
 import arrow
 
 # Mine
-from Classes.Officer import Officer
-from Classes.OfficerManager import OfficerManager
-from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
+from Classes.extra_functions import (
+    send_long,
+    handle_error,
+    get_rank_id,
+    has_role,
+    send_str_as_file,
+)
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
@@ -494,7 +499,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -599,7 +604,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -694,6 +699,48 @@ class Time(commands.Cog):
         await ctx.send(
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def time_to_1_csv(self, ctx):
+        """
+        This command converts the time to the LPD Officer Monitor 1.0s csv format and
+        sends it throguh discord.
+        """
+        await ctx.send("Please give me some time, this may take several minutes.")
+
+        # This opens a virtual file in memory that can be written to by the CSV module
+        with StringIO() as virtual_bot_1_time_file:
+            csv_writer = csv.writer(virtual_bot_1_time_file)
+            for officer in self.bot.officer_manager.all_officers:
+
+                # Get the last active time for the officer
+                last_active_time_datetime = (
+                    await officer.get_last_activity(
+                        self.bot.settings["monitored_channels"]
+                    )
+                )["time"]
+                last_active_time = (
+                    last_active_time_datetime - datetime(1970, 1, 1)
+                ).total_seconds()
+                if last_active_time is None:
+                    last_active_time = 0
+
+                # Get the patrol time
+                to_time = datetime.now(tz=timezone.utc)
+                from_time = to_time - timedelta(28)
+                patrol_time = await officer.get_time(from_time, to_time)
+
+                # Add both to the CSV file
+                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+
+            await send_str_as_file(
+                channel=ctx.channel,
+                file_data=virtual_bot_1_time_file.getvalue(),
+                filename="LPD_database.csv",
+                msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
+            )
 
 
 class Inactivity(commands.Cog):
@@ -822,10 +869,10 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
-    async def link(self, ctx, vrchat_name):
+    async def link(self, ctx, *args):
         r"""
         This command is used to tell the bot your VRChat name.
 
@@ -842,6 +889,25 @@ class VRChatAccoutLink(commands.Cog):
         copy your VRChat name from the debug console in the LPD Station. The
         debug console can be enabled with a button under the front desk.
         """
+
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("name", nargs="+")
+        parser.add_argument("-s", "--skip", action="store_true")
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("link", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        # if use spaces without quotes, won't add space if only one
+        vrchat_name = " ".join(parsed.name)
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -866,14 +932,22 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
+        # Format the VRChat name if that was asked for
+        if parsed.skip:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+
         # Confirm the VRC name
         confirm = await Confirm(
-            f"Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
+            f"Are you sure `{vrchat_formated_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
         ).prompt(ctx)
         if confirm:
-            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await self.bot.user_manager.add_user(
+                ctx.author.id, vrchat_name, parsed.skip
+            )
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink"
+                f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
             )
         else:
             await ctx.send(
@@ -908,8 +982,8 @@ class VRChatAccoutLink(commands.Cog):
             )
 
     @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     async def lvn(self, ctx):
         """
         This command is used to get the VRChat names of the people that are LPD Officers.
@@ -1069,8 +1143,8 @@ class Other(commands.Cog):
 
         return string
 
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
@@ -1175,7 +1249,9 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(
+                    f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role

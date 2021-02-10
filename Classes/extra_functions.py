@@ -1,4 +1,5 @@
 # Standard
+from typing import Optional
 import discord
 
 from io import StringIO, BytesIO
@@ -31,13 +32,13 @@ async def send_long(channel, string, code_block=False):
 
         # If the line is longer that 2000, send it as a file and exit.
         if len(line) > 2000:
-            with StringIO(string) as error_file_sio:
-                with BytesIO(error_file_sio.read().encode("utf8")) as error_file:
-                    await channel.send(
-                        "The output is too big to fit in a discord message so it is insted in a file.",
-                        file=discord.File(error_file, filename="long_output.txt"),
-                    )
-                    return
+            await send_str_as_file(
+                channel=channel,
+                file_data=string,
+                filename="long_output.txt",
+                msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+            )
+            return
 
         # Calculate the output length
         #            Previous output            \n   this line   the backticks if that is enabled
@@ -106,6 +107,7 @@ def role_id_index(settings):
         role_id_ladder.append(entry["id"])
     return role_id_ladder
 
+
 def get_role_name_by_id(settings, bad_role):
     """
     Identify a role's expected name by its ID
@@ -113,3 +115,16 @@ def get_role_name_by_id(settings, bad_role):
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
+
+
+async def send_str_as_file(
+    channel: discord.TextChannel,
+    file_data: str,
+    filename: Optional[str] = None,
+    msg_content: Optional[str] = None,
+) -> None:
+    with BytesIO(file_data.encode("utf8")) as error_file:
+        await channel.send(
+            msg_content,
+            file=discord.File(error_file, filename=filename),
+        )
