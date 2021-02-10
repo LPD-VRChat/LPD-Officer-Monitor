@@ -762,7 +762,6 @@ class Inactivity(commands.Cog):
         else:
             output_string = ""
             for officer in inactive_officers:
-                print(officer.member.id)
                 output_string = f"{output_string}{officer.mention}"
             confirm = await Confirm(f"Do you want to mark these officers inactive? {output_string}").prompt(ctx)
             if confirm:

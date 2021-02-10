@@ -353,6 +353,14 @@ class OfficerManager:
             if entry[2] > datetime.utcnow().date():
                 pass
             else:
+                old_msg_id = entry[4]
+                officer = await self.get_officer(entry[0])
+                if officer == None:
+                    pass
+                else:
+                    old_msg = await officer.member.fetch_message(old_msg_id)
+                    await old_msg.delete()
+
                 await self.remove_loa(str(entry[4]))
                 templist = list(loa_entries)
                 templist.remove(entry)
