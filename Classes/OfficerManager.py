@@ -354,6 +354,6 @@ class OfficerManager:
                 pass
             else:
                 await self.remove_loa(str(entry[4]))
-                loa_entries.remove(entry)
+                loa_entries = tuple(list(loa_entries).remove(entry))
 
         return loa_entries
