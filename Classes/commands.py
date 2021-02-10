@@ -755,16 +755,16 @@ class Inactivity(commands.Cog):
 
         if " -i " in ctx.message.content:
             for officer in inactive_officers:
-                confirm = await Confirm(f'Do you want to mark {officer.mention} as LPD Inactive?').prompt(ctx)
+                confirm = await Confirm(f'Do you want to mark {officer.member.mention} as LPD Inactive?').prompt(ctx)
                 if confirm:
                     await officer.member.add_roles(role)
-                    await ctx.channel.send(f'{officer.mention} has been marked LPD_inactive.')
+                    await ctx.channel.send(f'{officer.member.mention} has been marked LPD_inactive.')
                 else:
-                    await ctx.channel.send(f'{officer.mention} will have their inactivity reevaluated at a later date.')
+                    await ctx.channel.send(f'{officer.member.mention} will have their inactivity reevaluated at a later date.')
         else:
             output_string = ""
             for officer in inactive_officers:
-                string = f"{output_string}{officer.mention}"
+                string = f"{output_string}{officer.member.mention}"
             confirm = await Confirm(f"Do you want to mark these officers inactive? {output_string}").prompt(ctx)
             if confirm:
                 for officer in inactive_officers:
