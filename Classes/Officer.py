@@ -183,7 +183,7 @@ class Officer:
         """
 
         # Delete any existing entries
-        await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTImes WHERE officer_id = %s", self.id)
+        await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTimes WHERE officer_id = %s", self.id)
 
         # Save the new entry
         await self.bot.officer_manager.send_db_request(
