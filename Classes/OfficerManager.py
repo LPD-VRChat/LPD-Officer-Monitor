@@ -349,17 +349,16 @@ class OfficerManager:
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
 
+        loa_channel = self.bot.get_channel(
+            self.bot.settings["leave_of_absence_channel"])
+
         for entry in loa_entries:
             if entry[2] > datetime.utcnow().date():
                 pass
             else:
                 old_msg_id = entry[4]
-                officer = self.get_officer(entry[0])
-                if officer == None:
-                    pass
-                else:
-                    old_msg = await officer.member.fetch_message(old_msg_id)
-                    await old_msg.delete()
+                old_msg = await loa_channel.fetch_message(old_msg_id)
+                await old_msg.delete()
 
                 await self.remove_loa(str(entry[4]))
                 templist = list(loa_entries)
