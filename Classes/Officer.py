@@ -169,9 +169,10 @@ class Officer:
         request_id = message.id
         old_messages = await self.bot.officer_manager.send_db_request("SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id)
         ctx = await self.bot.get_context(message)
-        for old_msg_id in old_messages:
+        for old_msg_id in old_messages[0]:
             old_msg = await ctx.fetch_message(old_msg_id)
             await old_msg.delete()
+
         await self.save_loa(date_start, date_end, reason, request_id)
         await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
