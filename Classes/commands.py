@@ -743,6 +743,8 @@ class Inactivity(commands.Cog):
                 except:
                     await ctx.channel.send("There was a problem with the activity times. Make sure that there are officers with patrol times", delete_after=10)
 
+        print(inactive_officers)
+        print(len(inactive_officers))
         if len(inactive_officers) == 0:
             await ctx.channel.send("There are no inactive officers found without a leave of absence.")
             return
