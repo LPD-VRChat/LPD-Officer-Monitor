@@ -54,6 +54,7 @@ class EventManager:
             if event_time > datetime.utcnow() + timedelta(days=7):
                 continue
 
+            print(event.subcalendar_ids)
             for cal in calendar.subcalendars:
                 if cal['id'] == event.subcalendar_ids:
                     event_cal = cal
