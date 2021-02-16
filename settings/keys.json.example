@@ -1,4 +1,6 @@
 {
     "Discord_token": "",
-    "SQL_Password": ""
+    "SQL_Password": "",
+    "TeamUp_key": "",
+    "TeamUp_cal": ""
 }

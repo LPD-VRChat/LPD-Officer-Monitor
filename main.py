@@ -19,7 +19,7 @@ import commentjson as json
 # Mine
 from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
+from Classes.EventManager import EventManager
 from Classes.VRChatUserManager import VRChatUserManager
 
 from Classes.commands import Time, VRChatAccoutLink, Applications, Other
@@ -73,7 +73,8 @@ bot.everything_ready = False
 def supports_dms(ctx):
     if ctx.guild is None:
         print("Direct messages not supported.")
-        raise commands.NoPrivateMessage("This bot does not support direct messages.")
+        raise commands.NoPrivateMessage(
+            "This bot does not support direct messages.")
     else:
         return True
 
@@ -116,8 +117,10 @@ async def on_ready():
     # Mark everything ready
     bot.everything_ready = True
 
+    EventManager.get_calendar_events(keys["TeamUp_cal"], keys["TeamUp_key"])
 
-@bot.event
+
+@ bot.event
 async def on_message(message):
     # print("on_message")
 
@@ -145,7 +148,7 @@ async def on_message(message):
             await officer.log_message_activity(message)
 
 
-@bot.event
+@ bot.event
 async def on_voice_state_update(member, before, after):
     # print("on_voice_state_update")
     if bot.officer_manager is None:
@@ -190,7 +193,7 @@ async def on_voice_state_update(member, before, after):
         await officer.go_off_duty()
 
 
-@bot.event
+@ bot.event
 async def on_member_update(before, after):
 
     if bot.officer_manager is None:
