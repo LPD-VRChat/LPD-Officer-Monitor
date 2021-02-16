@@ -62,3 +62,4 @@ class EventManager:
             parsed_events.append(tmp_dict)
 
         print(parsed_events)
+        print(calendar.subcalendars())
