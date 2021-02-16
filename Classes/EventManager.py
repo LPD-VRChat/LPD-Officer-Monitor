@@ -64,7 +64,7 @@ class EventManager:
             tmp_dict = {"title": event.title,
                         "time": event_time,
                         "host": event.who,
-                        "calendar": event_cal.name}
+                        "calendar": event_cal['name']}
 
             #print(event.title, str(event_time)+' UTC')
             parsed_events.append(tmp_dict)
