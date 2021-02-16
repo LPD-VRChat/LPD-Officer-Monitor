@@ -45,5 +45,10 @@ class EventManager:
 
         # print(all_events)
         for event in all_events:
-            print(event.title, str(event.start_dt.replace(
-                tzinfo=timezone('UTC')))+' UTC')
+            event_time = event.start_dt.replace(tzinfo=timezone('UTC'))
+            if event_time < datetime.utcnow():
+                continue
+            if event_time > datetime.utcnow() + timedelta(days=7):
+                continue
+
+            print(event.title, str(event_time)+' UTC')
