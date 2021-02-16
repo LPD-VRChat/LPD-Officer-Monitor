@@ -58,8 +58,8 @@ class EventManager:
                         "host": event.who,
                         "calendar": event.subcalendar_ids}
 
-            #print(event.title, str(event_time)+' UTC')
+            # print(event.title, str(event_time)+' UTC')
             parsed_events.append(tmp_dict)
 
         print(parsed_events)
-        print(calendar.subcalendars())
+        print(calendar.subcalendars
