@@ -42,6 +42,6 @@ class EventManager:
         calendar = Calendar(cal_id, api_key)
         all_events = calendar.get_event_collection()
 
-        print(all_events)
-        # for event in all_events:
-        #    print(event)
+        # print(all_events)
+        for event in all_events:
+            print(event.title, event.start_dt)
