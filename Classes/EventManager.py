@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, timedelta
 from discord import Member
 from pyteamup import Calendar, Event
+from pytz import timezone
 
 
 class EventManager:
@@ -44,4 +45,5 @@ class EventManager:
 
         # print(all_events)
         for event in all_events:
-            print(event.title, event.start_dt)
+            print(event.title, str(event.start_dt.replace(
+                tzinfo=timezone('UTC')))+' UTC')
