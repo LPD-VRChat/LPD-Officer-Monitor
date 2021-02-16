@@ -1,6 +1,7 @@
 # Event Manager - 02/16/2021 alpha testing
 
 import asyncio
+import json
 
 from datetime import datetime, timedelta
 from discord import Member
@@ -53,13 +54,21 @@ class EventManager:
             if event_time > datetime.utcnow() + timedelta(days=7):
                 continue
 
+            for cal in calendar.subcalendars:
+                if cal['id'] == event.subcalendar_ids:
+                    event_cal = cal
+                    break
+                else:
+                    event_cal = None
+
             tmp_dict = {"title": event.title,
                         "time": event_time,
                         "host": event.who,
-                        "calendar": event.subcalendar_ids}
+                        "calendar": event_cal.name}
 
             #print(event.title, str(event_time)+' UTC')
             parsed_events.append(tmp_dict)
 
-        print(parsed_events)
-        print(calendar.subcalendars)
+        # print(parsed_events)
+        output = json.dumps(json.loads(parsed_events), indent=4)
+        print(output)
