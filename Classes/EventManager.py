@@ -62,7 +62,7 @@ class EventManager:
                     event_cal = None
 
             tmp_dict = {"title": event.title,
-                        "time": event_time,
+                        "time": str(event_time),
                         "host": event.who,
                         "calendar": event_cal['name']}
 
