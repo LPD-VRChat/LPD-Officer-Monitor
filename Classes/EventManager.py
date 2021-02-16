@@ -70,5 +70,5 @@ class EventManager:
             parsed_events.append(tmp_dict)
 
         # print(parsed_events)
-        output = json.dumps(json.loads(parsed_events), indent=4)
+        output = json.dumps(parsed_events, indent=4)
         print(output)
