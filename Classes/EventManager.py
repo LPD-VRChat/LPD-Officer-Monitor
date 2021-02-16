@@ -42,6 +42,7 @@ class EventManager:
     def get_calendar_events(cal_id, api_key):
         calendar = Calendar(cal_id, api_key)
         all_events = calendar.get_event_collection()
+        parsed_events = []
 
         # print(all_events)
         for event in all_events:
@@ -52,4 +53,12 @@ class EventManager:
             if event_time > datetime.utcnow() + timedelta(days=7):
                 continue
 
-            print(event.title, str(event_time)+' UTC')
+            tmp_dict = {"title": event.title,
+                        "time": event_time,
+                        "host": event.who,
+                        "calendar": event.subcalendar_ids}
+
+            #print(event.title, str(event_time)+' UTC')
+            parsed_events.append(tmp_dict)
+
+        print(parsed_events)
