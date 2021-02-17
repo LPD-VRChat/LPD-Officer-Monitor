@@ -1201,17 +1201,28 @@ class Other(commands.Cog):
     @commands.command()
     async def show_events(self, ctx):
         embed = discord.Embed(
-            title="Upcoming Events",
+            title="Upcoming Events (UTC)",
             color=discord.Colour.from_rgb(24, 87, 150),
             url="https://teamup.com/"+self.bot.event_manager.cal_id,
         )
+        cal_name = ""
+        for event in sorted(self.bot.events, key=lambda i: (i['calendar'], i['time'])):
 
-        for event in self.bot.events:
-            # embed.add_field(name=event['title'], value=event['time'], inline=True)
-            embed.add_field(name="Calendar",
-                            value=event['calendar'], inline=False)
-            embed.add_field(name="Title", value=event['title'], inline=True)
-            embed.add_field(name="Time", value=event['time'], inline=True)
-            embed.add_field(name="Host", value=event['host'], inline=True)
+            if event['calendar'] != cal_name:
+                embed.add_field(name="Calendar",
+                                value=event['calendar'],
+                                inline=False)
+
+            cal_name = event['calendar']
+
+            embed.add_field(name="Title",
+                            value=event['title'],
+                            inline=True)
+            embed.add_field(name="Time",
+                            value=event['time'],
+                            inline=True)
+            embed.add_field(name="Host",
+                            value=event['host'],
+                            inline=True)
 
         await ctx.channel.send(embed=embed)
