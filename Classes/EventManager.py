@@ -47,7 +47,7 @@ class EventManager:
         instance = cls(bot)
         cls.cal_id = cal_id
         cls.api_key = api_key
-        cls.main.start()
+        cls.main.start(cls)
         return instance
 
     def get_calendar_events(self):
