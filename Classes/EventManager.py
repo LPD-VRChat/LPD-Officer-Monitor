@@ -44,7 +44,7 @@ class EventManager:
         await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE start_time = (SELECT MAX(start_time) FROM Events WHERE host_id = %s", self.end_time, attendees, self.host.id)
 
     @classmethod
-    async def get_calendar_events(self, cal_id, api_key):
+    def get_calendar_events(self, cal_id, api_key):
         calendar = Calendar(cal_id, api_key)
 
         _start_date = datetime.utcnow() - timedelta(hours=6)
