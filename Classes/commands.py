@@ -1200,7 +1200,7 @@ class Other(commands.Cog):
 
     @commands.command()
     async def show_events(self, ctx):
-        embed = Embed(
+        embed = discord.Embed(
             title="Upcoming Events",
             color=discord.Colour.from_rgb(24, 87, 150),
             url="https://teamup.com/"+self.bot.event_manager.cal_id,
