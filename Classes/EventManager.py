@@ -1,12 +1,14 @@
 # Event Manager - 02/16/2021 alpha testing
 
-import asyncio
-import json
-
-from datetime import datetime, timedelta
-from discord import Member
-from pyteamup import Calendar, Event
+from discord.ext import tasks
 from pytz import timezone
+from pyteamup import Calendar, Event
+from discord import Member
+from datetime import datetime, timedelta
+import json
+import asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 
 class EventManager:
@@ -15,6 +17,7 @@ class EventManager:
         self.start_time = datetime.utcnow()
         self.end_time = datetime.utcnow() + timedelta(hours=2)
         self.host = host
+        self.bot.events = []
 
     async def start(self, host):
 
@@ -40,10 +43,15 @@ class EventManager:
         # Update the record we created earlier to add end_time and the attendee list
         await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE start_time = (SELECT MAX(start_time) FROM Events WHERE host_id = %s", self.end_time, attendees, self.host.id)
 
-    def get_calendar_events(cal_id, api_key):
+    async def get_calendar_events(self, cal_id, api_key):
         calendar = Calendar(cal_id, api_key)
-        all_events = calendar.get_event_collection()
-        parsed_events = []
+
+        _start_date = datetime.utcnow() - timedelta(hours=6)
+        _end_date = datetime.utcnow() + timedelta(hours=30)
+
+        all_events = calendar.get_event_collection(
+            start_date=_start_date, end_date=_end_date)
+        self.bot.events = []
 
         # print(all_events)
         for event in all_events:
@@ -67,8 +75,12 @@ class EventManager:
                         "calendar": event_cal['name']}
 
             #print(event.title, str(event_time)+' UTC')
-            parsed_events.append(tmp_dict)
+            self.bot.events.append(tmp_dict)
 
         # print(parsed_events)
-        output = json.dumps(parsed_events, indent=4)
+        output = json.dumps(self.bot.events, indent=4)
         print(output)
+
+    @tasks.loop(hours=12)
+    async def main(self):
+        pass
