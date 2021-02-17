@@ -1224,13 +1224,13 @@ class Other(commands.Cog):
 
             cal_name = event['calendar']
 
-            embed.add_field(name="",
+            embed.add_field(name="\u200b",
                             value=event['title'],
                             inline=True)
-            embed.add_field(name="",
+            embed.add_field(name="\u200b",
                             value=event['time'],
                             inline=True)
-            embed.add_field(name="",
+            embed.add_field(name="\u200b",
                             value=event['host'],
                             inline=True)
 
