@@ -1212,16 +1212,25 @@ class Other(commands.Cog):
                 embed.add_field(name="Calendar",
                                 value=event['calendar'],
                                 inline=False)
+                embed.add_field(name="Title",
+                                value=event['title'],
+                                inline=True)
+                embed.add_field(name="Time",
+                                value=event['time'],
+                                inline=True)
+                embed.add_field(name="Host",
+                                value=event['host'],
+                                inline=True)
 
             cal_name = event['calendar']
 
-            embed.add_field(name="Title",
+            embed.add_field(name="",
                             value=event['title'],
                             inline=True)
-            embed.add_field(name="Time",
+            embed.add_field(name="",
                             value=event['time'],
                             inline=True)
-            embed.add_field(name="Host",
+            embed.add_field(name="",
                             value=event['host'],
                             inline=True)
 
