@@ -75,10 +75,14 @@ class EventManager:
                     break
                 else:
                     event_cal = None
+            if event.who == None or event.who == "":
+                who = ""
+            else:
+                who = event.who
 
             tmp_dict = {"title": event.title,
                         "time": str(event_time),
-                        "host": event.who,
+                        "host": who,
                         "calendar": event_cal['name']}
 
             #print(event.title, str(event_time)+' UTC')

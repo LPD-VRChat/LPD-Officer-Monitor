@@ -115,12 +115,11 @@ async def on_ready():
     bot.user_manager = await VRChatUserManager.start(bot)
 
     # Start the EventManager
+    print("Starting the Event Manager...")
     bot.event_manager = await EventManager.start(bot, keys["TeamUp_cal"], keys["TeamUp_key"])
 
     # Mark everything ready
     bot.everything_ready = True
-
-    #EventManager.get_calendar_events(keys["TeamUp_cal"], keys["TeamUp_key"])
 
 
 @ bot.event

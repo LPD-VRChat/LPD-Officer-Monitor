@@ -1212,7 +1212,7 @@ class Other(commands.Cog):
         for event in sorted(self.bot.events, key=lambda i: (i['calendar'], i['time'])):
 
             if event['calendar'] != cal_name:
-                embed.add_field(name="Calendar",
+                embed.add_field(name="\u200b",
                                 value=event['calendar'],
                                 inline=False)
                 embed.add_field(name="Title",
