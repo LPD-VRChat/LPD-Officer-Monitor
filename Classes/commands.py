@@ -151,7 +151,8 @@ class Time(commands.Cog):
             embed = discord.Embed(description="Latest activity")
 
         # Set the author of the embed
-        embed.set_author(name=officer.display_name, icon_url=officer.member.avatar_url)
+        embed.set_author(name=officer.display_name,
+                         icon_url=officer.member.avatar_url)
 
         # Return the embed if their are no results to add
         if not time_results:
@@ -316,7 +317,8 @@ class Time(commands.Cog):
         # ====================
 
         try:
-            time_text, from_datetime, to_datetime = self.parse_days_date_input(parsed)
+            time_text, from_datetime, to_datetime = self.parse_days_date_input(
+                parsed)
         except ValueError as error:
             ctx.send(error)
             return
@@ -332,7 +334,8 @@ class Time(commands.Cog):
             time_seconds = await officer.get_time(from_datetime, to_datetime)
 
             # Print the results out
-            out_string += "\n" + self.seconds_to_string(time_seconds, multi_line=True)
+            out_string += "\n" + \
+                self.seconds_to_string(time_seconds, multi_line=True)
             await ctx.send(out_string)
 
         else:
@@ -349,7 +352,7 @@ class Time(commands.Cog):
             table.header(["From      ", "To        ", "hr:min:sec"])
 
             # This is a lambda to add the discord code block on the table to keep it monospace
-            draw_table = lambda table: "```\n" + table.draw() + "\n```"
+            def draw_table(table): return "```\n" + table.draw() + "\n```"
 
             # Loop through all the patrols to add them to a string and send them
             for patrol in all_patrols:
@@ -397,7 +400,8 @@ class Time(commands.Cog):
         This command gets all the times the officer was last active.
 
         To use the command do =last_active_time @mention_the_officer_or_officer_id,
-        for example =last_active_time @Hroi#1994 or =last_active_time 378666988412731404.
+        # 1994 or =last_active_time 378666988412731404.
+        for example =last_active_time @Hroi
         """
 
         officer_id = self.get_officer_id(officer)
@@ -469,7 +473,8 @@ class Time(commands.Cog):
 
         # Parse the day input
         try:
-            time_text, from_datetime, to_datetime = self.parse_days_date_input(parsed)
+            time_text, from_datetime, to_datetime = self.parse_days_date_input(
+                parsed)
         except ValueError as error:
             ctx.send(error)
             return
@@ -538,7 +543,8 @@ class Time(commands.Cog):
             out_str = "\n".join(
                 (
                     f"Recruits that have been active for {required_hours} hours in the last 28 days:",
-                    "\n".join(f"@{x.discord_name}" for x in all_officers_for_promotion),
+                    "\n".join(
+                        f"@{x.discord_name}" for x in all_officers_for_promotion),
                 )
             )
             await send_long(ctx.channel, out_str)
@@ -552,7 +558,7 @@ class Time(commands.Cog):
 
         This command should be used after =officer_promotions, when everyone has agreed
         on who should be promoted and the promotion message has been posted in
-        #announcements.
+        # announcements.
 
         You can just paste the message that came from =officer_promotions into this
         command as long as everyone agreed that their was no one that needed to be
@@ -657,7 +663,8 @@ class Time(commands.Cog):
             return
 
         # Make sure the user is sure again
-        officers_to_remove_str = "\n".join((x.mention for x in officers_to_remove))
+        officers_to_remove_str = "\n".join(
+            (x.mention for x in officers_to_remove))
         await send_long(
             ctx.channel,
             f"Here is everyone that will be removed:\n{officers_to_remove_str}",
@@ -727,7 +734,8 @@ class Time(commands.Cog):
                 patrol_time = await officer.get_time(from_time, to_time)
 
                 # Add both to the CSV file
-                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+                csv_writer.writerow(
+                    [officer.id, last_active_time, patrol_time])
 
             await send_str_as_file(
                 channel=ctx.channel,
@@ -785,7 +793,8 @@ class VRChatAccoutLink(commands.Cog):
         debug console can be enabled with a button under the front desk.
         """
 
-        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser = ArgumentParser(
+            description="Argparse user command", add_help=False)
         parser.add_argument("name", nargs="+")
         parser.add_argument("-s", "--skip", action="store_true")
         # Parse command and check errors
@@ -815,7 +824,8 @@ class VRChatAccoutLink(commands.Cog):
             return
 
         # If the officer already has a registered account
-        previous_vrchat_name = self.bot.user_manager.get_vrc_by_discord(ctx.author.id)
+        previous_vrchat_name = self.bot.user_manager.get_vrc_by_discord(
+            ctx.author.id)
         if previous_vrchat_name:
             confirm = await Confirm(
                 f"You already have a VRChat account registered witch is `{previous_vrchat_name}`, do you want to replace that account?"
@@ -830,7 +840,8 @@ class VRChatAccoutLink(commands.Cog):
         if parsed.skip:
             vrchat_formated_name = vrchat_name
         else:
-            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(
+                vrchat_name)
 
         # Confirm the VRC name
         confirm = await Confirm(
@@ -998,7 +1009,8 @@ class Other(commands.Cog):
         self.bot = bot
         self.color = discord.Color.dark_magenta()
         self.get_vrc_name = (
-            lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
+            lambda x: self.bot.user_manager.get_vrc_by_discord(
+                x.id) or x.display_name
         )
 
     def get_role_by_name(self, role_name):
@@ -1008,7 +1020,8 @@ class Other(commands.Cog):
             if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        raise errors.GetRoleMembersError(
+            message=f"The role {role_name} was not found.")
 
     def get_role_members(self, role):
 
@@ -1183,4 +1196,22 @@ class Other(commands.Cog):
             )
 
         # Send the results
+        await ctx.channel.send(embed=embed)
+
+    @commands.command()
+    async def show_events(self, ctx):
+      embed = Embed(
+           title="Upcoming Events",
+           color=discord.Colour.from_rgb(24, 87, 150),
+           url="https://teamup.com/"+self.bot.event_manager.cal_id,
+           )
+
+       for event in self.bot.events:
+            # embed.add_field(name=event['title'], value=event['time'], inline=True)
+            embed.add_field(name="Calendar",
+                            value=event['calendar'], inline=False)
+            embed.add_field(name="Title", value=event['title'], inline=True)
+            embed.add_field(name="Time", value=event['time'], inline=True)
+            embed.add_field(name="Host", value=event['host'], inline=True)
+
         await ctx.channel.send(embed=embed)

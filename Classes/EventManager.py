@@ -50,7 +50,7 @@ class EventManager:
         instance.main.start()
         return instance
 
-    def get_calendar_events(self):
+    def update(self):
         calendar = Calendar(self.cal_id, self.api_key)
 
         _start_date = datetime.utcnow() - timedelta(hours=6)
@@ -88,9 +88,9 @@ class EventManager:
         self.events = parsed_events
         self.bot.events = parsed_events
 
-        output = json.dumps(self.events, indent=4)
-        print(output)
+        #output = json.dumps(self.events, indent=4)
+        # print(output)
 
     @tasks.loop(hours=12)
     async def main(self):
-        self.get_calendar_events()
+        self.update()
