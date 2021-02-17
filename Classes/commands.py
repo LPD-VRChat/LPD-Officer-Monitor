@@ -12,12 +12,12 @@ import traceback
 import json
 import aiomysql
 import asyncio
-import tabulate
 
 
 # Community
 import discord
 from discord.ext import commands
+from tabulate import tabulate
 import texttable
 import arrow
 
