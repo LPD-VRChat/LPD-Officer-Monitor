@@ -12,6 +12,8 @@ import traceback
 import json
 import aiomysql
 import asyncio
+import tabulate
+
 
 # Community
 import discord
@@ -1200,11 +1202,18 @@ class Other(commands.Cog):
 
     @commands.command()
     async def show_events(self, ctx):
+
+        table = tabulate(
+            sorted(self.bot.events, key=lambda i: (i['calendar'], i['time'])))
+
         embed = discord.Embed(
             title="Upcoming Events (UTC)",
             color=discord.Colour.from_rgb(24, 87, 150),
+            description=table,
             url="https://teamup.com/"+self.bot.event_manager.cal_id,
         )
+
+        """
         cal_name = ""
         for event in sorted(self.bot.events, key=lambda i: (i['calendar'], i['time'])):
 
@@ -1233,5 +1242,6 @@ class Other(commands.Cog):
             embed.add_field(name="\u200b",
                             value=event['host'],
                             inline=True)
+        """
 
         await ctx.channel.send(embed=embed)
