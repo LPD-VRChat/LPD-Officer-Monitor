@@ -1200,13 +1200,13 @@ class Other(commands.Cog):
 
     @commands.command()
     async def show_events(self, ctx):
-      embed = Embed(
-           title="Upcoming Events",
-           color=discord.Colour.from_rgb(24, 87, 150),
-           url="https://teamup.com/"+self.bot.event_manager.cal_id,
-           )
+        embed = Embed(
+            title="Upcoming Events",
+            color=discord.Colour.from_rgb(24, 87, 150),
+            url="https://teamup.com/"+self.bot.event_manager.cal_id,
+        )
 
-       for event in self.bot.events:
+        for event in self.bot.events:
             # embed.add_field(name=event['title'], value=event['time'], inline=True)
             embed.add_field(name="Calendar",
                             value=event['calendar'], inline=False)
