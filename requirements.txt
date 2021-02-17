@@ -8,4 +8,3 @@ aiomysql
 git+https://github.com/Rapptz/discord-ext-menus
 pyTeamUp
 pandas
-tabulate
