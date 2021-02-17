@@ -43,7 +43,7 @@ class EventManager:
     """
 
     @classmethod
-    def start(cls, bot, cal_id, api_key):
+    async def start(cls, bot, cal_id, api_key):
         instance = cls(bot)
         instance.cal_id = cal_id
         instance.api_key = api_key
