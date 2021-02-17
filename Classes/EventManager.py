@@ -43,6 +43,7 @@ class EventManager:
         # Update the record we created earlier to add end_time and the attendee list
         await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE start_time = (SELECT MAX(start_time) FROM Events WHERE host_id = %s", self.end_time, attendees, self.host.id)
 
+    @classmethod
     async def get_calendar_events(self, cal_id, api_key):
         calendar = Calendar(cal_id, api_key)
 
