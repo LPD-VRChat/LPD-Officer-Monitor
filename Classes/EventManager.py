@@ -12,14 +12,12 @@ nest_asyncio.apply()
 
 
 class EventManager:
-    def __init__(self, bot, host):
+    def __init__(self, bot):
         self.bot = bot
-        self.start_time = datetime.utcnow()
-        self.end_time = datetime.utcnow() + timedelta(hours=2)
-        self.host = host
+        self.events = []
         self.bot.events = []
 
-    async def start(self, host):
+    """async def start(self, host):
 
         print(f"{self.start_time} - {self.host.displayName} has started an event scheduled to end {self.end_time}.")
 
@@ -42,17 +40,25 @@ class EventManager:
 
         # Update the record we created earlier to add end_time and the attendee list
         await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE start_time = (SELECT MAX(start_time) FROM Events WHERE host_id = %s", self.end_time, attendees, self.host.id)
+    """
 
     @classmethod
-    def get_calendar_events(self, cal_id, api_key):
-        calendar = Calendar(cal_id, api_key)
+    def start(cls, bot, cal_id, api_key):
+        instance = cls(bot)
+        cls.cal_id = cal_id
+        cls.api_key = api_key
+        cls.main.start()
+        return instance
+
+    def get_calendar_events(self):
+        calendar = Calendar(self.cal_id, self.api_key)
 
         _start_date = datetime.utcnow() - timedelta(hours=6)
         _end_date = datetime.utcnow() + timedelta(hours=30)
 
         all_events = calendar.get_event_collection(
             start_date=_start_date, end_date=_end_date)
-        self.bot.events = []
+        parsed_events = []
 
         # print(all_events)
         for event in all_events:
@@ -76,12 +82,15 @@ class EventManager:
                         "calendar": event_cal['name']}
 
             #print(event.title, str(event_time)+' UTC')
-            self.bot.events.append(tmp_dict)
+            parsed_events.append(tmp_dict)
 
         # print(parsed_events)
-        output = json.dumps(self.bot.events, indent=4)
+        self.events = parsed_events
+        self.bot.events = parsed_events
+
+        output = json.dumps(self.events, indent=4)
         print(output)
 
     @tasks.loop(hours=12)
     async def main(self):
-        pass
+        self.get_calendar_events()
