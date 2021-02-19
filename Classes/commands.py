@@ -5,7 +5,8 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta  # , timezone
+from datetime import datetime, timedelta, timezone
+from pytz import timezone as pytz
 import time
 import math
 import traceback
@@ -1206,7 +1207,7 @@ class Other(commands.Cog):
 
         for event in self.bot.event_manager.all_events:
             event_time = event.start_dt.to_pydatetime().replace(
-                tzinfo=timezone('UTC')).replace(tzinfo=None)
+                tzinfo=pytz('UTC')).replace(tzinfo=None)
 
             event_time = datetime.fromtimestamp(event_time).strftime(
                 self.bot.settings["db_time_format"])
