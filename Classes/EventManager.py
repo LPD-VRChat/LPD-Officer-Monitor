@@ -89,7 +89,7 @@ class EventManager:
 
         self.events = parsed_events
         self.bot.events = parsed_events
-        print(all_events)
+        print(event.event_id)
 
     @tasks.loop(hours=12)
     async def main(self):
