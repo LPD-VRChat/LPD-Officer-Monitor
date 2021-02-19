@@ -1202,6 +1202,9 @@ class Other(commands.Cog):
 
     @commands.command()
     async def show_events(self, ctx):
+        """
+        Display a pretty list of upcoming events
+        """
 
         parsed_events = []
 

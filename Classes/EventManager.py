@@ -18,12 +18,6 @@ class EventManager:
         self.events = []
         self.bot.events = []
 
-    """
-    async def stop(self):
-
-        self.
-    """
-
     @classmethod
     async def start(cls, bot, cal_id, api_key):
         instance = cls(bot)
@@ -33,38 +27,42 @@ class EventManager:
         return instance
 
     async def update_cache(self):
+
+        # Get the TeamUp calendar and store the subcalendars for use elsewhere
         calendar = Calendar(self.cal_id, self.api_key)
         self.subcalendars = calendar.subcalendars
 
+        # Set the search date range to UTCNOW -6/+30
         _start_date = datetime.utcnow() - timedelta(hours=6)
         _end_date = datetime.utcnow() + timedelta(hours=30)
 
+        # Store all the event objects in cache
         self.all_events = calendar.get_event_collection(
             start_date=_start_date, end_date=_end_date)
 
+        # Get all the existing event IDs - we'll skip saving to avoid overwrites
         _existing_event_ids = await self.bot.officer_manager.send_db_request("SELECT event_id FROM Events")
         existing_event_ids = [
             item for sublist in _existing_event_ids for item in sublist]
 
         for event in self.all_events:
+
+            # If we already have it, skip it
             if event.event_id in existing_event_ids:
                 continue
 
+            # If it doesn't have a host, skip it
             if event.who == "" or event.who == None:
                 continue
 
+            # Format the times into a database-friendly format
             start_dt = event.start_dt.to_pydatetime().replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
             end_dt = event.end_dt.to_pydatetime().replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
-            # start_dt = datetime.fromtimestamp(start_dt).strftime(
-            #    self.bot.settings["db_time_format"])
-            # end_dt = datetime.fromtimestamp(end_dt).strftime(
-            #    self.bot.settings["db_time_format"])
-
+            # Assume that event.who is the VRC name of the Host and save into the DB
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
-            print(event.event_id)
             await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
 
     @tasks.loop(hours=12)
@@ -72,6 +70,8 @@ class EventManager:
         await self.update_cache()
 
     async def log_attendance(self, event):
+
+        # Get start and end times for searching stuff
         start_dt = event.start_dt.to_pydatetime().replace(
             tzinfo=timezone('UTC')).replace(tzinfo=None)
         end_dt = datetime.utcnow()
