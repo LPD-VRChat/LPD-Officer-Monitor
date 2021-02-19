@@ -79,7 +79,7 @@ class EventManager:
                 who = ""
             else:
                 who = event.who
-            print(event)
+
             tmp_dict = {"title": event.title,
                         "time": str(event_time),
                         "host": who,
@@ -89,6 +89,7 @@ class EventManager:
 
         self.events = parsed_events
         self.bot.events = parsed_events
+        print(all_events)
 
     @tasks.loop(hours=12)
     async def main(self):
