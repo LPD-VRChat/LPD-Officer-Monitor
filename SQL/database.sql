@@ -50,3 +50,15 @@ CREATE TABLE VRChatNames
     
     CONSTRAINT officer_id_FK_VRC_NAMES FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );
+
+DROP TABLE IF EXISTS Events;
+CREATE TABLE Events
+(
+    event_id BIGINT UNSIGNED PRIMARY KEY,
+    host_id BIGINT UNSIGNED,
+    start_time DATETIME,
+    end_time DATETIME,
+    attendees TEXT,
+
+    CONSTRAINT host_id_FK_EVENTS FOREIGN KEY (host_id) REFERENCES Officers(officer_id)
+);
