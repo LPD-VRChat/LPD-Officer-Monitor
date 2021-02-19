@@ -51,15 +51,15 @@ class EventManager:
             if event.who == "" or event.who == None:
                 continue
 
-            start_dt = event.start_dt.replace(
+            start_dt = event.start_dt.to_pydatetime().replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
-            end_dt = event.end_dt.replace(
+            end_dt = event.end_dt.to_pydatetime().replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
-            start_dt = datetime.fromtimestamp(start_dt).strftime(
-                self.bot.settings["db_time_format"])
-            end_dt = datetime.fromtimestamp(end_dt).strftime(
-                self.bot.settings["db_time_format"])
+            # start_dt = datetime.fromtimestamp(start_dt).strftime(
+            #    self.bot.settings["db_time_format"])
+            # end_dt = datetime.fromtimestamp(end_dt).strftime(
+            #    self.bot.settings["db_time_format"])
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
 
@@ -70,7 +70,7 @@ class EventManager:
         await self.update_cache()
 
     async def log_attendance(self, event):
-        start_dt = event.start_dt.replace(
+        start_dt = event.start_dt.to_pydatetime().replace(
             tzinfo=timezone('UTC')).replace(tzinfo=None)
         end_dt = datetime.utcnow()
         latest_join_time = end_dt - timedelta(minutes=10)
