@@ -5,7 +5,7 @@ from pytz import timezone
 from pyteamup import Calendar, Event
 from discord import Member
 from datetime import datetime, timedelta
-import json
+
 import asyncio
 import nest_asyncio
 nest_asyncio.apply()
@@ -79,21 +79,16 @@ class EventManager:
                 who = ""
             else:
                 who = event.who
-
+            print(event)
             tmp_dict = {"title": event.title,
                         "time": str(event_time),
                         "host": who,
                         "calendar": event_cal['name']}
 
-            #print(event.title, str(event_time)+' UTC')
             parsed_events.append(tmp_dict)
 
-        # print(parsed_events)
         self.events = parsed_events
         self.bot.events = parsed_events
-
-        #output = json.dumps(self.events, indent=4)
-        # print(output)
 
     @tasks.loop(hours=12)
     async def main(self):
