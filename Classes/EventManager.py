@@ -5,6 +5,7 @@ from pytz import timezone
 from pyteamup import Calendar, Event
 from discord import Member
 from datetime import datetime, timedelta
+from pandas import to_datetime as to_dt
 
 import asyncio
 import nest_asyncio
@@ -50,12 +51,13 @@ class EventManager:
             if event.who == "" or event.who == None:
                 continue
 
-            start_dt = datetime.fromtimestamp(
-                event.start_dt.replace(
-                    tzinfo=timezone('UTC')).replace(tzinfo=None))
-            end_dt = datetime.fromtimestamp(
-                event.end_dt.replace(
-                    tzinfo=timezone('UTC')).replace(tzinfo=None))
+            start_dt = event.start_dt.replace(
+                tzinfo=timezone('UTC')).replace(tzinfo=None)
+            end_dt = event.end_dt.replace(
+                tzinfo=timezone('UTC')).replace(tzinfo=None)
+
+            start_dt = to_dt(start_dt)
+            end_dt = to_dt(end_dt)
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
 
@@ -66,9 +68,8 @@ class EventManager:
         await self.update_cache()
 
     async def log_attendance(self, event):
-        start_dt = datetime.fromtimestamp(
-            event.start_dt.replace(
-                tzinfo=timezone('UTC')).replace(tzinfo=None))
+        start_dt = event.start_dt.replace(
+            tzinfo=timezone('UTC')).replace(tzinfo=None)
         end_dt = datetime.utcnow()
         latest_join_time = end_dt - timedelta(minutes=10)
         print(f"{end_dt} - {event.who} has stopped their event.")
@@ -91,6 +92,8 @@ class EventManager:
         for event in self.all_events:
             event_time = event.start_dt.replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
+
+            event_time = to_dt(event_time)
 
             for cal in self.subcalendars:
                 if cal['id'] in event.subcalendar_ids:
