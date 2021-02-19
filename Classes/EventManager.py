@@ -43,7 +43,7 @@ class EventManager:
             start_date=_start_date, end_date=_end_date)
 
         _existing_event_ids = await self.bot.officer_manager.send_db_request("SELECT event_id FROM Events")
-        def existing_event_ids(_existing_event_ids): return [
+        existing_event_ids = [
             item for sublist in _existing_event_ids for item in sublist]
 
         for event in self.all_events:
