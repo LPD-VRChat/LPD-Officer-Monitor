@@ -88,38 +88,6 @@ class EventManager:
         # Update the record we created earlier to add end_time and the attendee list
         await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE event_id = %s", (end_dt, attendees, event.event_id))
 
-    async def render_events(self):
-        parsed_events = []
-
-        for event in self.all_events:
-            event_time = event.start_dt.replace(
-                tzinfo=timezone('UTC')).replace(tzinfo=None)
-
-            event_time = datetime.fromtimestamp(event_time).strftime(
-                self.bot.settings["db_time_format"])
-
-            for cal in self.subcalendars:
-                if cal['id'] in event.subcalendar_ids:
-                    event_cal = cal['name']
-                    break
-                else:
-                    event_cal = None
-
-            if event.who == None or event.who == "":
-                who = ""
-            else:
-                who = event.who
-
-            tmp_dict = {"title": event.title,
-                        "time": str(event_time),
-                        "host": who,
-                        "calendar": event_cal}
-
-            parsed_events.append(tmp_dict)
-
-        self.events = parsed_events
-        self.bot.events = parsed_events
-
     async def get_event_by_id(self, event_id, update_cache=False):
         """
         Usage: self.bot.event_manager.get_event_by_id(event_id, update_cache=True)  - update cached events before getting the event

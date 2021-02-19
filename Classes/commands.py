@@ -1202,6 +1202,34 @@ class Other(commands.Cog):
     @commands.command()
     async def show_events(self, ctx):
 
+        parsed_events = []
+
+        for event in self.bot.event_manager.all_events:
+            event_time = event.start_dt.replace(
+                tzinfo=timezone('UTC')).replace(tzinfo=None)
+
+            event_time = datetime.fromtimestamp(event_time).strftime(
+                self.bot.settings["db_time_format"])
+
+            for cal in self.bot.event_manager.subcalendars:
+                if cal['id'] in event.subcalendar_ids:
+                    event_cal = cal['name']
+                    break
+                else:
+                    event_cal = None
+
+            if event.who == None or event.who == "":
+                who = ""
+            else:
+                who = event.who
+
+            tmp_dict = {"title": event.title,
+                        "time": str(event_time),
+                        "host": who,
+                        "calendar": event_cal}
+
+            parsed_events.append(tmp_dict)
+
         embed = discord.Embed(
             title="Upcoming Events (UTC)",
             color=discord.Colour.from_rgb(24, 87, 150),
@@ -1209,7 +1237,7 @@ class Other(commands.Cog):
         )
 
         cal_name = ""
-        for event in sorted(self.bot.events, key=lambda i: (i['calendar'], i['time'])):
+        for event in sorted(parsed_events, key=lambda i: (i['calendar'], i['time'])):
 
             if event['calendar'] != cal_name:
                 embed.add_field(name="\u200b",
