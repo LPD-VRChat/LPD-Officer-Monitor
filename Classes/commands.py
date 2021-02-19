@@ -1230,7 +1230,7 @@ class Other(commands.Cog):
                         "calendar": event_cal}
 
             parsed_events.append(tmp_dict)
-
+        print(parsed_events)
         embed = discord.Embed(
             title="Upcoming Events (UTC)",
             color=discord.Colour.from_rgb(24, 87, 150),
