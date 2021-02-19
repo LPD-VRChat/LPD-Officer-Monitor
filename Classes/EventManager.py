@@ -111,7 +111,7 @@ class EventManager:
         self.events = parsed_events
         self.bot.events = parsed_events
 
-    await def get_event_by_id(self, event_id, update_cache=False):
+    async def get_event_by_id(self, event_id, update_cache=False):
         """
         Usage: self.bot.event_manager.get_event_by_id(event_id, update_cache=True)  - update cached events before getting the event
                self.bot.event_manager.get_event_by_id(event_id)                     - Get event from cache without updating (use this for repetitive calls)
@@ -124,7 +124,7 @@ class EventManager:
             if event.event_id == event_id:
                 return event
 
-    await def get_events_by_datetime(self, start_dt, update_cache=False):
+    async def get_events_by_datetime(self, start_dt, update_cache=False):
         """
         Usage: self.bot.event_manager.get_event_by_date(start_dt, update_cache=True)  - update cached events before getting the event
                self.bot.event_manager.get_event_by_date(start_dt)                     - Get event from cache without updating (use this for repetitive calls)
