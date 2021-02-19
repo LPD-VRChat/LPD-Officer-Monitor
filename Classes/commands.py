@@ -1209,8 +1209,8 @@ class Other(commands.Cog):
             event_time = event.start_dt.to_pydatetime().replace(
                 tzinfo=pytz('UTC')).replace(tzinfo=None)
 
-            event_time = datetime.fromtimestamp(event_time).strftime(
-                self.bot.settings["db_time_format"])
+            # event_time = datetime.fromtimestamp(event_time).strftime(
+            #    self.bot.settings["db_time_format"])
 
             for cal in self.bot.event_manager.subcalendars:
                 if cal['id'] in event.subcalendar_ids:
