@@ -43,7 +43,7 @@ class EventManager:
             start_date=_start_date, end_date=_end_date)
 
         existing_event_ids = await self.bot.officer_manager.send_db_request("SELECT event_id FROM Events")
-
+        print(existing_event_ids)
         for event in self.all_events:
             if event.event_id in existing_event_ids:
                 continue
