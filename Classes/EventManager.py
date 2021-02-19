@@ -50,10 +50,12 @@ class EventManager:
             if event.who == "" or event.who == None:
                 continue
 
-            start_dt = event.start_dt.replace(
-                tzinfo=timezone('UTC')).replace(tzinfo=None)
-            end_dt = event.end_dt.replace(
-                tzinfo=timezone('UTC')).replace(tzinfo=None)
+            start_dt = datetime.fromtimestamp(
+                event.start_dt.replace(
+                    tzinfo=timezone('UTC')).replace(tzinfo=None))
+            end_dt = datetime.fromtimestamp(
+                event.end_dt.replace(
+                    tzinfo=timezone('UTC')).replace(tzinfo=None))
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
 
@@ -64,8 +66,9 @@ class EventManager:
         await self.update_cache()
 
     async def log_attendance(self, event):
-        start_dt = event.start_dt.replace(
-            tzinfo=timezone('UTC')).replace(tzinfo=None)
+        start_dt = datetime.fromtimestamp(
+            event.start_dt.replace(
+                tzinfo=timezone('UTC')).replace(tzinfo=None))
         end_dt = datetime.utcnow()
         latest_join_time = end_dt - timedelta(minutes=10)
         print(f"{end_dt} - {event.who} has stopped their event.")
