@@ -54,7 +54,7 @@ CREATE TABLE VRChatNames
 DROP TABLE IF EXISTS Events;
 CREATE TABLE Events
 (
-    event_id BIGINT UNSIGNED PRIMARY KEY,
+    event_id VARCHAR(255) PRIMARY KEY,
     host_id BIGINT UNSIGNED,
     start_time DATETIME,
     end_time DATETIME,
