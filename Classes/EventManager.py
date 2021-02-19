@@ -62,7 +62,7 @@ class EventManager:
             #    self.bot.settings["db_time_format"])
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
-
+            print(event.event_id)
             await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
 
     @tasks.loop(hours=12)
