@@ -111,7 +111,7 @@ class EventManager:
         self.events = parsed_events
         self.bot.events = parsed_events
 
-    def get_event_by_id(self, event_id, update_cache=False):
+    await def get_event_by_id(self, event_id, update_cache=False):
         """
         Usage: self.bot.event_manager.get_event_by_id(event_id, update_cache=True)  - update cached events before getting the event
                self.bot.event_manager.get_event_by_id(event_id)                     - Get event from cache without updating (use this for repetitive calls)
@@ -124,7 +124,7 @@ class EventManager:
             if event.event_id == event_id:
                 return event
 
-    def get_events_by_datetime(self, start_dt, update_cache=False):
+    await def get_events_by_datetime(self, start_dt, update_cache=False):
         """
         Usage: self.bot.event_manager.get_event_by_date(start_dt, update_cache=True)  - update cached events before getting the event
                self.bot.event_manager.get_event_by_date(start_dt)                     - Get event from cache without updating (use this for repetitive calls)
@@ -134,5 +134,5 @@ class EventManager:
             await self.update_cache()
 
         for event in self.all_events:
-            if event.start_dt.replace(tzinfo=timezone('UTC')).replace(tzinfo=None) == start_dt:
+            if start_dt > event.start_dt.replace(tzinfo=timezone('UTC')).replace(tzinfo=None) and start_dt < event.end_dt.replace(tzinfo=timezone('UTC')).replace(tzinfo=None):
                 return event
