@@ -32,28 +32,32 @@ class EventManager:
         calendar = Calendar(self.cal_id, self.api_key)
         self.subcalendars = calendar.subcalendars
 
-        # Set the search date range to UTCNOW -6/+30
-        _start_date = datetime.utcnow() - timedelta(hours=6)
-        _end_date = datetime.utcnow() + timedelta(hours=30)
+        # Set the search date range to UTCNOW +/-72h
+        _start_date = datetime.utcnow() - timedelta(hours=72)
+        _end_date = datetime.utcnow() + timedelta(hours=72)
 
         # Store all the event objects in cache
         self.all_events = calendar.get_event_collection(
             start_date=_start_date, end_date=_end_date)
 
-        # Get all the existing event IDs - we'll skip saving to avoid overwrites
-        _existing_event_ids = await self.bot.officer_manager.send_db_request("SELECT event_id FROM Events")
-        existing_event_ids = [
-            item for sublist in _existing_event_ids for item in sublist]
+        # Get all the existing event IDs with no attendees - we'll skip saving duplicates to avoid overwrites
+        _existing_events = await self.bot.officer_manager.send_db_request("SELECT * FROM Events WHERE attendees IS NULL")
+        _completed_events = await self.bot.officer_manager.send_db_request("SELECT event_id FROM Events WHERE attendees IS NOT NULL")
+        existing_event_ids = []
+        completed_event_ids = []
+        for event in _existing_events:
+            existing_event_ids.append(event[0])
+
+        for event in _completed_events:
+            completed_event_ids.append(event[0])
 
         for event in self.all_events:
 
-            # If we already have it, skip it
-            if event.event_id in existing_event_ids:
+            # If it doesn't have a host, or if it's already happened, skip it
+            if event.who == "" or event.who == None or event.event_id in completed_event_ids:
                 continue
 
-            # If it doesn't have a host, skip it
-            if event.who == "" or event.who == None:
-                continue
+            save = True
 
             # Format the times into a database-friendly format
             start_dt = event.start_dt.to_pydatetime().replace(
@@ -61,9 +65,26 @@ class EventManager:
             end_dt = event.end_dt.to_pydatetime().replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
-            # Assume that event.who is the VRC name of the Host and save into the DB
+            # Assume that event.who is the VRC name of the Host
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
-            await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
+
+            # If we already have it, see if it's an exact match
+            if event.event_id in existing_event_ids:
+                for _event in _existing_events:
+                    # If it's not the same event ID, it's not the one we're looking for
+                    if _event[0] == event.event_id:
+                        continue
+
+                    # If this event exactly matches our saved/cached one, keep it
+                    if _event[1] == host_id and _event[2] == start_dt and _event[3] == end_dt:
+                        save = False
+                        break
+                    else:
+                        await self.bot.officer_manager.send_db_request("DELETE FROM Events WHERE event_id = %s", _event[0])
+
+            # Save to the DB
+            if save:
+                await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
 
     @tasks.loop(hours=12)
     async def main(self):
