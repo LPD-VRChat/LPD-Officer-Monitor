@@ -28,7 +28,8 @@ class OfficerManager:
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
         if self.guild is None:
-            print("ERROR Guild with ID", bot.settings["Server_ID"], "not found")
+            print("ERROR Guild with ID",
+                  bot.settings["Server_ID"], "not found")
             print("Shutting down...")
             exit()
 
@@ -108,7 +109,7 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args):
+    async def send_db_request(self, query, args=None):
 
         async with self.db_pool.acquire() as conn:
             cur = await conn.cursor()
@@ -245,7 +246,8 @@ class OfficerManager:
             )
 
         await self.send_db_request(
-            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
+            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (
+                officer_id)
         )
         await self.send_db_request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
