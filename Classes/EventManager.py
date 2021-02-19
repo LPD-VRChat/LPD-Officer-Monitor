@@ -57,7 +57,7 @@ class EventManager:
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
 
-            await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s)", event.event_id, host_id, start_dt, end_dt)
+            await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
 
     @tasks.loop(hours=12)
     async def main(self):
@@ -71,7 +71,7 @@ class EventManager:
         print(f"{end_dt} - {event.who} has stopped their event.")
 
         # Grab all recent on-duty officers that fall within the event window, and concatenate officer_ids into a CSV string
-        attendee_ids = await self.bot.officer_manager.send_db_request("SELECT officer_id FROM TimeLog WHERE start_time > %s AND start_time < %s AND end_time < %s", start_dt, latest_join_time, end_dt)
+        attendee_ids = await self.bot.officer_manager.send_db_request("SELECT officer_id FROM TimeLog WHERE start_time > %s AND start_time < %s AND end_time < %s", (start_dt, latest_join_time, end_dt))
         attendees = ""
         for officer_id in attendee_ids:
             if len(attendees) == 0:
@@ -80,7 +80,7 @@ class EventManager:
             attendees = f"{attendees},{officer_id}"
 
         # Update the record we created earlier to add end_time and the attendee list
-        await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE event_id = %s", end_dt, attendees, event.event_id)
+        await self.bot.officer_manager.send_db_request("UPDATE Events SET end_time = %s attendees = %s WHERE event_id = %s", (end_dt, attendees, event.event_id))
 
     async def render_events(self):
         parsed_events = []
