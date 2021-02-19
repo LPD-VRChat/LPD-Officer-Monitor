@@ -1217,10 +1217,9 @@ class Other(commands.Cog):
                     event_cal = cal['name']
                     break
                 else:
-                    event_cal = None
-
+                    event_cal = "\u200b"
             if event.who == None or event.who == "":
-                who = ""
+                who = "\u200b"
             else:
                 who = event.who
 
@@ -1230,7 +1229,7 @@ class Other(commands.Cog):
                         "calendar": event_cal}
 
             parsed_events.append(tmp_dict)
-        print(parsed_events)
+
         embed = discord.Embed(
             title="Upcoming Events (UTC)",
             color=discord.Colour.from_rgb(24, 87, 150),
