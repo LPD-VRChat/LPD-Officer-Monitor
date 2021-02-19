@@ -5,7 +5,7 @@ from pytz import timezone
 from pyteamup import Calendar, Event
 from discord import Member
 from datetime import datetime, timedelta
-from pandas import to_datetime as to_dt
+
 
 import asyncio
 import nest_asyncio
@@ -56,8 +56,10 @@ class EventManager:
             end_dt = event.end_dt.replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
-            start_dt = to_dt(start_dt)
-            end_dt = to_dt(end_dt)
+            start_dt = datetime.fromtimestamp(start_dt).strftime(
+                self.bot.settings["db_time_format"])
+            end_dt = datetime.fromtimestamp(end_dt).strftime(
+                self.bot.settings["db_time_format"])
 
             host_id = self.bot.user_manager.get_discord_by_vrc(event.who)
 
@@ -93,7 +95,8 @@ class EventManager:
             event_time = event.start_dt.replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
-            event_time = to_dt(event_time)
+            event_time = datetime.fromtimestamp(event_time).strftime(
+                self.bot.settings["db_time_format"])
 
             for cal in self.subcalendars:
                 if cal['id'] in event.subcalendar_ids:
