@@ -210,7 +210,7 @@ async def on_voice_state_update(member, before, after):
         and after.channel.category_id == bot.settings["on_duty_category"]
     ):
         # An Officer moved between monitored voice channels
-        return
+        officer.update_squad()
     elif after.channel.category_id == bot.settings["on_duty_category"]:
         # The officer moved from a voice channel that is not monitored to one that is monitored
         officer.go_on_duty()

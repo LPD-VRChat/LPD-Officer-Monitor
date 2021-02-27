@@ -33,7 +33,7 @@ def is_admin():
         if officer and officer.is_admin:
             return True
         else:
-            raise errors.NotForYouError("This command is only for LPD Cheifs.")
+            raise errors.NotForYouError("This command is only for LPD Chiefs.")
 
     return commands.check(predicate)
 

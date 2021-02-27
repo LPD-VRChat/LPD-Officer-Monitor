@@ -11,6 +11,7 @@ import datetime as dt
 
 # Community
 from discord import Member
+from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
 
 # Mine
@@ -26,27 +27,38 @@ class Officer:
 
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = ""
 
     def go_on_duty(self):
-
-        print(f"{self.discord_name} is going on duty")
-
+        
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
-            print("WARNING A user is going on duty even though he is already on duty")
+            print("WARNING: A user is going on duty even though he is already on duty...")
             return
-
+        
+        print(f"{self.discord_name} is going on duty in {self.member.voice.channel.name}")
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
+        self.squad = self.member.voice.channel.name
 
+    def update_squad(self):
+
+        # Print an error if the user is going on duty even though he is already on duty
+        if self.is_on_duty is False:
+            print("WARNING: Tried to update squad for a user not on duty...")
+            return
+
+        print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
+        self.squad = self.member.voice.channel.name
+    
     async def go_off_duty(self):
 
         print(f"{self.discord_name} is going off duty")
 
         # Print an error if the user is going off duty even though he is already off duty
         if self.is_on_duty is False:
-            print("WARNING A user is going off duty even though he isn't on duty")
+            print("WARNING: A user is going off duty even though he isn't on duty...")
             return
 
         # Calculate the on duty time and store it
@@ -55,6 +67,7 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = ""
 
     async def remove(self):
 
