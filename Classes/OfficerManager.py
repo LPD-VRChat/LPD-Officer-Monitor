@@ -248,7 +248,7 @@ class OfficerManager:
         if display_name == None:
             member_name = str(officer_id)
         else:
-            member_name = display_name + '(' + str(officer_id) + ')'
+            member_name = display_name + ' (' + str(officer_id) + ')'
         
         
         await self.send_db_request(
