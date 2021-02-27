@@ -105,9 +105,12 @@ venv.bak/
 
 # Ignore the keys
 *keys.json
+/settings/settings.json
 
-# VSCode
+# Visual Studio/VSCode
 .vscode/*
+.vs/
 
 # Local database
 LPD_database*.csv
+
