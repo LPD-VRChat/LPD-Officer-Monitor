@@ -1130,7 +1130,7 @@ class Other(commands.Cog):
             await user.add_roles(detention_role)
             await user.add_roles(detention_waiting_area_role)
             detainee_mentions = f"{detainee_mentions}{user.mention}"
-            await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+            await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
         await ctx.channel.send(f"Moved {detainee_mentions} to detention.")
         
@@ -1161,11 +1161,11 @@ class Other(commands.Cog):
                     remove_from_db = 1
                     await user.remove_roles(detention_waiting_area_role)
             if remove_from_db == 1:
-                user_role_list = list(await self.bot.officer_manager.send_db_request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
+                user_role_list = list(await self.bot.sql.request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
                 for role_id in user_role_list[0][0].split(','):
                     if role_id == '': continue
                     await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
-                await self.bot.officer_manager.send_db_request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
+                await self.bot.sql.request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
                 remove_from_db = 0
                 string = f"{string} {user.mention}"
         
@@ -1187,13 +1187,13 @@ class Other(commands.Cog):
         users_detained = ""
         strikee_mentions = ""
         for user in ctx.message.mentions:
-            await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
+            await self.bot.sql.request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
             strikee_mentions = f"{strikee_mentions}{user.mention}"
-            old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
+            old_strikes = list(await self.bot.sql.request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
             for date in old_strikes:
                 if date[0] <= datetime.utcnow() - timedelta(days=14):
                     old_strikes.remove(date)
-                    await self.bot.officer_manager.send_db_request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'")
+                    await self.bot.sql.request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'")
                     continue
             if len(old_strikes) >= 3:
                 users_detained = f"{users_detained}{user.mention}"
@@ -1204,7 +1204,7 @@ class Other(commands.Cog):
                     await user.remove_roles(role)
                 await user.add_roles(detention_role)
                 await user.add_roles(detention_waiting_area_role)
-                await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+                await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
         await ctx.channel.send(f"{strikee_mentions} received a strike against their record.")
         if len(users_detained) > 0: await ctx.channel.send(f"{users_detained} received 3 strikes in the last two weeks and will be sent to detention.")

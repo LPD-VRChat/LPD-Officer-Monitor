@@ -76,7 +76,7 @@ class VRChatUserManager:
         self.all_users.append([discord_id, vrchat_name])
 
         # Add to the permanent DB
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             """
             INSERT INTO 
                 VRChatNames(officer_id, vrc_name)
@@ -92,12 +92,12 @@ class VRChatUserManager:
         self.all_users = [x for x in self.all_users if x[0] != discord_id]
 
         # Remove from the permanent DB
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM VRChatNames WHERE officer_id = %s", (discord_id)
         )
 
     async def update_cache(self):
-        db_result = await self.bot.officer_manager.send_db_request(
+        db_result = await self.bot.sql.request(
             "SELECT officer_id, vrc_name FROM VRChatNames", ()
         )
 
