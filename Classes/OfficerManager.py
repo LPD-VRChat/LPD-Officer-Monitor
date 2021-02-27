@@ -12,6 +12,7 @@ import aiomysql
 import discord.errors as discord_errors
 from pymysql import err as mysql_errors
 import discord
+from discord.ext import tasks
 
 # Mine
 from Classes.Officer import Officer
@@ -108,7 +109,8 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args):
+    # 10/13/2020 - Destructo set args default None for compatibility
+    async def send_db_request(self, query, args=None):
 
         async with self.db_pool.acquire() as conn:
             cur = await conn.cursor()
@@ -330,3 +332,40 @@ class OfficerManager:
             if role["name_id"] == name_id:
                 return role
         raise ValueError(f"{name_id} not found in bot.settings")
+
+    async def remove_loa(self, request_id):
+        """
+        Delete the specified Leave of Absence
+        """
+
+        await self.send_db_request(
+            "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
+        )
+
+    async def get_loa(self):
+        loa_entries = await self.send_db_request(
+            "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
+        )
+
+        loa_channel = self.bot.get_channel(
+            self.bot.settings["leave_of_absence_channel"]
+        )
+
+        for entry in loa_entries:
+            if entry[2] > datetime.utcnow().date():
+                pass
+            else:
+                old_msg_id = entry[4]
+                old_msg = await loa_channel.fetch_message(old_msg_id)
+                await old_msg.delete()
+
+                await self.remove_loa(str(entry[4]))
+                templist = list(loa_entries)
+                templist.remove(entry)
+                loa_entries = tuple(templist)
+
+        return loa_entries
+
+    @tasks.loop(hours=1)
+    async def get_loa_hourly(self):
+        await self.get_loa()

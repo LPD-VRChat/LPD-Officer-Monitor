@@ -5,7 +5,6 @@
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
     "name_separator": ";",
-    
     // Channels
     "monitored_channels": {
         "ignored_categories": [
@@ -18,6 +17,7 @@
     "general_bot_channel": 708117281376305232,
 
     "error_log_channel": 670751809538752512,
+    "leave_of_absence_channel": 734906620630401045,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
     "allowed_command_channels": [
@@ -26,7 +26,6 @@
         723234394524876882,
         774748395972722688
     ],
-    
     // Roles
     "lpd_role": 655133459714670592,
     "trainer_role": 655128037993742337,
@@ -35,7 +34,7 @@
     "recruiter_role": 633018289777410068,
     "dev_team_role": 746362203225063454,
     "civilian_role": 723276594935758998,
-    "inactive_role": "LPD_inactive",
+    "inactive_role": 590684921534873620,
     "teams": [
         {
             "id": 746362203225063454,
@@ -73,11 +72,9 @@
             "is_admin": true
         }
     ],
-    
     // On duty
     "on_duty_category": 599764719212953610,
     "on_duty_role": 581553952550551564,
-    
     // Database
     "DB_name": "LPD_Officer_Monitor",
     "DB_user": "root",

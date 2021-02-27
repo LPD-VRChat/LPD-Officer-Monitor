@@ -17,12 +17,10 @@ from discord.ext import commands
 import commentjson as json
 
 # Mine
-from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
 from Classes.VRChatUserManager import VRChatUserManager
 
-from Classes.commands import Time, VRChatAccoutLink, Applications, Other
+from Classes.commands import Time, Inactivity, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
@@ -126,13 +124,20 @@ async def on_message(message):
         return
 
     # Private message are ignored
-    if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel):
+    if isinstance(message.channel, discord.DMChannel) or isinstance(
+        message.channel, discord.GroupChannel
+    ):
         await message.channel.send("I'm just a robot")
         return
 
     # Only parse the commands if the message was sent in an allowed channel
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
+
+    # If the message was sent in the #leave-of-absence channel, process it
+    if message.channel.id == bot.settings["leave_of_absence_channel"]:
+        officer = bot.officer_manager.get_officer(message.author.id)
+        await officer.process_loa(message)
 
     # Archive the message
     if (
@@ -238,6 +243,19 @@ async def on_error(event, *args, **kwargs):
 
 
 @bot.event
+async def on_raw_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        await bot.officer_manager.remove_loa(payload.message_id)
+
+
+@bot.event
+async def on_raw_bulk_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        for message_id in payload.message_ids:
+            await bot.officer_manager.remove_loa(message_id)
+
+
+@bot.event
 async def on_command_error(ctx, exception):
     print("on_command_error")
 
@@ -271,6 +289,7 @@ async def on_command_error(ctx, exception):
 bot.remove_command("help")
 bot.add_cog(Help(bot))
 bot.add_cog(Time(bot))
+bot.add_cog(Inactivity(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
