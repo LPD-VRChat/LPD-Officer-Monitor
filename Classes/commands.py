@@ -1120,12 +1120,14 @@ class Other(commands.Cog):
         detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
         detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
         detainee_mentions = ""
+        undet_string = ""
 
         for user in detainees:
             
             # If the user is an officer and holds a non-detainable rank: skip them
             officer = self.bot.officer_manager.get_officer(user.id)
             if officer and not officer.is_detainable:
+                undet_string = f'{undet_string}{user.mention}'
                 continue
 
             user_role_ids = ""
@@ -1138,7 +1140,8 @@ class Other(commands.Cog):
             detainee_mentions = f"{detainee_mentions}{user.mention}"
             await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
-        await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.')
+        if len(detainee_mentions) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.')
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, you can't detain {undet_string}. They're too important.")
         
         
     @checks.is_moderator()
@@ -1192,7 +1195,16 @@ class Other(commands.Cog):
 
         users_detained = ""
         strikee_mentions = ""
+        undet_string = ""
         for user in ctx.message.mentions:
+            
+            # If the user is an officer and holds a non-detainable rank: skip them
+            officer = self.bot.officer_manager.get_officer(user.id)
+            if officer and not officer.is_detainable:
+                undet_string = f'{undet_string}{user.mention}'
+                continue
+            
+            
             await self.bot.officer_manager.send_db_request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
             strikee_mentions = f"{strikee_mentions}{user.mention}"
             old_strikes = list(await self.bot.officer_manager.send_db_request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
@@ -1213,5 +1225,6 @@ class Other(commands.Cog):
                 # await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
                 
 
-        await ctx.channel.send(f"{strikee_mentions} received a strike against their record.", delete_after=10)
+        if len(strikee_mentions) > 0: await ctx.channel.send(f"{strikee_mentions} received a strike against their record.", delete_after=10)
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, {undet_string} cannot be given a strike. They're too important.")
         if len(users_detained) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.')
