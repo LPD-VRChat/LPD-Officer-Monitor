@@ -1126,6 +1126,7 @@ class Other(commands.Cog):
             
             # If the user is an officer and holds a non-detainable rank: skip them
             officer = self.bot.officer_manager.get_officer(user.id)
+            print(officer.is_detainable)
             if officer and not officer.is_detainable:
                 undet_string = f'{undet_string}{user.mention}'
                 continue
