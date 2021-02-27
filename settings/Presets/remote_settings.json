@@ -78,70 +78,82 @@
         {
             "name": "LPD Cadet",
             "name_id": "cadet",
-            "id": 663138744588566532
+            "id": 663138744588566532,
+            "detainable": true
         },
         {
             "name": "LPD Recruit",
             "name_id": "recruit",
-            "id": 645394827025842196
+            "id": 645394827025842196,
+            "detainable": true
         },
         {
             "name": "LPD Officer",
             "name_id": "officer",
-            "id": 645394785267482624
+            "id": 645394785267482624,
+            "detainable": true
         },
         {
             "name": "LPD Senior Officer",
             "name_id": "senior_officer",
-            "id": 759455978495148062
+            "id": 759455978495148062,
+            "detainable": true
         },
         {
             "name": "LPD Corporal",
             "name_id": "corporal",
-            "id": 645394678409330688
+            "id": 645394678409330688,
+            "detainable": false
         },
         {
             "name": "LPD Sergeant",
             "name_id": "sergeant",
-            "id": 645394647350247465
+            "id": 645394647350247465,
+            "detainable": false
         },
         {
             "name": "LPD Staff Sergeant",
             "name_id": "staff_sergeant",
             "id": 711366388186480751,
-            "is_white_shirt": true
+            "is_white_shirt": true,
+            "detainable": false
         },
         {
             "name": "LPD Advisor",
             "name_id": "advisor",
             "id": 679474638266433567,
-            "is_white_shirt": true
+            "is_white_shirt": true,
+            "detainable": false
         },
         {
             "name": "LPD Lieutenant",
             "name_id": "lieutenant",
             "id": 645394607714074634,
-            "is_white_shirt": true
+            "is_white_shirt": true,
+            "detainable": false
         },
         {
             "name": "LPD Captain",
             "name_id": "captain",
             "id": 645394574055047198,
-            "is_white_shirt": true
+            "is_white_shirt": true,
+            "detainable": false
         },
         {
             "name": "LPD Deputy Chief",
             "name_id": "deputy_chief",
             "id": 645394500717641751,
             "is_white_shirt": true,
-            "is_admin": true
+            "is_admin": true,
+            "detainable": false
         },
         {
             "name": "LPD Chief",
             "name_id": "chief",
             "id": 645388308158873610,
             "is_white_shirt": true,
-            "is_admin": true
+            "is_admin": true,
+            "detainable": false
         }
     ],
     // On duty
