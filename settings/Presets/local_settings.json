@@ -1,7 +1,7 @@
 {
     "Server_ID": 566315650864381953,
     "max_inactive_days": 28,
-    "bot_prefix": "~",
+    "bot_prefix": "=",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
     "name_separator": ";",
@@ -81,7 +81,7 @@
     
     // Database
     "DB_name": "LPD_Officer_Monitor",
-    "DB_user": "ubuntu",
+    "DB_user": "root",
     "DB_host": "127.0.0.1",
     "DB_socket": "/run/mysqld/mysqld.sock",
     
