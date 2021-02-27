@@ -42,13 +42,16 @@ class SQLManager:
                 autocommit=True,
             )
 
-        # Set the time zone for the session to UTC as an extra measure of safety.
-        await self.request("SET time_zone = '+0:00';")
-
-        return cls(
+        instance = cls(
             db_pool,
             bot,
         )
+
+        # Set the time zone for the session to UTC as an extra measure of safety.
+        await instance.request("SET time_zone = '+0:00';")
+
+        return instance
+
 
     async def request(self, query, args=None):
         """Send a SQL request to the database.
