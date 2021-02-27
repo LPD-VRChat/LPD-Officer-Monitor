@@ -10,11 +10,11 @@ import asyncio
 import aiomysql
 from pymysql import err as mysql_errors
 
+
 class SQLManager:
     def __init__(self, db_pool, bot):
         self.bot = bot
         self.db_pool = db_pool
-
 
     @classmethod
     async def start(cls, bot, db_password):
@@ -52,7 +52,7 @@ class SQLManager:
 
     async def request(self, query, args=None):
         """Send a SQL request to the database.
-        
+
         Usage: self.bot.sql.request(SQL_STRING)
                self.bot.sql.request(SQL_STRING, args=whatever)
 

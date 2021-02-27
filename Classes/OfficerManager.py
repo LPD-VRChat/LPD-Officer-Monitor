@@ -68,7 +68,7 @@ class OfficerManager:
         # Fetch all the officers from the database
         try:
             result = await bot.sql.request("SELECT officer_id FROM Officers")
-            
+
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
             print(error)
@@ -208,7 +208,6 @@ class OfficerManager:
                 traceback.format_exc(),
             )
 
-        
         await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
@@ -244,7 +243,7 @@ class OfficerManager:
 
     async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
         """Returns list of most active officers between given dates, up to optionally specified limit"""
-        
+
         db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
