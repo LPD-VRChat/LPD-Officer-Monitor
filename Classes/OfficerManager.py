@@ -12,6 +12,7 @@ import aiomysql
 import discord.errors as discord_errors
 from pymysql import err as mysql_errors
 import discord
+from discord.ext import tasks
 
 # Mine
 from Classes.Officer import Officer
@@ -344,6 +345,7 @@ class OfficerManager:
             (request_id)
         )
 
+    @tasks.loop(hours=1)
     async def get_loa(self):
         loa_entries = await self.send_db_request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
