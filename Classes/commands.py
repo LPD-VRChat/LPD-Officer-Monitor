@@ -1125,7 +1125,7 @@ class Other(commands.Cog):
             
             # If the user is an officer and holds a non-detainable rank: skip them
             officer = self.bot.officer_manager.get_officer(user.id)
-            if officer and not officer.id_detainable:
+            if officer and not officer.is_detainable:
                 continue
 
             user_role_ids = ""
