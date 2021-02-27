@@ -345,7 +345,6 @@ class OfficerManager:
             (request_id)
         )
 
-    @tasks.loop(hours=1)
     async def get_loa(self):
         loa_entries = await self.send_db_request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
@@ -368,3 +367,7 @@ class OfficerManager:
                 loa_entries = tuple(templist)
 
         return loa_entries
+
+    @tasks.loop(hours=1)
+    async def get_loa_hourly(self):
+        await self.get_loa()
