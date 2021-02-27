@@ -1138,7 +1138,7 @@ class Other(commands.Cog):
             detainee_mentions = f"{detainee_mentions}{user.mention}"
             await self.bot.officer_manager.send_db_request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
-        await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"].mention} Moved {detainee_mentions} to detention.')
+        await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.')
         
         
     @checks.is_moderator()
@@ -1214,4 +1214,4 @@ class Other(commands.Cog):
                 
 
         await ctx.channel.send(f"{strikee_mentions} received a strike against their record.", delete_after=10)
-        if len(users_detained) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"].mention} {users_detained} have received 3 strikes in the last two weeks.')
+        if len(users_detained) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.')
