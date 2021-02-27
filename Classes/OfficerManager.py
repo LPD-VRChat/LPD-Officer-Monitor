@@ -21,10 +21,10 @@ from Classes.extra_functions import handle_error
 
 
 class OfficerManager:
-    def __init__(self, db_pool, all_officer_ids, bot, run_before_officer_removal=None):
+    def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
-        self.db_pool = db_pool
         self._before_officer_removal = run_before_officer_removal
+        self.all_officer_ids = all_officer_ids
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -64,38 +64,12 @@ class OfficerManager:
         bot.loop.create_task(self.loop())
 
     @classmethod
-    async def start(cls, bot, db_password, run_before_officer_removal=None):
-
-        # Setup database
-        try:
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-                unix_socket=bot.settings["DB_socket"],
-            )
-        except (KeyError, mysql_errors.OperationalError):
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-            )
+    async def start(cls, bot, run_before_officer_removal=None):
 
         # Fetch all the officers from the database
         try:
-            async with db_pool.acquire() as conn:
-                cur = await conn.cursor()
-                await cur.execute("SELECT officer_id FROM Officers")
-                result = await cur.fetchall()
-                await cur.close()
+            result = await bot.sql.request("SELECT officer_id FROM Officers")
+
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
             print(error)
@@ -103,30 +77,14 @@ class OfficerManager:
             exit()
 
         return cls(
-            db_pool,
             (x[0] for x in result),
             bot,
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    # 10/13/2020 - Destructo set args default None for compatibility
     async def send_db_request(self, query, args=None):
-
-        async with self.db_pool.acquire() as conn:
-            cur = await conn.cursor()
-
-            await cur.execute(query, args)
-            result = await cur.fetchall()
-
-            await cur.close()
-
-        try:
-            if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
-                return None
-        except IndexError:
-            return None
-
-        return result
+        """This function is being deprecated in favor of self.bot.sql.request()"""
+        return await self.bot.sql.request(query, args)
 
     # =====================
     #    Loop
@@ -183,17 +141,20 @@ class OfficerManager:
     # =====================
 
     def get_officer(self, officer_id):
+        """Returns Officer object from Officer ID"""
+
         for officer in self._all_officers:
             if officer.id == officer_id:
                 return officer
         return None
 
     async def create_officer(self, officer_id, issue=None):
+        """Attempts to create Officer object from given Officer ID"""
 
         # Add the officer to the database
         try:
             try:
-                await self.send_db_request(
+                await self.bot.sql.request(
                     "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
                     (officer_id, datetime.now(timezone.utc)),
                 )
@@ -246,13 +207,13 @@ class OfficerManager:
                 traceback.format_exc(),
             )
 
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
 
@@ -280,6 +241,8 @@ class OfficerManager:
     # ====================
 
     async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
+        """Returns list of most active officers between given dates, up to optionally specified limit"""
+
         db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
@@ -293,9 +256,11 @@ class OfficerManager:
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
-        return await self.send_db_request(db_request, arg_list)
+        return await self.bot.sql.request(db_request, arg_list)
 
     def is_officer(self, member):
+        """Returns true if specified member object has and of the LPD roles"""
+
         if member is None:
             return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
@@ -306,6 +271,8 @@ class OfficerManager:
         return False
 
     def is_monitored(self, member_id):
+        """Returns true if specified member ID matches an officer ID in memory"""
+
         for officer in self._all_officers:
             if officer.id == member_id:
                 return True
@@ -328,6 +295,8 @@ class OfficerManager:
     # ====================
 
     def get_settings_role(self, name_id):
+        """Returns a role object for given name_id"""
+
         for role in self.bot.settings["role_ladder"]:
             if role["name_id"] == name_id:
                 return role

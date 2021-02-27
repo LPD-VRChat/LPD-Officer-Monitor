@@ -284,7 +284,7 @@ class Officer:
             + str(math.floor(end_time - start_time))
         )
 
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (%s, %s, %s)",
             (self.id, string_start_time, string_end_time),
         )
@@ -297,7 +297,7 @@ class Officer:
         to_db_time = to_datetime_object.strftime(self.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS 'Time'
             FROM TimeLog
@@ -317,7 +317,7 @@ class Officer:
     async def get_full_time(self, from_datetime_object, to_datetime_object):
 
         # Execute the query to get the time information
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT start_time, end_time, TIMESTAMPDIFF(SECOND, start_time, end_time) AS 'duration'
             FROM TimeLog
@@ -375,7 +375,7 @@ class Officer:
         )
 
         # Get the row ID for the last activity in the channel
-        row_id = await self.bot.officer_manager.send_db_request(
+        row_id = await self.bot.sql.request(
             "SELECT entry_number FROM MessageActivityLog WHERE officer_id = %s AND channel_id = %s",
             (self.id, msg.channel.id),
         )
@@ -383,12 +383,12 @@ class Officer:
         # Insert the data into the database
         if row_id:
             row_id = row_id[0][0]
-            await self.bot.officer_manager.send_db_request(
+            await self.bot.sql.request(
                 "UPDATE MessageActivityLog SET message_id = %s, send_time = %s WHERE entry_number = %s",
                 (msg.id, string_send_time, row_id),
             )
         else:
-            await self.bot.officer_manager.send_db_request(
+            await self.bot.sql.request(
                 "INSERT INTO MessageActivityLog(message_id, channel_id, officer_id, send_time) VALUES (%s, %s, %s, %s)",
                 (msg.id, msg.channel.id, self.id, string_send_time),
             )
@@ -409,7 +409,7 @@ class Officer:
         #     1) The messages from MessageActivityLog        - other_activity is null
         #     2) Last on duty activity                       - other_activity is On duty activity
         #     3) When the bot started monitoring the officer - other_activity is Started monitoring
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
             FROM MessageActivityLog

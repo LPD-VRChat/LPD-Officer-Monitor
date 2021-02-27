@@ -20,6 +20,7 @@
     "leave_of_absence_channel": 734906620630401045,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
+	"mugshot_channel": 792045947508228106,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,
@@ -79,5 +80,8 @@
     "DB_name": "LPD_Officer_Monitor",
     "DB_user": "root",
     "DB_host": "127.0.0.1",
-    "DB_socket": "/run/mysqld/mysqld.sock"
+    "DB_socket": "/run/mysqld/mysqld.sock",
+    
+    // VRChat
+    "VRC_Username": "Officer Monitor"
 }

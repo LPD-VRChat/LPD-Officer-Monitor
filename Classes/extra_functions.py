@@ -17,6 +17,7 @@ def is_number(string):
 
 
 async def send_long(channel, string, code_block=False):
+    """Send output as a text file, or optionally a code block if code_block=True is passed"""
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -85,6 +86,8 @@ async def handle_error(bot, title, traceback_string):
 
 
 def get_rank_id(settings, name_id):
+    """Returns the Discord Role ID for specified name_id"""
+
     role_ladder = settings["role_ladder"]
 
     for role in role_ladder:
@@ -99,9 +102,8 @@ def has_role(role_list, role_id):
 
 
 def role_id_index(settings):
-    """
-    Process the role_ladder into a usable list when called
-    """
+    """Process the role_ladder into a usable list when called"""
+
     role_id_ladder = []
     for entry in settings["role_ladder"]:
         role_id_ladder.append(entry["id"])
@@ -109,9 +111,8 @@ def role_id_index(settings):
 
 
 def get_role_name_by_id(settings, bad_role):
-    """
-    Identify a role's expected name by its ID
-    """
+    """Identify a role's expected name by its ID"""
+
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
