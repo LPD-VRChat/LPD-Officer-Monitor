@@ -1,10 +1,11 @@
 [
   {
-    "version": "2.0",
+    "version": "2.0.4",
     "developer": "hrolfurgylfa",
     "contributors": [
       "CaptainDestructo",
       "50thomatoes50"
-    ]
+    ],
+    "update_description": "Adds member's display name to the removal message in the debug log"
   }
 ]
