@@ -1,6 +1,7 @@
 # Standard
 from typing import Optional
 import discord
+
 from io import StringIO, BytesIO
 
 # Community

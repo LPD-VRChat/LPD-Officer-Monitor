@@ -105,6 +105,7 @@ venv.bak/
 
 # Ignore the keys
 *keys.json
+/settings/settings.json
 
 # Visual Studio/VSCode
 .vscode/*
