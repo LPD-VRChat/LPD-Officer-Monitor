@@ -8,4 +8,5 @@
       ],
       "update_description": "Adds Officer.squad property, which contains the VC name the officer is in when on duty. Null when off duty."
     }
-  ]
+]
+

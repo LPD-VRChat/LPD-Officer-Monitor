@@ -13,16 +13,15 @@ import argparse
 # Community
 import aiomysql
 import discord
+from discord.errors import HTTPException
 from discord.ext import commands
 import commentjson as json
 
 # Mine
-from Classes.Officer import Officer
 from Classes.OfficerManager import OfficerManager
-
+from Classes.SQLManager import SQLManager
 from Classes.VRChatUserManager import VRChatUserManager
-
-from Classes.commands import Time, VRChatAccoutLink, Applications, Other
+from Classes.commands import Time, Inactivity, VRChatAccoutLink, Applications, Other
 from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
@@ -41,6 +40,7 @@ parser.add_argument("-s", "--server", action="store_true")
 parser.add_argument("-l", "--local", action="store_true")
 args = parser.parse_args()
 
+_eyes_response_last_sent = None
 
 # ====================
 # Global Variables
@@ -61,6 +61,7 @@ bot = commands.Bot(
 )  # 10/12/2020 - Destructo added intents
 bot.settings = settings
 bot.officer_manager = None
+bot.sql = None
 bot.everything_ready = False
 
 
@@ -100,18 +101,25 @@ async def on_ready():
     if bot.officer_manager is not None:
         return
 
+    if bot.sql is not None:
+        return
+
     # Create the function to run before officer removal
     async def before_officer_removal(bot, officer_id):
         await bot.user_manager.remove_user(officer_id)
 
-    # Start the officer manager
-    print("Starting officer manager")
-    bot.officer_manager = await OfficerManager.start(
-        bot, keys["SQL_Password"], run_before_officer_removal=before_officer_removal
-    )
+    # Start the SQL Manager
+    print("Starting SQL Manager...")
+    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
+    
+    # Start the officer Manager
+    print("Starting Officer Manager...")
+    bot.officer_manager = await OfficerManager.start(bot, run_before_officer_removal=before_officer_removal)
 
     # Start the VRChatUserManager
+    print("Starting VRChat User Manager...")
     bot.user_manager = await VRChatUserManager.start(bot)
+    
 
     # Mark everything ready
     bot.everything_ready = True
@@ -120,13 +128,15 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # print("on_message")
-
+    
     # Early out if message from the bot itself
     if message.author.bot:
         return
 
     # Private message are ignored
-    if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel):
+    if isinstance(message.channel, discord.DMChannel) or isinstance(
+        message.channel, discord.GroupChannel
+    ):
         await message.channel.send("I'm just a robot")
         return
 
@@ -134,6 +144,11 @@ async def on_message(message):
     if message.channel.id in bot.settings["allowed_command_channels"]:
         await bot.process_commands(message)
 
+    # If the message was sent in the #leave-of-absence channel, process it
+    if message.channel.id == bot.settings["leave_of_absence_channel"]:
+        officer = bot.officer_manager.get_officer(message.author.id)
+        await officer.process_loa(message)
+        
     # Archive the message
     if (
         message.channel.category_id
@@ -143,6 +158,20 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         if officer:
             await officer.log_message_activity(message)
+
+    if '\N{EYES}' in message.content:                                                                   # If :eyes: is in the message
+        global _eyes_response_last_sent
+        if _eyes_response_last_sent == None or time.time() - _eyes_response_last_sent > 60:             # And we haven't sent it in the last 60 seconds
+            ctx = await bot.get_context(message)
+            await ctx.channel.send('\N{EYES}')                                                          # Send :eyes: in the chat
+            _eyes_response_last_sent = time.time()                                                      # And update the timer
+
+    if message.author.id == 530227944577171477:                                                         # This is 4's UID
+        try:
+            await message.add_reaction("<4Water:693582980492558397>")                                   # React with the 4Water emote
+        except HTTPException:                                                                           # If for some reason we can't get that emote 
+            ctx = await bot.get_context(message)
+            await message.add_reaction("\U0001F4A6")                                                    # React with :sweat_drops:
 
 
 @bot.event
@@ -217,7 +246,7 @@ async def on_member_update(before, after):
     # Member has left the LPD
     elif officer_before is True and officer_after is False:
         await bot.officer_manager.remove_officer(
-            before.id, reason="this person does not have the LPD role anymore"
+            before.id, reason="this person does not have the LPD role anymore", display_name=after.display_name
         )
 
 
@@ -225,7 +254,7 @@ async def on_member_update(before, after):
 async def on_member_remove(member):
     if bot.officer_manager.is_officer(member):
         await bot.officer_manager.remove_officer(
-            member.id, reason="this person left the server."
+            member.id, reason="this person left the server.", display_name=member.display_name
         )
 
 
@@ -235,6 +264,19 @@ async def on_error(event, *args, **kwargs):
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
+
+
+@bot.event
+async def on_raw_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        await bot.officer_manager.remove_loa(payload.message_id)
+
+
+@bot.event
+async def on_raw_bulk_message_delete(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        for message_id in payload.message_ids:
+            await bot.officer_manager.remove_loa(message_id)
 
 
 @bot.event
@@ -271,10 +313,10 @@ async def on_command_error(ctx, exception):
 bot.remove_command("help")
 bot.add_cog(Help(bot))
 bot.add_cog(Time(bot))
+bot.add_cog(Inactivity(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Other(bot))
-
 
 # ====================
 # Start
