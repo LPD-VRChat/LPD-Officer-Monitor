@@ -106,11 +106,10 @@ venv.bak/
 # Ignore the keys
 *keys.json
 
-# VSCode
+# Visual Studio/VSCode
 .vscode/*
+.vs/
 
 # Local database
 LPD_database*.csv
-output.py
-.vs/slnx.sqlite
-.vs/LPD-Officer-Monitor/v16/.suo
+
