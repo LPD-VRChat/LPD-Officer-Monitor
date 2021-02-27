@@ -104,7 +104,7 @@ class Officer:
 
     @property
     def is_detainable(self):
-        return self._has_role(*self._get_roles_with_tag("detainable"))
+        return self._has_role(*self._get_roles_with_tag("is_detainable"))
 
 
     # Often used member functions

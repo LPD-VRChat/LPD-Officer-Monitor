@@ -52,26 +52,26 @@
             "name": "LPD Cadet",
             "name_id": "cadet",
             "id": 666005873679663134,
-            "detainable": true
+            "is_detainable": true
         },
         {
             "name": "LPD Recruit",
             "name_id": "recruit",
             "id": 594238854102515735,
-            "detainable": true
+            "is_detainable": true
         },
         {
             "name": "LPD Officer",
             "name_id": "officer",
             "id": 594239040723615780,
-            "detainable": true
+            "is_detainable": true
         },
         {
             "name": "LPD Captain",
             "name_id": "captain",
             "id": 584111242705371138,
             "is_white_shirt": true,
-            "detainable": false
+            "is_detainable": false
         },
         {
             "name": "LPD Chief",
@@ -79,7 +79,7 @@
             "id": 717803321569837216,
             "is_white_shirt": true,
             "is_admin": true,
-            "detainable": false
+            "is_detainable": false
         }
     ],
     
