@@ -20,8 +20,7 @@ import Classes.extra_functions as ef
 class Officer:
     def __init__(self, user_id, bot):
         self.bot = bot
-        self.member = bot.get_guild(
-            bot.settings["Server_ID"]).get_member(user_id)
+        self.member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
         if self.member == None:
             raise MemberNotFoundError()
 
@@ -88,7 +87,7 @@ class Officer:
                 "SEP": 9,
                 "OCT": 10,
                 "NOV": 11,
-                "DEC": 12
+                "DEC": 12,
             }
             int(date_start[0])
             int(date_end[0])
@@ -127,8 +126,7 @@ class Officer:
 
         # Convert our separate data into a usable datetime
         date_start_complex = (
-            str(date_start[0]) + "/" +
-            str(date_start[1]) + "/" + str(date_start[2])
+            str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
         )
         date_end_complex = (
             str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
@@ -139,8 +137,8 @@ class Officer:
             date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
         except (ValueError, TypeError):
             await message.channel.send(
-                message.author.mention +
-                " There was a problem with your day. Please use a valid day number.",
+                message.author.mention
+                + " There was a problem with your day. Please use a valid day number.",
                 delete_after=10,
             )
             await message.delete()
@@ -160,7 +158,9 @@ class Officer:
 
         # Fire the script to save the entry
         request_id = message.id
-        old_messages = await self.bot.officer_manager.send_db_request("SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id)
+        old_messages = await self.bot.officer_manager.send_db_request(
+            "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
 
         if len(old_messages) == 0:
             pass
@@ -181,12 +181,14 @@ class Officer:
         """
 
         # Delete any existing entries
-        await self.bot.officer_manager.send_db_request("DELETE FROM LeaveTimes WHERE officer_id = %s", self.id)
+        await self.bot.officer_manager.send_db_request(
+            "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
 
         # Save the new entry
         await self.bot.officer_manager.send_db_request(
             "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
-            (self.id, date_start, date_end, reason, request_id)
+            (self.id, date_start, date_end, reason, request_id),
         )
 
     # ====================
@@ -292,8 +294,7 @@ class Officer:
         from_db_time = from_datetime_object.strftime(
             self.bot.settings["db_time_format"]
         )
-        to_db_time = to_datetime_object.strftime(
-            self.bot.settings["db_time_format"])
+        to_db_time = to_datetime_object.strftime(self.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
         result = await self.bot.officer_manager.send_db_request(

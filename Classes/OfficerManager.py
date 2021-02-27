@@ -29,8 +29,7 @@ class OfficerManager:
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
         if self.guild is None:
-            print("ERROR Guild with ID",
-                  bot.settings["Server_ID"], "not found")
+            print("ERROR Guild with ID", bot.settings["Server_ID"], "not found")
             print("Shutting down...")
             exit()
 
@@ -248,8 +247,7 @@ class OfficerManager:
             )
 
         await self.send_db_request(
-            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (
-                officer_id)
+            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
         await self.send_db_request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
@@ -341,8 +339,7 @@ class OfficerManager:
         """
 
         await self.send_db_request(
-            "DELETE FROM LeaveTimes WHERE request_id = %s",
-            (request_id)
+            "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
         )
 
     async def get_loa(self):
@@ -351,7 +348,8 @@ class OfficerManager:
         )
 
         loa_channel = self.bot.get_channel(
-            self.bot.settings["leave_of_absence_channel"])
+            self.bot.settings["leave_of_absence_channel"]
+        )
 
         for entry in loa_entries:
             if entry[2] > datetime.utcnow().date():
