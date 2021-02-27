@@ -1131,7 +1131,7 @@ class Other(commands.Cog):
 
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role_name} is empty.")
+            raise errors.GetRoleMembersError(message=f"{role.name} is empty.")
 
         # Sort the members
         return sorted(role.members, key=self.get_vrc_name)
@@ -1308,3 +1308,125 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    # Put a user in detention
+    async def detain(self, ctx):
+        """
+        This command places a user in detention by assigning the Detention and Detention Waiting Area roles.
+        Chat moderators may use this to effectively temp ban a user without having the ban permission.
+        This command should only be used when the severity of violation is extreme. Use strike when possible.
+        """
+        detainees = ctx.message.mentions
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+        detainee_mentions = ""
+        undet_string = ""
+
+        for user in detainees:
+            
+            # If the user is an officer and holds a non-detainable rank: skip them
+            officer = self.bot.officer_manager.get_officer(user.id)
+            if officer and not officer.is_detainable:
+                undet_string = f'{undet_string}{user.mention}'
+                continue
+
+            user_role_ids = ""
+            for role in user.roles:
+                if role.name == '@everyone': continue
+                user_role_ids = f"{role.id},{user_role_ids}"
+                await user.remove_roles(role)
+            await user.add_roles(detention_role)
+            await user.add_roles(detention_waiting_area_role)
+            detainee_mentions = f"{detainee_mentions}{user.mention}"
+            await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+
+        if len(detainee_mentions) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.')
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, you can't detain {undet_string}. Only Senior Officers and below may be detained.")
+        
+        
+    @checks.is_moderator()
+    @commands.command()
+    # Remove a user from detention
+    async def restore(self, ctx):
+        """
+        This command removes a non-LPD user from detention by removing the Detention and Detention Waiting Area roles.
+        Use of this command is restricted to Moderators and above.
+        """
+        detainees = ctx.message.mentions
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+        string = 'Removing'
+        send_string = 0
+
+        for user in detainees:
+            remove_from_db = 0
+            for role in user.roles:
+                if role.id == detention_role.id:
+                    send_string = 1
+                    remove_from_db = 1
+                    await user.remove_roles(detention_role)
+                if role.id == detention_waiting_area_role.id:
+                    send_string = 1
+                    remove_from_db = 1
+                    await user.remove_roles(detention_waiting_area_role)
+            if remove_from_db == 1:
+                user_role_list = list(await self.bot.sql.request(f"SELECT roles FROM Detainees WHERE member_id = {user.id}"))
+                for role_id in user_role_list[0][0].split(','):
+                    if role_id == '': continue
+                    await user.add_roles(self.bot.officer_manager.guild.get_role(int(role_id)))
+                await self.bot.sql.request(f"DELETE FROM Detainees WHERE member_id = {user.id}")
+                remove_from_db = 0
+                string = f"{string} {user.mention}"
+        
+        string = f"{string} from detention."
+        if send_string == 1: await ctx.channel.send(string, delete_after=10)
+        else: await ctx.channel.send("Please mention valid users you wish to release from detention.", delete_after=10)                    
+
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    async def strike(self, ctx):
+        """
+        This command issues a warning strike to the user(s) mentioned.
+        """
+
+        detention_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_role"])
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(self.bot.settings["detention_waiting_area_role"])
+
+        users_detained = ""
+        strikee_mentions = ""
+        undet_string = ""
+        for user in ctx.message.mentions:
+            
+            # If the user is an officer and holds a non-detainable rank: skip them
+            officer = self.bot.officer_manager.get_officer(user.id)
+            if officer and not officer.is_detainable:
+                undet_string = f'{undet_string}{user.mention}'
+                continue
+            
+            
+            await self.bot.sql.request(f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')")
+            strikee_mentions = f"{strikee_mentions}{user.mention}"
+            old_strikes = list(await self.bot.sql.request(f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"))
+            for date in old_strikes:
+                if date[0] <= datetime.utcnow() - timedelta(days=14):
+                    old_strikes.remove(date)
+                    await self.bot.sql.request(f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'")
+                    continue
+            if len(old_strikes) >= 3:
+                users_detained = f"{users_detained}{user.mention}"
+                # user_role_ids = ""
+                # for role in user.roles:
+                #     if role.name == '@everyone': continue
+                #     user_role_ids = f"{role.id},{user_role_ids}"
+                #     await user.remove_roles(role)
+                # await user.add_roles(detention_role)
+                # await user.add_roles(detention_waiting_area_role)
+                # await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+                
+
+        if len(strikee_mentions) > 0: await ctx.channel.send(f"{strikee_mentions} received a strike against their record.", delete_after=10)
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, {undet_string} cannot be given a strike. Only Senior Officers and below can be given a strike.")
+        if len(users_detained) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.')

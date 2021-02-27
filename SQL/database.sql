@@ -15,6 +15,13 @@ CREATE TABLE Officers
     started_monitoring_time DATETIME
 );
 
+CREATE TABLE Detainees
+(
+	member_id BIGINT UNSIGNED PRIMARY KEY,
+    roles MEDIUMTEXT,
+	date DATETIME
+);
+
 CREATE TABLE LeaveTimes
 (
     officer_id BIGINT UNSIGNED PRIMARY KEY,
@@ -25,9 +32,6 @@ CREATE TABLE LeaveTimes
 	
 	CONSTRAINT officer_id_FK_LOA FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );
-
-
-
 
 /*CREATE TABLE TimePeriods
 (
@@ -63,4 +67,13 @@ CREATE TABLE VRChatNames
     vrc_name VARCHAR(255),
     
     CONSTRAINT officer_id_FK_VRC_NAMES FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+);
+
+DROP TABLE IF EXISTS UserStrikes;
+CREATE TABLE UserStrikes
+(
+    member_id BIGINT UNSIGNED,
+    reason TEXT,
+    date DATETIME,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT
 );
