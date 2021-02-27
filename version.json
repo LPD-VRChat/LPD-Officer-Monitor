@@ -1,12 +1,11 @@
-  [
-    {
-      "version": "2.0.3",
-      "developer": "hrolfurgylfa",
-      "contributors": [
-        "CaptainDestructo",
-        "50thomatoes50"
-      ],
-      "update_description": "Added sweep for on-duty officers in OfficerManager startup. Officers who are on-duty when the bot starts up will be put on-duty, and the event will be logged to stdout."
-    }
-  ]
-
+[
+  {
+    "version": "2.0.4",
+    "developer": "hrolfurgylfa",
+    "contributors": [
+      "CaptainDestructo",
+      "50thomatoes50"
+    ],
+    "update_description": "Adds member's display name to the removal message in the debug log"
+  }
+]

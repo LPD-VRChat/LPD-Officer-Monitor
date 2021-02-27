@@ -214,7 +214,7 @@ class OfficerManager:
         # Return the officer
         return new_officer
 
-    async def remove_officer(self, officer_id, reason=None):
+    async def remove_officer(self, officer_id, reason=None, display_name=None):
 
         # Run the function that needs to run before the officer removal
         try:
@@ -227,6 +227,12 @@ class OfficerManager:
                 traceback.format_exc(),
             )
 
+        # Get display name for the Officer to be removed
+        if display_name == None:
+            member_name = str(officer_id)
+        else:
+            member_name = f'{display_name} ({officer_id})'
+        
         await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
@@ -247,7 +253,7 @@ class OfficerManager:
 
         msg_string = (
             "WARNING: "
-            + str(officer_id)
+            + member_name
             + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:

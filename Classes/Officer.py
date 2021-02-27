@@ -59,7 +59,8 @@ class Officer:
     async def remove(self):
 
         # Remove itself
-        await self.bot.officer_manager.remove_officer(self.id)
+        display_name = self.member.display_name
+        await self.bot.officer_manager.remove_officer(self.id, display_name=display_name)
 
     async def process_loa(self, message):
         try:
