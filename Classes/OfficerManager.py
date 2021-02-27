@@ -12,6 +12,7 @@ import aiomysql
 import discord.errors as discord_errors
 from pymysql import err as mysql_errors
 import discord
+from discord.ext import tasks
 
 # Mine
 from Classes.Officer import Officer
@@ -20,10 +21,10 @@ from Classes.extra_functions import handle_error
 
 
 class OfficerManager:
-    def __init__(self, db_pool, all_officer_ids, bot, run_before_officer_removal=None):
+    def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
-        self.db_pool = db_pool
         self._before_officer_removal = run_before_officer_removal
+        self.all_officer_ids = all_officer_ids
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -44,6 +45,7 @@ class OfficerManager:
         # Add all the officers to the list
         self._all_officers = []
         self._officers_needing_removal = []
+        self._number_officers_on_duty_at_launch = 0
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
             try:
@@ -52,49 +54,42 @@ class OfficerManager:
                 print(
                     f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager."
                 )
+                
+                # Check to see if the officer is in an on duty VC, and if so, put them on duty, put a message in stdout and increment a counter
+                if new_officer.member.voice is not None:
+                    if new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
+                        print(f'Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now...')
+                        new_officer.go_on_duty()
+                        self._number_officers_on_duty_at_launch += 1
+
             except MemberNotFoundError:
                 print(
                     f"The officer with the ID {officer_id} was not found in the server. The officer will be removed in a moment."
                 )
                 self._officers_needing_removal.append(officer_id)
-        print(f"Officers needing removal: {self._officers_needing_removal}")
 
+        print(f"Officers needing removal: {self._officers_needing_removal}")
+        
+        # If there were officers on duty when the OfficerManager started, put a warning in stdout
+        if self._number_officers_on_duty_at_launch > 1:
+            pretty_text = f'were {self._number_officers_on_duty_at_launch} officers'
+
+        if self._number_officers_on_duty_at_launch == 1:
+            pretty_text = f'was {self._number_officers_on_duty_at_launch} officer'
+
+        if self._number_officers_on_duty_at_launch > 0:
+            print(f'WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted.')
+        
         # Set up the automatically running code
         bot.loop.create_task(self.loop())
 
     @classmethod
-    async def start(cls, bot, db_password, run_before_officer_removal=None):
-
-        # Setup database
-        try:
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-                unix_socket=bot.settings["DB_socket"],
-            )
-        except (KeyError, mysql_errors.OperationalError):
-            db_pool = await aiomysql.create_pool(
-                host=bot.settings["DB_host"],
-                port=3306,
-                user=bot.settings["DB_user"],
-                password=db_password,
-                db=bot.settings["DB_name"],
-                loop=asyncio.get_event_loop(),
-                autocommit=True,
-            )
+    async def start(cls, bot, run_before_officer_removal=None):
 
         # Fetch all the officers from the database
         try:
-            async with db_pool.acquire() as conn:
-                cur = await conn.cursor()
-                await cur.execute("SELECT officer_id FROM Officers")
-                result = await cur.fetchall()
-                await cur.close()
+            result = await bot.sql.request("SELECT officer_id FROM Officers")
+
         except Exception as error:
             print("ERROR failed to fetch officers from database:")
             print(error)
@@ -102,29 +97,14 @@ class OfficerManager:
             exit()
 
         return cls(
-            db_pool,
             (x[0] for x in result),
             bot,
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args):
-
-        async with self.db_pool.acquire() as conn:
-            cur = await conn.cursor()
-
-            await cur.execute(query, args)
-            result = await cur.fetchall()
-
-            await cur.close()
-
-        try:
-            if len(result) == 1 and len(result[0]) == 1 and result[0][0] == None:
-                return None
-        except IndexError:
-            return None
-
-        return result
+    async def send_db_request(self, query, args=None):
+        """This function is being deprecated in favor of self.bot.sql.request()"""
+        return await self.bot.sql.request(query, args)
 
     # =====================
     #    Loop
@@ -181,17 +161,20 @@ class OfficerManager:
     # =====================
 
     def get_officer(self, officer_id):
+        """Returns Officer object from Officer ID"""
+
         for officer in self._all_officers:
             if officer.id == officer_id:
                 return officer
         return None
 
     async def create_officer(self, officer_id, issue=None):
+        """Attempts to create Officer object from given Officer ID"""
 
         # Add the officer to the database
         try:
             try:
-                await self.send_db_request(
+                await self.bot.sql.request(
                     "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
                     (officer_id, datetime.now(timezone.utc)),
                 )
@@ -250,14 +233,13 @@ class OfficerManager:
         else:
             member_name = f'{display_name} ({officer_id})'
         
-        
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
         )
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
 
@@ -285,6 +267,8 @@ class OfficerManager:
     # ====================
 
     async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
+        """Returns list of most active officers between given dates, up to optionally specified limit"""
+
         db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
             FROM TimeLog
@@ -298,9 +282,11 @@ class OfficerManager:
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
-        return await self.send_db_request(db_request, arg_list)
+        return await self.bot.sql.request(db_request, arg_list)
 
     def is_officer(self, member):
+        """Returns true if specified member object has and of the LPD roles"""
+
         if member is None:
             return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
@@ -311,6 +297,8 @@ class OfficerManager:
         return False
 
     def is_monitored(self, member_id):
+        """Returns true if specified member ID matches an officer ID in memory"""
+
         for officer in self._all_officers:
             if officer.id == member_id:
                 return True
@@ -333,7 +321,46 @@ class OfficerManager:
     # ====================
 
     def get_settings_role(self, name_id):
+        """Returns a role object for given name_id"""
+
         for role in self.bot.settings["role_ladder"]:
             if role["name_id"] == name_id:
                 return role
         raise ValueError(f"{name_id} not found in bot.settings")
+
+    async def remove_loa(self, request_id):
+        """
+        Delete the specified Leave of Absence
+        """
+
+        await self.send_db_request(
+            "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
+        )
+
+    async def get_loa(self):
+        loa_entries = await self.send_db_request(
+            "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
+        )
+
+        loa_channel = self.bot.get_channel(
+            self.bot.settings["leave_of_absence_channel"]
+        )
+
+        for entry in loa_entries:
+            if entry[2] > datetime.utcnow().date():
+                pass
+            else:
+                old_msg_id = entry[4]
+                old_msg = await loa_channel.fetch_message(old_msg_id)
+                await old_msg.delete()
+
+                await self.remove_loa(str(entry[4]))
+                templist = list(loa_entries)
+                templist.remove(entry)
+                loa_entries = tuple(templist)
+
+        return loa_entries
+
+    @tasks.loop(hours=1)
+    async def get_loa_hourly(self):
+        await self.get_loa()

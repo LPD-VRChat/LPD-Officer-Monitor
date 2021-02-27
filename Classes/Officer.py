@@ -7,6 +7,7 @@ import asyncio
 import math
 import time
 from datetime import datetime
+import datetime as dt
 
 # Community
 from discord import Member
@@ -60,6 +61,136 @@ class Officer:
         # Remove itself
         display_name = self.member.display_name
         await self.bot.officer_manager.remove_officer(self.id, display_name=display_name)
+
+    async def process_loa(self, message):
+        try:
+            date_range = message.content.split(":")[0]
+            date_a = date_range.split("-")[0]
+            date_b = date_range.split("-")[1]
+            date_start = ["", "", ""]
+            date_end = ["", "", ""]
+            date_start[0] = date_a.split("/")[0].strip()
+            date_start[1] = date_a.split("/")[1].strip()
+            date_start[2] = date_a.split("/")[2].strip()
+            date_end[0] = date_b.split("/")[0].strip()
+            date_end[1] = date_b.split("/")[1].strip()
+            date_end[2] = date_b.split("/")[2].strip()
+            reason = message.content.split(":")[1].strip()
+            months = {
+                "JAN": 1,
+                "FEB": 2,
+                "MAR": 3,
+                "APR": 4,
+                "MAY": 5,
+                "JUN": 6,
+                "JUL": 7,
+                "AUG": 8,
+                "SEP": 9,
+                "OCT": 10,
+                "NOV": 11,
+                "DEC": 12,
+            }
+            int(date_start[0])
+            int(date_end[0])
+
+            date_start[1] = date_start[1].upper()[0:3]
+            date_start[1] = months[date_start[1]]
+            date_end[1] = date_end[1].upper()[0:3]
+            date_end[1] = months[date_end[1]]
+
+        except (TypeError, ValueError, KeyError, IndexError):
+            # If all of that failed, let the user know with an autodeleting message
+            await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        date_start = [int(i) for i in date_start]
+        date_end = [int(i) for i in date_end]
+
+        if (
+            date_start[1] < 1
+            or date_start[1] > 12
+            or date_end[1] < 1
+            or date_end[1] > 12
+        ):
+            # If the month isn't 1-12, let the user know they dumb
+            await message.channel.send(
+                message.author.mention + " There are only 12 months in a year.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        # Convert our separate data into a usable datetime
+        date_start_complex = (
+            str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
+        )
+        date_end_complex = (
+            str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
+        )
+
+        try:
+            date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
+            date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+        except (ValueError, TypeError):
+            await message.channel.send(
+                message.author.mention
+                + " There was a problem with your day. Please use a valid day number.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        if date_end > date_start + dt.timedelta(
+            weeks=+12
+        ) or date_end < date_start + dt.timedelta(weeks=+3):
+            # If more than 12 week LOA, inform user
+            await message.channel.send(
+                message.author.mention
+                + " Leaves of Absence are limited to 3-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        # Fire the script to save the entry
+        request_id = message.id
+        old_messages = await self.bot.officer_manager.send_db_request(
+            "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
+
+        if len(old_messages) == 0:
+            pass
+        else:
+            ctx = await self.bot.get_context(message)
+            for old_msg_id in old_messages[0]:
+                old_msg = await ctx.fetch_message(old_msg_id)
+                await old_msg.delete()
+
+        await self.save_loa(date_start, date_end, reason, request_id)
+        await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+
+    async def save_loa(self, date_start, date_end, reason, request_id):
+        """
+        Pass all 5 required fields to save_loa()
+        If record with matching officer_id is found,
+        record will be updated with new dates and reason.
+        """
+
+        # Delete any existing entries
+        await self.bot.officer_manager.send_db_request(
+            "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
+
+        # Save the new entry
+        await self.bot.officer_manager.send_db_request(
+            "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
+            (self.id, date_start, date_end, reason, request_id),
+        )
 
     # ====================
     # properties

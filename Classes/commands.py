@@ -1,15 +1,15 @@
 # Standard
+import csv
 import sys
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone, time
+from datetime import datetime, timedelta, timezone
 import time
 import math
 import traceback
 import json
-import aiomysql
 import asyncio
 
 # Community
@@ -19,7 +19,13 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
+from Classes.extra_functions import (
+    send_long,
+    handle_error,
+    get_rank_id,
+    has_role,
+    send_str_as_file,
+)
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
@@ -342,7 +348,8 @@ class Time(commands.Cog):
             table.header(["From      ", "To        ", "hr:min:sec"])
 
             # This is a lambda to add the discord code block on the table to keep it monospace
-            draw_table = lambda table: "```\n" + table.draw() + "\n```"
+            def draw_table(table):
+                return "```\n" + table.draw() + "\n```"
 
             # Loop through all the patrols to add them to a string and send them
             for patrol in all_patrols:
@@ -489,7 +496,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -593,7 +600,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -638,7 +645,7 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now() - last_activity["time"]).days
+            active_days_ago = (datetime.now(timezone.utc) - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
@@ -687,6 +694,165 @@ class Time(commands.Cog):
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def time_to_1_csv(self, ctx):
+        """
+        This command converts the time to the LPD Officer Monitor 1.0s csv format and
+        sends it throguh discord.
+        """
+        await ctx.send("Please give me some time, this may take several minutes.")
+
+        # This opens a virtual file in memory that can be written to by the CSV module
+        with StringIO() as virtual_bot_1_time_file:
+            csv_writer = csv.writer(virtual_bot_1_time_file)
+            for officer in self.bot.officer_manager.all_officers:
+
+                # Get the last active time for the officer
+                last_active_time_datetime = (
+                    await officer.get_last_activity(
+                        self.bot.settings["monitored_channels"]
+                    )
+                )["time"]
+                last_active_time = (
+                    last_active_time_datetime - datetime(1970, 1, 1)
+                ).total_seconds()
+                if last_active_time is None:
+                    last_active_time = 0
+
+                # Get the patrol time
+                to_time = datetime.now(tz=timezone.utc)
+                from_time = to_time - timedelta(28)
+                patrol_time = await officer.get_time(from_time, to_time)
+
+                # Add both to the CSV file
+                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+
+            await send_str_as_file(
+                channel=ctx.channel,
+                file_data=virtual_bot_1_time_file.getvalue(),
+                filename="LPD_database.csv",
+                msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
+            )
+
+
+class Inactivity(commands.Cog):
+    """Here are all the commands relating to Leaves of Absence and Inactivity"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.blurple()
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Mark Officers inactive after running =list_inactive
+    async def mark_inactive(self, ctx):
+        """
+        This command lists inactive officers, and prompts the user to mark them with the LPD_inactive role.
+        Use the `-i` flag to mark officers inactive individually.
+        """
+
+        # Get all fields from LeaveTimes
+        loa_entries = await self.bot.officer_manager.get_loa()
+
+        loa_officer_ids = []
+
+        # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
+        for entry in loa_entries:
+            loa_officer_ids.append(entry[0])
+
+        # For everyone in the server where their role is in the role ladder,
+        # get their last activity times, or if no last activity time, use
+        # the time we started monitoring them. Exclude those we have already
+        # determined have a valid Leave of Absence
+
+        # Get a date range for our LOAs, and make some dictionaries to work in
+        max_inactive_days = self.bot.settings["max_inactive_days"]
+        oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
+        inactive_officers = []
+        role_ids = role_id_index(self.bot.settings)
+
+        for officer in self.bot.officer_manager.all_officers:
+            if officer.id not in loa_officer_ids:
+                last_activity = await officer.get_last_activity(
+                    self.bot.officer_manager.all_monitored_channels
+                )
+                last_activity = last_activity["time"]
+                try:
+                    if last_activity < oldest_valid:
+                        inactive_officers.append(officer)
+                except:
+                    await ctx.channel.send(
+                        "There was a problem with the activity times. Make sure that there are officers with patrol times",
+                        delete_after=10,
+                    )
+
+        if len(inactive_officers) == 0:
+            await ctx.channel.send(
+                "There are no inactive officers found without a leave of absence."
+            )
+            return
+
+        role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+
+        if "-i" in ctx.message.content:
+            for officer in inactive_officers:
+                confirm = await Confirm(
+                    f"Do you want to mark {officer.mention} as inactive?"
+                ).prompt(ctx)
+                if confirm:
+                    await officer.member.add_roles(role)
+                    await ctx.channel.send(
+                        f"{officer.mention} has been marked as inactive."
+                    )
+                else:
+                    await ctx.channel.send(
+                        f"{officer.mention} will have their inactivity reevaluated at a later date."
+                    )
+        else:
+            output_string = ""
+            for officer in inactive_officers:
+                output_string = f"{officer.mention}\n{output_string}"
+            await send_long(ctx.channel, output_string)
+            confirm = await Confirm(
+                f"Do you want to mark the officers above as inactive?"
+            ).prompt(ctx)
+            if confirm:
+                for officer in inactive_officers:
+                    await officer.member.add_roles(role)
+                await ctx.channel.send(
+                    f"All officers above have been marked as inactive."
+                )
+            else:
+                await ctx.channel.send("Cancelled.")
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    # Review Leaves of Absence
+    async def show_loa(self, ctx):
+        """
+        This command displays all Leave of Absence requests currently on file.
+        """
+        loa_entries = await self.bot.officer_manager.get_loa()
+        i = 0
+        for entry in loa_entries:
+            i = i + 1
+            officer = self.bot.get_user(entry[0])
+            string = f"There are currently Leaves of Absence on file for the following Officers:"
+            string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
+            if len(string) > 1000:
+                await ctx.channel.send(string)
+                string = ""
+
+        if i == 0:
+            string = "There are no Leaves of Absence on file at this time."
+        await ctx.channel.send(string)
+
 
 class VRChatAccoutLink(commands.Cog):
     """This stores all the VRChatAccoutLink commands."""
@@ -715,10 +881,10 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
-    async def link(self, ctx, vrchat_name):
+    async def link(self, ctx, *args):
         r"""
         This command is used to tell the bot your VRChat name.
 
@@ -735,6 +901,25 @@ class VRChatAccoutLink(commands.Cog):
         copy your VRChat name from the debug console in the LPD Station. The
         debug console can be enabled with a button under the front desk.
         """
+
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("name", nargs="+")
+        parser.add_argument("-s", "--skip", action="store_true")
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("link", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        # if use spaces without quotes, won't add space if only one
+        vrchat_name = " ".join(parsed.name)
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -758,14 +943,22 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
+        # Format the VRChat name if that was asked for
+        if parsed.skip:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+
         # Confirm the VRC name
         confirm = await Confirm(
-            f"Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
+            f"Are you sure `{vrchat_formated_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
         ).prompt(ctx)
         if confirm:
-            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await self.bot.user_manager.add_user(
+                ctx.author.id, vrchat_name, parsed.skip
+            )
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command =unlink"
+                f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
             )
         else:
             await ctx.send(
@@ -1065,7 +1258,9 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.channel.send(
+                    f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role
@@ -1097,8 +1292,15 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = "".join(match[0][1]) + "s"
+
             else:
                 name = role.name
+
+            """
+            elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
+                name = 'Cadets'
+            Leaving this here for future use if needed.
+            """
 
             embed.add_field(
                 name=name + ":", value=number_of_officers_with_each_role[role]
