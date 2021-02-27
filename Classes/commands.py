@@ -1141,7 +1141,7 @@ class Other(commands.Cog):
             await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
         if len(detainee_mentions) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.')
-        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, you can't detain {undet_string}. They're too important.")
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, you can't detain {undet_string}. Only Senior Officers and below may be detained.")
         
         
     @checks.is_moderator()
@@ -1226,5 +1226,5 @@ class Other(commands.Cog):
                 
 
         if len(strikee_mentions) > 0: await ctx.channel.send(f"{strikee_mentions} received a strike against their record.", delete_after=10)
-        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, {undet_string} cannot be given a strike. They're too important.")
+        if len(undet_string) > 0: await ctx.channel.send(f"Sorry, {undet_string} cannot be given a strike. Only Senior Officers and below can be given a strike.")
         if len(users_detained) > 0: await ctx.channel.send(f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.')
