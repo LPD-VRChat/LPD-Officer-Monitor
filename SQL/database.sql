@@ -22,6 +22,17 @@ CREATE TABLE Detainees
 	date DATETIME
 );
 
+CREATE TABLE LeaveTimes
+(
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
+    date_start DATETIME,
+    date_end DATETIME,
+    reason TEXT,
+	request_id BIGINT UNSIGNED,
+	
+	CONSTRAINT officer_id_FK_LOA FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+);
+
 /*CREATE TABLE TimePeriods
 (
 	time_period_id INT PRIMARY KEY AUTO_INCREMENT,

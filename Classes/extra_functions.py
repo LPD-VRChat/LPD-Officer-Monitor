@@ -1,5 +1,7 @@
 # Standard
+from typing import Optional
 import discord
+
 from io import StringIO, BytesIO
 
 # Community
@@ -15,6 +17,7 @@ def is_number(string):
 
 
 async def send_long(channel, string, code_block=False):
+    """Send output as a text file, or optionally a code block if code_block=True is passed"""
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -30,13 +33,13 @@ async def send_long(channel, string, code_block=False):
 
         # If the line is longer that 2000, send it as a file and exit.
         if len(line) > 2000:
-            with StringIO(string) as error_file_sio:
-                with BytesIO(error_file_sio.read().encode("utf8")) as error_file:
-                    await channel.send(
-                        "The output is too big to fit in a discord message so it is insted in a file.",
-                        file=discord.File(error_file, filename="long_output.txt"),
-                    )
-                    return
+            await send_str_as_file(
+                channel=channel,
+                file_data=string,
+                filename="long_output.txt",
+                msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+            )
+            return
 
         # Calculate the output length
         #            Previous output            \n   this line   the backticks if that is enabled
@@ -83,6 +86,8 @@ async def handle_error(bot, title, traceback_string):
 
 
 def get_rank_id(settings, name_id):
+    """Returns the Discord Role ID for specified name_id"""
+
     role_ladder = settings["role_ladder"]
 
     for role in role_ladder:
@@ -96,20 +101,31 @@ def has_role(role_list, role_id):
     return len([x for x in role_list if x.id == role_id]) > 0
 
 
-
 def role_id_index(settings):
-    """
-    Process the role_ladder into a usable list when called
-    """
+    """Process the role_ladder into a usable list when called"""
+
     role_id_ladder = []
     for entry in settings["role_ladder"]:
         role_id_ladder.append(entry["id"])
     return role_id_ladder
 
+
 def get_role_name_by_id(settings, bad_role):
-    """
-    Identify a role's expected name by its ID
-    """
+    """Identify a role's expected name by its ID"""
+
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
+
+
+async def send_str_as_file(
+    channel: discord.TextChannel,
+    file_data: str,
+    filename: Optional[str] = None,
+    msg_content: Optional[str] = None,
+) -> None:
+    with BytesIO(file_data.encode("utf8")) as error_file:
+        await channel.send(
+            msg_content,
+            file=discord.File(error_file, filename=filename),
+        )

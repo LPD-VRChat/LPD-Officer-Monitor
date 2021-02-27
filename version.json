@@ -1,11 +1,11 @@
-  [
-    {
-      "version": "2.0.6",
-      "developer": "hrolfurgylfa",
-      "contributors": [
-        "CaptainDestructo",
-        "50thomatoes50"
-      ],
-      "update_description": "Adds detention and strike system for chat moderators and moderators."
-    }
-  ]
+[
+  {
+    "version": "2.0.6",
+    "developer": "hrolfurgylfa",
+    "contributors": [
+      "CaptainDestructo",
+      "50thomatoes50"
+    ],
+    "update_description": "Adds detention and strike system for chat moderators and moderators."
+  }
+]
