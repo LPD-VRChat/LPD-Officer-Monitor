@@ -52,7 +52,6 @@ class SQLManager:
 
         return instance
 
-
     async def request(self, query, args=None):
         """Send a SQL request to the database.
 
