@@ -30,13 +30,17 @@ class Officer:
         self.squad = ""
 
     def go_on_duty(self):
-        
+
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
-            print("WARNING: A user is going on duty even though he is already on duty...")
+            print(
+                "WARNING: A user is going on duty even though he is already on duty..."
+            )
             return
-        
-        print(f"{self.discord_name} is going on duty in {self.member.voice.channel.name}")
+
+        print(
+            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
+        )
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
@@ -51,7 +55,7 @@ class Officer:
 
         print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
         self.squad = self.member.voice.channel.name
-    
+
     async def go_off_duty(self):
 
         print(f"{self.discord_name} is going off duty")
@@ -73,7 +77,9 @@ class Officer:
 
         # Remove itself
         display_name = self.member.display_name
-        await self.bot.officer_manager.remove_officer(self.id, display_name=display_name)
+        await self.bot.officer_manager.remove_officer(
+            self.id, display_name=display_name
+        )
 
     async def process_loa(self, message):
         try:
@@ -170,6 +176,15 @@ class Officer:
             await message.delete()
             return
 
+        # Make sure the LOA isn't over yet
+        if date_end < datetime.utcnow():
+            await message.channel.send(
+                f"{message.author.mention} The leave of absence you supplied has already expired.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
         # Fire the script to save the entry
         request_id = message.id
         old_messages = await self.bot.officer_manager.send_db_request(
@@ -226,7 +241,7 @@ class Officer:
     @property
     def is_chat_moderator(self):
         return self._has_role(self.bot.settings["chat_moderator_role"])
-        
+
     @property
     def is_moderator(self):
         return self._has_role(self.bot.settings["moderator_role"])
@@ -250,7 +265,6 @@ class Officer:
     @property
     def is_detainable(self):
         return self._has_role(*self._get_roles_with_tag("is_detainable"))
-
 
     # Often used member functions
 
