@@ -101,6 +101,12 @@ class Help(commands.Cog):
                 for cog_name in self.bot.cogs:
 
                     cog = self.bot.cogs[cog_name]
+
+                    # Make sure to skip the help cog, itself
+                    if isinstance(cog, type(self)):
+                        continue
+
+                    # Add the color
                     try:
                         cog_embed = discord.Embed(
                             title=cog_name, description=cog.description, color=cog.color
