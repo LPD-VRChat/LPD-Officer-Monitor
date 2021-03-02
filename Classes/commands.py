@@ -231,7 +231,7 @@ class Time(commands.Cog):
                 # The user is giving from_time and thus wants from_time
                 # to be the current time
                 from_datetime = self.parse_date(parsed.from_date)
-                to_datetime = datetime.now(timezone.utc)
+                to_datetime = datetime.utcnow()
 
             else:
                 # Both are here, they can just be parsed
@@ -509,8 +509,8 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.now(timezone.utc) - timedelta(days=28),
-            datetime.now(timezone.utc),
+            datetime.utcnow() - timedelta(days=28),
+            datetime.utcnow(),
             limit=None,
         )
 
@@ -645,7 +645,7 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now(timezone.utc) - last_activity["time"]).days
+            active_days_ago = (datetime.utcnow() - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
