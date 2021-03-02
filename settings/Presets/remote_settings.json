@@ -40,9 +40,9 @@
     "dev_team_role": 645751942626279460,
     "civilian_role": 659121007923167234,
     "chat_moderator_role": 751164515177201776,
-	"moderator_role": 654458435785588737,
-	"detention_role": 645401830561546250,
-	"detention_waiting_area_role": 697914340870848533,
+    "moderator_role": 654458435785588737,
+    "detention_role": 645401830561546250,
+    "detention_waiting_area_role": 697914340870848533,
     "teams": [
         {
             "id": 0,
