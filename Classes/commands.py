@@ -898,7 +898,7 @@ class Inactivity(commands.Cog):
             if inactive_role in member.roles:
                 for role in member.roles:
                     if role.id in all_lpd_ranks:
-                        member.remove_roles(role)
+                        await member.remove_roles(role)
             await member.remove_roles(inactive_role)
 
         await ctx.channel.send(
