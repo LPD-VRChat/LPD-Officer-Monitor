@@ -5,7 +5,7 @@ nest_asyncio.apply()
 
 from sanic import Sanic
 from sanic.response import json, html
-from Classes/OfficerManager import build_officer_list
+from Classes.OfficerManager import build_officer_list
 
 app = Sanic(name="LPD_Officer_Monitor")
 
