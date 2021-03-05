@@ -25,7 +25,7 @@ class WebManager:
         await app.create_server(host=host, port=port, return_asyncio_server=True)
 
     @app.route("/")
-    async def testpage(request):
+    async def testpage(self, request):
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -49,7 +49,7 @@ class WebManager:
         return html(content)
 
     @app.route("/officers")
-    async def display_officers(request):
+    async def display_officers(self, request):
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
