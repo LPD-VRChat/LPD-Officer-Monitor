@@ -22,7 +22,7 @@ class WebManager:
         instance.app = app
         instance.host = host
         instance.port = port
-        await app.create_server(host=host, port=port)
+        await app.create_server(host=host, port=port, return_asyncio_server=True)
 
     @app.route("/")
     async def testpage(request):
