@@ -64,9 +64,7 @@ else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
 
-bot = commands.Bot(
-    command_prefix=settings["bot_prefix"], intents=intents
-)  # 10/12/2020 - Destructo added intents
+bot = commands.Bot(command_prefix=settings["bot_prefix"], intents=intents)
 bot.settings = settings
 bot.officer_manager = None
 bot.sql = None
@@ -116,15 +114,15 @@ async def on_ready():
     async def before_officer_removal(bot, officer_id):
         await bot.user_manager.remove_user(officer_id)
 
-    # Start the SQL Manager
-    print("Starting SQL Manager...")
-    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
-
     # Start the WebManager
     print("Starting WebManager...")
     bot.web_manager = await WebManager.start(bot)
 
-    # Start the officer Manager
+    # Start the SQL Manager
+    print("Starting SQL Manager...")
+    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
+
+    # Start the Officer Manager
     print("Starting Officer Manager...")
     bot.officer_manager = await OfficerManager.start(
         bot, run_before_officer_removal=before_officer_removal
