@@ -320,6 +320,33 @@ class OfficerManager:
     #   other functions
     # ====================
 
+    def build_officer_list(self):
+    content = """<!DOCTYPE html>
+            <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <meta charset="utf-8" />
+                <title>List of all officers</title>
+            </head>
+            <body>
+            <table style="width:100%">
+            <tr>
+                <th>Officer ID</th>
+                <th>Name</th>
+                <th>On Duty?</th>
+                <th>Squad</th>
+            </tr>"""
+
+        for officer in self.bot.officer_manager.all_officers:
+            content = f"""{content}
+                        <tr>
+                        <td>{officer.id}</td>
+                        <td>{officer.display_name}</td>
+                        <td>{officer.is_on_duty}</td>
+                        <td>{officer.squad}</td>
+                        </tr>"""
+        content = f"""{content}
+                    </table></body></html>"""
+    
     def get_settings_role(self, name_id):
         """Returns a role object for given name_id"""
 

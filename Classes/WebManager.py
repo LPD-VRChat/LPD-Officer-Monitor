@@ -5,7 +5,7 @@ nest_asyncio.apply()
 
 from sanic import Sanic
 from sanic.response import json, html
-
+from Classes/OfficerManager import build_officer_list
 
 app = Sanic(name="LPD_Officer_Monitor")
 
@@ -25,7 +25,7 @@ class WebManager:
         await app.create_server(host=host, port=port, return_asyncio_server=True)
 
     @app.route("/")
-    async def testpage(self, request):
+    async def testpage(request):
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -49,31 +49,6 @@ class WebManager:
         return html(content)
 
     @app.route("/officers")
-    async def display_officers(request, self):
-        content = """<!DOCTYPE html>
-            <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-            <head>
-                <meta charset="utf-8" />
-                <title>List of all officers</title>
-            </head>
-            <body>
-            <table style="width:100%">
-            <tr>
-                <th>Officer ID</th>
-                <th>Name</th>
-                <th>On Duty?</th>
-                <th>Squad</th>
-            </tr>"""
-
-        for officer in self.bot.officer_manager.all_officers:
-            content = f"""{content}
-                        <tr>
-                        <td>{officer.id}</td>
-                        <td>{officer.display_name}</td>
-                        <td>{officer.is_on_duty}</td>
-                        <td>{officer.squad}</td>
-                        </tr>"""
-        content = f"""{content}
-                    </table></body></html>"""
-
+    async def display_officers(request):
+        content = build_officer_list()
         return html(content)
