@@ -862,7 +862,7 @@ class Inactivity(commands.Cog):
         )
 
         for channel in ctx.message.channel_mentions:
-            for message in channel.history:
+            async for message in channel.history(limit=None):
                 if inactive_role in message.author.roles:
                     await message.author.remove_roles(inactive_role)
                     officer = self.bot.officer_manager.get_officer(message.author.id)
