@@ -1,6 +1,8 @@
 from sanic import Sanic
 from sanic.response import json, html
 
+app = Sanic(name="LPD_Officer_Monitor")
+
 
 class WebManager:
     def __init__(self, bot):
@@ -9,7 +11,7 @@ class WebManager:
 
     @classmethod
     async def start(cls, bot, host="0.0.0.0", port=80):
-        app = Sanic(name="LPD_Officer_Monitor")
+
         instance = cls(bot)
         instance.app = app
         instance.host = host
