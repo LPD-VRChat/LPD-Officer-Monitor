@@ -30,9 +30,24 @@ class WebManager:
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
-                <title></title>
+                <title>testpage</title>
+                <style>
+                    a:link,a:visited {
+                    color: Blue;
+                    background-color: White;
+                    text-decoration: underline;
+                    target-new: none;
+                    }
+                    a:hover {
+                    color: Blue;
+                    background-color: Yellow;
+                    text-decoration: underline;
+                    target-new: none;
+                    }
+                </style>
             </head>
             <body>
+                <a href="/officers">Table of All Officers</a><br><br>The following are test objects that do nothing<br>
                 <input type="text" name="fname"><br>
                 <select>
                     <option value="volvo">Volvo</option>
