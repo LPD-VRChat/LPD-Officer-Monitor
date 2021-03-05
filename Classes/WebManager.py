@@ -47,3 +47,33 @@ class WebManager:
             </body>
             </html>"""
         return html(content)
+
+    @app.route("/officers")
+    async def display_officers(request):
+        content = """<!DOCTYPE html>
+            <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <meta charset="utf-8" />
+                <title>List of all officers</title>
+            </head>
+            <body>
+            <table style="width:100%">
+            <tr>
+                <th>Officer ID</th>
+                <th>Name</th>
+                <th>On Duty?</th>
+                <th>Squad</th>
+            </tr>"""
+
+        for officer in self.bot.officer_manager.all_officers:
+            content = f"""{content}
+                        <tr>
+                        <td>{officer.id}</td>
+                        <td>{officer.display_name}</td>
+                        <td>{officer.is_on_duty}</td>
+                        <td>{officer.squad}</td>
+                        </tr>"""
+        content = f"""{content}
+                    </table></body></html>"""
+
+        return html(content)
