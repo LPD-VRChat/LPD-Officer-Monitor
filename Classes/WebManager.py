@@ -16,8 +16,8 @@ class WebManager:
 
     @classmethod
     async def start(cls, Bot, host="0.0.0.0", port=8080):
-        bot = Bot
         global bot
+        bot = Bot
         instance = cls(bot)
         instance.app = app
         instance.host = host
