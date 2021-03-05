@@ -54,11 +54,16 @@ class OfficerManager:
                 print(
                     f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager."
                 )
-                
+
                 # Check to see if the officer is in an on duty VC, and if so, put them on duty, put a message in stdout and increment a counter
                 if new_officer.member.voice is not None:
-                    if new_officer.member.voice.channel.category_id == self.bot.settings["on_duty_category"]:
-                        print(f'Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now...')
+                    if (
+                        new_officer.member.voice.channel.category_id
+                        == self.bot.settings["on_duty_category"]
+                    ):
+                        print(
+                            f"Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now..."
+                        )
                         new_officer.go_on_duty()
                         self._number_officers_on_duty_at_launch += 1
 
@@ -69,17 +74,19 @@ class OfficerManager:
                 self._officers_needing_removal.append(officer_id)
 
         print(f"Officers needing removal: {self._officers_needing_removal}")
-        
+
         # If there were officers on duty when the OfficerManager started, put a warning in stdout
         if self._number_officers_on_duty_at_launch > 1:
-            pretty_text = f'were {self._number_officers_on_duty_at_launch} officers'
+            pretty_text = f"were {self._number_officers_on_duty_at_launch} officers"
 
         if self._number_officers_on_duty_at_launch == 1:
-            pretty_text = f'was {self._number_officers_on_duty_at_launch} officer'
+            pretty_text = f"was {self._number_officers_on_duty_at_launch} officer"
 
         if self._number_officers_on_duty_at_launch > 0:
-            print(f'WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted.')
-        
+            print(
+                f"WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted."
+            )
+
         # Set up the automatically running code
         bot.loop.create_task(self.loop())
 
@@ -231,8 +238,8 @@ class OfficerManager:
         if display_name == None:
             member_name = str(officer_id)
         else:
-            member_name = f'{display_name} ({officer_id})'
-        
+            member_name = f"{display_name} ({officer_id})"
+
         await self.bot.sql.request(
             "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
         )
@@ -252,9 +259,7 @@ class OfficerManager:
                 i += 1
 
         msg_string = (
-            "WARNING: "
-            + member_name
-            + " has been removed from the LPD Officer Monitor"
+            "WARNING: " + member_name + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:
             msg_string += " because " + str(reason)
@@ -321,7 +326,7 @@ class OfficerManager:
     # ====================
 
     def build_officer_list(self):
-    content = """<!DOCTYPE html>
+        content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
@@ -346,7 +351,7 @@ class OfficerManager:
                         </tr>"""
         content = f"""{content}
                     </table></body></html>"""
-    
+
     def get_settings_role(self, name_id):
         """Returns a role object for given name_id"""
 
