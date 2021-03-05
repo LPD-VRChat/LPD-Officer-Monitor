@@ -434,6 +434,13 @@ class Officer:
                 (msg.id, msg.channel.id, self.id, string_send_time),
             )
 
+    async def renew_time(self):
+        """Inserts a 1 second on duty session into the Officer's logbook to trick the inactivity hook"""
+        start_time = datetime.timestamp(datetime.utcnow())
+        end_time = start_time + 1
+
+        await self.log_time(start_time, end_time)
+
     # Internal functions
 
     def _create_activity_dict(self, activity_tuple):
@@ -473,3 +480,4 @@ class Officer:
             return None
         # Filter all non-counted channels out
         return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)
+)

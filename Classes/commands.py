@@ -833,7 +833,6 @@ class Inactivity(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Review Leaves of Absence
     async def show_loa(self, ctx):
         """
         This command displays all Leave of Absence requests currently on file.
@@ -852,6 +851,59 @@ class Inactivity(commands.Cog):
         if i == 0:
             string = "There are no Leaves of Absence on file at this time."
         await ctx.channel.send(string)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def accept_inactive_reasons(self, ctx):
+        """Approve all inactivity reasons listed in the mentioned channels"""
+        inactive_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+
+        for channel in ctx.message.channel_mentions:
+            for message in channel.history:
+                if inactive_role in message.author.roles:
+                    await message.author.remove_roles(inactive_role)
+                    officer = self.bot.officer_manager.get_officer(message.author.id)
+                    await officer.renew_time()
+
+        unexcused_mentions = ""
+        for member in ctx.guild.members:
+            if inactive_role in member.roles:
+                unexcused_mentions = f"{unexcused_mentions}{member.mention}"
+
+        if len(unexcused_mentions) == 0:
+            await ctx.channel.send(
+                "Looks like everyone had a reason to be inactive. Renewed time for all inactive members."
+            )
+            return
+
+        await ctx.channel.send(
+            f"Looks like some people didn't give a reason for their inactivity. Renewing time for those who did. Here are the unexcused inactive members:"
+        )
+        await ctx.channel.send(f"{unexcused_mentions}")
+
+        auto_remove = await Confirm(
+            f"Would you like to automatically remove the LPD, Rank, and Inactive roles from these members?"
+        ).prompt(ctx)
+
+        if not auto_remove:
+            return
+
+        all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
+        all_lpd_ranks.append(self.bot.settings["lpd_role"])
+
+        for member in ctx.guild.members:
+            if inactive_role in member.roles:
+                for role in member.roles:
+                    if role.id in all_lpd_ranks:
+                        member.remove_roles(role)
+            await member.remove_roles(inactive_role)
+
+        await ctx.channel.send(
+            f"Removed LPD, Rank, and Inactive roles from the users above."
+        )
 
 
 class VRChatAccoutLink(commands.Cog):
