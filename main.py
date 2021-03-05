@@ -21,6 +21,7 @@ import commentjson as json
 from Classes.OfficerManager import OfficerManager
 from Classes.SQLManager import SQLManager
 from Classes.VRChatUserManager import VRChatUserManager
+from Classes.WebManager import WebManager
 from Classes.commands import (
     Time,
     Inactivity,
@@ -128,6 +129,10 @@ async def on_ready():
     # Start the VRChatUserManager
     print("Starting VRChat User Manager...")
     bot.user_manager = await VRChatUserManager.start(bot)
+
+    # Start the WebManager
+    print("Starting WebManager...")
+    bot.web_manager = await WebManager.start(bot)
 
     # Mark everything ready
     bot.everything_ready = True
