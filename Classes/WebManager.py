@@ -22,8 +22,8 @@ class WebManager:
         instance.app = app
         instance.host = host
         instance.port = port
-
-        app.run(host=host, port=port)
+        loop = asyncio.get_event_loop()
+        app.run(host=host, port=port, loop=loop)
 
     @app.route("/")
     async def testpage(request):
