@@ -5,7 +5,7 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import time
 import math
 import traceback
@@ -722,7 +722,7 @@ class Time(commands.Cog):
                     last_active_time = 0
 
                 # Get the patrol time
-                to_time = datetime.now(tz=timezone.utc)
+                to_time = datetime.utcnow()
                 from_time = to_time - timedelta(28)
                 patrol_time = await officer.get_time(from_time, to_time)
 
