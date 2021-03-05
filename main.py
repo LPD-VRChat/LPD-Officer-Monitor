@@ -114,10 +114,6 @@ async def on_ready():
     async def before_officer_removal(bot, officer_id):
         await bot.user_manager.remove_user(officer_id)
 
-    # Start the WebManager
-    print("Starting WebManager...")
-    bot.web_manager = await WebManager.start(bot)
-
     # Start the SQL Manager
     print("Starting SQL Manager...")
     bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
@@ -131,6 +127,10 @@ async def on_ready():
     # Start the VRChatUserManager
     print("Starting VRChat User Manager...")
     bot.user_manager = await VRChatUserManager.start(bot)
+
+    # Start the WebManager
+    print("Starting WebManager...")
+    bot.web_manager = await WebManager.start(bot)
 
     # Mark everything ready
     bot.everything_ready = True
