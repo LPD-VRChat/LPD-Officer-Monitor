@@ -1,7 +1,13 @@
+import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
+
 from sanic import Sanic
 from sanic.response import json, html
 
-app = Sanic(name="LPD_Officer_Monitor")
+loop = asyncio.get_event_loop()
+app = Sanic(name="LPD_Officer_Monitor", loop=loop)
 
 
 class WebManager:
