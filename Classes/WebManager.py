@@ -49,7 +49,7 @@ class WebManager:
         return html(content)
 
     @app.route("/officers")
-    async def display_officers(self, request):
+    async def display_officers(request, self):
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
