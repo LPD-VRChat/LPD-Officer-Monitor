@@ -480,4 +480,3 @@ class Officer:
             return None
         # Filter all non-counted channels out
         return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)
-)
