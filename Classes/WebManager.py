@@ -41,6 +41,9 @@ class WebManager:
         DISCORD_PROVIDER["CLIENT_ID"] = id
         DISCORD_PROVIDER["CLIENT_SECRET"] = secret
         DISCORD_PROVIDER[
+            "EMAAIL_REGEX"
+        ] = """\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"""
+        DISCORD_PROVIDER[
             "ENDPOINT_PATH"
         ] = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fofficers&response_type=code&scope=identify%20email"
 
