@@ -56,8 +56,9 @@ class WebManager:
         ] = "http://devbox.lolipd.com/callback"  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
 
+        global discord
         discord = DiscordOAuth2Session(app)
-
+        instance.discord = discord
         #   endpoint_path = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fcallback&response_type=code&scope=identify"
         loop = asyncio.get_event_loop()
         app.run(loop=loop, host=host, port=port)
@@ -120,7 +121,7 @@ class WebManager:
 
     @app.route("/officers")
     @requires_authorization
-    async def display_officers():
+    async def display_officers(self):
 
         user = await discord.fetch_user()
         content = f"""<!DOCTYPE html>
