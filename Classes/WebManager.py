@@ -153,8 +153,8 @@ class WebManager:
     @requires_authorization
     async def _officers_page():
         user = await discord.fetch_user()
-
-        if user.id not in bot.officer_manager.all_officer_ids:
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer:
             for id in bot.officer_manager.all_officer_ids:
                 print(id)
             content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
@@ -192,7 +192,7 @@ class WebManager:
     async def _moderation_page():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer.is_white_shirt:
+        if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
                 <body>
                 <div class="topnav">
