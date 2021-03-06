@@ -59,8 +59,8 @@ class WebManager:
         discord = DiscordOAuth2Session(app)
 
         #   endpoint_path = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fcallback&response_type=code&scope=identify"
-
-        app.run()
+        loop = asyncio.get_event_loop()
+        app.run(loop=loop)
 
     @app.route("/callback/")
     async def _callback():
