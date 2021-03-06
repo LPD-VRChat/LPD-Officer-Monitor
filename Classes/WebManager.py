@@ -111,9 +111,11 @@ class WebManager:
 
     @app.route("/")
     async def home():
-        content = HTML_HEAD.format('Welcome to the LPD!') +
-            """Welcome to the home page.""" +
-            HTML_FOOT
+        content = (
+            HTML_HEAD.format("Welcome to the LPD!")
+            + """Welcome to the home page."""
+            + HTML_FOOT
+        )
         return content
 
     @app.route("/login/")
