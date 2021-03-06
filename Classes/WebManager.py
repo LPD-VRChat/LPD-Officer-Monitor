@@ -102,7 +102,7 @@ class WebManager:
                         <a href="/login">Login</a>
                         <a href="/officers">Officers</a>
                         <a href="/officers_only">Officers only</a>
-                        <a href="/moderartion">Moderation</a>
+                        <a href="/moderation">Moderation</a>
                 </div>
                 Welcome to the home page!
             </body>
@@ -125,7 +125,7 @@ class WebManager:
                         <a href="/login">Login</a>
                         <a href="/officers">Officers</a>
                         <a href="/officers_only">Officers only</a>
-                        <a href="/moderartion">Moderation</a>
+                        <a href="/moderation">Moderation</a>
                 </div>
             Welcome {user.name} - your ID  is {user.id}<br><br>
             <table style="width:100%">
@@ -162,7 +162,7 @@ class WebManager:
                         <a href="/login">Login</a>
                         <a href="/officers">Officers</a>
                         <a href="/officers_only">Officers only</a>
-                        <a href="/moderartion">Moderation</a>
+                        <a href="/moderation">Moderation</a>
                 </div>
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
@@ -177,7 +177,7 @@ class WebManager:
                     <a href="/login">Login</a>
                     <a href="/officers">Officers</a>
                     <a href="/officers_only">Officers only</a>
-                    <a href="/moderartion">Moderation</a>
+                    <a href="/moderation">Moderation</a>
          </div>
         This page is for LPD Officers only. It looks like you're an officer, so welcome!
         </body>
@@ -198,7 +198,7 @@ class WebManager:
                         <a href="/login">Login</a>
                         <a href="/officers">Officers</a>
                         <a href="/officers_only">Officers only</a>
-                        <a href="/moderartion">Moderation</a>
+                        <a href="/moderation">Moderation</a>
                 </div>
                 Sorry, you're not staff.
                 </body>
@@ -212,7 +212,7 @@ class WebManager:
                     <a href="/login">Login</a>
                     <a href="/officers">Officers</a>
                     <a href="/officers_only">Officers only</a>
-                    <a href="/moderartion">Moderation</a>
+                    <a href="/moderation">Moderation</a>
              </div>
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
