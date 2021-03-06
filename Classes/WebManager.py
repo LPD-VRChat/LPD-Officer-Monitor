@@ -137,7 +137,7 @@ class WebManager:
         if code == "":
             return html("NO")
 
-            user = _request.ctx.session["user"]
+        user = _request.ctx.session["user"]
 
         content = f"""<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
