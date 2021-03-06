@@ -155,6 +155,8 @@ class WebManager:
         user = await discord.fetch_user()
 
         if user.id not in bot.officer_manager.all_officer_ids:
+            for id in bot.officer_manager.all_officer_ids:
+                print(id)
             content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
             <body>
                 <div class="topnav">
@@ -164,7 +166,6 @@ class WebManager:
                         <a href="/officers_only">Officers only</a>
                         <a href="/moderation">Moderation</a>
                 </div>
-            {x for x in bot.officer_manager.all_officer_ids}
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
             {HTML_FOOT}"""
