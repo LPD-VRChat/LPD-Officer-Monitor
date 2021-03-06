@@ -66,7 +66,7 @@ class WebManager:
         await request.app.session_interface.open(request)
 
     @app.middleware("response")
-    async def save_session(request, response):
+    async def save_session(_request: Request, response):
         # after each request save the session,
         # pass the response to set client cookies
         await request.app.session_interface.save(request, response)
@@ -94,7 +94,9 @@ class WebManager:
                 </style>
             </head>
             <body>
-                <a href="/officers">Table of All Officers</a><br><br>The following are test objects that do nothing<br>
+                <a href="/officers">Table of All Officers</a><br><br>
+                <a href="/login">Login</a><br><br>
+                The following are test objects that do nothing<br>
                 <input type="text" name="fname"><br>
                 <select>
                     <option value="volvo">Volvo</option>
