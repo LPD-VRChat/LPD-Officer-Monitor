@@ -40,6 +40,9 @@ class WebManager:
         DISCORD_PROVIDER["SCOPE"] = "identify email"
         DISCORD_PROVIDER["CLIENT_ID"] = id
         DISCORD_PROVIDER["CLIENT_SECRET"] = secret
+        DISCORD_PROVIDER[
+            "OAUTH_ENDPOINT_PATH"
+        ] = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fofficers&response_type=code&scope=identify%20email"
 
         app.config.OAUTH_PROVIDERS["default"] = DISCORD_PROVIDER
 
