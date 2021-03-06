@@ -126,7 +126,7 @@ class WebManager:
             </head>
             <body>Redirecting to Discord login...
             </body></html>"""
-            global userr
+        global userr
         return html(content)
 
     @app.route("/officers")
