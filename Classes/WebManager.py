@@ -3,8 +3,12 @@ import nest_asyncio
 
 nest_asyncio.apply()
 
+import aiohttp
 from sanic import Sanic
-from sanic.response import json, html
+from sanic.response import json, html, text, HTTPResponse
+from sanic.request import Request
+from sanic_session import InMemorySessionInterface
+from sanic_oauth.blueprint import oauth_blueprint, login_required
 
 app = Sanic(name="LPD_Officer_Monitor")
 
@@ -15,22 +19,58 @@ class WebManager:
         self.bot = bot
 
     @classmethod
-    async def start(cls, Bot, host="0.0.0.0", port=8080):
+    async def start(cls, Bot, host="0.0.0.0", port=8080, id=None, secret=None):
         global bot
         bot = Bot
         instance = cls(bot)
+
+        app.blueprint(oauth_blueprint)
+        app.session_interface = InMemorySessionInterface()
+
         instance.app = app
         instance.host = host
         instance.port = port
+
+        app.config.OAUTH_REDIRECT_URI = "http://devbox.lolipd.com/oauth"
+        app.config.OAUTH_SCOPE = "email"
+        app.config.OAUTH_PROVIDERS = defaultdict(dict)
+        DISCORD_PROVIDER = app.config.OAUTH_PROVIDERS["discord"]
+        DISCORD_PROVIDER["PROVIDER_CLASS"] = "sanic_oauth.providers.DiscordClient"
+        DISCORD_PROVIDER["SCOPE"] = "identify email"
+        DISCORD_PROVIDER["CLIENT_ID"] = id
+        DISCORD_PROVIDER["CLIENT_SECRET"] = secret
+
+        app.config.OAUTH_PROVIDERS["default"] = DISCORD_PROVIDER
+
         await app.create_server(host=host, port=port, return_asyncio_server=True)
 
+    @app.listener("before_server_start")
+    async def init_aiohttp_session(sanic_app, _loop) -> None:
+        sanic_app.async_session = aiohttp.ClientSession()
+
+    @app.listener("after_server_stop")
+    async def close_aiohttp_session(sanic_app, _loop) -> None:
+        await sanic_app.async_session.close()
+
+    @app.middleware("request")
+    async def add_session_to_request(request):
+        # before each request initialize a session
+        # using the client's request
+        await request.app.session_interface.open(request)
+
+    @app.middleware("response")
+    async def save_session(request, response):
+        # after each request save the session,
+        # pass the response to set client cookies
+        await request.app.session_interface.save(request, response)
+
     @app.route("/")
-    async def testpage(request):
+    async def home(_request) -> HTTPResponse:
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
-                <title>testpage</title>
+                <title>Welcome to the Loli Police Department!</title>
                 <style>
                     a:link,a:visited {
                     color: Blue;
@@ -64,7 +104,8 @@ class WebManager:
         return html(content)
 
     @app.route("/officers")
-    async def display_officers(request):
+    @login_required()
+    async def display_officers(_request: Request, user) -> HTTPResponse:
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>

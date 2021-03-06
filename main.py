@@ -130,7 +130,9 @@ async def on_ready():
 
     # Start the WebManager
     print("Starting WebManager...")
-    bot.web_manager = await WebManager.start(bot)
+    bot.web_manager = await WebManager.start(
+        bot, id=keys["Client_ID"], secret=keys["Client_secret"]
+    )
 
     # Mark everything ready
     bot.everything_ready = True
