@@ -2,18 +2,36 @@ import asyncio
 import nest_asyncio
 
 nest_asyncio.apply()
+from quart import Quart, redirect, url_for
+from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
-import aiohttp
-from collections import defaultdict
-from sanic import Sanic
-from sanic.response import json, html, text, HTTPResponse
-from sanic.request import Request
-from sanic_session import InMemorySessionInterface
-from sanic_oauth.blueprint import oauth_blueprint, login_required
+app = Quart("LPD Officer Monitor")
 
-app = Sanic(name="LPD_Officer_Monitor")
-global code
-code = ""
+
+@app.route("/callback/")
+async def callback():
+    await discord.callback()
+    return redirect(url_for(".me"))
+
+
+@app.errorhandler(Unauthorized)
+async def redirect_unauthorized(e):
+    return redirect(url_for("login"))
+
+
+@app.route("/me/")
+@requires_authorization
+async def me():
+    user = await discord.fetch_user()
+    return f"""
+    <html>
+        <head>
+            <title>{user.name}</title>
+        </head>
+        <body>
+            <img src='{user.avatar_url}' />
+        </body>
+    </html>"""
 
 
 class WebManager:
@@ -27,55 +45,46 @@ class WebManager:
         bot = Bot
         instance = cls(bot)
 
-        app.blueprint(oauth_blueprint)
-        app.session_interface = InMemorySessionInterface()
+        app.secret_key = b"random bytes representing quart secret key"
 
-        instance.app = app
-        instance.host = host
-        instance.port = port
+        app.config["DISCORD_CLIENT_ID"] = id  # Discord client ID.
+        app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
+        app.config[
+            "DISCORD_REDIRECT_URI"
+        ] = "http://devbox.lolipd.com/officers"  # URL to your callback endpoint.
+        app.config["DISCORD_BOT_TOKEN"] = ""  # Required to access BOT resources.
 
-        app.config.OAUTH_REDIRECT_URI = "http://devbox.lolipd.com/officers"
-        app.config.OAUTH_SCOPE = "email"
-        app.config.OAUTH_PROVIDERS = defaultdict(dict)
-        DISCORD_PROVIDER = app.config.OAUTH_PROVIDERS["discord"]
-        DISCORD_PROVIDER["PROVIDER_CLASS"] = "sanic_oauth.providers.DiscordClient"
-        DISCORD_PROVIDER["SCOPE"] = "identify email"
-        DISCORD_PROVIDER["CLIENT_ID"] = id
-        DISCORD_PROVIDER["CLIENT_SECRET"] = secret
-        DISCORD_PROVIDER[
-            "EMAIL_REGEX"
-        ] = """\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"""
-        DISCORD_PROVIDER[
-            "ENDPOINT_PATH"
-        ] = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fofficers&response_type=code&scope=identify%20email"
+        discord = DiscordOAuth2Session(app)
 
-        app.config.OAUTH_PROVIDERS["default"] = DISCORD_PROVIDER
+        #   endpoint_path = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fofficers&response_type=code&scope=identify%20email"
 
-        await app.create_server(host=host, port=port, return_asyncio_server=True)
+        app.run()
 
-    @app.listener("before_server_start")
-    async def init_aiohttp_session(sanic_app, _loop) -> None:
-        sanic_app.async_session = aiohttp.ClientSession()
+    @app.route("/callback/")
+    async def callback():
+        await discord.callback()
+        return redirect(url_for(".me"))
 
-    @app.listener("after_server_stop")
-    async def close_aiohttp_session(sanic_app, _loop) -> None:
-        await sanic_app.async_session.close()
+    @app.errorhandler(Unauthorized)
+    async def redirect_unauthorized(e):
+        return redirect(url_for("login"))
 
-    @app.middleware("request")
-    async def add_session_to_request(request):
-        # before each request initialize a session
-        # using the client's request
-        await request.app.session_interface.open(request)
-
-    @app.middleware("response")
-    async def save_session(request, response):
-        # after each request save the session,
-        # pass the response to set client cookies
-        print(request)
-        await request.app.session_interface.save(request, response)
+    @app.route("/me/")
+    @requires_authorization
+    async def me():
+        user = await discord.fetch_user()
+        return f"""
+        <html>
+            <head>
+                <title>{user.name}</title>
+            </head>
+            <body>
+                <img src='{user.avatar_url}' />
+            </body>
+        </html>"""
 
     @app.route("/")
-    async def home(_request) -> HTTPResponse:
+    async def home():
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -113,31 +122,15 @@ class WebManager:
                 <input type="radio" name="gender" value="male"> Male<br>
             </body>
             </html>"""
-        return html(content)
+        return content
 
-    @app.route("/login")
-    @login_required()
-    async def _login(_request: Request, user) -> HTTPResponse:
-        content = """<!DOCTYPE html>
-            <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-            <head>
-                <meta charset="utf-8" />
-                <title>Login Redirect</title>
-            </head>
-            <body>Redirecting to Discord login...
-            </body></html>"""
-        _request.ctx.session["user"] = user
-        return html(content)
+    @app.route("/login/")
+    async def login():
+        return await discord.create_session()
 
     @app.route("/officers")
-    # @login_required()
-    async def display_officers(_request: Request) -> HTTPResponse:
-        code = _request.args.get("code", "")
-
-        if code == "":
-            return html("NO")
-
-        user = _request.ctx.session["user"]
+    @requires_authorization()
+    async def display_officers():
 
         content = f"""<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -165,4 +158,4 @@ class WebManager:
         content = f"""{content}
                     </table></body></html>"""
 
-        return html(content)
+        return content
