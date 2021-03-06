@@ -237,7 +237,7 @@ class WebManager:
 
         return content
 
-    @app.route("/api/time/last_active")
+    @app.route("/api/time/last_active", methods=["POST", "GET"])
     @requires_authorization
     async def _web_last_active():
         officer_id = request.args.get("officer_id")
