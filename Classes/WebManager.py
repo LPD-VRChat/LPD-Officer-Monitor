@@ -12,6 +12,8 @@ from sanic_session import InMemorySessionInterface
 from sanic_oauth.blueprint import oauth_blueprint, login_required
 
 app = Sanic(name="LPD_Officer_Monitor")
+global code
+code = ""
 
 
 class WebManager:
