@@ -63,7 +63,7 @@ class WebManager:
         app.run()
 
     @app.route("/callback/")
-    async def callback():
+    async def _callback():
         await discord.callback()
         return redirect(url_for(".me"))
 
@@ -109,19 +109,7 @@ class WebManager:
             </head>
             <body>
                 <a href="/officers">Table of All Officers</a><br><br>
-                <a href="/login">Login</a><br><br>
-                The following are test objects that do nothing<br>
-                <input type="text" name="fname"><br>
-                <select>
-                    <option value="volvo">Volvo</option>
-                    <option value="saab">Saab</option>
-                    <option value="mercedes">Mercedes</option>
-                    <option value="audi">Audi</option>
-                </select><br>
-                <input type="submit" value="Submit"><br>
-                <input type="color" value="#ff0000"><br>
-                <input type="date" value="2017-06-01" min="1980-04-01" max="2099-04-30"><br>
-                <input type="radio" name="gender" value="male"> Male<br>
+                <a href="/login">Login</a>
             </body>
             </html>"""
         return content
@@ -134,13 +122,14 @@ class WebManager:
     @requires_authorization()
     async def display_officers():
 
+        user = await discord.fetch_user()
         content = f"""<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
                 <title>List of all officers</title>
             </head>
-            <body>{user}</br><br>
+            <body>Welcome {user.name} - your ID  is {user.id}<br><br>
             <table style="width:100%">
             <tr>
                 <th>Officer ID</th>
