@@ -32,7 +32,7 @@ class WebManager:
         instance.host = host
         instance.port = port
 
-        app.config.OAUTH_REDIRECT_URI = "http://devbox.lolipd.com/oauth"
+        app.config.OAUTH_REDIRECT_URI = "http://devbox.lolipd.com/officers"
         app.config.OAUTH_SCOPE = "email"
         app.config.OAUTH_PROVIDERS = defaultdict(dict)
         DISCORD_PROVIDER = app.config.OAUTH_PROVIDERS["discord"]
