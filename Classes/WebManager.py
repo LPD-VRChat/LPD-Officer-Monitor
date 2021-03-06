@@ -26,17 +26,9 @@ HTML_HEAD = """<!DOCTYPE html>
                     target-new: none;
                     }
                 </style>
-            </HEAD>
-            <BODY>
-                <div class="topnav">
-                    <a class="active" href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/officers">Officers</a>
-                        <a href="/officers_only">Officers only</a>
-                        <a href="/moderartion">Moderation</a>
-                </div>"""
+            </HEAD>"""
 
-HTML_FOOT = """</BODY></HTML>"""
+HTML_FOOT = """</HTML>"""
 
 
 @app.route("/callback/")
@@ -106,16 +98,25 @@ class WebManager:
     async def _me():
         user = await discord.fetch_user()
         return f"""{HTML_HEAD.format(user.name)}
-            <img src='{user.avatar_url}' />
+            <body>
+                <img src='{user.avatar_url}' />
+            </body>
             {HTML_FOOT}"""
 
     @app.route("/")
     async def home():
-        content = (
-            HTML_HEAD.format("Welcome to the LPD!")
-            + """Welcome to the home page."""
-            + HTML_FOOT
-        )
+        content = f"""{HTML_HEAD.format('Welcome to the LPD!')}
+            <body>
+                <div class="topnav">
+                    <a class="active" href="/">Home</a>
+                        <a href="/login">Login</a>
+                        <a href="/officers">Officers</a>
+                        <a href="/officers_only">Officers only</a>
+                        <a href="/moderartion">Moderation</a>
+                </div>
+                Welcome to the home page!
+            </body>
+            {HTML_FOOT}"""
         return content
 
     @app.route("/login/")
@@ -128,6 +129,14 @@ class WebManager:
 
         user = await discord.fetch_user()
         content = f"""{HTML_HEAD.format('Table of Officers')}
+            <body>
+                <div class="topnav">
+                    <a class="active" href="/">Home</a>
+                        <a href="/login">Login</a>
+                        <a href="/officers">Officers</a>
+                        <a href="/officers_only">Officers only</a>
+                        <a href="/moderartion">Moderation</a>
+                </div>
             Welcome {user.name} - your ID  is {user.id}<br><br>
             <table style="width:100%">
             <tr>
@@ -146,7 +155,7 @@ class WebManager:
                         <td>{officer.squad}</td>
                         </tr>"""
         content = f"""{content}
-                    </table>{HTML_FOOT}"""
+                    </table></body>{HTML_FOOT}"""
 
         return content
 
@@ -157,14 +166,32 @@ class WebManager:
 
         if user.id not in bot.officer_manager.all_officer_ids:
             content = f"""{htmL_HEAD.format('This page is restricted to LPD Officers only')}
+            <body>
+                <div class="topnav">
+                    <a class="active" href="/">Home</a>
+                        <a href="/login">Login</a>
+                        <a href="/officers">Officers</a>
+                        <a href="/officers_only">Officers only</a>
+                        <a href="/moderartion">Moderation</a>
+                </div>
             Sorry, this page is restricted to Officers of the LPD only.
+            </body>
             {HTML_FOOT}"""
 
             return content
 
         content = f"""{HTML_HEAD.format('LPD Officers only')}
-            This page is for LPD Officers only. It looks like you're an officer, so welcome!
-            {HTML_FOOT}"""
+        <body>
+        <div class="topnav">
+                <a class="active" href="/">Home</a>
+                    <a href="/login">Login</a>
+                    <a href="/officers">Officers</a>
+                    <a href="/officers_only">Officers only</a>
+                    <a href="/moderartion">Moderation</a>
+         </div>
+        This page is for LPD Officers only. It looks like you're an officer, so welcome!
+        </body>
+        {HTML_FOOT}"""
 
         return content
 
@@ -175,13 +202,31 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer.is_white_shirt():
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                <body>
+                <div class="topnav">
+                    <a class="active" href="/">Home</a>
+                        <a href="/login">Login</a>
+                        <a href="/officers">Officers</a>
+                        <a href="/officers_only">Officers only</a>
+                        <a href="/moderartion">Moderation</a>
+                </div>
                 Sorry, you're not staff.
+                </body>
                 {HTML_FOOT}"""
 
             return content
         content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
+            <body>
+            <div class="topnav">
+                <a class="active" href="/">Home</a>
+                    <a href="/login">Login</a>
+                    <a href="/officers">Officers</a>
+                    <a href="/officers_only">Officers only</a>
+                    <a href="/moderartion">Moderation</a>
+             </div>
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
+            </body>
             {HTML_FOOT}"""
 
         return content
