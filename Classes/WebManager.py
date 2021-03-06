@@ -155,7 +155,7 @@ class WebManager:
         user = await discord.fetch_user()
 
         if user.id not in bot.officer_manager.all_officer_ids:
-            content = f"""{htmL_HEAD.format('This page is restricted to LPD Officers only')}
+            content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
             <body>
                 <div class="topnav">
                     <a class="active" href="/">Home</a>
