@@ -126,8 +126,7 @@ class WebManager:
             </head>
             <body>Redirecting to Discord login...
             </body></html>"""
-        global userr
-        userr = user
+        _request.ctx.session["user"] = user
         return html(content)
 
     @app.route("/officers")
@@ -138,13 +137,15 @@ class WebManager:
         if code == "":
             return html("NO")
 
+            user = _request.ctx.session["user"]
+
         content = f"""<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
                 <title>List of all officers</title>
             </head>
-            <body>{userr}
+            <body>{user}</br><br>
             <table style="width:100%">
             <tr>
                 <th>Officer ID</th>
