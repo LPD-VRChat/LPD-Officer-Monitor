@@ -164,7 +164,7 @@ class WebManager:
                         <a href="/officers_only">Officers only</a>
                         <a href="/moderation">Moderation</a>
                 </div>
-            {bot.officer_manager.all_officer_ids}
+            {x for x in bot.officer_manager.all_officer_ids}
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
             {HTML_FOOT}"""
