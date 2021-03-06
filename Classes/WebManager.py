@@ -73,7 +73,7 @@ class WebManager:
 
     @app.route("/me/")
     @requires_authorization
-    async def me():
+    async def _me():
         user = await discord.fetch_user()
         return f"""
         <html>
