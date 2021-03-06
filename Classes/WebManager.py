@@ -41,7 +41,7 @@ class WebManager:
         DISCORD_PROVIDER["CLIENT_ID"] = id
         DISCORD_PROVIDER["CLIENT_SECRET"] = secret
         DISCORD_PROVIDER[
-            "EMAAIL_REGEX"
+            "EMAIL_REGEX"
         ] = """\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"""
         DISCORD_PROVIDER[
             "ENDPOINT_PATH"
