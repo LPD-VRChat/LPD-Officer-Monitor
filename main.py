@@ -131,7 +131,10 @@ async def on_ready():
     # Start the WebManager
     print("Starting WebManager...")
     bot.web_manager = await WebManager.start(
-        bot, id=keys["Client_ID"], secret=keys["Client_secret"]
+        bot,
+        id=keys["Client_ID"],
+        secret=keys["Client_secret"],
+        token=keys["Discord_token"],
     )
 
     # Mark everything ready

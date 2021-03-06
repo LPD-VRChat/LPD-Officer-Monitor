@@ -40,7 +40,9 @@ class WebManager:
         self.bot = bot
 
     @classmethod
-    async def start(cls, Bot, host="0.0.0.0", port=8080, id=None, secret=None):
+    async def start(
+        cls, Bot, host="0.0.0.0", port=8080, id=None, secret=None, token=None
+    ):
         global bot
         bot = Bot
         instance = cls(bot)
@@ -51,12 +53,12 @@ class WebManager:
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
         app.config[
             "DISCORD_REDIRECT_URI"
-        ] = "http://devbox.lolipd.com/officers"  # URL to your callback endpoint.
-        app.config["DISCORD_BOT_TOKEN"] = ""  # Required to access BOT resources.
+        ] = "http://devbox.lolipd.com/callback"  # URL to your callback endpoint.
+        app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
 
         discord = DiscordOAuth2Session(app)
 
-        #   endpoint_path = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fofficers&response_type=code&scope=identify%20email"
+        #   endpoint_path = "https://discord.com/api/oauth2/authorize?client_id=764230749992779806&redirect_uri=http%3A%2F%2Fdevbox.lolipd.com%2Fcallback&response_type=code&scope=identify"
 
         app.run()
 
