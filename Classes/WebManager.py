@@ -77,7 +77,7 @@ class WebManager:
     @app.route("/callback/")
     async def _callback():
         await discord.callback()
-        return redirect(url_for(".home"))
+        return redirect(url_for("."))
 
     @app.errorhandler(Unauthorized)
     async def redirect_unauthorized(e):
@@ -190,7 +190,7 @@ class WebManager:
     async def _moderation_page():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer.is_white_shirt():
+        if not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
                 <body>
                 <div class="topnav">
