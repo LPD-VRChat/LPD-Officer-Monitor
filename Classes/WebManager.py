@@ -119,7 +119,7 @@ class WebManager:
         return await discord.create_session()
 
     @app.route("/officers")
-    @requires_authorization()
+    @requires_authorization
     async def display_officers():
 
         user = await discord.fetch_user()
