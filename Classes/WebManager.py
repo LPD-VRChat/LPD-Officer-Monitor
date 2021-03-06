@@ -66,10 +66,11 @@ class WebManager:
         await request.app.session_interface.open(request)
 
     @app.middleware("response")
-    async def save_session(_request: Request, response):
+    async def save_session(request, response):
         # after each request save the session,
         # pass the response to set client cookies
-        await _request.app.session_interface.save(_request, response)
+        print(request)
+        await request.app.session_interface.save(request, response)
 
     @app.route("/")
     async def home(_request) -> HTTPResponse:
