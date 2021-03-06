@@ -143,7 +143,7 @@ class WebManager:
 
     @app.route("/officers")
     # @login_required()
-    async def display_officers(_request: Request, user) -> HTTPResponse:
+    async def display_officers(_request: Request) -> HTTPResponse:
         content = """<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
