@@ -126,6 +126,7 @@ class WebManager:
             </head>
             <body>Redirecting to Discord login...
             </body></html>"""
+            global userr
         return html(content)
 
     @app.route("/officers")
@@ -136,13 +137,13 @@ class WebManager:
         if code == "":
             return html("NO")
 
-        content = """<!DOCTYPE html>
+        content = f"""<!DOCTYPE html>
             <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="utf-8" />
                 <title>List of all officers</title>
             </head>
-            <body>
+            <body>{userr}
             <table style="width:100%">
             <tr>
                 <th>Officer ID</th>
