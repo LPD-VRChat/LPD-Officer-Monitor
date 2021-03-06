@@ -240,6 +240,12 @@ class WebManager:
     @app.route("/api/time/last_active", methods=["POST", "GET"])
     @requires_authorization
     async def _web_last_active():
+
+        if request.method == "POST":
+            data = request.form
+
+        print(data)
+
         officer_id = request.args.get("officer_id")
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
