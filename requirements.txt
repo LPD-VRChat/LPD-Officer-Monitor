@@ -8,5 +8,6 @@ aiomysql
 git+https://github.com/Rapptz/discord-ext-menus
 sanic==20.3.0
 sanic-oauth==0.4.0
+sanic-session==0.7.3
 aiohttp==3.3.2
 multidict==4.7.6

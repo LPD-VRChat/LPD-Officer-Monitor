@@ -4,6 +4,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import aiohttp
+from collections import defaultdict
 from sanic import Sanic
 from sanic.response import json, html, text, HTTPResponse
 from sanic.request import Request
