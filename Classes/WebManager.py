@@ -2,8 +2,17 @@ import asyncio
 import nest_asyncio
 
 nest_asyncio.apply()
-from quart import Quart, redirect, url_for
+from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
+
+from Classes.commands import (
+    Time,
+    Inactivity,
+    VRChatAccoutLink,
+    Applications,
+    Moderation,
+    Other,
+)
 
 app = Quart("LPD Officer Monitor")
 
@@ -218,7 +227,59 @@ class WebManager:
              </div>
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
+            <form action="/api/time/last_active" method="POST">
+                <label for="officer_id">Officer ID</label>
+                <input type="number" id="officer_id" name = "officer_id">
+                <input type="submit" value="Get activity">
+            </form>
             </body>
             {HTML_FOOT}"""
 
+        return content
+
+    @app.route("/api/time/last_active")
+    @requires_authorization
+    async def _web_last_active():
+        officer_id = request.args.get("officer_id")
+        officer = bot.officer_manager.get_officer(officer_id)
+        if officer is None:
+            content = f"""{HTML_HEAD.format('No such Officer')}
+                The officer you have requested does not exist. Please make sure the ID is correct.
+                </body>{HTML_FOOT}"""
+            return content
+
+        # Get the time
+        result = await officer.get_all_activity(
+            bot.officer_manager.all_monitored_channels
+        )
+
+        # Send the embed
+        time_results = sorted(
+            time_results, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+        )
+        TABLE = """<table style="width:50%">
+            <tr>
+            <th>Time</th>
+            <th>Location</th>
+            </tr>
+            """
+        for result in time_results:
+            if result["channel_id"] == None:
+                TABLE = f"""{TABLE}
+                    <tr>
+                    <td>{result['time']}</td>
+                    <td>{result['other_activity']}</td>
+                    </tr>
+                    """
+            else:
+                TABLE = f"""{TABLE}
+                    <tr>
+                    <td>{result['time']}</td>
+                    <td>{bot.get_channel(result['channel_id']).name}</td>
+                    <tr>
+                    """
+        TABLE = f"""{TABLE}
+            </table>"""
+
+        content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
         return content
