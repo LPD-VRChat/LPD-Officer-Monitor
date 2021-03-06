@@ -13,18 +13,8 @@ HTML_HEAD = """<!DOCTYPE html>
                 <meta charset="utf-8" />
                 <TITLE>{}</TITLE>
                 <style>
-                    a:link,a:visited {
-                    color: Blue;
-                    background-color: White;
-                    text-decoration: underline;
-                    target-new: none;
-                    }
-                    a:hover {
-                    color: Blue;
-                    background-color: Yellow;
-                    text-decoration: underline;
-                    target-new: none;
-                    }
+                    a:link,a:visited {{color: Blue; background-color: White; text-decoration: underline; target-new: none;}}
+                    a:hover {{color: Blue; background-color: Yellow; text-decoration: underline; target-new: none;}}
                 </style>
             </HEAD>"""
 
