@@ -31,7 +31,7 @@ HTML_HEAD = """<!DOCTYPE html>
                 <script language="javascript"> 
 
                     function DoPost(officer_id){{
-                        $.post("/api/time/last_activity", {{ officer_id: officer_id }} );
+                        $.post("/api/time/last_activity", {{ officer_id: officer_id }}, function() {{ window.location.href = '/api/time/last_activity' }} );
                     }}
 
 </script>
