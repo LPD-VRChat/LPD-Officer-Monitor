@@ -133,7 +133,7 @@ async def on_ready():
     bot.user_manager = await VRChatUserManager.start(bot)
 
     # Start the WebManager
-    print("Starting WebManager...")
+    print("Starting Web Manager...")
     bot.web_manager = await WebManager.start(
         bot,
         id=keys["Client_ID"],
