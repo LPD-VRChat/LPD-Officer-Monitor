@@ -27,11 +27,14 @@ HTML_HEAD = """<!DOCTYPE html>
                 <style>
                     a:link,a:visited {{color: Blue; background-color: White; text-decoration: underline; target-new: none;}}
                     a:hover {{color: Blue; background-color: Yellow; text-decoration: underline; target-new: none;}}
-                    .inline {{display: inline;}}
-                    .link-button {{background: none;border: none;color: blue;text-decoration: underline;cursor: pointer;font-size: 1em;font-family: serif;}}
-                    .link-button:focus {{outline: none;}}
-                    .link-button:active {{color:red;}}
                 </style>
+                <script language="javascript"> 
+
+                    function DoPost(officer_id){{
+                        $.post("/api/time/last_activity", {{ officer_id: officer_id }} );
+                    }}
+
+</script>
             </HEAD>"""
 
 HTML_FOOT = """</HTML>"""
@@ -159,7 +162,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<form method="post" action="/api/time/last_active" class="inline"><input type="hidden" name="officer_id" value="{officer.id}"><button type="submit" name="Get activity" value="Get activity" class="link-button">Get activity</button></form>' if bot.officer_manager.get_officer(user.id) is not None else ''}
+                        {f'<td><a href="javascript:DoPost({officer_id})">Get activity</a></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
