@@ -266,7 +266,7 @@ class WebManager:
 
         # Send the embed
         time_results = sorted(
-            time_results, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+            result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
         )
         TABLE = """<table style="width:50%">
             <tr>
