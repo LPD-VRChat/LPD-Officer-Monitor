@@ -156,7 +156,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<td><form action="/api/time/last_activity" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+                        {f'<td><form action="/api/time/last_active" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
