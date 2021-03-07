@@ -53,19 +53,19 @@ async def redirect_unauthorized(e):
     return redirect(url_for("login"))
 
 
-@app.route("/me/")
-@requires_authorization
-async def me():
-    user = await discord.fetch_user()
-    return f"""
-    <html>
-        <head>
-            <title>{user.name}</title>
-        </head>
-        <body>
-            <img src='{user.avatar_url}' />
-        </body>
-    </html>"""
+# @app.route("/me/")
+# @requires_authorization
+# async def me():
+#     user = await discord.fetch_user()
+#     return f"""
+#     <html>
+#         <head>
+#             <title>{user.name}</title>
+#         </head>
+#         <body>
+#             <img src='{user.avatar_url}' />
+#         </body>
+#     </html>"""
 
 
 class WebManager:
@@ -103,16 +103,6 @@ class WebManager:
     @app.errorhandler(Unauthorized)
     async def redirect_unauthorized(e):
         return redirect(url_for("login"))
-
-    # @app.route("/me/")
-    # @requires_authorization
-    # async def _me():
-    #     user = await discord.fetch_user()
-    #     return f"""{HTML_HEAD.format(user.name)}
-    #         <body>
-    #             <img src='{user.avatar_url}' />
-    #         </body>
-    #         {HTML_FOOT}"""
 
     @app.route("/")
     async def home():
