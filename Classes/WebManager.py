@@ -98,7 +98,7 @@ class WebManager:
     @app.route("/callback/")
     async def _callback():
         await discord.callback()
-        return redirect(url_for("."))
+        return redirect(url_for("/"))
 
     @app.errorhandler(Unauthorized)
     async def redirect_unauthorized(e):
