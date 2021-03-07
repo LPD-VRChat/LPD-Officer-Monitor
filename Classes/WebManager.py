@@ -162,7 +162,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<td><a href="javascript:DoPost({officer_id})">Get activity</a></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+                        {f'<td><a href="javascript:DoPost({officer.id})">Get activity</a></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
