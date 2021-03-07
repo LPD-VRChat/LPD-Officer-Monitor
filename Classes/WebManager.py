@@ -27,14 +27,8 @@ HTML_HEAD = """<!DOCTYPE html>
                 <style>
                     a:link,a:visited {{color: Blue; background-color: White; text-decoration: underline; target-new: none;}}
                     a:hover {{color: Blue; background-color: Yellow; text-decoration: underline; target-new: none;}}
+                    .btn-link {{border: none; outline: none; background: none; cursor: pointer; color: #0000EE; padding: 0; text-decoration: underline; font-family: inherit; font-size: inherit;}}
                 </style>
-                <script language="javascript"> 
-
-                    function DoPost(officer_id){{
-                        $.post("/api/time/last_activity", {{ officer_id: officer_id }}, function() {{ window.location.href = '/api/time/last_activity' }} );
-                    }}
-
-</script>
             </HEAD>"""
 
 HTML_FOOT = """</HTML>"""
@@ -162,7 +156,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<td><a href="javascript:DoPost({officer.id})">Get activity</a></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+                        {f'<td><form action="/api/time/last_activity" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
