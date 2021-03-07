@@ -104,15 +104,15 @@ class WebManager:
     async def redirect_unauthorized(e):
         return redirect(url_for("login"))
 
-    @app.route("/me/")
-    @requires_authorization
-    async def _me():
-        user = await discord.fetch_user()
-        return f"""{HTML_HEAD.format(user.name)}
-            <body>
-                <img src='{user.avatar_url}' />
-            </body>
-            {HTML_FOOT}"""
+    # @app.route("/me/")
+    # @requires_authorization
+    # async def _me():
+    #     user = await discord.fetch_user()
+    #     return f"""{HTML_HEAD.format(user.name)}
+    #         <body>
+    #             <img src='{user.avatar_url}' />
+    #         </body>
+    #         {HTML_FOOT}"""
 
     @app.route("/")
     async def home():
