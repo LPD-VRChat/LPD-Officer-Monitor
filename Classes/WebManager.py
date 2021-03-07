@@ -42,17 +42,6 @@ NAVBAR = """<div class="topnav">
 HTML_FOOT = """</HTML>"""
 
 
-@app.route("/callback/")
-async def callback():
-    await discord.callback()
-    return redirect(url_for(".me"))
-
-
-@app.errorhandler(Unauthorized)
-async def redirect_unauthorized(e):
-    return redirect(url_for("login"))
-
-
 # @app.route("/me/")
 # @requires_authorization
 # async def me():
