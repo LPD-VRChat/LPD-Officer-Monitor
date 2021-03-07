@@ -246,10 +246,10 @@ class WebManager:
         else:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
+        print(data.__dict__)
         officer_id = data.get("officer_id")
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
-            print(officer)
             content = f"""{HTML_HEAD.format('No such Officer')}
                 The officer you have requested does not exist. Please make sure the ID is correct.
                 </body>{HTML_FOOT}"""
