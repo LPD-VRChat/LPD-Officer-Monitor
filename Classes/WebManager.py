@@ -159,7 +159,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<form method="post" action="/api/time/last_active" class="inline"><input type="hidden" name="officer_id" value="{officer_id}"><button type="submit" name="Get activity" value="Get activity" class="link-button">Get activity</button></form>' if bot.officer_manager.get_officer(user.id) is not None else ''}
+                        {f'<form method="post" action="/api/time/last_active" class="inline"><input type="hidden" name="officer_id" value="{officer.id}"><button type="submit" name="Get activity" value="Get activity" class="link-button">Get activity</button></form>' if bot.officer_manager.get_officer(user.id) is not None else ''}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
