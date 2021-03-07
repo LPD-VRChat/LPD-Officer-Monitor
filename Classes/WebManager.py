@@ -155,6 +155,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
+                        {f'<form action="/api/time/last_active" method="post"><input type="submit" name="officer_id" value="{officer.id}" /></form>' if bot.officer_manager.get_officer(await discord.fetch_user().id) not None}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
@@ -250,12 +251,8 @@ class WebManager:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
         officer_id = int(data["officer_id"])
-        # content = f"""{HTML_HEAD.format('No such Officer')}
-        #     Officer IDs must be an 18 digit Discord ID integer.
-        #     </body>{HTML_FOOT}"""
-        # return content
-
         officer = bot.officer_manager.get_officer(officer_id)
+
         if officer is None:
             content = f"""{HTML_HEAD.format('No such Officer')}
                 The officer you have requested does not exist. Please make sure the ID is correct.
