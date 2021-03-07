@@ -242,12 +242,11 @@ class WebManager:
     async def _web_last_active():
 
         if request.method == "POST":
-            data = request.form
+            data = await request.form
         else:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
-        print(data.__getattribute__)
-        officer_id = data.__getattribute__("officer_id")
+        officer_id = data["officer_id"]
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
             content = f"""{HTML_HEAD.format('No such Officer')}
