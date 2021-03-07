@@ -2,6 +2,9 @@ import asyncio
 import nest_asyncio
 
 nest_asyncio.apply()
+
+import time
+
 from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
