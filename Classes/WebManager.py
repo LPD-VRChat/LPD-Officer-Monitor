@@ -243,9 +243,10 @@ class WebManager:
 
         if request.method == "POST":
             data = request.form
+        else:
+            return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
-        print(data["officer_id"])
-        officer_id = data["officer_id"]
+        officer_id = data.get("officer_id")
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
             print(officer)
