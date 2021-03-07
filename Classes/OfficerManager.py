@@ -3,7 +3,9 @@
 # ====================
 
 # Standard
-import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
 import traceback
 from datetime import datetime, timezone
 

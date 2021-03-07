@@ -3,7 +3,9 @@
 # ====================
 
 # Standard
-import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
 import math
 import time
 from datetime import datetime
