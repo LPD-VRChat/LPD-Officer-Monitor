@@ -246,13 +246,20 @@ class WebManager:
         else:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
-        officer_id = data["officer_id"]
+        try:
+            officer_id = int(data["officer_id"])
+        except:
+            content = f"""{HTML_HEAD.format('No such Officer')}
+                Officer IDs must be an 18 digit Discord ID integer.
+                </body>{HTML_FOOT}"""
+            return content
+
         officer = bot.officer_manager.get_officer(officer_id)
-        # if officer is None:
-        #     content = f"""{HTML_HEAD.format('No such Officer')}
-        #         The officer you have requested does not exist. Please make sure the ID is correct.
-        #         </body>{HTML_FOOT}"""
-        #     return content
+        if officer is None:
+            content = f"""{HTML_HEAD.format('No such Officer')}
+                The officer you have requested does not exist. Please make sure the ID is correct.
+                </body>{HTML_FOOT}"""
+            return content
 
         # Get the time
         result = await officer.get_all_activity(
