@@ -244,7 +244,10 @@ class WebManager:
         if request.method == "POST":
             data = request.form
 
-        print(data)
+
+        for key in f.keys():
+            for value in f.getlist(key):
+                print key,":",value
 
         officer_id = request.args.get("officer_id")
         officer = bot.officer_manager.get_officer(officer_id)
