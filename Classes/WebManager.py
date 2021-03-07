@@ -247,6 +247,8 @@ class WebManager:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
         officer_id = data["officer_id"]
+        print(data)
+        print(officer_id)
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
             content = f"""{HTML_HEAD.format('No such Officer')}
