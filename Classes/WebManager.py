@@ -246,13 +246,11 @@ class WebManager:
         else:
             return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
 
-        try:
-            officer_id = int(data["officer_id"])
-        except:
-            content = f"""{HTML_HEAD.format('No such Officer')}
-                Officer IDs must be an 18 digit Discord ID integer.
-                </body>{HTML_FOOT}"""
-            return content
+        officer_id = int(data["officer_id"])
+        # content = f"""{HTML_HEAD.format('No such Officer')}
+        #     Officer IDs must be an 18 digit Discord ID integer.
+        #     </body>{HTML_FOOT}"""
+        # return content
 
         officer = bot.officer_manager.get_officer(officer_id)
         if officer is None:
