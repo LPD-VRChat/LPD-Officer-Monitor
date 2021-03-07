@@ -155,7 +155,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<form action="/api/time/last_active" method="post"><input type="submit" name="officer_id" value="{officer.id}" /></form>' if bot.officer_manager.get_officer(await discord.fetch_user().id) not None}
+                        {f'<form action="/api/time/last_active" method="post"><input type="submit" name="officer_id" value="{officer.id}" /></form>' if bot.officer_manager.get_officer(await discord.fetch_user().id) is not None}
                         </tr>"""
         content = f"""{content}
                     </table></body>{HTML_FOOT}"""
