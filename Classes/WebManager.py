@@ -31,6 +31,14 @@ HTML_HEAD = """<!DOCTYPE html>
                 </style>
             </HEAD>"""
 
+NAVBAR = """<div class="topnav">
+                    <a class="active" href="/">Home</a>
+                    <a href="/login">Login</a>
+                    <a href="/officers">Officers</a>
+                    <a href="/officers_only">Officers only</a>
+                    <a href="/moderation">Moderation</a>
+            </div>"""
+
 HTML_FOOT = """</HTML>"""
 
 
@@ -110,13 +118,7 @@ class WebManager:
     async def home():
         content = f"""{HTML_HEAD.format('Welcome to the LPD!')}
             <body>
-                <div class="topnav">
-                    <a class="active" href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/officers">Officers</a>
-                        <a href="/officers_only">Officers only</a>
-                        <a href="/moderation">Moderation</a>
-                </div>
+            {NAVBAR}
                 Welcome to the home page!
             </body>
             {HTML_FOOT}"""
@@ -133,13 +135,7 @@ class WebManager:
         user = await discord.fetch_user()
         content = f"""{HTML_HEAD.format('Table of Officers')}
             <body>
-                <div class="topnav">
-                    <a class="active" href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/officers">Officers</a>
-                        <a href="/officers_only">Officers only</a>
-                        <a href="/moderation">Moderation</a>
-                </div>
+            {NAVBAR}
             Welcome {user.name} - your ID  is {user.id}<br><br>
             <table style="width:100%">
             <tr>
@@ -173,13 +169,7 @@ class WebManager:
                 print(id)
             content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
             <body>
-                <div class="topnav">
-                    <a class="active" href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/officers">Officers</a>
-                        <a href="/officers_only">Officers only</a>
-                        <a href="/moderation">Moderation</a>
-                </div>
+            {NAVBAR}
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
             {HTML_FOOT}"""
@@ -188,13 +178,7 @@ class WebManager:
 
         content = f"""{HTML_HEAD.format('LPD Officers only')}
         <body>
-        <div class="topnav">
-                <a class="active" href="/">Home</a>
-                    <a href="/login">Login</a>
-                    <a href="/officers">Officers</a>
-                    <a href="/officers_only">Officers only</a>
-                    <a href="/moderation">Moderation</a>
-         </div>
+        {NAVBAR}
         This page is for LPD Officers only. It looks like you're an officer, so welcome!
         </body>
         {HTML_FOOT}"""
@@ -209,13 +193,7 @@ class WebManager:
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
                 <body>
-                <div class="topnav">
-                    <a class="active" href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/officers">Officers</a>
-                        <a href="/officers_only">Officers only</a>
-                        <a href="/moderation">Moderation</a>
-                </div>
+                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
@@ -223,13 +201,7 @@ class WebManager:
             return content
         content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
             <body>
-            <div class="topnav">
-                <a class="active" href="/">Home</a>
-                    <a href="/login">Login</a>
-                    <a href="/officers">Officers</a>
-                    <a href="/officers_only">Officers only</a>
-                    <a href="/moderation">Moderation</a>
-             </div>
+            {NAVBAR}
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
             <form action="/api/time/last_active" method="POST">
@@ -255,7 +227,7 @@ class WebManager:
         officer = bot.officer_manager.get_officer(officer_id)
 
         if officer is None:
-            content = f"""{HTML_HEAD.format('No such Officer')}
+            content = f"""{HTML_HEAD.format('No such Officer')}{NAVBAR}
                 The officer you have requested does not exist. Please make sure the ID is correct.
                 </body>{HTML_FOOT}"""
             return content
@@ -269,12 +241,15 @@ class WebManager:
         time_results = sorted(
             result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
         )
-        TABLE = """<table style="width:50%">
+        TABLE = f"""<table style="width:50%">
+            <tr>
+            <td>{officer.display_name}</td>
+            <td>{officer.id}</td>
+            </tr>
             <tr>
             <th>Time</th>
             <th>Location</th>
-            </tr>
-            """
+            </tr>"""
         for result in time_results:
             if result["channel_id"] == None:
                 TABLE = f"""{TABLE}
@@ -293,5 +268,5 @@ class WebManager:
         TABLE = f"""{TABLE}
             </table>"""
 
-        content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
+        content = f"""{HTML_HEAD.format('Last Activity')}<BODY>{NAVBAR}{TABLE}</BODY>{HTML_FOOT}"""
         return content
