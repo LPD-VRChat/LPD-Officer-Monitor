@@ -303,7 +303,6 @@ class Time(commands.Cog):
         if officer_id == None:
             ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
@@ -407,7 +406,6 @@ class Time(commands.Cog):
         if officer_id == None:
             ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
