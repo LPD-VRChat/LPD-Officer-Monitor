@@ -133,6 +133,7 @@ class WebManager:
                 <th>Name</th>
                 <th>On Duty?</th>
                 <th>Squad</th>
+                <th>Get last_activity</th>
             </tr>
             </thead>
             <tbody>"""
@@ -236,8 +237,8 @@ class WebManager:
         TABLE = f"""<table class="blueTable">
             <thead>
             <tr>
-            <td>{officer.display_name}</td>
-            <td>{officer.id}</td>
+            <th>{officer.display_name}</th>
+            <th>{officer.id}</th>
             </tr>
             <tr>
             <th>Time</th>
