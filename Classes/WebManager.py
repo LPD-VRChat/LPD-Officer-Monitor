@@ -28,6 +28,16 @@ HTML_HEAD = """<!DOCTYPE html>
                     a:link,a:visited {{color: Blue; background-color: White; text-decoration: underline; target-new: none;}}
                     a:hover {{color: Blue; background-color: Yellow; text-decoration: underline; target-new: none;}}
                     .btn-link {{border: none; outline: none; background: none; cursor: pointer; color: #0000EE; padding: 0; text-decoration: underline; font-family: inherit; font-size: inherit;}}
+                    table.blueTable {{border: 1px solid #1C6EA4; background-color: #EEEEEE; width: 80%; text-align: left; border-collapse: collapse;}}
+                    table.blueTable td, table.blueTable th {{border: 1px solid #AAAAAA; padding: 3px 2px;}}
+                    table.blueTable tbody td {{font-size: 13px;}}
+                    table.blueTable tr:nth-child(even) {{background: #D0E4F5;}}
+                    table.blueTable thead {{background: #1C6EA4; background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%); background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%); background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%); border-bottom: 2px solid #444444;}}
+                    table.blueTable thead th {{font-size: 15px; font-weight: bold;  color: #FFFFFF;  border-left: 2px solid #D0E4F5;}}
+                    table.blueTable thead th:first-child {{border-left: none;}}
+                    table.blueTable tfoot td {{font-size: 14px;}}
+                    table.blueTable tfoot .links {{text-align: right;}}
+                    table.blueTable tfoot .links a{{display: inline-block; background: #1C6EA4; color: #FFFFFF; padding: 2px 8px; border-radius: 5px;}}
                 </style>
             </HEAD>"""
 
@@ -84,6 +94,10 @@ class WebManager:
         loop = asyncio.get_event_loop()
         app.run(loop=loop, host=host, port=port)
 
+    @app.route("/login/")
+    async def login():
+        return await discord.create_session()
+
     @app.route("/callback/")
     async def _callback():
         await discord.callback()
@@ -103,10 +117,6 @@ class WebManager:
             {HTML_FOOT}"""
         return content
 
-    @app.route("/login/")
-    async def login():
-        return await discord.create_session()
-
     @app.route("/officers")
     @requires_authorization
     async def display_officers():
@@ -116,13 +126,16 @@ class WebManager:
             <body>
             {NAVBAR}
             Welcome {user.name} - your ID  is {user.id}<br><br>
-            <table style="width:100%">
+            <table class="blueTable">
+            <thead>
             <tr>
                 <th>Officer ID</th>
                 <th>Name</th>
                 <th>On Duty?</th>
                 <th>Squad</th>
-            </tr>"""
+            </tr>
+            </thead>
+            <tbody>"""
 
         for officer in bot.officer_manager.all_officers:
             content = f"""{content}
@@ -134,7 +147,7 @@ class WebManager:
                         {f'<td><form action="/api/time/last_active" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
-                    </table></body>{HTML_FOOT}"""
+                    </tbody></table></body>{HTML_FOOT}"""
 
         return content
 
@@ -220,7 +233,8 @@ class WebManager:
         time_results = sorted(
             result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
         )
-        TABLE = f"""<table style="width:50%">
+        TABLE = f"""<table class="blueTable">
+            <thead>
             <tr>
             <td>{officer.display_name}</td>
             <td>{officer.id}</td>
@@ -228,7 +242,9 @@ class WebManager:
             <tr>
             <th>Time</th>
             <th>Location</th>
-            </tr>"""
+            </tr>
+            </thead>
+            <tbody>"""
         for result in time_results:
             if result["channel_id"] == None:
                 TABLE = f"""{TABLE}
@@ -245,7 +261,7 @@ class WebManager:
                     <tr>
                     """
         TABLE = f"""{TABLE}
-            </table>"""
+            </tbody></table>"""
 
         content = f"""{HTML_HEAD.format('Last Activity')}<BODY>{NAVBAR}{TABLE}</BODY>{HTML_FOOT}"""
         return content
