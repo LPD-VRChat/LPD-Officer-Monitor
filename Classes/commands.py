@@ -11,6 +11,9 @@ import math
 import traceback
 import json
 import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
 
 # Community
 import discord

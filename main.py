@@ -4,6 +4,10 @@
 
 # Standard
 import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
+
 import datetime
 import time
 import sys
