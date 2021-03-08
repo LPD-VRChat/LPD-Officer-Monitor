@@ -8,7 +8,7 @@ import time
 from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
-from Classes.extra_functions import role_id_index
+from Classes.extra_functions import role_id_index as _role_id_index
 
 
 # from Classes.commands import (
@@ -449,7 +449,7 @@ class WebManager:
 
             return content
 
-        role_id_index = role_id_index(bot.settings)
+        role_id_index = _role_id_index(bot.settings)
 
         TABLE = f"""<table class="blueTable">
                     <tr>
