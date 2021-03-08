@@ -457,7 +457,7 @@ class WebManager:
 
         return content
 
-    @app.route("/moderation/inactivity")
+    @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
     async def _mark_inactive():
         user = await discord.fetch_user()
@@ -523,7 +523,8 @@ class WebManager:
                     </tr>"""
 
         for officer in inactive_officers:
-            TABLE = f"""<tr>
+            TABLE = f"""{TABLE}
+                        <tr>
                         <td>{officer[0].display_name}</td>
                         <td>{officer[1]}</td>
                         <td>{'Yes' if officer[2] else 'No'}</td>
