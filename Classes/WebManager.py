@@ -506,7 +506,7 @@ class WebManager:
                 )
                 last_activity = last_activity["time"]
                 if last_activity < oldest_valid:
-                    inactive_officers.append(officer, last_activity, has_role)
+                    inactive_officers.append([officer, last_activity, has_role])
                 # except:
                 #     pass
                 #     return f"""{HTML_HEAD.format('Inactivity - NO DATA')}<br><br>It looks like there isn't any patrol data... </body>{HTML_FOOT}"""
