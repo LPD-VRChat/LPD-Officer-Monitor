@@ -476,6 +476,7 @@ class WebManager:
             officer_id = int(data["officer_id"])
             officer = bot.officer_manager.get_officer(officer_id)
             await officer.member.add_roles(role)
+            return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/moderation/inactivity"></head><body></body></html>"""
 
         # Get all fields from LeaveTimes
         loa_entries = await bot.officer_manager.get_loa()
