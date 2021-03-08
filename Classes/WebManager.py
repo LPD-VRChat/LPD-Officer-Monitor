@@ -25,8 +25,6 @@ HTML_HEAD = """<!DOCTYPE html>
                 <meta charset="utf-8" />
                 <TITLE>{}</TITLE>
                 <style>
-                    a:link,a:visited {{color: Blue; background-color: White; text-decoration: underline; target-new: none;}}
-                    a:hover {{color: Blue; background-color: Yellow; text-decoration: underline; target-new: none;}}
                     .btn-link {{border: none; outline: none; background: none; cursor: pointer; color: #0000EE; padding: 0; text-decoration: underline; font-family: inherit; font-size: inherit;}}
                     table.blueTable {{border: 1px solid #1C6EA4; background-color: #EEEEEE; width: 80%; text-align: left; border-collapse: collapse;}}
                     table.blueTable td, table.blueTable th {{border: 1px solid #AAAAAA; padding: 3px 2px;}}
