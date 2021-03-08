@@ -410,7 +410,7 @@ class WebManager:
 
         guild = bot.get_guild(bot.settings["Server_ID"])
         for vrcuser in bot.user_manager.all_users:
-            member = guild.get_member(user[0])
+            member = guild.get_member(vrcuser[0])
             TABLE = f"""{TABLE}
                         <tr>
                         <td>{member.display_name}</td>
