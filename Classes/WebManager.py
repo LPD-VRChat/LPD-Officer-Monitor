@@ -116,8 +116,7 @@ NAVBAR = """<div class="navbar">
                 <a href="/officers_only">Officers only</a>
                 
                 <div class="dropdown">
-                    <button class="dropbtn">Moderation
-                        <!--<i class="fa fa-caret-down></i>-->
+                    <button class="dropbtn">Moderation &darr;
                     </button>
                     
                     <div class="dropdown-content">
