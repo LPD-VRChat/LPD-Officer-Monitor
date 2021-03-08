@@ -4,6 +4,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import time
+from datetime import datetime, timedelta
 
 from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
@@ -110,9 +111,10 @@ HTML_HEAD = """<!DOCTYPE html>
                     display: block;
                     }}
                 </style>
-            </HEAD>"""
-
-NAVBAR = """<div class="navbar">
+                <link rel='icon' href='https://static.wikia.nocookie.net/vrchat-legends/images/1/1e/LPD_Logo_low.png/revision/latest?cb=20200401012542' type='image/x-icon'/ >
+            </HEAD>
+            <BODY>
+            "<div class="navbar">
                 <a href="/">Home</a>
                 <a href="/login">Login</a>
                 <a href="/officers">Officers</a>
@@ -127,6 +129,7 @@ NAVBAR = """<div class="navbar">
                         <a href="/moderation/loa">Leaves of Absence</a>
                         <a href="/moderation/vrclist">VRChat Name List</a>
                         <a href="/moderation/rtv">Officers by Role</a>
+                        <a href="/moderation/inactivity">Inactive Officers</a>
                     </div>
                 </div>
 
@@ -178,8 +181,6 @@ class WebManager:
     @app.route("/")
     async def home():
         content = f"""{HTML_HEAD.format('Welcome to the LPD!')}
-            <body>
-            {NAVBAR}
                 Welcome to the home page!
             </body>
             {HTML_FOOT}"""
@@ -191,8 +192,6 @@ class WebManager:
 
         user = await discord.fetch_user()
         content = f"""{HTML_HEAD.format('Table of Officers')}
-            <body>
-            {NAVBAR}
             Welcome {user.name} - your ID  is {user.id}<br><br>
             <table class="blueTable">
             <thead>
@@ -230,8 +229,6 @@ class WebManager:
             for id in bot.officer_manager.all_officer_ids:
                 print(id)
             content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
-            <body>
-            {NAVBAR}
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
             {HTML_FOOT}"""
@@ -254,16 +251,12 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                <body>
-                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
 
             return content
         content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
-            <body>
-            {NAVBAR}
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
             <form action="/api/time/last_active" method="POST">
@@ -284,8 +277,6 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                <body>
-                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
@@ -301,7 +292,7 @@ class WebManager:
         officer = bot.officer_manager.get_officer(officer_id)
 
         if officer is None:
-            content = f"""{HTML_HEAD.format('No such Officer')}{NAVBAR}
+            content = f"""{HTML_HEAD.format('No such Officer')}
                 The officer you have requested does not exist. Please make sure the ID is correct.
                 </body>{HTML_FOOT}"""
             return content
@@ -345,7 +336,7 @@ class WebManager:
         TABLE = f"""{TABLE}
             </tbody></table>"""
 
-        content = f"""{HTML_HEAD.format('Last Activity')}<BODY>{NAVBAR}{TABLE}</BODY>{HTML_FOOT}"""
+        content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
         return content
 
     @app.route("/moderation/loa")
@@ -355,8 +346,6 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                <body>
-                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
@@ -386,7 +375,6 @@ class WebManager:
                         </tr>"""
 
         content = f"""{HTML_HEAD.format('Leave of Absence Entries')}
-                      <BODY>{NAVBAR}
                       {TABLE}
                       </TABLE>
                       </BODY>
@@ -401,8 +389,6 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                <body>
-                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
@@ -425,8 +411,6 @@ class WebManager:
                         </tr>"""
 
         content = f"""{HTML_HEAD.format('VRChat Name List')}
-                      <BODY>
-                      {NAVBAR}
                       {TABLE}
                       </TABLE>
                       </BODY>
@@ -441,8 +425,6 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
             content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                <body>
-                {NAVBAR}
                 Sorry, you're not staff.
                 </body>
                 {HTML_FOOT}"""
@@ -468,8 +450,88 @@ class WebManager:
                             </tr>"""
 
         content = f"""{HTML_HEAD.format('LPD Members by Rank')}
-                      <BODY>
-                      {NAVBAR}
+                      {TABLE}
+                      </TABLE>
+                      </BODY>
+                      {HTML_FOOT}"""
+
+        return content
+
+    @app.route("/moderation/inactivity")
+    @requires_authorization
+    async def _mark_inactive():
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+
+        role = bot.officer_manager.guild.get_role(bot.settings["inactive_role"])
+        if request.method == "POST":
+            data = await request.form
+            officer_id = int(data["officer_id"])
+            officer = bot.officer_manager.get_officer(officer_id)
+            await officer.member.add_roles(role)
+
+        # Get all fields from LeaveTimes
+        loa_entries = await bot.officer_manager.get_loa()
+
+        loa_officer_ids = []
+
+        # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
+        for entry in loa_entries:
+            loa_officer_ids.append(entry[0])
+
+        # For everyone in the server where their role is in the role ladder,
+        # get their last activity times, or if no last activity time, use
+        # the time we started monitoring them. Exclude those we have already
+        # determined have a valid Leave of Absence
+
+        # Get a date range for our LOAs, and make some dictionaries to work in
+        max_inactive_days = bot.settings["max_inactive_days"]
+        oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
+        inactive_officers = []
+        role_ids = role_id_index(bot.settings)
+
+        for officer in bot.officer_manager.all_officers:
+            if officer.id not in loa_officer_ids:
+                has_role = False
+                if role in officer.member.roles:
+                    has_role = True
+                last_activity = await officer.get_last_activity(
+                    bot.officer_manager.all_monitored_channels
+                )
+                last_activity = last_activity["time"]
+                try:
+                    if last_activity < oldest_valid:
+                        inactive_officers.append(officer, last_activity, has_role)
+                except:
+                    return f"""{HTML_HEAD.format('Inactivity - NO DATA')}<br><br>It looks like there isn't any patrol data... </body>{HTML_FOOT}"""
+
+        if len(inactive_officers) == 0:
+            return f"""{HTML_HEAD.format('Inactivity - NONE INACTIVE')}<br><br>It doesn't look like there are any inactive officers!</body>{HTML_FOOT}"""
+
+        TABLE = f"""<table class="blueTable">
+                    <tr>
+                    <th>Officer name</th>
+                    <th>Last activity</th>
+                    <th>Already Marked</th>
+                    <th>Mark Inactive</th>
+                    </tr>"""
+
+        for officer in inactive_officers:
+            TABLE = f"""<tr>
+                        <td>{officer[0].display_name}</td>
+                        <td>{officer[1]}</td>
+                        <td>{'Yes' if officer[2] else 'No'}</td>
+                        <td>{f'<td><form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id" value="{officer[0].id}" class="btn-link">Get activity</button></form></td>' if not officer[2] else ''}
+                        </tr>"""
+
+        content = f"""{HTML_HEAD.format('Inactive Officers')}
                       {TABLE}
                       </TABLE>
                       </BODY>
