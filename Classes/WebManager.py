@@ -505,12 +505,11 @@ class WebManager:
                     bot.officer_manager.all_monitored_channels
                 )
                 last_activity = last_activity["time"]
-                try:
-                    if last_activity < oldest_valid:
-                        inactive_officers.append(officer, last_activity, has_role)
-                except:
-                    pass
-                    # return f"""{HTML_HEAD.format('Inactivity - NO DATA')}<br><br>It looks like there isn't any patrol data... </body>{HTML_FOOT}"""
+                if last_activity < oldest_valid:
+                    inactive_officers.append(officer, last_activity, has_role)
+                # except:
+                #     pass
+                #     return f"""{HTML_HEAD.format('Inactivity - NO DATA')}<br><br>It looks like there isn't any patrol data... </body>{HTML_FOOT}"""
 
         if len(inactive_officers) == 0:
             return f"""{HTML_HEAD.format('Inactivity - NONE INACTIVE')}<br><br>It doesn't look like there are any inactive officers!</body>{HTML_FOOT}"""
