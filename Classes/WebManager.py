@@ -361,15 +361,18 @@ class WebManager:
         TABLE = f"""<table class="blueTable">
                     <tr>
                     <th>Officer ID</th>
+                    <th>Officer Name</th>
                     <th>Start date</th>
                     <th>End date</th>
                     <th>Reason</th>
                     </tr>"""
 
         for entry in loa_entries:
+            officer = bot.officer_manager.get_officer(entry[0])
             TABLE = f"""{TABLE}
                         <tr>
                         <td>{entry[0]}</td>
+                        <td>{officer.display_name}
                         <td>{entry[1]}</td>
                         <td>{entry[2]}</td>
                         <td>{entry[3]}</td>
@@ -411,7 +414,7 @@ class WebManager:
             TABLE = f"""{TABLE}
                         <tr>
                         <td>{member.display_name}</td>
-                        <td>{user[1]}</td>
+                        <td>{vrcuser[1]}</td>
                         </tr>"""
 
         content = f"""{HTML_HEAD.format('VRChat Name List')}
