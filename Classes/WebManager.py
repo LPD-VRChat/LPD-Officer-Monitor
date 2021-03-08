@@ -527,7 +527,7 @@ class WebManager:
                         <td>{officer[0].display_name}</td>
                         <td>{officer[1]}</td>
                         <td>{'Yes' if officer[2] else 'No'}</td>
-                        <td>{f'<td><form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id" value="{officer[0].id}" class="btn-link">Get activity</button></form></td>' if not officer[2] else ''}
+                        {f'<td><form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id" value="{officer[0].id}" class="btn-link">Mark inactive</button></form></td>' if not officer[2] else ''}
                         </tr>"""
 
         content = f"""{HTML_HEAD.format('Inactive Officers')}
