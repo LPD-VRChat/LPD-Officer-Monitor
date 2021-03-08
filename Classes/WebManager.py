@@ -38,33 +38,96 @@ HTML_HEAD = """<!DOCTYPE html>
                     table.blueTable tfoot td {{font-size: 14px;}}
                     table.blueTable tfoot .links {{text-align: right;}}
                     table.blueTable tfoot .links a{{display: inline-block; background: #1C6EA4; color: #FFFFFF; padding: 2px 8px; border-radius: 5px;}}
+                    /* Navbar container */
+                    .navbar {{
+                    overflow: hidden;
+                    background-color: #333;
+                    font-family: Arial;
+                    }}
+
+                    /* Links inside the navbar */
+                    .navbar a {{
+                    float: left;
+                    font-size: 16px;
+                    color: white;
+                    text-align: center;
+                    padding: 14px 16px;
+                    text-decoration: none;
+                    }}
+
+                    /* The dropdown container */
+                    .dropdown {{
+                    float: left;
+                    overflow: hidden;
+                    }}
+
+                    /* Dropdown button */
+                    .dropdown .dropbtn {{
+                    font-size: 16px;
+                    border: none;
+                    outline: none;
+                    color: white;
+                    padding: 14px 16px;
+                    background-color: inherit;
+                    font-family: inherit; /* Important for vertical align on mobile phones */
+                    margin: 0; /* Important for vertical align on mobile phones */
+                    }}
+
+                    /* Add a red background color to navbar links on hover */
+                    .navbar a:hover, .dropdown:hover .dropbtn {{
+                    background-color: red;
+                    }}
+
+                    /* Dropdown content (hidden by default) */
+                    .dropdown-content {{
+                    display: none;
+                    position: absolute;
+                    background-color: #f9f9f9;
+                    min-width: 160px;
+                    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                    z-index: 1;
+                    }}
+
+                    /* Links inside the dropdown */
+                    .dropdown-content a {{
+                    float: none;
+                    color: black;
+                    padding: 12px 16px;
+                    text-decoration: none;
+                    display: block;
+                    text-align: left;
+                    }}
+
+                    /* Add a grey background color to dropdown links on hover */
+                    .dropdown-content a:hover {{
+                    background-color: #ddd;
+                    }}
+
+                    /* Show the dropdown menu on hover */
+                    .dropdown:hover .dropdown-content {{
+                    display: block;
+                    }}
                 </style>
             </HEAD>"""
 
-NAVBAR = """<div class="topnav">
+NAVBAR = """<div class="navbar">
                     <a class="active" href="/">Home</a>
                     <a href="/login">Login</a>
                     <a href="/officers">Officers</a>
                     <a href="/officers_only">Officers only</a>
-                    <a href="/moderation">Moderation</a>
+                    <div class="dropdown">
+                        <button class="dropbtn">Moderation
+                            <i class="fa fa-caret-down></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="/moderation">Moderation</a>
+                            <a href="/moderation/loa">Leaves of Absence</a>
+                            <a href="/moderation/vrclist">VRChat Name List</a>
+                        </div>
+                    </div>
             </div>"""
 
 HTML_FOOT = """</HTML>"""
-
-
-# @app.route("/me/")
-# @requires_authorization
-# async def me():
-#     user = await discord.fetch_user()
-#     return f"""
-#     <html>
-#         <head>
-#             <title>{user.name}</title>
-#         </head>
-#         <body>
-#             <img src='{user.avatar_url}' />
-#         </body>
-#     </html>"""
 
 
 class WebManager:
@@ -136,6 +199,7 @@ class WebManager:
                 <th>Get last_activity</th>
             </tr>
             </thead>
+
             <tbody>"""
 
         for officer in bot.officer_manager.all_officers:
@@ -211,6 +275,18 @@ class WebManager:
     @requires_authorization
     async def _web_last_active():
 
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                <body>
+                {NAVBAR}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+
         if request.method == "POST":
             data = await request.form
         else:
@@ -265,4 +341,87 @@ class WebManager:
             </tbody></table>"""
 
         content = f"""{HTML_HEAD.format('Last Activity')}<BODY>{NAVBAR}{TABLE}</BODY>{HTML_FOOT}"""
+        return content
+
+    @app.route("/moderation/loa")
+    @requires_authorization
+    async def _leave_of_absence():
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                <body>
+                {NAVBAR}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+
+        loa_entries = await bot.officer_manager.get_loa()
+
+        TABLE = f"""<table class="blueTable">
+                    <tr>
+                    <th>Officer ID</th>
+                    <th>Start date</th>
+                    <th>End date</th>
+                    <th>Reason</th>
+                    </tr>"""
+
+        for entry in loa_entries:
+            TABLE = f"""{TABLE}
+                        <tr>
+                        <td>{entry[0]}</td>
+                        <td>{entry[1]}</td>
+                        <td>{entry[2]}</td>
+                        <td>{entry[3]}</td>
+                        </tr>"""
+
+        content = f"""{HTML_HEAD.format('Leave of Absence Entries')}
+                      <BODY>{NAVBAR}
+                      {TABLE}
+                      </TABLE>
+                      </BODY>
+                      {HTML_FOOT}"""
+
+        return content
+
+    @app.route("/moderation/vrclist")
+    @requires_authorization
+    async def _vrchat_list():
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                <body>
+                {NAVBAR}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+
+        TABLE = f"""<table class="blueTable">
+                    <tr>
+                    <th>Officer name</th>
+                    <th>VRChat Name</th>
+                    </tr>"""
+
+        guild = bot.get_guild(bot.settings["Server_ID"])
+        for vrcuser in bot.user_manager.all_users:
+            member = guild.get_member(user[0])
+            TABLE = f"""{TABLE}
+                        <tr>
+                        <td>{member.display_name}</td>
+                        <td>{user[1]}</td>
+                        </tr>"""
+
+        content = f"""{HTML_HEAD.format('VRChat Name List')}
+                      <BODY>
+                      {NAVBAR}
+                      {TABLE}
+                      </TABLE>
+                      </BODY>
+                      {HTML_FOOT}"""
+
         return content
