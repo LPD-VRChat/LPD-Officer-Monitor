@@ -236,8 +236,6 @@ class WebManager:
             return content
 
         content = f"""{HTML_HEAD.format('LPD Officers only')}
-        <body>
-        {NAVBAR}
         This page is for LPD Officers only. It looks like you're an officer, so welcome!
         </body>
         {HTML_FOOT}"""
