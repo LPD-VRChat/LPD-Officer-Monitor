@@ -773,7 +773,6 @@ class Inactivity(commands.Cog):
         max_inactive_days = self.bot.settings["max_inactive_days"]
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
-        role_ids = role_id_index(self.bot.settings)
 
         for officer in self.bot.officer_manager.all_officers:
             if officer.id not in loa_officer_ids:
