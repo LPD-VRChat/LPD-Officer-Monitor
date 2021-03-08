@@ -8,14 +8,17 @@ import time
 from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
-from Classes.commands import (
-    Time,
-    Inactivity,
-    VRChatAccoutLink,
-    Applications,
-    Moderation,
-    Other,
-)
+from Classes.extra_functions import role_id_index
+
+
+# from Classes.commands import (
+#     Time,
+#     Inactivity,
+#     VRChatAccoutLink,
+#     Applications,
+#     Moderation,
+#     Other,
+# )
 
 app = Quart("LPD Officer Monitor")
 
@@ -123,6 +126,7 @@ NAVBAR = """<div class="navbar">
                         <a href="/moderation">Moderation</a>
                         <a href="/moderation/loa">Leaves of Absence</a>
                         <a href="/moderation/vrclist">VRChat Name List</a>
+                        <a href="/moderation/rtv">Officers by Role</a>
                     </div>
                 </div>
 
@@ -421,6 +425,49 @@ class WebManager:
                         </tr>"""
 
         content = f"""{HTML_HEAD.format('VRChat Name List')}
+                      <BODY>
+                      {NAVBAR}
+                      {TABLE}
+                      </TABLE>
+                      </BODY>
+                      {HTML_FOOT}"""
+
+        return content
+
+    @app.route("/moderation/rtv")
+    @requires_authorization
+    async def _rtv():
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                <body>
+                {NAVBAR}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+
+        role_id_index = role_id_index(bot.settings)
+
+        TABLE = f"""<table class="blueTable">
+                    <tr>
+                    <th>Officer Name</th>
+                    <th>Rank</th>
+                    </tr>
+                    """
+
+        for role_id in role_id_index:
+            role = bot.officer_manager.guild.get_role(role_id)
+            for member in role.members:
+                TABLE = f"""{TABLE}
+                            <tr>
+                            <td>{member.display_name}</td>
+                            <td>{role.name}</td>
+                            </tr>"""
+
+        content = f"""{HTML_HEAD.format('LPD Members by Rank')}
                       <BODY>
                       {NAVBAR}
                       {TABLE}
