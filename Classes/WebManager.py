@@ -353,13 +353,13 @@ class WebManager:
         loa_entries = await bot.officer_manager.get_loa()
 
         TABLE = f"""<table class="blueTable">
-                    <tr>
+                    <thead><tr>
                     <th>Officer ID</th>
                     <th>Officer Name</th>
                     <th>Start date</th>
                     <th>End date</th>
                     <th>Reason</th>
-                    </tr>"""
+                    </thead></tr>"""
 
         for entry in loa_entries:
             officer = bot.officer_manager.get_officer(entry[0])
