@@ -109,7 +109,7 @@ HTML_HEAD = """<!DOCTYPE html>
             </HEAD>"""
 
 NAVBAR = """<div class="navbar">
-                    <a class="active" href="/">Home</a>
+                    <a href="/">Home</a>
                     <a href="/login">Login</a>
                     <a href="/officers">Officers</a>
                     <a href="/officers_only">Officers only</a>
