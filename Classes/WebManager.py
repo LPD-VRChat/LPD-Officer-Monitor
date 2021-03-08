@@ -117,7 +117,7 @@ NAVBAR = """<div class="navbar">
                 
                 <div class="dropdown">
                     <button class="dropbtn">Moderation
-                        //<i class="fa fa-caret-down></i>
+                        <!--<i class="fa fa-caret-down></i>-->
                     </button>
                     
                     <div class="dropdown-content">
