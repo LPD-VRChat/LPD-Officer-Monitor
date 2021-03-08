@@ -36,6 +36,7 @@ HTML_HEAD = """<!DOCTYPE html>
                     table.blueTable tfoot td {{font-size: 14px;}}
                     table.blueTable tfoot .links {{text-align: right;}}
                     table.blueTable tfoot .links a{{display: inline-block; background: #1C6EA4; color: #FFFFFF; padding: 2px 8px; border-radius: 5px;}}
+                    
                     /* Navbar container */
                     .navbar {{
                     overflow: hidden;
@@ -109,20 +110,23 @@ HTML_HEAD = """<!DOCTYPE html>
             </HEAD>"""
 
 NAVBAR = """<div class="navbar">
-                    <a href="/">Home</a>
-                    <a href="/login">Login</a>
-                    <a href="/officers">Officers</a>
-                    <a href="/officers_only">Officers only</a>
-                    <div class="dropdown">
-                        <button class="dropbtn">Moderation
-                            <i class="fa fa-caret-down></i>
-                        </button>
-                        <div class="dropdown-content">
-                            <a href="/moderation">Moderation</a>
-                            <a href="/moderation/loa">Leaves of Absence</a>
-                            <a href="/moderation/vrclist">VRChat Name List</a>
-                        </div>
+                <a href="/">Home</a>
+                <a href="/login">Login</a>
+                <a href="/officers">Officers</a>
+                <a href="/officers_only">Officers only</a>
+                
+                <div class="dropdown">
+                    <button class="dropbtn">Moderation
+                        //<i class="fa fa-caret-down></i>
+                    </button>
+                    
+                    <div class="dropdown-content">
+                        <a href="/moderation">Moderation</a>
+                        <a href="/moderation/loa">Leaves of Absence</a>
+                        <a href="/moderation/vrclist">VRChat Name List</a>
                     </div>
+                </div>
+
             </div>"""
 
 HTML_FOOT = """</HTML>"""
