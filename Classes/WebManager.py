@@ -394,10 +394,10 @@ class WebManager:
             return content
 
         TABLE = f"""<table class="blueTable">
-                    <tr>
+                    <thead><tr>
                     <th>Officer name</th>
                     <th>VRChat Name</th>
-                    </tr>"""
+                    </thead></tr>"""
 
         guild = bot.get_guild(bot.settings["Server_ID"])
         for vrcuser in bot.user_manager.all_users:
@@ -432,10 +432,10 @@ class WebManager:
         role_id_index = _role_id_index(bot.settings)
 
         TABLE = f"""<table class="blueTable">
-                    <tr>
+                    <thead><tr>
                     <th>Officer Name</th>
                     <th>Rank</th>
-                    </tr>
+                    </thead></tr>
                     """
 
         for role_id in role_id_index:
@@ -514,12 +514,12 @@ class WebManager:
             return f"""{HTML_HEAD.format('Inactivity - NONE INACTIVE')}<br><br>It doesn't look like there are any inactive officers!</body>{HTML_FOOT}"""
 
         TABLE = f"""<table class="blueTable">
-                    <tr>
+                    <thead><tr>
                     <th>Officer name</th>
                     <th>Last activity</th>
                     <th>Already Marked</th>
                     <th>Mark Inactive</th>
-                    </tr>"""
+                    </thead></tr>"""
 
         for officer in inactive_officers:
             TABLE = f"""{TABLE}
