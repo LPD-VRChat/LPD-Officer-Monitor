@@ -114,7 +114,7 @@ HTML_HEAD = """<!DOCTYPE html>
                 <link rel='icon' href='https://static.wikia.nocookie.net/vrchat-legends/images/1/1e/LPD_Logo_low.png/revision/latest?cb=20200401012542' type='image/x-icon'/ >
             </HEAD>
             <BODY>
-            "<div class="navbar">
+            <div class="navbar">
                 <a href="/">Home</a>
                 <a href="/login">Login</a>
                 <a href="/officers">Officers</a>
