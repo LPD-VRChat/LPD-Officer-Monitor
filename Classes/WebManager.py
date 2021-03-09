@@ -5,11 +5,13 @@ nest_asyncio.apply()
 
 import time
 from datetime import datetime, timedelta
+import re
 
 from quart import Quart, redirect, url_for, request
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
 from Classes.extra_functions import role_id_index as _role_id_index
+
 
 
 # from Classes.commands import (
@@ -130,8 +132,10 @@ HTML_HEAD = """<!DOCTYPE html>
                         <a href="/moderation/vrclist">VRChat Name List</a>
                         <a href="/moderation/rtv">Officers by Role</a>
                         <a href="/moderation/inactivity">Inactive Officers</a>
+                        <a href="/moderation/patrol_time">Patrol Time</a>
                     </div>
                 </div>
+                <a href="https://teamup.com/ksfnmscvrenv3hkk32">Event Calendar</a>
 
             </div>"""
 
@@ -186,13 +190,135 @@ class WebManager:
             {HTML_FOOT}"""
         return content
 
-    @app.route("/officers")
+    @app.route("/officers", methods=["POST", "GET"])
     @requires_authorization
     async def display_officers():
-
         user = await discord.fetch_user()
+
+        if request.method == "POST":
+            user = await discord.fetch_user()
+            officer = bot.officer_manager.get_officer(user.id)
+            if not officer or not officer.is_white_shirt:
+                content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                    Sorry, you're not staff.
+                    </body>
+                    {HTML_FOOT}"""
+
+                return content
+            
+            data = await request.form
+            officer_id = int(data["officer_id"])
+            officer = bot.officer_manager.get_officer(officer_id)
+
+            if officer is None:
+                content = f"""{HTML_HEAD.format('No such Officer')}
+                    The officer you have requested does not exist. Please make sure the ID is correct.
+                    </body>{HTML_FOOT}"""
+                return content
+
+            # Get the time
+            result = await officer.get_all_activity(
+                bot.officer_manager.all_monitored_channels
+            )
+
+            # Send the embed
+            time_results = sorted(
+                result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+            )
+            TABLE = f"""<table class="blueTable">
+                <thead>
+                <tr>
+                <th>{officer.display_name}</th>
+                <th>{officer.id}</th>
+                </tr>
+                <tr></tr>
+                <tr>
+                <th>Time</th>
+                <th>Location</th>
+                </tr>
+                </thead>
+                <tbody>"""
+            for result in time_results:
+                if result["channel_id"] == None:
+                    TABLE = f"""{TABLE}
+                        <tr>
+                        <td>{result['time']}</td>
+                        <td>{result['other_activity']}</td>
+                        </tr>
+                        """
+                else:
+                    TABLE = f"""{TABLE}
+                        <tr>
+                        <td>{result['time']}</td>
+                        <td>{bot.get_channel(result['channel_id']).name}</td>
+                        <tr>
+                        """
+            TABLE = f"""{TABLE}
+                </tbody></table>"""
+
+            content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
+            return content
+
+        count_officers = """<table class="blueTable">
+                          <thead><tr><th>Rank</th>
+                          <th>Count</th></tr></thead>"""
+        if bot.officer_manager.get_officer(user.id).is_white_shirt:
+            role_ids = _role_id_index(bot.settings)
+            all_officers = []
+            guild = bot.officer_manager.guild
+            for member in guild.members:
+                for role in member.roles:
+                    if role.id in role_ids:
+                        if member in all_officers:
+                            del all_officers[-1]
+                        all_officers.append(member)
+            
+            # Get a usable number of oficers, and create a dictionary for the count by role
+            number_of_officers = len(all_officers)
+            number_of_officers_with_each_role = {}
+            
+            # For every role in the role list, reverse sorted to preserve higher role:
+            for entry in role_ids[::-1]:
+                role = guild.get_role(entry)
+                if (
+                    role is None
+                ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
+                    pass
+                else:
+                    number_of_officers_with_each_role[role] = 0  # Create entry in the dictionary
+
+            # This actually counts the officers per role
+            for officer in all_officers:
+                for role in number_of_officers_with_each_role:
+                    if role in officer.roles:
+                        number_of_officers_with_each_role[role] += 1
+                        break
+            pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
+            # Reverse the order of the dictionary, since we reversed the list earlier. This preserves the previous output of Cadet first, Chief last
+            number_of_officers_with_each_role = dict(
+                reversed(list(number_of_officers_with_each_role.items()))
+            )
+        
+            # Make the embed look pretty with actual role names in server
+            for role in number_of_officers_with_each_role:
+
+                match = pattern.findall(role.name)
+                if match:
+                    name = "".join(match[0][1]) + "s"
+
+                else:
+                    name = role.name
+
+                count_officers = f"""{count_officers}
+                                     <tr>
+                                     <td><form action="/moderation/rtv" method="post"><button type="submit" name="role_id" value="{role.id}" class="btn-link">{name}</button></form></td>
+                                     <td>{number_of_officers_with_each_role[role]}</td>
+                                     </tr>"""
+        
+        count_officers = f"""{count_officers}</table><br><br>"""
+
         content = f"""{HTML_HEAD.format('Table of Officers')}
-            Welcome {user.name} - your ID  is {user.id}<br><br>
+            {count_officers if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
             <table class="blueTable">
             <thead>
             <tr>
@@ -213,7 +339,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<td><form action="/api/time/last_active" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+                        {f'<td><form action="/officers" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
                         </tr>"""
         content = f"""{content}
                     </tbody></table></body>{HTML_FOOT}"""
@@ -266,76 +392,7 @@ class WebManager:
             {HTML_FOOT}"""
 
         return content
-
-    @app.route("/api/time/last_active", methods=["POST", "GET"])
-    @requires_authorization
-    async def _web_last_active():
-
-        user = await discord.fetch_user()
-        officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
-
-            return content
-
-        if request.method == "POST":
-            data = await request.form
-        else:
-            return """<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=http://http.cat/404"></head><body></body></html>"""
-
-        officer_id = int(data["officer_id"])
-        officer = bot.officer_manager.get_officer(officer_id)
-
-        if officer is None:
-            content = f"""{HTML_HEAD.format('No such Officer')}
-                The officer you have requested does not exist. Please make sure the ID is correct.
-                </body>{HTML_FOOT}"""
-            return content
-
-        # Get the time
-        result = await officer.get_all_activity(
-            bot.officer_manager.all_monitored_channels
-        )
-
-        # Send the embed
-        time_results = sorted(
-            result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
-        )
-        TABLE = f"""<table class="blueTable">
-            <thead>
-            <tr>
-            <th>{officer.display_name}</th>
-            <th>{officer.id}</th>
-            </tr>
-            <tr>
-            <th>Time</th>
-            <th>Location</th>
-            </tr>
-            </thead>
-            <tbody>"""
-        for result in time_results:
-            if result["channel_id"] == None:
-                TABLE = f"""{TABLE}
-                    <tr>
-                    <td>{result['time']}</td>
-                    <td>{result['other_activity']}</td>
-                    </tr>
-                    """
-            else:
-                TABLE = f"""{TABLE}
-                    <tr>
-                    <td>{result['time']}</td>
-                    <td>{bot.get_channel(result['channel_id']).name}</td>
-                    <tr>
-                    """
-        TABLE = f"""{TABLE}
-            </tbody></table>"""
-
-        content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
-        return content
+        
 
     @app.route("/moderation/loa")
     @requires_authorization
@@ -416,7 +473,7 @@ class WebManager:
 
         return content
 
-    @app.route("/moderation/rtv")
+    @app.route("/moderation/rtv", methods=["POST", "GET"])
     @requires_authorization
     async def _rtv():
         user = await discord.fetch_user()
@@ -428,9 +485,16 @@ class WebManager:
                 {HTML_FOOT}"""
 
             return content
-
+        
         role_id_index = _role_id_index(bot.settings)
-
+        
+        if request.method == "POST":
+            data = await request.form
+            role_id = data["role_id"]
+            role_id_index = []
+            role_id_index.append(int(role_id))
+        
+        print(role_id_index)
         TABLE = f"""<table class="blueTable">
                     <thead><tr>
                     <th>Officer Name</th>
@@ -536,4 +600,92 @@ class WebManager:
                       </BODY>
                       {HTML_FOOT}"""
 
+        return content
+
+    @app.route('/moderation/patrol_time', methods=["POST", "GET"])
+    @requires_authorization
+    async def _web_patrol_time():
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_white_shirt:
+            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+                Sorry, you're not staff.
+                </body>
+                {HTML_FOOT}"""
+
+            return content
+        now = datetime.utcnow()
+        then = datetime.utcnow() - timedelta(days=bot.settings["max_inactive_days"])
+        all_officers = bot.officer_manager.all_officers
+
+        sort_by = "NAME"
+        if request.method == "POST":
+            data = await request.form
+            sort_by = data["sort_by"]
+            
+
+        
+        content = f"""{HTML_HEAD.format('Patrol Times by ' + sort_by.upper())}
+                      <table class="blueTable">
+                      <thead>
+                      <tr>
+                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="name" class="btn-link">Name</button></form></th>
+                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="id" class="btn-link">Officer ID</button></form></th>
+                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="time" class="btn-link">Time</button></form></th>
+                      </tr>
+                      </thead>"""
+
+        multi_line = True
+
+        if sort_by.upper() == "TIME":
+            for officer in all_officers:
+                officer.seconds = await officer.get_time(then, now)
+            all_officers.sort(key=lambda officer: officer.seconds, reverse=True)
+        elif sort_by.upper() == "NAME":
+            all_officers.sort(key=lambda officer: officer.display_name)
+        elif sort_by.upper() == "ID":
+            all_officers.sort(key=lambda officer: officer.id)
+
+        for officer in all_officers:
+            seconds = await officer.get_time(then, now)
+            divisions = [60, 60, 24, 7]
+            calculations = [[seconds]]
+            for i in range(0, len(divisions)):
+                second_if_end, first = divmod(calculations[i][0], divisions[i])
+                calculations[i].append(first)
+                calculations.append([second_if_end])
+            return_str = ""
+            time_names = ["Seconds", "Minutes", "Hours", "Days", "Weeks"]
+            for i in range(0, 5):
+
+                # Determine the fetch num
+                if i + 1 == 5:
+                    fetch_num = 0
+                else:
+                    fetch_num = 1
+                if multi_line:
+                    # End the loop if everything after will be 0
+                    if calculations[i][0] == 0 and i != 0:
+                        break
+                    return_str = (
+                        f"{time_names[i]}: {calculations[i][fetch_num]}\n{return_str}"
+                    )
+                else:
+                    if i == 0:
+                        return_str = f"{calculations[i][fetch_num]}"
+                    else:
+                        return_str = f"{calculations[i][fetch_num]}:{return_str}"
+            
+
+            content = f"""{content}
+                          <tr>
+                          <td>{officer.display_name}</td>
+                          <td>{officer.id}</td>
+                          <td>{return_str}</td>
+                          </tr>"""
+
+        content = f"""{content}
+                      </table>
+                      {HTML_FOOT}"""
+        
         return content
