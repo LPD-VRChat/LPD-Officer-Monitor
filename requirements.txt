@@ -1,5 +1,6 @@
 discord.py
 asyncio
+nest_asyncio
 emoji
 texttable
 arrow

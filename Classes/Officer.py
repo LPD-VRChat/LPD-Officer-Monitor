@@ -269,6 +269,59 @@ class Officer:
     def is_detainable(self):
         return self._has_role(*self._get_roles_with_tag("is_detainable"))
 
+    @property
+    def is_dispatch(self):
+        return (self.is_on_duty and not self.is_detainable)
+
+    @property
+    def is_cadet(self):
+        return self._has_role(*self._get_roles_with_tag("name_id", value="cadet"))
+
+    @property
+    def is_lmt_trained(self):
+        return self._has_role(self.bot.settings["lmt_trained_role"])
+
+    @property
+    def is_lmt_trainer(self):
+        return self._has_role(self.bot.settings["lmt_trainer_role"])
+
+    @property
+    def is_watch_officer(self):
+        return self._has_role(self.bot.settings["watch_officer_role"])
+
+    @property
+    def is_prison_trainer(self):
+        return self._has_role(self.bot.settings["prison_trainer_role"])
+
+    @property
+    def is_instigator(self):
+        return self._has_role(self.bot.settings["instigator_role"])
+
+    @property
+    def is_event_host(self):
+        return self._has_role(self.bot.settings["event_host_role"])
+
+    @property
+    def is_media_production(self):
+        return self._has_role(self.bot.settings["media_production_role"])
+
+    @property
+    def is_janitor(self):
+        return self._has_role(self.bot.settings["janitor_role"])
+
+    @property
+    def is_korean(self):
+        return self._has_role(self.bot.settings["korean_role"])
+
+    @property
+    def is_chinese(self):
+        return self._has_role(self.bot.settings["chinese_role"])
+
+    @property
+    def is_inactive(self):
+        return self._has_role(self.bot.settings["inactive_role"])
+
+
     # Often used member functions
 
     @property
@@ -295,11 +348,11 @@ class Officer:
                 return True
         return False
 
-    def _get_roles_with_tag(self, role_tag):
+    def _get_roles_with_tag(self, role_tag, value=True):
         return tuple(
             x["id"]
             for x in self.bot.settings["role_ladder"]
-            if role_tag in x and x[role_tag] == True
+            if role_tag in x and x[role_tag] == value
         )
 
     # ====================

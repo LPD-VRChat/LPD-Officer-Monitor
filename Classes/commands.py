@@ -1487,3 +1487,18 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+    @checks.is_white_shirt()
+    @commands.command()
+    async def roomba_reset(self, ctx):
+        await self.bot.sql.request('DELETE FROM Roomba')
+        await self.bot.sql.request('INSERT INTO Roomba VALUES (0)')
+        await ctx.channel.send("Reset the Roomba's killstreak to 0")
+
+    @checks.is_white_shirt()
+    @commands.command()
+    async def roomba_kills(self, ctx):
+        killcount = await self.bot.sql.request('SELECT count FROM Roomba')
+        killcount = killcount[0][0]
+
+        await ctx.channel.send(f"The Roomba has {killcount} kills.")

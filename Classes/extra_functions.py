@@ -129,3 +129,22 @@ async def send_str_as_file(
             msg_content,
             file=discord.File(error_file, filename=filename),
         )
+
+
+def member_role_dict(member, verbose=False):
+    """Generates a dictionary of roles"""
+    
+    role_dict = {}
+    
+    for role in member.roles:
+        if role.is_default: continue
+        if role.is_bot_managed: continue
+        if role.is_integration: continue
+        role_details = {}
+        role_details["name"] = role.name
+        role_details["color"] = role.color
+        if role.is_premium_subscriber: role_details["is_premium_subscriber"] = True
+
+        role_dict[role.id] = role_details if verbose else True
+
+    return role_dict

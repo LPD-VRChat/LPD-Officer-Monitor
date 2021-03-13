@@ -6,22 +6,14 @@ nest_asyncio.apply()
 import time
 from datetime import datetime, timedelta
 import re
+import moviepy.editor as mp
 
-from quart import Quart, redirect, url_for, request
+from quart import Quart, redirect, url_for, request, send_file
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
 from Classes.extra_functions import role_id_index as _role_id_index
+from Classes.APITex import render_array
 
-
-
-# from Classes.commands import (
-#     Time,
-#     Inactivity,
-#     VRChatAccoutLink,
-#     Applications,
-#     Moderation,
-#     Other,
-# )
 
 app = Quart("LPD Officer Monitor")
 
@@ -44,74 +36,40 @@ HTML_HEAD = """<!DOCTYPE html>
                     table.blueTable tfoot .links a{{display: inline-block; background: #1C6EA4; color: #FFFFFF; padding: 2px 8px; border-radius: 5px;}}
                     
                     /* Navbar container */
-                    .navbar {{
-                    overflow: hidden;
-                    background-color: #333;
-                    font-family: Arial;
-                    }}
+                    .navbar {{overflow: hidden; background-color: #333; font-family: Arial;}}
 
                     /* Links inside the navbar */
-                    .navbar a {{
-                    float: left;
-                    font-size: 16px;
-                    color: white;
-                    text-align: center;
-                    padding: 14px 16px;
-                    text-decoration: none;
-                    }}
+                    .navbar a {{float: left; font-size: 16px; color: white; text-align: center; padding: 14px 16px; text-decoration: none;}}
 
                     /* The dropdown container */
-                    .dropdown {{
-                    float: left;
-                    overflow: hidden;
-                    }}
+                    .dropdown {{float: left; overflow: hidden;}}
 
                     /* Dropdown button */
-                    .dropdown .dropbtn {{
-                    font-size: 16px;
-                    border: none;
-                    outline: none;
-                    color: white;
-                    padding: 14px 16px;
-                    background-color: inherit;
-                    font-family: inherit; /* Important for vertical align on mobile phones */
-                    margin: 0; /* Important for vertical align on mobile phones */
-                    }}
+                    .dropdown .dropbtn {{font-size: 16px; border: none; outline: none; color: white; padding: 14px 16px; background-color: inherit; font-family: inherit; margin: 0;}}
 
                     /* Add a red background color to navbar links on hover */
-                    .navbar a:hover, .dropdown:hover .dropbtn {{
-                    background-color: red;
-                    }}
+                    .navbar a:hover, .dropdown:hover .dropbtn {{background-color: red;}}
 
                     /* Dropdown content (hidden by default) */
-                    .dropdown-content {{
-                    display: none;
-                    position: absolute;
-                    background-color: #f9f9f9;
-                    min-width: 160px;
-                    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                    z-index: 1;
-                    }}
+                    .dropdown-content {{display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1;}}
 
                     /* Links inside the dropdown */
-                    .dropdown-content a {{
-                    float: none;
-                    color: black;
-                    padding: 12px 16px;
-                    text-decoration: none;
-                    display: block;
-                    text-align: left;
-                    }}
+                    .dropdown-content a {{float: none; color: black; padding: 12px 16px; text-decoration: none; display: block; text-align: left;}}
 
                     /* Add a grey background color to dropdown links on hover */
-                    .dropdown-content a:hover {{
-                    background-color: #ddd;
-                    }}
+                    .dropdown-content a:hover {{background-color: #ddd;}}
 
                     /* Show the dropdown menu on hover */
-                    .dropdown:hover .dropdown-content {{
-                    display: block;
-                    }}
+                    .dropdown:hover .dropdown-content {{display: block;}}
+
+                    .flex-container {{padding: 0; margin: 0; list-style: none; border: 1px solid silver; -ms-box-orient: horizontal; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;}}
+
+                    .flex-item {{padding: 5px; width: 400px; margin: 10px; }}
+
+                    .wrap    {{-webkit-flex-wrap: wrap; flex-wrap: wrap;}}  
+
+                    .wrap li {{background: gold;}}
+                    
                 </style>
                 <link rel='icon' href='https://static.wikia.nocookie.net/vrchat-legends/images/1/1e/LPD_Logo_low.png/revision/latest?cb=20200401012542' type='image/x-icon'/ >
             </HEAD>
@@ -133,14 +91,33 @@ HTML_HEAD = """<!DOCTYPE html>
                         <a href="/moderation/rtv">Officers by Role</a>
                         <a href="/moderation/inactivity">Inactive Officers</a>
                         <a href="/moderation/patrol_time">Patrol Time</a>
+                        <a href="/moderation/rank_last_active">Last Activity by Rank</a>
                     </div>
                 </div>
+
+                <div class="dropdown">
+                    <button class="dropbtn">Dispatch &darr;
+                    </button>
+                    
+                    <div class="dropdown-content">
+                        <a href="/dispatch">Dispatch</a>
+                        
+                        
+                    </div>
+                </div>
+
                 <a href="https://teamup.com/ksfnmscvrenv3hkk32">Event Calendar</a>
 
-            </div>"""
+            </div>""" #  height: 100px;line-height: 100px; 
 
 HTML_FOOT = """</HTML>"""
 
+def _403_(missing_role):
+    title = f'This page is for LPD {missing_role} only'
+    return f"""{HTML_HEAD.format(title)}
+                Sorry, you're not {missing_role}.
+                </body>
+                {HTML_FOOT}"""
 
 class WebManager:
     def __init__(self, bot):
@@ -149,9 +126,11 @@ class WebManager:
 
     @classmethod
     async def start(
-        cls, Bot, host="0.0.0.0", port=8080, id=None, secret=None, token=None
+        cls, Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None
     ):
         global bot
+        global discord
+
         bot = Bot
         instance = cls(bot)
 
@@ -164,10 +143,9 @@ class WebManager:
         ] = "http://devbox.lolipd.com/callback"  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
 
-        global discord
         discord = DiscordOAuth2Session(app)
         loop = asyncio.get_event_loop()
-        app.run(loop=loop, host=host, port=port)
+        app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
 
     @app.route("/login/")
     async def login():
@@ -198,8 +176,8 @@ class WebManager:
         if request.method == "POST":
             user = await discord.fetch_user()
             officer = bot.officer_manager.get_officer(user.id)
-            if not officer or not officer.is_white_shirt:
-                content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
+            if not officer or not officer.is_moderator:
+                content = f"""{HTML_HEAD.format('This page is for LPD Moderators only.')}
                     Sorry, you're not staff.
                     </body>
                     {HTML_FOOT}"""
@@ -262,7 +240,7 @@ class WebManager:
         count_officers = """<table class="blueTable">
                           <thead><tr><th>Rank</th>
                           <th>Count</th></tr></thead>"""
-        if bot.officer_manager.get_officer(user.id).is_white_shirt:
+        if bot.officer_manager.get_officer(user.id).is_moderator:
             role_ids = _role_id_index(bot.settings)
             all_officers = []
             guild = bot.officer_manager.guild
@@ -318,7 +296,7 @@ class WebManager:
         count_officers = f"""{count_officers}</table><br><br>"""
 
         content = f"""{HTML_HEAD.format('Table of Officers')}
-            {count_officers if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+            {count_officers if bot.officer_manager.get_officer(user.id).is_moderator else ''}
             <table class="blueTable">
             <thead>
             <tr>
@@ -339,7 +317,7 @@ class WebManager:
                         <td>{officer.display_name}</td>
                         <td>{officer.is_on_duty}</td>
                         <td>{officer.squad}</td>
-                        {f'<td><form action="/officers" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_white_shirt else ''}
+                        {f'<td><form action="/officers" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_moderator else ''}
                         </tr>"""
         content = f"""{content}
                     </tbody></table></body>{HTML_FOOT}"""
@@ -352,8 +330,6 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer:
-            for id in bot.officer_manager.all_officer_ids:
-                print(id)
             content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
             Sorry, this page is restricted to Officers of the LPD only.
             </body>
@@ -373,39 +349,24 @@ class WebManager:
     async def _moderation_page():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
 
-            return content
         content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
             <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
-            <form action="/api/time/last_active" method="POST">
-                <label for="officer_id">Officer ID</label>
-                <input type="number" id="officer_id" name = "officer_id">
-                <input type="submit" value="Get activity">
-            </form>
             </body>
             {HTML_FOOT}"""
 
         return content
-        
 
     @app.route("/moderation/loa")
     @requires_authorization
     async def _leave_of_absence():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
-
-            return content
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
 
         loa_entries = await bot.officer_manager.get_loa()
 
@@ -442,13 +403,8 @@ class WebManager:
     async def _vrchat_list():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
-
-            return content
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
 
         TABLE = f"""<table class="blueTable">
                     <thead><tr>
@@ -478,13 +434,8 @@ class WebManager:
     async def _rtv():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
-
-            return content
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
         
         role_id_index = _role_id_index(bot.settings)
         
@@ -494,7 +445,6 @@ class WebManager:
             role_id_index = []
             role_id_index.append(int(role_id))
         
-        print(role_id_index)
         TABLE = f"""<table class="blueTable">
                     <thead><tr>
                     <th>Officer Name</th>
@@ -524,13 +474,8 @@ class WebManager:
     async def _mark_inactive():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
-
-            return content
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
 
         role = bot.officer_manager.guild.get_role(bot.settings["inactive_role"])
         if request.method == "POST":
@@ -570,9 +515,6 @@ class WebManager:
                 last_activity = last_activity["time"]
                 if last_activity < oldest_valid:
                     inactive_officers.append([officer, last_activity, has_role])
-                # except:
-                #     pass
-                #     return f"""{HTML_HEAD.format('Inactivity - NO DATA')}<br><br>It looks like there isn't any patrol data... </body>{HTML_FOOT}"""
 
         if len(inactive_officers) == 0:
             return f"""{HTML_HEAD.format('Inactivity - NONE INACTIVE')}<br><br>It doesn't look like there are any inactive officers!</body>{HTML_FOOT}"""
@@ -607,13 +549,9 @@ class WebManager:
     async def _web_patrol_time():
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_white_shirt:
-            content = f"""{HTML_HEAD.format('This page is for LPD White Shirts only.')}
-                Sorry, you're not staff.
-                </body>
-                {HTML_FOOT}"""
+        if not officer or not officer.is_moderator:
+            return _403_('Moderator')
 
-            return content
         now = datetime.utcnow()
         then = datetime.utcnow() - timedelta(days=bot.settings["max_inactive_days"])
         all_officers = bot.officer_manager.all_officers
@@ -689,3 +627,240 @@ class WebManager:
                       {HTML_FOOT}"""
         
         return content
+
+    @app.route('/moderation/rank_last_active', methods=["POST", "GET"])
+    @requires_authorization
+    async def _web_rank_last_active():
+        
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+        if not officer or not officer.is_moderator:
+            return _403_.format('Moderator')
+        
+        this_func_navbar = """<table>
+                              <thead>"""
+
+        role_ids = _role_id_index(bot.settings)
+
+        for role_id in role_ids:
+            this_func_navbar = f"""{this_func_navbar}
+                                   <tr>
+                                   <th><form action="/moderation/rank_last_active" method="post"><button type="submit" name="role_id" value="{role_id}" class="btn-link">{bot.officer_manager.guild.get_role(role_id).name}</button></form></th>
+                                   </tr>"""
+        this_func_navbar = f"""{this_func_navbar}
+                               </thead>
+                               </table><br><br>"""
+
+        if request.method == "POST":
+            data = await request.form
+            role_id = data["role_id"]
+            role = bot.officer_manager.guild.get_role(int(role_id))
+
+            TABLE = f"""<table class="blueTable">
+                    <thead>
+                    <tr>
+                    <th>{role.name}</th>
+                    <th></th>
+                    </tr>
+                    <tr></tr>
+                    <tr>
+                    <th>Name</th>
+                    <th>Last Active</th>
+                    </tr>
+                    </thead>
+                    <tbody>"""
+            
+            for member in role.members:
+                officer = bot.officer_manager.get_officer(member.id)
+                
+                result = await officer.get_all_activity(
+                    bot.officer_manager.all_monitored_channels
+                )
+
+                # Send the embed
+                time_results = sorted(
+                    result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+                )
+                
+                result = time_results[0]
+                
+                TABLE = f"""{TABLE}
+                    <tr>
+                    <td>{officer.display_name}</td>
+                    <td>{result['time']}</td>
+                    <tr>
+                    """
+
+            TABLE = f"""{TABLE}
+                </tbody></table>"""
+
+            content = f"""{HTML_HEAD.format('Last Activity by Rank')}{this_func_navbar}{TABLE}</BODY>{HTML_FOOT}"""
+            return content
+
+        TABLE = f"""<table class="blueTable">
+                    <thead>
+                    <tr>
+                    <th>Name</th>
+                    <th>Last Active</th>
+                    </tr>
+                    </thead>
+                    <tbody>"""
+            
+        for officer in bot.officer_manager.all_officers:
+            
+            result = await officer.get_all_activity(
+                bot.officer_manager.all_monitored_channels
+            )
+
+            # Send the embed
+            time_results = sorted(
+                result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+            )
+            
+            result = time_results[0]
+            
+            TABLE = f"""{TABLE}
+                <tr>
+                <td>{officer.display_name}</td>
+                <td>{result['time']}</td>
+                <tr>
+                """
+
+        TABLE = f"""{TABLE}
+            </tbody></table>"""
+
+        content = f"""{HTML_HEAD.format('Last Activity by Role')}{this_func_navbar}{TABLE}</BODY>{HTML_FOOT}"""
+        return content
+
+    @app.route('/dispatch')
+    @requires_authorization
+    async def _dispatch_main_view():
+
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+
+        if not officer.is_dispatch:
+            return _403_('Dispatch')
+
+        on_duty_officers = []
+        TABLE = """<ul class="flex-container nowrap">"""
+
+        for officer in bot.officer_manager.all_officers:
+            if not officer.is_on_duty:
+                continue
+            on_duty_officers.append(officer)
+        
+        on_duty_officers.sort(key=lambda x: x.squad)
+
+        squad = None
+        for officer in on_duty_officers:
+            if officer.squad != squad:
+                if squad != None:
+                    TABLE = f"""{TABLE}
+                                </table>
+                                </li>"""
+                TABLE = f"""{TABLE}
+                            <li class="flex-item">
+                                <table class="blueTable">
+                                    <thead>
+                                    <tr>
+                                        <th>{officer.squad}<th>
+                                    </tr>
+                                    </thead>"""
+            TABLE = f"""{TABLE}
+                        <tr>
+                        <td>{officer.display_name}</td>
+                        </tr>"""
+            squad = officer.squad
+
+        TABLE = f"""{TABLE}
+                    </table
+                    </li>
+                    </u1>"""
+
+        content = f"""{HTML_HEAD.format('Dispatch - Squad view')}
+                      {TABLE}
+                      </body>
+                      {HTML_FOOT}"""
+        squad = None
+        return content
+
+    @app.route('/roomba/killcount/upload')
+    async def _increment_roomba_killcount_():
+        killcount = await bot.sql.request('SELECT count FROM Roomba')
+        killcount = killcount[0][0]
+        if request.method == "HEAD":
+            try:
+                killcount = killcount + 1
+            except: 
+                killcount = 1
+            await bot.sql.request('DELETE FROM Roomba')
+            await bot.sql.request('INSERT INTO Roomba VALUES (%s)', killcount)
+        
+            channel = bot.get_channel(bot.settings["error_log_channel"])
+            await channel.send(f"""The Roomba has {killcount} kills.""")
+
+        content = """<html>
+                    <head>
+                    <script>
+                        window.stop()
+                    </script>
+                    </head>
+                    <body>
+                    </body>
+                    </html>"""
+
+        return content
+
+    @app.route('/api/auth')
+    async def _api_handler_():
+        
+        #vrcuser = request.args.get('vrcuser')
+        #officer_id = bot.user_manager.get_discord_by_vrc(vrcuser)
+        
+        # Destructo's officer_id for debugging
+        officer_id = 249404332447891456
+        
+        officer = bot.officer_manager.get_officer(officer_id)
+
+        if officer == None:
+            is_lpd = False
+        else:
+            is_lpd = True
+
+        d = {}
+
+        d["is_cadet"] = officer.is_cadet
+        d["is_white_shirt"] = officer.is_white_shirt
+        d["is_lpd"] = is_lpd
+        d["is_moderator"] = officer.is_moderator
+        d["is_slrt"] = officer.is_slrt_trained
+        d["is_slrt_trainer"] = officer.is_slrt_trainer
+        d["is_lmt"] = officer.is_lmt_trained
+        d["is_lmt_trainer"] = officer.is_lmt_trainer
+        d["is_watch_officer"] = officer.is_watch_officer
+        d["is_prison_trainer"] = officer.is_prison_trainer
+        d["is_instigator"] = officer.is_instigator
+        d["is_trainer"] = officer.is_trainer
+        d["is_chat_moderator"] = officer.is_chat_moderator
+        d["is_event_host"] = officer.is_event_host
+        d["is_dev_team"] = officer.is_dev_member
+        d["is_media_production"] = officer.is_media_production
+        d["is_janitor"] = officer.is_janitor
+        d["is_korean"] = officer.is_korean
+        d["is_chinese"] = officer.is_chinese
+        d["is_inactive"] = officer.is_inactive
+
+
+        # Generate a GIF from the permissions
+        render_array(d, filename='/tmp/APITextemp.gif')
+        
+        # Convert to webm
+        clip = mp.VideoFileClip('/tmp/APITextemp.gif')
+        clip.write_videofile('/tmp/APITextemp.webm', verbose=False, logger=None)
+
+        # Return the webm
+        response = await send_file('/tmp/APITextemp.webm')
+        response.content_type = "video/webm"
+
+        return response
