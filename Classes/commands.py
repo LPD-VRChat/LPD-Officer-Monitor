@@ -1313,7 +1313,7 @@ class Other(commands.Cog):
             raise errors.GetRoleMembersError(message=f"{role.name} is empty.")
 
         # Sort the members
-        return sorted(role.members, key=self.get_vrc_name)
+        return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
 
     @staticmethod
     def filter_start_end(string, list_of_characters_to_filter):
