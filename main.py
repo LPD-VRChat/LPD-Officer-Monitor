@@ -39,6 +39,11 @@ from Classes.extra_functions import handle_error, get_settings_file
 import Classes.errors as errors
 
 
+# Before we do anything else, make sure that we have an event loop to use for
+# graceful shutdown purpopses.
+loop = asyncio.get_event_loop()
+
+
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
 intents.members = True
@@ -104,45 +109,49 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
-    global bot
+    try:
+        print("on_ready")
+        global bot
 
-    # Make sure this function does not create the officer manager twice
-    if bot.officer_manager is not None:
-        return
+        # Make sure this function does not create the officer manager twice
+        if bot.officer_manager is not None:
+            return
 
-    if bot.sql is not None:
-        return
+        if bot.sql is not None:
+            return
 
-    # Create the function to run before officer removal
-    async def before_officer_removal(bot, officer_id):
-        await bot.user_manager.remove_user(officer_id)
+        # Create the function to run before officer removal
+        async def before_officer_removal(bot, officer_id):
+            await bot.user_manager.remove_user(officer_id)
 
-    # Start the SQL Manager
-    print("Starting SQL Manager...")
-    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
+        # Start the SQL Manager
+        print("Starting SQL Manager...")
+        bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
 
-    # Start the Officer Manager
-    print("Starting Officer Manager...")
-    bot.officer_manager = await OfficerManager.start(
-        bot, run_before_officer_removal=before_officer_removal
-    )
+        # Start the Officer Manager
+        print("Starting Officer Manager...")
+        bot.officer_manager = await OfficerManager.start(
+            bot, run_before_officer_removal=before_officer_removal
+        )
 
-    # Start the VRChatUserManager
-    print("Starting VRChat User Manager...")
-    bot.user_manager = await VRChatUserManager.start(bot)
+        # Start the VRChatUserManager
+        print("Starting VRChat User Manager...")
+        bot.user_manager = await VRChatUserManager.start(bot)
 
-    # Start the WebManager
-    print("Starting Web Manager...")
-    bot.web_manager = await WebManager.start(
-        bot,
-        id=keys["Client_ID"],
-        secret=keys["Client_secret"],
-        token=keys["Discord_token"],
-    )
+        # Start the WebManager
+        print("Starting Web Manager...")
+        bot.web_manager = await WebManager.start(
+            bot,
+            id=keys["Client_ID"],
+            secret=keys["Client_secret"],
+            token=keys["Discord_token"],
+        )
 
-    # Mark everything ready
-    bot.everything_ready = True
+        # Mark everything ready
+        bot.everything_ready = True
+    
+    except KeyboardInterrupt:
+        loop.stop()
 
 
 @bot.event
