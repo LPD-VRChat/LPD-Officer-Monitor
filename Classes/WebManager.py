@@ -820,36 +820,41 @@ class WebManager:
         
         # Destructo's officer_id for debugging
         officer_id = 249404332447891456
+
+        # Hroi's officer_id for debugging
+        # officer_id = 378666988412731404
         
         officer = bot.officer_manager.get_officer(officer_id)
 
+        d = {}
+
         if officer == None:
             is_lpd = False
+            d["is_lpd"] = is_lpd
         else:
             is_lpd = True
 
-        d = {}
-
-        d["is_cadet"] = officer.is_cadet
-        d["is_white_shirt"] = officer.is_white_shirt
-        d["is_lpd"] = is_lpd
-        d["is_moderator"] = officer.is_moderator
-        d["is_slrt"] = officer.is_slrt_trained
-        d["is_slrt_trainer"] = officer.is_slrt_trainer
-        d["is_lmt"] = officer.is_lmt_trained
-        d["is_lmt_trainer"] = officer.is_lmt_trainer
-        d["is_watch_officer"] = officer.is_watch_officer
-        d["is_prison_trainer"] = officer.is_prison_trainer
-        d["is_instigator"] = officer.is_instigator
-        d["is_trainer"] = officer.is_trainer
-        d["is_chat_moderator"] = officer.is_chat_moderator
-        d["is_event_host"] = officer.is_event_host
-        d["is_dev_team"] = officer.is_dev_member
-        d["is_media_production"] = officer.is_media_production
-        d["is_janitor"] = officer.is_janitor
-        d["is_korean"] = officer.is_korean
-        d["is_chinese"] = officer.is_chinese
-        d["is_inactive"] = officer.is_inactive
+            d["is_cadet"] = officer.is_cadet
+            d["is_white_shirt"] = officer.is_white_shirt
+            d["is_lpd"] = is_lpd
+            d["is_moderator"] = officer.is_moderator
+            d["is_slrt"] = officer.is_slrt_trained
+            d["is_slrt_trainer"] = officer.is_slrt_trainer
+            d["is_lmt"] = officer.is_lmt_trained
+            d["is_lmt_trainer"] = officer.is_lmt_trainer
+            d["is_watch_officer"] = officer.is_watch_officer
+            d["is_prison_trainer"] = officer.is_prison_trainer
+            d["is_instigator"] = officer.is_instigator
+            d["is_trainer"] = officer.is_trainer
+            d["is_chat_moderator"] = officer.is_chat_moderator
+            d["is_event_host"] = officer.is_event_host
+            d["is_dev_team"] = officer.is_dev_member
+            d["is_media_production"] = officer.is_media_production
+            d["is_janitor"] = officer.is_janitor
+            d["is_korean"] = officer.is_korean
+            d["is_chinese"] = officer.is_chinese
+            d["is_inactive"] = officer.is_inactive
+            d["is_programming_team"] = officer.is_programming_team
 
 
         # Generate a GIF from the permissions

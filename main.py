@@ -352,4 +352,9 @@ bot.add_cog(Other(bot))
 # Start
 # ====================
 
-bot.run(keys["Discord_token"])
+
+
+try:
+    bot.run(keys["Discord_token"])
+except KeyboardInterrupt:
+    print("DON'T DO THAT")

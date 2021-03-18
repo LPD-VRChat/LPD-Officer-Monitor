@@ -259,7 +259,7 @@ class Officer:
 
     @property
     def is_slrt_trained(self):
-        return not self._has_role(self.bot.settings["slrt_trained_role"])
+        return self._has_role(self.bot.settings["slrt_trained_role"])
 
     @property
     def is_dev_member(self):
@@ -320,6 +320,10 @@ class Officer:
     @property
     def is_inactive(self):
         return self._has_role(self.bot.settings["inactive_role"])
+
+    @property
+    def is_programming_team(self):
+        return self._has_role(self.bot.settings["programming_team_role"])
 
 
     # Often used member functions
