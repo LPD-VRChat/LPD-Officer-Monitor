@@ -1502,3 +1502,21 @@ class Other(commands.Cog):
         killcount = killcount[0][0]
 
         await ctx.channel.send(f"The Roomba has {killcount} kills.")
+
+    @checks.is_dev_team()
+    @commands.command()
+    async def get_urls(self, ctx):
+        users = []
+        for user in self.bot.user_manager.all_users:
+            username = user[1]
+            users.append(username)
+
+        from Classes.URLGen import a
+        urls = a(users)
+
+        send_string = ''
+        for url in urls:
+            send_string = f'{url}\n'
+        
+        await send_long(ctx.channel, send_string, code_block=True)
+

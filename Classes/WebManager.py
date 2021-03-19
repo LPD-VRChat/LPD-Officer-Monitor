@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta
 import re
 import moviepy.editor as mp
+from urllib.parse import unquote_plus as dec
 
 from quart import Quart, redirect, url_for, request, send_file
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
@@ -815,11 +816,17 @@ class WebManager:
     @app.route('/api/auth')
     async def _api_handler_():
         
-        #vrcuser = request.args.get('vrcuser')
-        #officer_id = bot.user_manager.get_discord_by_vrc(vrcuser)
+        encoded_username = request.args.get('vrcuser')
+        w = int(request.args.get('w'))
+        h = int(request.args.get('h'))
+        
+        w = w if w > 8 else 8
+        h = h if h > 8 else 8
+
+        officer_id = bot.user_manager.get_discord_by_vrc(dec(encoded_username))
         
         # Destructo's officer_id for debugging
-        officer_id = 249404332447891456
+        # officer_id = 249404332447891456
 
         # Hroi's officer_id for debugging
         # officer_id = 378666988412731404
@@ -858,7 +865,7 @@ class WebManager:
 
 
         # Generate a GIF from the permissions
-        render_array(d, filename='/tmp/APITextemp.gif')
+        render_array(d, filename='/tmp/APITextemp.gif', w=w, h=h)
         
         # Convert to webm
         clip = mp.VideoFileClip('/tmp/APITextemp.gif')

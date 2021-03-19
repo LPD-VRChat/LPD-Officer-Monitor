@@ -6,7 +6,7 @@ from array2gif import write_gif
 ### See bottom of file for GIF bitvalue documentation ###
 #########################################################
 
-def render_array(input, filename=None):
+def render_array(input, filename=None, w=8, h=8):
     
     if filename == None:
         real_filename = '/tmp/APITextemp.gif'
@@ -22,18 +22,26 @@ def render_array(input, filename=None):
     _cyan_value_RGB    = np.array([  0, 255, 255])
     _magenta_value_RGB = np.array([255,   0, 255])
 
+    # This creates an array of arbitrary size based on the WxH size received on initialization.
 
-    # This creates the 8x8 array of RGB values with all values true/black
-    dataset = np.array([
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        ])
+    i = 0
+    j = 0
+    _base_row = []
+    _base_array = []
+
+    while j in range(0,w):
+        _base_row.append(_black_value_RGB)
+        j += 1
+    
+    while i in range(0,h):
+        _base_array.append(_base_row)
+        i += 1
+
+    dataset = np.array(_base_array)
+    
+    z = w - 1
+
+    dataset[0][z] = _white_value_RGB
 
     
     
@@ -106,14 +114,15 @@ def render_array(input, filename=None):
     dataset[6][6] = _black_value_RGB
     dataset[6][7] = _black_value_RGB
 
-    dataset[7][0] = _red_value_RGB   ############### WARNING: We can't reliably check this value
+    dataset[7][0] = _red_value_RGB   ############### WARNING: We can't reliably check this value in an 8x8
     dataset[7][1] = _black_value_RGB
     dataset[7][2] = _black_value_RGB
     dataset[7][3] = _black_value_RGB
     dataset[7][4] = _black_value_RGB
     dataset[7][5] = _black_value_RGB
     dataset[7][6] = _black_value_RGB
-    dataset[7][7] = _white_value_RGB ############### WARNING: Do not change this value or you break stuff
+    dataset[7][7] = _black_value_RGB
+
 
     # Save the GIF
     write_gif(dataset, real_filename)
