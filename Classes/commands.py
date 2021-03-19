@@ -902,24 +902,14 @@ class VRChatAccoutLink(commands.Cog):
         debug console can be enabled with a button under the front desk.
         """
 
-        parser = ArgumentParser(description="Argparse user command", add_help=False)
-        parser.add_argument("name", nargs="+")
-        parser.add_argument("-s", "--skip", action="store_true")
-        # Parse command and check errors
-        try:
-            parsed = parser.parse_args("link", args)
-        except argparse.ArgumentError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
-            return None
-        except argparse.ArgumentTypeError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
-            return
-        except errors.ArgumentParsingError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
-            return
+        # Check if -s is specified
+        if args[0] == "-s":
+            skip_formatting = True
+        else:
+            skip_formatting = False
 
         # if use spaces without quotes, won't add space if only one
-        vrchat_name = " ".join(parsed.name)
+        vrchat_name = " ".join(args[int(skip_formatting):])
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -944,7 +934,7 @@ class VRChatAccoutLink(commands.Cog):
                 return
 
         # Format the VRChat name if that was asked for
-        if parsed.skip:
+        if skip_formatting:
             vrchat_formated_name = vrchat_name
         else:
             vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
@@ -955,7 +945,7 @@ class VRChatAccoutLink(commands.Cog):
         ).prompt(ctx)
         if confirm:
             await self.bot.user_manager.add_user(
-                ctx.author.id, vrchat_name, parsed.skip
+                ctx.author.id, vrchat_name, skip_formatting
             )
             await ctx.send(
                 f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
