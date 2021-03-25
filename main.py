@@ -145,6 +145,7 @@ async def on_ready():
             id=keys["Client_ID"],
             secret=keys["Client_secret"],
             token=keys["Discord_token"],
+            callback=keys["Callback_URL"]
         )
 
         # Mark everything ready

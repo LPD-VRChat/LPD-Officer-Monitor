@@ -127,7 +127,7 @@ class WebManager:
 
     @classmethod
     async def start(
-        cls, Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None
+        cls, Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None
     ):
         global bot
         global discord
@@ -139,9 +139,7 @@ class WebManager:
 
         app.config["DISCORD_CLIENT_ID"] = id  # Discord client ID.
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
-        app.config[
-            "DISCORD_REDIRECT_URI"
-        ] = "http://devbox.lolipd.com/callback"  # URL to your callback endpoint.
+        app.config["DISCORD_REDIRECT_URI"] = callback  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
 
         discord = DiscordOAuth2Session(app)
