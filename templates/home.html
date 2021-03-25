@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<HTML lang="en">
+
+<HEAD>
+    <meta charset="utf-8" />
+    <TITLE>{% block title %}{{ title }}{% endblock %}</TITLE>
+    <style>
+        {% include "default.css" %}
+    </style>
+</HEAD>
+
+<BODY>
+    {% include "navbar.html" %}
+    {% block body %}Welcome to the LPD!{% endblock %}
+</BODY>
+
+</HTML>

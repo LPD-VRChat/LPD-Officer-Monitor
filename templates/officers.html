@@ -1,0 +1,81 @@
+{% extends "home.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+
+{% if method == "POST" %}
+    {% if is_moderator %}
+        {% if officer is not none %}
+            <TABLE class="blueTable">
+                <thead>
+                    <tr>
+                        <th>{{ officer.display_name }}</th>
+                        <th>{{ officer.id }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr></tr>
+                    {% for result in time_results %}
+                        <tr>
+                            <td>{{ result.time }}</td>
+                            <td>{{ result.other_activity }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </TABLE>
+        {% else %}
+            The officer you have requested does not exist. Please make sure the ID is correct.
+        {% endif %}
+    {% else %}
+        This page is for LPD Moderators only!
+    {% endif %}
+
+{% else %}
+    {% if is_moderator %}
+    <TABLE class="blueTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role in role_list %}
+            <tr>
+                <td>
+                    <form action="/moderation/rtv" method="post"><button type="submit" name="role_id" value="{{ role.id }}"
+                            class="btn-link">{{ role.name }}</button></form>
+                </td>
+                <td>{{ role.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </TABLE>
+    {% endif %}
+
+    <TABLE class="blueTable">
+        <thead>
+            <tr>
+                <th>Officer ID</th>
+                <th>Name</th>
+                <th>On Duty?</th>
+                <th>Squad</th>
+                <th>Get last_activity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for officer in all_officers %}
+                <tr>
+                    <td>{{ officer.id }}</td>
+                    <td>{{ officer.display_name }}</td>
+                    <td>{{ officer.is_on_duty }}</td>
+                    <td>{{ officer.squad }}</td>
+                    {% if is_moderator %}
+                    <td><form action="/officers" method="post"><button type="submit" name="officer_id" value="{{ officer.id }}" class="btn-link">Get activity</button></form></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </TABLE>
+
+{% endif %}
+{% endblock %}

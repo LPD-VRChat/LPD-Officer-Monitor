@@ -9,7 +9,7 @@ import re
 import moviepy.editor as mp
 from urllib.parse import unquote_plus as dec
 
-from quart import Quart, redirect, url_for, request, send_file
+from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
 from Classes.extra_functions import role_id_index as _role_id_index
@@ -19,7 +19,7 @@ from Classes.APITex import render_array
 app = Quart("LPD Officer Monitor")
 
 HTML_HEAD = """<!DOCTYPE html>
-            <HTML lang="en" xmlns="http://www.w3.org/1999/xhtml">
+            <HTML lang="en">
             <HEAD>
                 <meta charset="utf-8" />
                 <TITLE>{}</TITLE>
@@ -127,13 +127,12 @@ class WebManager:
 
     @classmethod
     async def start(
-        cls, Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None
+        cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None
     ):
-        global bot
-        global discord
+        #global bot         # These get replaced by discord = app.config["DISCORD"]
+        #global discord                             bot = app.config["BOT"]
 
-        bot = Bot
-        instance = cls(bot)
+        instance = cls(_Bot)
 
         app.secret_key = b"random bytes representing quart secret key"
 
@@ -141,17 +140,22 @@ class WebManager:
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
         app.config["DISCORD_REDIRECT_URI"] = callback  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
-
-        discord = DiscordOAuth2Session(app)
+        app.config["BOT"] = _Bot
+        
+        _Discord = DiscordOAuth2Session(app)
+        app.config["DISCORD"] = _Discord
+        
         loop = asyncio.get_event_loop()
         app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
 
     @app.route("/login/")
     async def login():
+        discord = app.config["DISCORD"]
         return await discord.create_session()
 
     @app.route("/callback/")
     async def _callback():
+        discord = app.config["DISCORD"]
         await discord.callback()
         return redirect(url_for(".home"))
 
@@ -161,84 +165,54 @@ class WebManager:
 
     @app.route("/")
     async def home():
-        content = f"""{HTML_HEAD.format('Welcome to the LPD!')}
-                Welcome to the home page!
-            </body>
-            {HTML_FOOT}"""
-        return content
+        return await render_template("home.html", title="Welcome to the LPD!")
 
     @app.route("/officers", methods=["POST", "GET"])
     @requires_authorization
     async def display_officers():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        title = "Roster"
+        time_results = None
+        specified_officer = None
+        _no_activity = False
         user = await discord.fetch_user()
 
         if request.method == "POST":
-            user = await discord.fetch_user()
             officer = bot.officer_manager.get_officer(user.id)
-            if not officer or not officer.is_moderator:
-                content = f"""{HTML_HEAD.format('This page is for LPD Moderators only.')}
-                    Sorry, you're not staff.
-                    </body>
-                    {HTML_FOOT}"""
-
-                return content
             
             data = await request.form
             officer_id = int(data["officer_id"])
-            officer = bot.officer_manager.get_officer(officer_id)
+            specified_officer = bot.officer_manager.get_officer(officer_id)
 
-            if officer is None:
-                content = f"""{HTML_HEAD.format('No such Officer')}
-                    The officer you have requested does not exist. Please make sure the ID is correct.
-                    </body>{HTML_FOOT}"""
-                return content
+            if specified_officer is not None and officer.is_moderator:
+                result = await specified_officer.get_all_activity(
+                    bot.officer_manager.all_monitored_channels
+                )
+                time_results = sorted(
+                    result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+                )
+                
+                for result in time_results:
+                    if result["channel_id"] is not None:
+                        result["other_activity"] = bot.get_channel(result['channel_id']).name
+                    
+                title = "Last Activity"
+                
+                if time_results == None:
+                    _no_activity = True
+            
+            elif specified_officer is not None and not officer.is_moderator:
+                title = "LPD Moderators only"
 
-            # Get the time
-            result = await officer.get_all_activity(
-                bot.officer_manager.all_monitored_channels
-            )
+            else:
+                title = "No such officer"
 
-            # Send the embed
-            time_results = sorted(
-                result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
-            )
-            TABLE = f"""<table class="blueTable">
-                <thead>
-                <tr>
-                <th>{officer.display_name}</th>
-                <th>{officer.id}</th>
-                </tr>
-                <tr></tr>
-                <tr>
-                <th>Time</th>
-                <th>Location</th>
-                </tr>
-                </thead>
-                <tbody>"""
-            for result in time_results:
-                if result["channel_id"] == None:
-                    TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{result['time']}</td>
-                        <td>{result['other_activity']}</td>
-                        </tr>
-                        """
-                else:
-                    TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{result['time']}</td>
-                        <td>{bot.get_channel(result['channel_id']).name}</td>
-                        <tr>
-                        """
-            TABLE = f"""{TABLE}
-                </tbody></table>"""
+            if _no_activity and time_results is None:
+                title = "No activity"
+                time_results = [{"channel_id": "No activity", "other_activity": "None"}]
 
-            content = f"""{HTML_HEAD.format('Last Activity')}{TABLE}</BODY>{HTML_FOOT}"""
-            return content
-
-        count_officers = """<table class="blueTable">
-                          <thead><tr><th>Rank</th>
-                          <th>Count</th></tr></thead>"""
         if bot.officer_manager.get_officer(user.id).is_moderator:
             role_ids = _role_id_index(bot.settings)
             all_officers = []
@@ -277,55 +251,28 @@ class WebManager:
             )
         
             # Make the embed look pretty with actual role names in server
-            for role in number_of_officers_with_each_role:
+            role_list = []
 
+            for role in number_of_officers_with_each_role:
                 match = pattern.findall(role.name)
                 if match:
                     name = "".join(match[0][1]) + "s"
-
                 else:
-                    name = role.name
+                    name = role.name 
 
-                count_officers = f"""{count_officers}
-                                     <tr>
-                                     <td><form action="/moderation/rtv" method="post"><button type="submit" name="role_id" value="{role.id}" class="btn-link">{name}</button></form></td>
-                                     <td>{number_of_officers_with_each_role[role]}</td>
-                                     </tr>"""
+                role_list.append({"id": role.id, "name": name, "count": number_of_officers_with_each_role[role]})
+                
+                
+
+        return await render_template("officers.html", title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_moderator, all_officers=bot.officer_manager.all_officers, method=request.method, time_results=time_results, officer=specified_officer)
         
-        count_officers = f"""{count_officers}</table><br><br>"""
-
-        content = f"""{HTML_HEAD.format('Table of Officers')}
-            {count_officers if bot.officer_manager.get_officer(user.id).is_moderator else ''}
-            <table class="blueTable">
-            <thead>
-            <tr>
-                <th>Officer ID</th>
-                <th>Name</th>
-                <th>On Duty?</th>
-                <th>Squad</th>
-                <th>Get last_activity</th>
-            </tr>
-            </thead>
-
-            <tbody>"""
-
-        for officer in bot.officer_manager.all_officers:
-            content = f"""{content}
-                        <tr>
-                        <td>{officer.id}</td>
-                        <td>{officer.display_name}</td>
-                        <td>{officer.is_on_duty}</td>
-                        <td>{officer.squad}</td>
-                        {f'<td><form action="/officers" method="post"><button type="submit" name="officer_id" value="{officer.id}" class="btn-link">Get activity</button></form></td>' if bot.officer_manager.get_officer(user.id).is_moderator else ''}
-                        </tr>"""
-        content = f"""{content}
-                    </tbody></table></body>{HTML_FOOT}"""
-
-        return content
 
     @app.route("/officers_only")
     @requires_authorization
     async def _officers_page():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer:
@@ -346,6 +293,9 @@ class WebManager:
     @app.route("/moderation")
     @requires_authorization
     async def _moderation_page():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -362,6 +312,9 @@ class WebManager:
     @app.route("/moderation/loa")
     @requires_authorization
     async def _leave_of_absence():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -400,6 +353,9 @@ class WebManager:
     @app.route("/moderation/vrclist")
     @requires_authorization
     async def _vrchat_list():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -431,6 +387,9 @@ class WebManager:
     @app.route("/moderation/rtv", methods=["POST", "GET"])
     @requires_authorization
     async def _rtv():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+        
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -471,6 +430,9 @@ class WebManager:
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
     async def _mark_inactive():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+        
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -546,6 +508,9 @@ class WebManager:
     @app.route('/moderation/patrol_time', methods=["POST", "GET"])
     @requires_authorization
     async def _web_patrol_time():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+        
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
@@ -630,6 +595,8 @@ class WebManager:
     @app.route('/moderation/rank_last_active', methods=["POST", "GET"])
     @requires_authorization
     async def _web_rank_last_active():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
         
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
@@ -734,6 +701,8 @@ class WebManager:
     @app.route('/dispatch')
     @requires_authorization
     async def _dispatch_main_view():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
 
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
@@ -786,6 +755,9 @@ class WebManager:
 
     @app.route('/roomba/killcount/upload')
     async def _increment_roomba_killcount_():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+        
         killcount = await bot.sql.request('SELECT count FROM Roomba')
         killcount = killcount[0][0]
         if request.method == "HEAD":
@@ -813,6 +785,8 @@ class WebManager:
 
     @app.route('/api/auth')
     async def _api_handler_():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
         
         encoded_username = request.args.get('vrcuser')
         w = int(request.args.get('w'))

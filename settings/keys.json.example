@@ -6,5 +6,5 @@
     "TeamUp_cal": "",
     "Client_secret": "",
     "Client_ID": 0,
-    "Callback_URL": "http://callbackurl"
+    "Callback_URL": "https://callbackurl"
 }
