@@ -1,0 +1,40 @@
+{% extends "home.html" %}
+{% block title %}Last Activity{% endblock %}
+{% block body %}
+<h1 style="font-size: 1.6em; text-align: left;">Roles</h1>
+<div id="container">
+    <div class="row">
+        {% for role in roles %}
+        <div class="block">
+            <form action="/moderation/rank_last_active" method="post"><button type="submit" name="role_id"
+                    value="{{ role.id }}" class="btn-link">{{ role.name }}</button></form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<TABLE class="blueTable">
+    <thead>
+        {% if requested_role != None %}
+        <tr>
+            <th>{{ requested_role.name }}</th>
+            <th></th>
+        </tr>
+        <tr></tr>
+        {% endif %}
+        <tr>
+            <th>Name</th>
+            <th>Last Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in last_activity_list %}
+        <tr>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</TABLE>
+
+{% endblock %}
