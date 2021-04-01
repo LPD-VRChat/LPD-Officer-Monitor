@@ -21,104 +21,6 @@ from Classes.APITex import render_array
 
 app = Quart("LPD Officer Monitor")
 
-############################################
-# DELETE THIS AFTER CONVERSION TO TEMPLATE #
-HTML_HEAD = """<!DOCTYPE html>
-            <HTML lang="en">
-            <HEAD>
-                <meta charset="utf-8" />
-                <TITLE>{}</TITLE>
-                <style>
-                    .btn-link {{border: none; outline: none; background: none; cursor: pointer; color: #0000EE; padding: 0; text-decoration: underline; font-family: inherit; font-size: inherit;}}
-                    table.blueTable {{border: 1px solid #1C6EA4; background-color: #EEEEEE; width: 80%; text-align: left; border-collapse: collapse;}}
-                    table.blueTable td, table.blueTable th {{border: 1px solid #AAAAAA; padding: 3px 2px;}}
-                    table.blueTable tbody td {{font-size: 13px;}}
-                    table.blueTable tr:nth-child(even) {{background: #D0E4F5;}}
-                    table.blueTable thead {{background: #1C6EA4; background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%); background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%); background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%); border-bottom: 2px solid #444444;}}
-                    table.blueTable thead th {{font-size: 15px; font-weight: bold;  color: #FFFFFF;  border-left: 2px solid #D0E4F5;}}
-                    table.blueTable thead th:first-child {{border-left: none;}}
-                    table.blueTable tfoot td {{font-size: 14px;}}
-                    table.blueTable tfoot .links {{text-align: right;}}
-                    table.blueTable tfoot .links a{{display: inline-block; background: #1C6EA4; color: #FFFFFF; padding: 2px 8px; border-radius: 5px;}}
-                    
-                    /* Navbar container */
-                    .navbar {{overflow: hidden; background-color: #333; font-family: Arial;}}
-
-                    /* Links inside the navbar */
-                    .navbar a {{float: left; font-size: 16px; color: white; text-align: center; padding: 14px 16px; text-decoration: none;}}
-
-                    /* The dropdown container */
-                    .dropdown {{float: left; overflow: hidden;}}
-
-                    /* Dropdown button */
-                    .dropdown .dropbtn {{font-size: 16px; border: none; outline: none; color: white; padding: 14px 16px; background-color: inherit; font-family: inherit; margin: 0;}}
-
-                    /* Add a red background color to navbar links on hover */
-                    .navbar a:hover, .dropdown:hover .dropbtn {{background-color: red;}}
-
-                    /* Dropdown content (hidden by default) */
-                    .dropdown-content {{display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1;}}
-
-                    /* Links inside the dropdown */
-                    .dropdown-content a {{float: none; color: black; padding: 12px 16px; text-decoration: none; display: block; text-align: left;}}
-
-                    /* Add a grey background color to dropdown links on hover */
-                    .dropdown-content a:hover {{background-color: #ddd;}}
-
-                    /* Show the dropdown menu on hover */
-                    .dropdown:hover .dropdown-content {{display: block;}}
-
-                    .flex-container {{padding: 0; margin: 0; list-style: none; border: 1px solid silver; -ms-box-orient: horizontal; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;}}
-
-                    .flex-item {{padding: 5px; width: 400px; margin: 10px; }}
-
-                    .wrap    {{-webkit-flex-wrap: wrap; flex-wrap: wrap;}}  
-
-                    .wrap li {{background: gold;}}
-                    
-                </style>
-                <link rel='icon' href='https://static.wikia.nocookie.net/vrchat-legends/images/1/1e/LPD_Logo_low.png/revision/latest?cb=20200401012542' type='image/x-icon'/ >
-            </HEAD>
-            <BODY>
-            <div class="navbar">
-                <a href="/">Home</a>
-                <a href="/login">Login</a>
-                <a href="/officers">Officers</a>
-                <a href="/officers_only">Officers only</a>
-                
-                <div class="dropdown">
-                    <button class="dropbtn">Moderation &darr;
-                    </button>
-                    
-                    <div class="dropdown-content">
-                        <a href="/moderation">Moderation</a>
-                        <a href="/moderation/loa">Leaves of Absence</a>
-                        <a href="/moderation/vrclist">VRChat Name List</a>
-                        <a href="/moderation/rtv">Officers by Role</a>
-                        <a href="/moderation/inactivity">Inactive Officers</a>
-                        <a href="/moderation/patrol_time">Patrol Time</a>
-                        <a href="/moderation/rank_last_active">Last Activity by Rank</a>
-                    </div>
-                </div>
-
-                <div class="dropdown">
-                    <button class="dropbtn">Dispatch &darr;
-                    </button>
-                    
-                    <div class="dropdown-content">
-                        <a href="/dispatch">Dispatch</a>
-                        
-                        
-                    </div>
-                </div>
-
-                <a href="https://teamup.com/ksfnmscvrenv3hkk32">Event Calendar</a>
-
-            </div>""" #  height: 100px;line-height: 100px; 
-#                                          #
-HTML_FOOT = """</HTML>"""                  #
-#                                          #
-# ######################################## #
 
 async def _403_(missing_role):
     return await render_template("403.html", missing_role=missing_role)
@@ -295,19 +197,9 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer:
-            content = f"""{HTML_HEAD.format('This page is restricted to LPD Officers only')}
-            Sorry, this page is restricted to Officers of the LPD only.
-            </body>
-            {HTML_FOOT}"""
+            return await _403_('Officer')
 
-            return content
-
-        content = f"""{HTML_HEAD.format('LPD Officers only')}
-        This page is for LPD Officers only. It looks like you're an officer, so welcome!
-        </body>
-        {HTML_FOOT}"""
-
-        return content
+        return await render_template("under_construction.html", target="Officers")
 
     @app.route("/moderation")
     @requires_authorization
@@ -320,13 +212,7 @@ class WebManager:
         if not officer or not officer.is_moderator:
             return await _403_('Moderator')
 
-        content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
-            <h1 style="color: #4485b8;">LPD Moderator portal</h1>
-            <p><span style="color: #000000;"><b>This is a test page for LPD Moderators only.</b></span></p>
-            </body>
-            {HTML_FOOT}"""
-
-        return content
+        return await render_template("under_construction.html", target="Moderators")
 
     @app.route("/moderation/loa")
     @requires_authorization
@@ -589,48 +475,14 @@ class WebManager:
         if not officer.is_dispatch:
             return await _403_('Dispatch')
 
-        on_duty_officers = []
-        TABLE = """<ul class="flex-container nowrap">"""
-
+        active_squads = []
         for officer in bot.officer_manager.all_officers:
-            if not officer.is_on_duty:
-                continue
-            on_duty_officers.append(officer)
+            if not officer.is_on_duty: continue
+            if officer.squad not in active_squads: active_squads.append(officer.squad)
         
-        on_duty_officers.sort(key=lambda x: x.squad)
-
-        squad = None
-        for officer in on_duty_officers:
-            if officer.squad != squad:
-                if squad != None:
-                    TABLE = f"""{TABLE}
-                                </table>
-                                </li>"""
-                TABLE = f"""{TABLE}
-                            <li class="flex-item">
-                                <table class="blueTable">
-                                    <thead>
-                                    <tr>
-                                        <th>{officer.squad}<th>
-                                    </tr>
-                                    </thead>"""
-            TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{officer.display_name}</td>
-                        </tr>"""
-            squad = officer.squad
-
-        TABLE = f"""{TABLE}
-                    </table
-                    </li>
-                    </u1>"""
-
-        content = f"""{HTML_HEAD.format('Dispatch - Squad view')}
-                      {TABLE}
-                      </body>
-                      {HTML_FOOT}"""
-        squad = None
-        return content
+        active_squads.sort(key=lambda x: x.position)
+            
+        return await render_template("dispatch.html", data=active_squads)
 
     @app.route('/roomba/killcount/upload')
     async def _increment_roomba_killcount_():
