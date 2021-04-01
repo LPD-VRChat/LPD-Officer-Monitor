@@ -1,0 +1,31 @@
+{% extends "home.html" %}
+{% block title %}Officers by Role {{ rolename }}{% endblock %}
+{% block body %}
+<h1 style="font-size: 1.6em; text-align: left;">Roles</h1>
+<div id="container">
+    <div class="row">
+        {% for role in roles %}
+        <div class="block">
+            <form action="/moderation/rtv" method="post"><button type="submit" name="role_id" value="{{ role.id }}"
+                    class="btn-link">{{ role.name }}</button></form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<TABLE class="blueTable">
+    <thead>
+        <tr>
+            <th>Officer Name</th>
+            <th>Rank</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for officer in results %}
+        <tr>
+            <td>{{ officer.name }}</td>
+            <td>{{ officer.role }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</TABLE>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "home.html" %}
+{% block title %}Leave of Absence Entries{% endblock %}
+{% block body %}
+<TABLE class="blueTable">
+    <thead>
+        <tr>
+            <th>Officer ID</th>
+            <th>Officer Name</th>
+            <th>Start Date</th>
+            <th>End Data</th>
+            <th>Reason</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in loa_entries %}
+        <tr>
+            <td>{{ entry.id }}</td>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.start_date }}</td>
+            <td>{{ entry.end_date }}</td>
+            <td>{{ entry.reason }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</TABLE>
+{% endblock %}
