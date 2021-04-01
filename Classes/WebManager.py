@@ -570,39 +570,20 @@ class WebManager:
         if not officer or not officer.is_moderator:
             return await _403_('Moderator')
         
-        this_func_navbar = """<table>
-                              <thead>"""
-
+        roles = []
         role_ids = _role_id_index(bot.settings)
 
         for role_id in role_ids:
-            this_func_navbar = f"""{this_func_navbar}
-                                   <tr>
-                                   <th><form action="/moderation/rank_last_active" method="post"><button type="submit" name="role_id" value="{role_id}" class="btn-link">{bot.officer_manager.guild.get_role(role_id).name}</button></form></th>
-                                   </tr>"""
-        this_func_navbar = f"""{this_func_navbar}
-                               </thead>
-                               </table><br><br>"""
+            roles.append(bot.officer_manager.guild.get_role(role_id))
+
+
+        last_activity_list = []
 
         if request.method == "POST":
             data = await request.form
             role_id = data["role_id"]
             role = bot.officer_manager.guild.get_role(int(role_id))
 
-            TABLE = f"""<table class="blueTable">
-                    <thead>
-                    <tr>
-                    <th>{role.name}</th>
-                    <th></th>
-                    </tr>
-                    <tr></tr>
-                    <tr>
-                    <th>Name</th>
-                    <th>Last Active</th>
-                    </tr>
-                    </thead>
-                    <tbody>"""
-            
             for member in role.members:
                 officer = bot.officer_manager.get_officer(member.id)
                 
@@ -615,30 +596,11 @@ class WebManager:
                     result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
                 )
                 
-                result = time_results[0]
-                
-                TABLE = f"""{TABLE}
-                    <tr>
-                    <td>{officer.display_name}</td>
-                    <td>{result['time']}</td>
-                    <tr>
-                    """
+                last_activity_list.append({'name': officer.display_name, 'date': time_results[0]['time']})
 
-            TABLE = f"""{TABLE}
-                </tbody></table>"""
+            return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=role)
 
-            content = f"""{HTML_HEAD.format('Last Activity by Rank')}{this_func_navbar}{TABLE}</BODY>{HTML_FOOT}"""
-            return content
-
-        TABLE = f"""<table class="blueTable">
-                    <thead>
-                    <tr>
-                    <th>Name</th>
-                    <th>Last Active</th>
-                    </tr>
-                    </thead>
-                    <tbody>"""
-            
+        
         for officer in bot.officer_manager.all_officers:
             
             result = await officer.get_all_activity(
@@ -650,20 +612,11 @@ class WebManager:
                 result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
             )
             
-            result = time_results[0]
+            last_activity_list.append({'name': officer.display_name, 'date': time_results[0]['time']})
             
-            TABLE = f"""{TABLE}
-                <tr>
-                <td>{officer.display_name}</td>
-                <td>{result['time']}</td>
-                <tr>
-                """
 
-        TABLE = f"""{TABLE}
-            </tbody></table>"""
-
-        content = f"""{HTML_HEAD.format('Last Activity by Role')}{this_func_navbar}{TABLE}</BODY>{HTML_FOOT}"""
-        return content
+        
+        return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=None)
 
     @app.route('/dispatch')
     @requires_authorization
