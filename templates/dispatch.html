@@ -1,0 +1,24 @@
+{% extends "home.html" %}
+{% block title %}Dispatch - Squad View{% endblock %}
+{% block body %}
+<ul class="flex-container nowrap">
+    {% for squad in data %}
+    <li class="flex-item">
+        <TABLE class="blueTable">
+            <thead>
+                <tr>
+                    <th>{{ squad.name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for officer in squad.members %}
+                <tr>
+                    <td>{{ officer.display_name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </TABLE>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
