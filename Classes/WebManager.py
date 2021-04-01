@@ -21,6 +21,8 @@ from Classes.APITex import render_array
 
 app = Quart("LPD Officer Monitor")
 
+############################################
+# DELETE THIS AFTER CONVERSION TO TEMPLATE #
 HTML_HEAD = """<!DOCTYPE html>
             <HTML lang="en">
             <HEAD>
@@ -113,8 +115,10 @@ HTML_HEAD = """<!DOCTYPE html>
                 <a href="https://teamup.com/ksfnmscvrenv3hkk32">Event Calendar</a>
 
             </div>""" #  height: 100px;line-height: 100px; 
-
-HTML_FOOT = """</HTML>"""
+#                                          #
+HTML_FOOT = """</HTML>"""                  #
+#                                          #
+# ######################################## #
 
 async def _403_(missing_role):
     return await render_template("403.html", missing_role=missing_role)
@@ -444,33 +448,7 @@ class WebManager:
                 if last_activity < oldest_valid:
                     inactive_officers.append([officer, last_activity, has_role])
 
-        if len(inactive_officers) == 0:
-            return f"""{HTML_HEAD.format('Inactivity - NONE INACTIVE')}<br><br>It doesn't look like there are any inactive officers!</body>{HTML_FOOT}"""
-
-        TABLE = f"""<table class="blueTable">
-                    <thead><tr>
-                    <th>Officer name</th>
-                    <th>Last activity</th>
-                    <th>Already Marked</th>
-                    <th>Mark Inactive</th>
-                    </thead></tr>"""
-
-        for officer in inactive_officers:
-            TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{officer[0].display_name}</td>
-                        <td>{officer[1]}</td>
-                        <td>{'Yes' if officer[2] else 'No'}</td>
-                        {f'<td><form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id" value="{officer[0].id}" class="btn-link">Mark inactive</button></form></td>' if not officer[2] else ''}
-                        </tr>"""
-
-        content = f"""{HTML_HEAD.format('Inactive Officers')}
-                      {TABLE}
-                      </TABLE>
-                      </BODY>
-                      {HTML_FOOT}"""
-
-        return content
+        return await render_template("mark_inactive.html", inactive_officers=inactive_officers, len=len(inactive_officers))
 
     @app.route('/moderation/patrol_time', methods=["POST", "GET"])
     @requires_authorization
@@ -491,18 +469,7 @@ class WebManager:
         if request.method == "POST":
             data = await request.form
             sort_by = data["sort_by"]
-            
-
         
-        content = f"""{HTML_HEAD.format('Patrol Times by ' + sort_by.upper())}
-                      <table class="blueTable">
-                      <thead>
-                      <tr>
-                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="name" class="btn-link">Name</button></form></th>
-                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="id" class="btn-link">Officer ID</button></form></th>
-                      <th><form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="time" class="btn-link">Time</button></form></th>
-                      </tr>
-                      </thead>"""
 
         multi_line = True
 
@@ -515,6 +482,7 @@ class WebManager:
         elif sort_by.upper() == "ID":
             all_officers.sort(key=lambda officer: officer.id)
 
+        data = []
         for officer in all_officers:
             seconds = await officer.get_time(then, now)
             divisions = [60, 60, 24, 7]
@@ -546,18 +514,9 @@ class WebManager:
                         return_str = f"{calculations[i][fetch_num]}:{return_str}"
             
 
-            content = f"""{content}
-                          <tr>
-                          <td>{officer.display_name}</td>
-                          <td>{officer.id}</td>
-                          <td>{return_str}</td>
-                          </tr>"""
-
-        content = f"""{content}
-                      </table>
-                      {HTML_FOOT}"""
-        
-        return content
+            data.append({'name': officer.display_name, 'id': officer.id, 'return_str': return_str})
+            
+        return await render_template("web_patrol_time.html", sort_by=sort_by.upper(), data=data)
 
     @app.route('/moderation/rank_last_active', methods=["POST", "GET"])
     @requires_authorization
