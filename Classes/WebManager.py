@@ -6,11 +6,14 @@ nest_asyncio.apply()
 import time
 from datetime import datetime, timedelta
 import re
+import signal
 import moviepy.editor as mp
 from urllib.parse import unquote_plus as dec
 
 from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
+from hypercorn.asyncio import serve
+from hypercorn.config import Config
 
 from Classes.extra_functions import role_id_index as _role_id_index
 from Classes.APITex import render_array
@@ -113,12 +116,12 @@ HTML_HEAD = """<!DOCTYPE html>
 
 HTML_FOOT = """</HTML>"""
 
-def _403_(missing_role):
-    title = f'This page is for LPD {missing_role} only'
-    return f"""{HTML_HEAD.format(title)}
-                Sorry, you're not {missing_role}.
-                </body>
-                {HTML_FOOT}"""
+async def _403_(missing_role):
+    return await render_template("403.html", missing_role=missing_role)
+
+shutdown_event = asyncio.Event()
+def _signal_handler(): #*_: Any) -> None:
+    shutdown_event.set()
 
 class WebManager:
     def __init__(self, bot):
@@ -126,11 +129,7 @@ class WebManager:
         self.bot = bot
 
     @classmethod
-    async def start(
-        cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None
-    ):
-        #global bot         # These get replaced by discord = app.config["DISCORD"]
-        #global discord                             bot = app.config["BOT"]
+    async def start(cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None):
 
         instance = cls(_Bot)
 
@@ -144,9 +143,25 @@ class WebManager:
         
         _Discord = DiscordOAuth2Session(app)
         app.config["DISCORD"] = _Discord
+
+        certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem'
+        keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem'
+
+        config = Config()
+        config.bind = [f"{host}:{port}"]
+        config.certfile = certfile
+        config.keyfile = keyfile
+        config.worker_class = ["asyncio"]
+        config.server_names = ["devbox.lolipd.com", "www.lolipd.com"]
+        config.accesslog = "/var/log/LPD-Officer-Monitor/access.log"
+        config.errorlog = "/var/log/LPD-Officer-Monitor/error.log"
+
         
         loop = asyncio.get_event_loop()
-        app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
+        loop.add_signal_handler(signal.SIGTERM, _signal_handler)
+        #app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
+        
+        loop.create_task(serve(app, config, shutdown_trigger=shutdown_event.wait))
 
     @app.route("/login/")
     async def login():
@@ -299,7 +314,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await _403_('Moderator')
 
         content = f"""{HTML_HEAD.format('LPD Moderator Portal')}
             <h1 style="color: #4485b8;">LPD Moderator portal</h1>
@@ -318,37 +333,15 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await render_template("403.html", loa_entries=loa_entries)
 
-        loa_entries = await bot.officer_manager.get_loa()
-
-        TABLE = f"""<table class="blueTable">
-                    <thead><tr>
-                    <th>Officer ID</th>
-                    <th>Officer Name</th>
-                    <th>Start date</th>
-                    <th>End date</th>
-                    <th>Reason</th>
-                    </thead></tr>"""
-
-        for entry in loa_entries:
+        loa_entries_raw = await bot.officer_manager.get_loa()
+        loa_entries = []
+        for entry in loa_entries_raw:
             officer = bot.officer_manager.get_officer(entry[0])
-            TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{entry[0]}</td>
-                        <td>{officer.display_name}
-                        <td>{entry[1]}</td>
-                        <td>{entry[2]}</td>
-                        <td>{entry[3]}</td>
-                        </tr>"""
+            loa_entries.append({'id': entry[0], 'name': officer.display_name, 'start_date': entry[1], 'end_date': entry[2], 'reason': entry[3]})
 
-        content = f"""{HTML_HEAD.format('Leave of Absence Entries')}
-                      {TABLE}
-                      </TABLE>
-                      </BODY>
-                      {HTML_FOOT}"""
-
-        return content
+        return await render_template("leaves_of_absence.html", loa_entries=loa_entries)
 
     @app.route("/moderation/vrclist")
     @requires_authorization
@@ -359,30 +352,15 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await _403_('Moderator')
 
-        TABLE = f"""<table class="blueTable">
-                    <thead><tr>
-                    <th>Officer name</th>
-                    <th>VRChat Name</th>
-                    </thead></tr>"""
-
+        vrcnames = []
         guild = bot.get_guild(bot.settings["Server_ID"])
         for vrcuser in bot.user_manager.all_users:
             member = guild.get_member(vrcuser[0])
-            TABLE = f"""{TABLE}
-                        <tr>
-                        <td>{member.display_name}</td>
-                        <td>{vrcuser[1]}</td>
-                        </tr>"""
+            vrcnames.append({'name': member.display_name, 'vrcname': vrcuser[1]})
 
-        content = f"""{HTML_HEAD.format('VRChat Name List')}
-                      {TABLE}
-                      </TABLE>
-                      </BODY>
-                      {HTML_FOOT}"""
-
-        return content
+        return await render_template("vrclist.html", vrcnames=vrcnames)
 
     @app.route("/moderation/rtv", methods=["POST", "GET"])
     @requires_authorization
@@ -393,39 +371,28 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await _403_('Moderator')
         
-        role_id_index = _role_id_index(bot.settings)
-        
+        role_id_index = []
+        for role in bot.officer_manager.guild.roles:
+            if role.name == "@everyone": continue
+            role_id_index.append(role.id)
+
+        rolename = ''
         if request.method == "POST":
             data = await request.form
             role_id = data["role_id"]
             role_id_index = []
             role_id_index.append(int(role_id))
-        
-        TABLE = f"""<table class="blueTable">
-                    <thead><tr>
-                    <th>Officer Name</th>
-                    <th>Rank</th>
-                    </thead></tr>
-                    """
+            rolename = bot.officer_manager.guild.get_role(int(role_id)).name
 
+        results = []
         for role_id in role_id_index:
             role = bot.officer_manager.guild.get_role(role_id)
             for member in role.members:
-                TABLE = f"""{TABLE}
-                            <tr>
-                            <td>{member.display_name}</td>
-                            <td>{role.name}</td>
-                            </tr>"""
+                results.append({'name': member.display_name, 'role': role.name})
 
-        content = f"""{HTML_HEAD.format('LPD Members by Rank')}
-                      {TABLE}
-                      </TABLE>
-                      </BODY>
-                      {HTML_FOOT}"""
-
-        return content
+        return await render_template("rtv.html", results=results, method=request.method, rolename=rolename, roles=bot.officer_manager.guild.roles)
 
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
@@ -436,7 +403,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await _403_('Moderator')
 
         role = bot.officer_manager.guild.get_role(bot.settings["inactive_role"])
         if request.method == "POST":
@@ -514,7 +481,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_('Moderator')
+            return await _403_('Moderator')
 
         now = datetime.utcnow()
         then = datetime.utcnow() - timedelta(days=bot.settings["max_inactive_days"])
@@ -601,7 +568,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return _403_.format('Moderator')
+            return await _403_('Moderator')
         
         this_func_navbar = """<table>
                               <thead>"""
@@ -708,7 +675,7 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
 
         if not officer.is_dispatch:
-            return _403_('Dispatch')
+            return await _403_('Dispatch')
 
         on_duty_officers = []
         TABLE = """<ul class="flex-container nowrap">"""
