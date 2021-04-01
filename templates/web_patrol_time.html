@@ -1,0 +1,31 @@
+{% extends "home.html" %}
+{% block title %}Patrol Time by {{ sort_by }}{% endblock %}
+{% block body %}
+<TABLE class="blueTable">
+    <thead>
+        <tr>
+            <th>
+                <form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="name"
+                        class="btn-link">Name</button></form>
+            </th>
+            <th>
+                <form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="id"
+                        class="btn-link">Officer ID</button></form>
+            </th>
+            <th>
+                <form action="/moderation/patrol_time" method="post"><button type="submit" name="sort_by" value="time"
+                        class="btn-link">Time</button></form>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in data %}
+        <tr>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.id }}</td>
+            <td>{{ entry.return_str }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</TABLE>
+{% endblock %}

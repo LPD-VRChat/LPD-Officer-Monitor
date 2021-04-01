@@ -1,0 +1,33 @@
+{% extends "home.html" %}
+{% block title %}Inactive Officers{% endblock %}
+{% block body %}
+{% if len == 0 %}
+<br><br>It doesn't look like there are any inactive officers!
+{% else %}
+<TABLE class="blueTable">
+    <thead>
+        <tr>
+            <th>Officer Name</th>
+            <th>Last Activity</th>
+            <th>Already Marked?</th>
+            <th>Mark Inactive</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for officer in inactive_officers %}
+        <tr>
+            <td>{{ officer[0].display_name }}</td>
+            <td>{{ officer[1] }}</td>
+            <td>{{ 'Yes' if officer[2] else 'No' }}</td>
+            {% if not officer[2] %}
+            <td>
+                <form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id"
+                        value="{{ officer.id }}" class="btn-link">Mark inactive</button></form>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</TABLE>
+{% endif %}
+{% endblock %}
