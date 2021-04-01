@@ -756,8 +756,14 @@ class WebManager:
         bot = app.config["BOT"]
         
         encoded_username = request.args.get('vrcuser')
-        w = int(request.args.get('w'))
-        h = int(request.args.get('h'))
+        try:
+            w = int(request.args.get('w'))
+        except:
+            w = int(request.args.get('W'))
+        try:
+            h = int(request.args.get('h'))
+        except:
+            h = int(request.args.get('H'))
         
         w = w if w > 8 else 8
         h = h if h > 8 else 8
@@ -772,39 +778,10 @@ class WebManager:
         
         officer = bot.officer_manager.get_officer(officer_id)
 
-        d = {}
-
         if officer == None:
-            is_lpd = False
-            d["is_lpd"] = is_lpd
+            render_array(None, filename='/tmp/APITextemp.gif', w=w, h=h)
         else:
-            is_lpd = True
-
-            d["is_cadet"] = officer.is_cadet
-            d["is_white_shirt"] = officer.is_white_shirt
-            d["is_lpd"] = is_lpd
-            d["is_moderator"] = officer.is_moderator
-            d["is_slrt"] = officer.is_slrt_trained
-            d["is_slrt_trainer"] = officer.is_slrt_trainer
-            d["is_lmt"] = officer.is_lmt_trained
-            d["is_lmt_trainer"] = officer.is_lmt_trainer
-            d["is_watch_officer"] = officer.is_watch_officer
-            d["is_prison_trainer"] = officer.is_prison_trainer
-            d["is_instigator"] = officer.is_instigator
-            d["is_trainer"] = officer.is_trainer
-            d["is_chat_moderator"] = officer.is_chat_moderator
-            d["is_event_host"] = officer.is_event_host
-            d["is_dev_team"] = officer.is_dev_member
-            d["is_media_production"] = officer.is_media_production
-            d["is_janitor"] = officer.is_janitor
-            d["is_korean"] = officer.is_korean
-            d["is_chinese"] = officer.is_chinese
-            d["is_inactive"] = officer.is_inactive
-            d["is_programming_team"] = officer.is_programming_team
-
-
-        # Generate a GIF from the permissions
-        render_array(d, filename='/tmp/APITextemp.gif', w=w, h=h)
+            render_array(officer, filename='/tmp/APITextemp.gif', w=w, h=h)
         
         # Convert to webm
         clip = mp.VideoFileClip('/tmp/APITextemp.gif')
