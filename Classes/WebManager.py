@@ -265,16 +265,21 @@ class WebManager:
         
         role_id_index = []
         for role in bot.officer_manager.guild.roles:
-            if role.name == "@everyone": continue
+            if role.name == "@everyone":
+                everyone_role_id = role.id
+                continue
             role_id_index.append(role.id)
 
         rolename = ''
+        requested_role_id = ''
         if request.method == "POST":
             data = await request.form
             role_id = data["role_id"]
-            role_id_index = []
-            role_id_index.append(int(role_id))
-            rolename = bot.officer_manager.guild.get_role(int(role_id)).name
+            requested_role_id = int(role_id)
+            if requested_role_id != everyone_role_id:
+                role_id_index = []
+                role_id_index.append(int(role_id))
+                rolename = bot.officer_manager.guild.get_role(int(role_id)).name
 
         results = []
         for role_id in role_id_index:
@@ -282,7 +287,7 @@ class WebManager:
             for member in role.members:
                 results.append({'name': member.display_name, 'role': role.name})
 
-        return await render_template("rtv.html", results=results, method=request.method, rolename=rolename, roles=bot.officer_manager.guild.roles)
+        return await render_template("rtv.html", results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=bot.officer_manager.guild.roles)
 
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization

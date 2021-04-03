@@ -1,22 +1,26 @@
 {% extends "home.html" %}
 {% block title %}Officers by Role {{ rolename }}{% endblock %}
 {% block body %}
-<h1 style="font-size: 1.6em; text-align: left;">Roles</h1>
-<div id="container">
-    <div class="row">
-        {% for role in roles %}
-        <div class="block">
-            <form action="/moderation/rtv" method="post"><button type="submit" name="role_id" value="{{ role.id }}"
-                    class="btn-link">{{ role.name }}</button></form>
-        </div>
-        {% endfor %}
-    </div>
-</div>
+
+
+
 <TABLE class="blueTable">
     <thead>
         <tr>
             <th>Officer Name</th>
-            <th>Rank</th>
+            <th>Role: <form action="/moderation/rtv" method="post">
+    <div>
+        <select name="role_id" id="role_id" onchange="this.form.submit();">
+            {% for role in roles %}
+            {% if requested_role_id == role.id %}
+            <option selected value={{ role.id }}>{{ role.name }}</option>
+            {% else %}
+            <option value={{ role.id }}>{{ role.name }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+</form></th>
         </tr>
     </thead>
     <tbody>
@@ -28,4 +32,5 @@
         {% endfor %}
     </tbody>
 </TABLE>
+
 {% endblock %}
