@@ -112,9 +112,16 @@ class Officer:
                 "NOV": 11,
                 "DEC": 12,
             }
+
+            # Ensure day is numeric
             int(date_start[0])
             int(date_end[0])
 
+            # Ensure year is numeric
+            int(date_start[2])
+            int(date_end[2])
+
+            # Get month number from dictionary
             date_start[1] = date_start[1].upper()[0:3]
             date_start[1] = months[date_start[1]]
             date_end[1] = date_end[1].upper()[0:3]

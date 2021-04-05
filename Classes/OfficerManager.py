@@ -186,7 +186,7 @@ class OfficerManager:
             try:
                 await self.bot.sql.request(
                     "INSERT INTO Officers(officer_id, started_monitoring_time) Values (%s, %s)",
-                    (officer_id, datetime.now(timezone.utc)),
+                    (officer_id, datetime.utcnow()),
                 )
             except mysql_errors.IntegrityError as error:
                 print(repr(error.args))
