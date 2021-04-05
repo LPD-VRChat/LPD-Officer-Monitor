@@ -1361,7 +1361,9 @@ class Other(commands.Cog):
         return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
 
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
+    @commands.check_any(
+        checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
+    )
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
