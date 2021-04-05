@@ -9,3 +9,4 @@ aiomysql
 git+https://github.com/Rapptz/discord-ext-menus
 quart
 quart-discord
+fuzzywuzzy

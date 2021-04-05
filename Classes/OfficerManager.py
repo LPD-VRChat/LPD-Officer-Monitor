@@ -46,14 +46,14 @@ class OfficerManager:
         ]
 
         # Add all the officers to the list
-        self._all_officers = []
+        self._all_officers = dict()
         self._officers_needing_removal = []
         self._number_officers_on_duty_at_launch = 0
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
             try:
                 new_officer = Officer(officer_id, bot)
-                self._all_officers.append(new_officer)
+                self._all_officers[officer_id] = new_officer
                 print(
                     f"Added {new_officer.member.name}#{new_officer.member.discriminator} to the Officer Manager."
                 )
@@ -136,8 +136,7 @@ class OfficerManager:
                     )
 
             # Remove extra users from the officer_monitor
-            for officer_member in self._all_officers:
-                member_id = officer_member.id
+            for member_id in self._all_officers:
 
                 member = self.guild.get_member(member_id)
 
@@ -170,13 +169,13 @@ class OfficerManager:
     #    modify officers
     # =====================
 
-    def get_officer(self, officer_id):
+    def get_officer(self, officer_id: int) -> Officer:
         """Returns Officer object from Officer ID"""
 
-        for officer in self._all_officers:
-            if officer.id == officer_id:
-                return officer
-        return None
+        try:
+            return self._all_officers[officer_id]
+        except KeyError:
+            return None
 
     async def create_officer(self, officer_id, issue=None):
         """Attempts to create Officer object from given Officer ID"""
@@ -203,7 +202,7 @@ class OfficerManager:
         new_officer = Officer(officer_id, self.bot)
 
         # Add the officer to the _all_officers list
-        self._all_officers.append(new_officer)
+        self._all_officers[officer_id] = new_officer
 
         # Print
         msg_string = (
@@ -250,16 +249,19 @@ class OfficerManager:
             "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
         )
         await self.bot.sql.request(
+            "DELETE FROM LeaveTimes WHERE officer_id = %s", (officer_id)
+        )
+        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
 
         # Remove the officer from the officer list
-        i = 0
-        while i < len(self._all_officers):
-            if self._all_officers[i].id == officer_id:
-                del self._all_officers[i]
-            else:
-                i += 1
+        try:
+            del self._all_officers[officer_id]
+        except KeyError:
+            print(
+                f"ERROR: Officer {officer_id} was not in the Monitored list of Officers"
+            )
 
         msg_string = (
             "WARNING: " + member_name + " has been removed from the LPD Officer Monitor"
@@ -304,13 +306,10 @@ class OfficerManager:
                 return True
         return False
 
-    def is_monitored(self, member_id):
+    def is_monitored(self, member_id: int) -> bool:
         """Returns true if specified member ID matches an officer ID in memory"""
 
-        for officer in self._all_officers:
-            if officer.id == member_id:
-                return True
-        return False
+        return member_id in self._all_officers.keys()
 
     @property
     def all_server_members_in_LPD(self):

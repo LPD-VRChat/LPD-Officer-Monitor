@@ -112,6 +112,7 @@ def is_dev_team():
 
     return commands.check(predicate)
 
+
 def is_chat_moderator():
     def predicate(ctx):
         officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
@@ -121,10 +122,10 @@ def is_chat_moderator():
             return True
         else:
             raise errors.NotForYouError("This command is only for LPD Chat Moderators.")
-            
+
     return commands.check(predicate)
-    
-    
+
+
 def is_moderator():
     def predicate(ctx):
         officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
@@ -132,7 +133,18 @@ def is_moderator():
             return True
         else:
             raise errors.NotForYouError("This command is only for LPD Moderators.")
-            
+
+    return commands.check(predicate)
+
+
+def is_team_lead():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_team_lead:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Team Leads.")
+
     return commands.check(predicate)
 
 def is_programming_team():
