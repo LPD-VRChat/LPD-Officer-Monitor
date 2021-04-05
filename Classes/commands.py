@@ -709,7 +709,7 @@ class Time(commands.Cog):
         # This opens a virtual file in memory that can be written to by the CSV module
         with StringIO() as virtual_bot_1_time_file:
             csv_writer = csv.writer(virtual_bot_1_time_file)
-            for officer in self.bot.officer_manager.all_officers:
+            for id, officer in self.bot.officer_manager.all_officers.items():
 
                 # Get the last active time for the officer
                 last_active_time_datetime = (
@@ -776,7 +776,7 @@ class Inactivity(commands.Cog):
         inactive_officers = []
         role_ids = role_id_index(self.bot.settings)
 
-        for officer in self.bot.officer_manager.all_officers:
+        for id, officer in self.bot.officer_manager.all_officers.items():
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(
                     self.bot.officer_manager.all_monitored_channels
