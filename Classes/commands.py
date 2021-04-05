@@ -11,6 +11,8 @@ import math
 import traceback
 import json
 import asyncio
+from typing import List, Tuple
+import fuzzywuzzy.process
 
 # Community
 import discord
@@ -1287,42 +1289,71 @@ class Other(commands.Cog):
             lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
         )
 
-    def get_role_by_name(self, role_name):
+    @staticmethod
+    def remove_name_decoration(name: str) -> str:
+        """
+        Remove the discord special characters at the start and end of the string
+        """
+        return name.strip("| ⠀ ")
+
+    def get_role_by_name(self, role_name: str) -> discord.Role:
+        """
+        Return a discord role if found, else raise `errors.GetRoleMembersError`
+        """
+        role_names = []
 
         # Get the role
         for role in self.bot.officer_manager.guild.roles:
-            if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
+            undecorated_name = self.remove_name_decoration(role.name)
+            role_names.append(undecorated_name)
+            if (
+                undecorated_name.lower() == role_name.lower()
+            ):  # non case sensitive comparaison
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        msg = f"The role `{role_name}` was not found.\nDid you mean :"
+        cutoff_score = 75
+        suggestions: List[Tuple[str, int]] = []
 
-    def get_role_members(self, role):
+        # usually you get something on the first run, sometimes if you write really badly you won't get anything
+        # lower the score to get more suggestions
+        while len(suggestions) < 1 and len(role_name) > 1 and cutoff_score > 0:
+            suggestions = fuzzywuzzy.process.extractBests(
+                role_name, role_names, score_cutoff=cutoff_score
+            )
+            # if only one suggestion, give result imediatly instead of suggest and having to type cmd again
+            if cutoff_score == 75 and len(suggestions) == 1:
+                try:
+                    return self.get_role_by_name(suggestions[0][0])
+                except errors.GetRoleMembersError as e:
+                    print(
+                        f"ERROR: rtv, Could not find role `{suggestions[0][0]}`, msg:",
+                        e,
+                    )
+                    pass  # if role not found, we use original name to find suggestions
 
+            cutoff_score -= 25
+
+        for suggest in suggestions:
+            # it's better to include quotes for copy paste correct role
+            if " " in suggest[0]:
+                msg += f'  `"{suggest[0]}"`'
+            else:
+                msg += f"  `{suggest[0]}`"
+        raise errors.GetRoleMembersError(message=msg)
+
+    def get_role_members(self, role: discord.Role) -> list:
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role.name} is empty.")
+            raise errors.GetRoleMembersError(message=f"`{role.name}` is empty.")
 
         # Sort the members
         return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
 
-    @staticmethod
-    def filter_start_end(string, list_of_characters_to_filter):
-        while True:
-            if string[0] in list_of_characters_to_filter:
-                string = string[1::]
-            else:
-                break
-
-        while True:
-            if string[-1] in list_of_characters_to_filter:
-                string = string[0:-1]
-            else:
-                break
-
-        return string
-
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
+    @commands.check_any(
+        checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
+    )
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
@@ -1332,7 +1363,8 @@ class Other(commands.Cog):
         """
 
         try:
-            members = self.get_role_members(self.get_role_by_name(role_name))
+            discord_role = self.get_role_by_name(role_name)
+            members = self.get_role_members(discord_role)
         except errors.GetRoleMembersError as error:
             await ctx.send(error)
             return
@@ -1340,7 +1372,9 @@ class Other(commands.Cog):
         members_str = "\n".join(self.get_vrc_name(x) for x in members)
 
         # Send everyone
-        await ctx.send(f"Here is everyone in the role {role_name}:")
+        await ctx.send(
+            f"Here is everyone in the role `{self.remove_name_decoration(discord_role.name)}`:"
+        )
         await send_long(ctx.channel, members_str, code_block=True)
 
     @checks.is_admin_bot_channel()
@@ -1381,7 +1415,7 @@ class Other(commands.Cog):
             json_out.append(
                 {
                     "id": role_dict["id"],
-                    "name": self.filter_start_end(role.name, ["|", " ", "⠀", " "]),
+                    "name": self.remove_name_decoration(role.name),
                     "name_id": role_dict["name_id"],
                     "member_count": len(members),
                     "members": [self.get_vrc_name(m) for m in members],

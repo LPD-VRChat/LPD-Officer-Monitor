@@ -273,6 +273,10 @@ class Officer:
     def is_detainable(self):
         return self._has_role(*self._get_roles_with_tag("is_detainable"))
 
+    @property
+    def is_team_lead(self):
+        return self._has_role(self.bot.settings["team_lead_role"])
+
     # Often used member functions
 
     @property
