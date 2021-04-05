@@ -28,12 +28,14 @@ from Classes.extra_functions import (
     get_rank_id,
     has_role,
     send_str_as_file,
+    restart
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
+from Classes.URLGen import geturls
 
 
 class Time(commands.Cog):
@@ -1511,8 +1513,7 @@ class Other(commands.Cog):
             username = user[1]
             users.append(username)
 
-        from Classes.URLGen import a
-        urls = a(users)
+        urls = geturls(users)
 
         send_string = ''
         for url in urls:
@@ -1520,3 +1521,12 @@ class Other(commands.Cog):
         
         await send_long(ctx.channel, send_string, code_block=True)
 
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def restart(self, ctx):
+        """This command restarts the bot cleanly."""
+
+        await ctx.channel.send("Restarting the bot now!")
+        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
+        await restart(self.bot, whostr)

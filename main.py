@@ -35,7 +35,7 @@ from Classes.commands import (
     Other,
 )
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file
+from Classes.extra_functions import handle_error, get_settings_file, restart
 import Classes.errors as errors
 
 
@@ -152,7 +152,7 @@ async def on_ready():
         bot.everything_ready = True
     
     except KeyboardInterrupt:
-        loop.stop()
+        restart(bot, "the console by KeyboardInterrupt")
 
 
 @bot.event

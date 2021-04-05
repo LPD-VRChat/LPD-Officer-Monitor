@@ -134,3 +134,13 @@ def is_moderator():
             raise errors.NotForYouError("This command is only for LPD Moderators.")
             
     return commands.check(predicate)
+
+def is_programming_team():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_programming_team:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for the LPD Programming Team.")
+            
+    return commands.check(predicate)

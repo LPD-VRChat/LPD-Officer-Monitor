@@ -115,4 +115,3 @@ venv.bak/
 LPD_database*.csv
 *.sqlite
 
-Classes/URLGen.py

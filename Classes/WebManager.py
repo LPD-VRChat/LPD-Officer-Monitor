@@ -17,6 +17,7 @@ from hypercorn.config import Config
 
 from Classes.extra_functions import role_id_index as _role_id_index
 from Classes.APITex import render_array
+from Classes.URLGen import geturls
 
 
 app = Quart("LPD Officer Monitor")
@@ -561,3 +562,20 @@ class WebManager:
         response.content_type = "video/webm"
 
         return response
+
+    @app.route('/api/geturls')
+    async def _get_urls_():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+        
+        users = []
+        for user in bot.user_manager.all_users:
+            username = user[1]
+            users.append(username)
+
+        urls = geturls(users)
+
+        for url in urls:
+            result = f'{url}\n'
+        
+        return result
