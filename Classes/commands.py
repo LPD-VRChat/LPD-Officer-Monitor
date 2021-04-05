@@ -11,6 +11,7 @@ import math
 import traceback
 import json
 import asyncio
+from typing import List, Tuple
 import fuzzywuzzy.process
 
 # Community
@@ -1322,7 +1323,7 @@ class Other(commands.Cog):
 
         msg = f"The role `{role_name}` was not found.\nDid you mean :"
         cutoff_score = 75
-        suggestions = [["role", 0]]  # example data for mypy
+        suggestions: List[Tuple[str, int]] = []
 
         # usually you get something on the first run, sometimes if you write really badly you won't get anything
         # lower the score to get more suggestions
