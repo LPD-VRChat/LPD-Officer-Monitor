@@ -55,6 +55,7 @@ intents.members = True
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--server", action="store_true")
 parser.add_argument("-l", "--local", action="store_true")
+parser.add_argument("--run-insecure", action="store_true")
 args = parser.parse_args()
 
 _eyes_response_last_sent = None
@@ -145,7 +146,10 @@ async def on_ready():
             id=keys["Client_ID"],
             secret=keys["Client_secret"],
             token=keys["Discord_token"],
-            callback=keys["Callback_URL"]
+            callback=keys["Callback_URL"],
+            certfile=keys["certfile"],
+            keyfile=keys["keyfile"],
+            _run_insecure=args.run_insecure
         )
 
         # Mark everything ready

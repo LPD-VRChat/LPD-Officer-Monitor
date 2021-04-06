@@ -9,6 +9,7 @@ import re
 import signal
 import moviepy.editor as mp
 from urllib.parse import unquote_plus as dec
+from os import path
 
 from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
@@ -36,7 +37,7 @@ class WebManager:
         self.bot = bot
 
     @classmethod
-    async def start(cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None):
+    async def start(cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None, certfile=None, keyfile=None, _run_insecure=False):
 
         instance = cls(_Bot)
 
@@ -51,13 +52,20 @@ class WebManager:
         _Discord = DiscordOAuth2Session(app)
         app.config["DISCORD"] = _Discord
 
-        certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem'
-        keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem'
+        if path.exists(certfile) and path.exists(keyfile) and not _run_insecure:
+            _run_secure = True
+        else:
+            _run_secure = False        
 
         config = Config()
+        
+        if _run_secure:
+            config.certfile = certfile
+            config.keyfile = keyfile
+        else:
+            port = 80
+        
         config.bind = [f"{host}:{port}"]
-        config.certfile = certfile
-        config.keyfile = keyfile
         config.worker_class = ["asyncio"]
         config.server_names = ["devbox.lolipd.com", "www.lolipd.com"]
         config.accesslog = "/var/log/LPD-Officer-Monitor/access.log"
@@ -265,11 +273,35 @@ class WebManager:
             return await _403_('Moderator')
         
         role_id_index = []
+        rank_ladder = _role_id_index(bot.settings)
+        sorted_roles = []
+        other_roles = []
+        team_roles = []
+        trainer_roles = []
+        
+        for role_id in rank_ladder:
+            sorted_roles.append(bot.officer_manager.guild.get_role(role_id))
+
         for role in bot.officer_manager.guild.roles:
             if role.name == "@everyone":
                 everyone_role_id = role.id
+                sorted_roles.insert(0, role)
                 continue
             role_id_index.append(role.id)
+            if role not in sorted_roles:
+                if "team" in role.name.lower():
+                    team_roles.append(role)
+                elif "trainer" in role.name.lower():
+                    trainer_roles.append(role)
+                else:
+                    other_roles.append(role)
+
+        other_roles.sort(key=lambda x: x.name)
+        team_roles.sort(key=lambda x: x.name)
+        trainer_roles.sort(key=lambda x: x.name)
+        sorted_roles.extend(team_roles)
+        sorted_roles.extend(trainer_roles)
+        sorted_roles.extend(other_roles)
 
         rolename = ''
         requested_role_id = ''
@@ -288,7 +320,7 @@ class WebManager:
             for member in role.members:
                 results.append({'name': member.display_name, 'role': role.name})
 
-        return await render_template("rtv.html", results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=bot.officer_manager.guild.roles)
+        return await render_template("rtv.html", results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=sorted_roles)
 
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
