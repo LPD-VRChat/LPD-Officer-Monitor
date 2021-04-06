@@ -194,7 +194,7 @@ class WebManager:
                 
                 
 
-        return await render_template("officers.html", title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_moderator, all_officers=bot.officer_manager.all_officers, method=request.method, time_results=time_results, officer=specified_officer)
+        return await render_template("officers.html", title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_moderator, all_officers=bot.officer_manager.all_officers.values(), method=request.method, time_results=time_results, officer=specified_officer)
         
 
     @app.route("/officers_only")
@@ -360,7 +360,7 @@ class WebManager:
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
 
-        for officer in bot.officer_manager.all_officers:
+        for officer in bot.officer_manager.all_officers.values():
             if officer.id not in loa_officer_ids:
                 has_role = False
                 if role in officer.member.roles:
@@ -387,7 +387,7 @@ class WebManager:
 
         now = datetime.utcnow()
         then = datetime.utcnow() - timedelta(days=bot.settings["max_inactive_days"])
-        all_officers = bot.officer_manager.all_officers
+        all_officers = bot.officer_manager.all_officers.values()
 
         sort_by = "NAME"
         if request.method == "POST":
@@ -484,7 +484,7 @@ class WebManager:
             return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=role)
 
         
-        for officer in bot.officer_manager.all_officers:
+        for officer in bot.officer_manager.all_officers.values():
             
             result = await officer.get_all_activity(
                 bot.officer_manager.all_monitored_channels
@@ -514,7 +514,7 @@ class WebManager:
             return await _403_('Dispatch')
 
         active_squads = []
-        for officer in bot.officer_manager.all_officers:
+        for officer in bot.officer_manager.all_officers.values():
             if not officer.is_on_duty: continue
             if officer.squad not in active_squads: active_squads.append(officer.squad)
         
