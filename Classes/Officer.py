@@ -27,7 +27,7 @@ class Officer:
 
         self._on_duty_start_time = None
         self.is_on_duty = False
-        self.squad = ""
+        self.squad = None
 
     def go_on_duty(self):
 
@@ -44,7 +44,7 @@ class Officer:
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
-        self.squad = self.member.voice.channel.name
+        self.squad = self.member.voice.channel
 
     def update_squad(self):
 
@@ -54,7 +54,7 @@ class Officer:
             return
 
         print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
-        self.squad = self.member.voice.channel.name
+        self.squad = self.member.voice.channel
 
     async def go_off_duty(self):
 
@@ -71,7 +71,7 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
-        self.squad = ""
+        self.squad = None
 
     async def remove(self):
 
