@@ -196,7 +196,6 @@ class WebManager:
 
         return await render_template("officers.html", title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_moderator, all_officers=bot.officer_manager.all_officers.values(), method=request.method, time_results=time_results, officer=specified_officer)
         
-
     @app.route("/officers_only")
     @requires_authorization
     async def _officers_page():
@@ -501,7 +500,7 @@ class WebManager:
         
         return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=None)
 
-    @app.route('/dispatch')
+    @app.route('/dispatch', methods=["POST", "GET"])
     @requires_authorization
     async def _dispatch_main_view():
         discord = app.config["DISCORD"]
@@ -510,7 +509,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
 
-        if not officer.is_dispatch:
+        if not officer.is_dispatch and not officer.is_programming_team:
             return await _403_('Dispatch')
 
         active_squads = []
