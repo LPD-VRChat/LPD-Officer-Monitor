@@ -147,9 +147,9 @@ async def on_ready():
             secret=keys["Client_secret"],
             token=keys["Discord_token"],
             callback=keys["Callback_URL"],
-            certfile=keys["certfile"],
-            keyfile=keys["keyfile"],
-            _run_insecure=args.run_insecure
+            certfile=keys["certfile"] if "certfile" in keys and "keyfile" in keys else "/...",      # This will fail out the check in WebManager if the certfile and keyfile aren't specified
+            keyfile=keys["keyfile"] if "certfile" in keys and "keyfile" in keys else "/...",
+            _run_insecure=args.run_insecure if "certfile" in keys and "keyfile" in keys else True
         )
 
         # Mark everything ready
