@@ -1033,7 +1033,7 @@ class VRChatAccoutLink(commands.Cog):
         """
         This command is just for testing the bot.
         """
-        await ctx.send(str(self.bot.user_manager.all_users))
+        await send_long(ctx.channel, str(self.bot.user_manager.all_users), code_block=False)
 
 
 class Applications(commands.Cog):
