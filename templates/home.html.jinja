@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <TITLE>{% block title %}{{ title }}{% endblock %}</TITLE>
     <style>
-        {% include "default.css" %}
+        {% include "default.css.jinja" %}
     </style>
 </HEAD>
 
 <BODY>
-    {% include "navbar.html" %}
+    {% include "navbar.html.jinja" %}
     {% block body %}Welcome to the LPD!{% endblock %}
 </BODY>
 

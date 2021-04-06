@@ -159,10 +159,9 @@ async def restart(bot, source):
     
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
-    for officer_id in bot.officer_manager.all_officers:
-        officer = bot.officer_manager.all_officers[officer_id]
+    for officer in bot.officer_manager.all_officers.values():
         if officer.is_on_duty:
-            officer.go_off_duty()
+            await officer.go_off_duty()
     
     # Log the restart
     msg_string = f"WARNING: Bot restarted from {source}"

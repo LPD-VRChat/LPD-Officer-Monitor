@@ -10,6 +10,7 @@ import signal
 import moviepy.editor as mp
 from urllib.parse import unquote_plus as dec
 from os import path
+from collections import OrderedDict
 
 from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
@@ -25,7 +26,7 @@ app = Quart("LPD Officer Monitor")
 
 
 async def _403_(missing_role):
-    return await render_template("403.html", missing_role=missing_role)
+    return await render_template("403.html.jinja", missing_role=missing_role)
 
 shutdown_event = asyncio.Event()
 def _signal_handler(): #*_: Any) -> None:
@@ -95,7 +96,7 @@ class WebManager:
 
     @app.route("/")
     async def home():
-        return await render_template("home.html", title="Welcome to the LPD!")
+        return await render_template("home.html.jinja", title="Welcome to the LPD!")
 
     @app.route("/officers", methods=["POST", "GET"])
     @requires_authorization
@@ -207,7 +208,7 @@ class WebManager:
         if not officer:
             return await _403_('Officer')
 
-        return await render_template("under_construction.html", target="Officers")
+        return await render_template("under_construction.html.jinja", target="Officers")
 
     @app.route("/moderation")
     @requires_authorization
@@ -220,7 +221,7 @@ class WebManager:
         if not officer or not officer.is_moderator:
             return await _403_('Moderator')
 
-        return await render_template("under_construction.html", target="Moderators")
+        return await render_template("under_construction.html.jinja", target="Moderators")
 
     @app.route("/moderation/loa")
     @requires_authorization
@@ -231,7 +232,7 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_moderator:
-            return await render_template("403.html", loa_entries=loa_entries)
+            return await render_template("403.html.jinja", loa_entries=loa_entries)
 
         loa_entries_raw = await bot.officer_manager.get_loa()
         loa_entries = []
@@ -239,7 +240,7 @@ class WebManager:
             officer = bot.officer_manager.get_officer(entry[0])
             loa_entries.append({'id': entry[0], 'name': officer.display_name, 'start_date': entry[1], 'end_date': entry[2], 'reason': entry[3]})
 
-        return await render_template("leaves_of_absence.html", loa_entries=loa_entries)
+        return await render_template("leaves_of_absence.html.jinja", loa_entries=loa_entries)
 
     @app.route("/moderation/vrclist")
     @requires_authorization
@@ -258,7 +259,7 @@ class WebManager:
             member = guild.get_member(vrcuser[0])
             vrcnames.append({'name': member.display_name, 'vrcname': vrcuser[1]})
 
-        return await render_template("vrclist.html", vrcnames=vrcnames)
+        return await render_template("vrclist.html.jinja", vrcnames=vrcnames)
 
     @app.route("/moderation/rtv", methods=["POST", "GET"])
     @requires_authorization
@@ -319,7 +320,7 @@ class WebManager:
             for member in role.members:
                 results.append({'name': member.display_name, 'role': role.name})
 
-        return await render_template("rtv.html", results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=sorted_roles)
+        return await render_template("rtv.html.jinja", results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=sorted_roles)
 
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
@@ -371,7 +372,7 @@ class WebManager:
                 if last_activity < oldest_valid:
                     inactive_officers.append([officer, last_activity, has_role])
 
-        return await render_template("mark_inactive.html", inactive_officers=inactive_officers, len=len(inactive_officers))
+        return await render_template("mark_inactive.html.jinja", inactive_officers=inactive_officers, len=len(inactive_officers))
 
     @app.route('/moderation/patrol_time', methods=["POST", "GET"])
     @requires_authorization
@@ -439,7 +440,7 @@ class WebManager:
 
             data.append({'name': officer.display_name, 'id': officer.id, 'return_str': return_str})
             
-        return await render_template("web_patrol_time.html", sort_by=sort_by.upper(), data=data)
+        return await render_template("web_patrol_time.html.jinja", sort_by=sort_by.upper(), data=data)
 
     @app.route('/moderation/rank_last_active', methods=["POST", "GET"])
     @requires_authorization
@@ -480,7 +481,7 @@ class WebManager:
                 
                 last_activity_list.append({'name': officer.display_name, 'date': time_results[0]['time']})
 
-            return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=role)
+            return await render_template("last_active.html.jinja", roles=roles, last_activity_list=last_activity_list, requested_role=role)
 
         
         for officer in bot.officer_manager.all_officers.values():
@@ -498,7 +499,7 @@ class WebManager:
             
 
         
-        return await render_template("last_active.html", roles=roles, last_activity_list=last_activity_list, requested_role=None)
+        return await render_template("last_active.html.jinja", roles=roles, last_activity_list=last_activity_list, requested_role=None)
 
     @app.route('/dispatch', methods=["POST", "GET"])
     @requires_authorization
@@ -512,14 +513,33 @@ class WebManager:
         if not officer.is_dispatch and not officer.is_programming_team:
             return await _403_('Dispatch')
 
-        active_squads = []
+        data = {}
         for officer in bot.officer_manager.all_officers.values():
+            display_name = officer.display_name
             if not officer.is_on_duty: continue
-            if officer.squad not in active_squads: active_squads.append(officer.squad)
-        
-        active_squads.sort(key=lambda x: x.position)
+
+            if officer.event_slrt is not None:
+                if officer.event_slrt is not officer.squad:
+                    display_name = f'{officer.event_slrt.name} - {officer.display_name}'
+                else:
+                    display_name = officer.display_name
             
-        return await render_template("dispatch.html", data=active_squads)
+            if officer.event_lmt is not None:
+                if officer.event_lmt is not officer.squad:
+                    display_name = f'{officer.event_lmt.name} - {officer.display_name}'
+                else:
+                    display_name = officer.display_name
+            
+            if officer.squad.id not in data:
+                data[officer.squad.id] = [officer.squad, []]
+            data[officer.squad.id][1].append([officer, display_name])
+        
+        for squad_id in data:
+            data[squad_id][1] = sorted(data[squad_id][1], key=lambda x: x[1])
+
+        data = OrderedDict(sorted(data.items(), key = lambda x: x[1][0].position))
+            
+        return await render_template("dispatch.html.jinja", data=data)
 
     @app.route('/roomba/killcount/upload')
     async def _increment_roomba_killcount_():
