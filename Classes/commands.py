@@ -130,10 +130,10 @@ class Time(commands.Cog):
     def get_officer_id(self, officer_string):
 
         # Check for an @ mention
-        p = re.compile(r"<@\![0-9]+>")
+        p = re.compile(r"<@!{0,1}([0-9]+?)>")
         match = p.match(officer_string)
         if match:
-            return int(match.group()[3:-1])
+            return int(match.group(1))
 
         # Check for an ID
         p = re.compile(r"[0-9]+")
