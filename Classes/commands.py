@@ -300,7 +300,7 @@ class Time(commands.Cog):
         # Get the officer ID
         officer_id = self.get_officer_id(parsed.officer)
         if officer_id == None:
-            ctx.send("Make sure to mention an officer.")
+            await ctx.send("Make sure to mention an officer.")
             return
         print(f"officer_id: {officer_id}")
 
@@ -911,7 +911,7 @@ class VRChatAccoutLink(commands.Cog):
             skip_formatting = False
 
         # if use spaces without quotes, won't add space if only one
-        vrchat_name = " ".join(args[int(skip_formatting):])
+        vrchat_name = " ".join(args[int(skip_formatting) :])
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
