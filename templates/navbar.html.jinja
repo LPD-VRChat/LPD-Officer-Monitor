@@ -24,7 +24,7 @@
         </button>
 
         <div class="dropdown-content">
-            <a href="/dispatch">Dispatch</a>
+            <a href="/dispatch/spa">Dispatch</a>
 
 
         </div>
@@ -32,4 +32,7 @@
 
     <a href="https://teamup.com/ksfnmscvrenv3hkk32">Event Calendar</a>
 
+    {% if display_name is defined %}
+    <a href="" style="float: right; background-color: #333; pointer-events: none; cursor: default;">Welcome, {{ display_name }}</a>
+    {% endif %}
 </div>

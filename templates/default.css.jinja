@@ -1,5 +1,5 @@
 .btn-link {border: none; outline: none; background: none; cursor: pointer; color: #0000EE; padding: 0; text-decoration: underline; font-family: inherit; font-size: inherit;}
-table.blueTable {border: 1px solid #1C6EA4; background-color: #EEEEEE; width: 80%; text-align: left; border-collapse: collapse;}
+table.blueTable {min-width: 200px; border: 1px solid #1C6EA4; background-color: #EEEEEE; text-align: left; border-collapse: collapse; table-layout: fixed;}
 table.blueTable td, table.blueTable th {border: 1px solid #AAAAAA; padding: 3px 2px;}
 table.blueTable tbody td {font-size: 13px;}
 table.blueTable tr:nth-child(even) {background: #D0E4F5;}
@@ -27,12 +27,7 @@ table.blueTable tfoot .links a{display: inline-block; background: #1C6EA4; color
 .dropdown-content a:hover {background-color: #ddd;}
 /* Show the dropdown menu on hover */
 .dropdown:hover .dropdown-content {display: block;}
-.flex-container {padding: 0; margin: 0; list-style: none; border: 1px solid silver; -ms-box-orient: horizontal; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;}
-.flex-item {padding: 5px; width: 400px; margin: 10px; }
+.flex-container {width: 100%; padding: 0; margin: 0; list-style: none; border: 1px solid silver; -ms-box-orient: horizontal; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex; flex-wrap: wrap;}
+.flex-item {padding: 5px; margin: 10px; }
 .wrap    {-webkit-flex-wrap: wrap; flex-wrap: wrap;}  
 .wrap li {background: gold;}
-
-#container {width: 80%; float: left; margin: 10px auto; padding: 5px;}
-#container .row {border: 0px solid green; border-left: 0; border-top: none; margin: 0; padding: 0;}
-/* #container br {clear: both;} */
-#container .block {width: 40%; float: left; padding: 5px;}

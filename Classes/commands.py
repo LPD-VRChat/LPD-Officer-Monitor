@@ -907,8 +907,15 @@ class VRChatAccoutLink(commands.Cog):
         debug console can be enabled with a button under the front desk.
         """
 
+        if not args:
+            await ctx.channel.send("Please specify your VRChat name.")
+            return
+        
         # Check if -s is specified
         if args[0] == "-s":
+            if len(args) == 1:
+                await ctx.channel.send("Please specify your VRChat name.")
+                return
             skip_formatting = True
         else:
             skip_formatting = False

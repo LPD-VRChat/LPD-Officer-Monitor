@@ -31,8 +31,7 @@ class Officer:
         self._on_duty_start_time = None
         self.is_on_duty = False
         self.squad = None
-        self.event_slrt = None
-        self.event_lmt = None
+        self.event_squad = None
 
     def go_on_duty(self):
 
@@ -50,10 +49,8 @@ class Officer:
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
         self.squad = self.member.voice.channel
-        if 'slrt' in self.member.voice.channel.name.lower():
-            self.event_slrt = self.member.voice.channel
-        if 'lmt' in self.member.voice.channel.name.lower():
-            self.event_lmt = self.member.voice.channel
+        if 'at station' not in self.member.voice.channel.name.lower() and 'train' not in self.member.voice.channel.name.lower():
+            self.event_squad = self.member.voice.channel
 
     def update_squad(self):
 
@@ -65,13 +62,10 @@ class Officer:
         print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
         
         
-        if 'at station' in self.member.voice.channel.name.lower():
-            self.event_slrt = None
-            self.event_lmt = None
-        if 'slrt' in self.member.voice.channel.name.lower() and 'at station' in self.squad.name.lower():
-            self.event_slrt = self.member.voice.channel
-        if 'lmt' in self.member.voice.channel.name.lower() and 'at station' in self.squad.name.lower():
-            self.event_lmt = self.member.voice.channel
+        if 'at station' not in self.member.voice.channel.name.lower() and 'train' not in self.member.voice.channel.name.lower() and self.event_squad is None:
+            self.event_squad = self.member.voice.channel
+        elif 'at station' in self.member.voice.channel.name.lower():
+            self.event_squad = None
         self.squad = self.member.voice.channel
 
     async def go_off_duty(self):
@@ -90,8 +84,7 @@ class Officer:
         self._on_duty_start_time = None
         self.is_on_duty = False
         self.squad = None
-        self.event_slrt = None
-        self.event_lmt = None
+        self.event_squad = None
 
     async def remove(self):
 
