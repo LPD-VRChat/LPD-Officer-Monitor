@@ -1,0 +1,74 @@
+{% extends "home.html.jinja" %}
+{% block title %}Dispatch - Single Page View{% endblock %}
+{% block body %}
+<p id="squads"></p>
+<script>
+setInterval(function(){ 
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("squads").innerHTML = this.responseText;
+    }
+  }
+  xhttp.open("GET", "spa/data.asp", true);
+  xhttp.send();
+}, 1000);
+</script>
+<form class="form-horizontal" action="/dispatch/spa/backup_request" method="post">
+<fieldset>
+
+<!-- Form Name -->
+<legend>Backup Request</legend>
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="squad_id">Squad</label>
+  <div class="col-md-2">
+    <select id="squad_id" name="squad_id" class="form-control">
+      {% for squad_id in squad_ids %}
+      <option value="{{ squad_id }}">{{ squad_ids[squad_id].name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="backup_type">Type</label>
+  <div class="col-md-4"> 
+    <label class="radio-inline" for="backup_type-0">
+      <input type="radio" name="backup_type" id="backup_type-0" value="SLRT" checked="checked">
+      SLRT
+    </label> 
+    <label class="radio-inline" for="backup_type-1">
+      <input type="radio" name="backup_type" id="backup_type-1" value="LMT">
+      LMT
+    </label> 
+    <label class="radio-inline" for="backup_type-2">
+      <input type="radio" name="backup_type" id="backup_type-2" value="Patrol">
+      Patrol
+    </label>
+  </div>
+</div>
+
+<!-- Text input-->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="world_name">World Name #1234</label>  
+  <div class="col-md-4">
+  <input id="world_name" name="world_name" type="text" placeholder="" class="form-control input-md" required=""> 
+  </div>
+</div>
+
+<!-- Textarea -->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="situation">Situation</label>
+  <div class="col-md-4">                     
+    <textarea class="form-control" id="situation" name="situation">Describe the situation here.</textarea>
+  </div>
+</div>
+<input type="submit" value="Send Request">
+
+</fieldset>
+</form>
+
+{% endblock %}
