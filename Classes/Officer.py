@@ -276,6 +276,10 @@ class Officer:
     @property
     def is_team_lead(self):
         return self._has_role(self.bot.settings["team_lead_role"])
+    
+    @property
+    def is_programming_team(self):
+        return self._has_role(self.bot.settings["programming_team_role"])
 
     # Often used member functions
 
