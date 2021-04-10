@@ -707,7 +707,14 @@ class WebManager:
         world_name = data["world_name"]
         situation = data["situation"]
 
-        await bot.dispatch_log.create(squad_id, backup_type, world_name, situation)
+        await bot.dispatch_log.create(
+            squad_id,
+            backup_type,
+            world_name,
+            situation,
+            officer.display_name,
+            user.avatar_url,
+        )
 
         return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
 

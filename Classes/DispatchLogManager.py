@@ -8,7 +8,7 @@ import aiohttp
 
 
 class DispatchLogManager:
-    def __init__(self, bot):
+    def __init__(self, bot, dispatch_webhook_url):
 
         self.bot = bot
         for _channel in bot.officer_manager.all_monitored_channels:
@@ -16,19 +16,17 @@ class DispatchLogManager:
             if channel.name.lower() == "dispatch-log":
                 self.dispatch_log = channel
                 break
+        self.dispatch_webhook_url = dispatch_webhook_url
 
     @classmethod
     async def start(cls, bot, dispatch_webhook_url):
-        instance = cls(bot)
-
-        async with aiohttp.ClientSession() as session:
-            instance.webhook = Webhook.from_url(
-                dispatch_webhook_url, adapter=AsyncWebhookAdapter(session)
-            )
+        instance = cls(bot, dispatch_webhook_url)
 
         return instance
 
-    async def create(self, squad_id, backup_type, world, situation):
+    async def create(
+        self, squad_id, backup_type, world, situation, display_name, avatar_url
+    ):
         """Used to create an entry in #dispatch-log. Pass squad_id as int, backup type [SLRT, LMT, Patrol], world as str, situation as text."""
 
         backup_emoji = next(
@@ -43,9 +41,14 @@ class DispatchLogManager:
             ),
         )
         send_message = f"Required Backup: {backup_type} {backup_emoji}\n\nWorld: {world}\n\nSituation: {situation}\n\nSquad: {self.bot.officer_manager.guild.get_channel(squad_id).name}\n\nStatus: In-progress\n----------------------------------------"
-        # message = await self.dispatch_log.send(send_message)
 
-        await self.webhook.send("Hello World", username="Foo")
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url(
+                self.dispatch_webhook_url, adapter=AsyncWebhookAdapter(session)
+            )
+            message = await webhook.send(
+                send_message, username=display_name, avatar_url=avatar_url, wait=True
+            )
 
         await self.bot.sql.request(
             "INSERT INTO DispatchLog (message_id, backup_type, squad_id, world, situation, complete) VALUES (%s, %s, %s, %s, %s, %s)",
@@ -79,14 +82,20 @@ class DispatchLogManager:
         )
         send_message = f"Required Backup: {backup_type} {backup_emoji}\n\nWorld: {world}\n\nSituation: {situation}\n\nSquad: {self.bot.officer_manager.guild.get_channel(squad_id).name}\n\nStatus: Resolved\n----------------------------------------"
 
-        message = await self.dispatch_log.fetch_message(message_id)
-        if not message:
-            return False
+        # message = await self.dispatch_log.fetch_message(message_id)
+        # if not message:
+        #     return False
 
-        await message.edit(content=send_message)
+        # await message.edit(content=send_message)
+
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url(
+                self.dispatch_webhook_url, adapter=AsyncWebhookAdapter(session)
+            )
+            await webhook.edit_message(message_id, content=send_message)
         await self.bot.sql.request(
             "REPLACE INTO DispatchLog (message_id, backup_type, squad_id, world, situation, complete) VALUES (%s, %s, %s, %s, %s, %s)",
-            (message.id, backup_type, squad_id, world, situation, True),
+            (message_id, backup_type, squad_id, world, situation, True),
         )
 
         return True
