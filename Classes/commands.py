@@ -31,7 +31,7 @@ from Classes.extra_functions import (
     get_rank_id,
     has_role,
     send_str_as_file,
-    restart,
+    clean_shutdown,
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -1554,9 +1554,9 @@ class Other(commands.Cog):
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
-    async def restart(self, ctx):
-        """This command restarts the bot cleanly."""
+    async def shutdown(self, ctx):
+        """This command shuts down the bot cleanly."""
 
-        await ctx.channel.send("Restarting the bot now!")
+        await ctx.channel.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
-        await restart(self.bot, whostr)
+        await clean_shutdown(self.bot, whostr)

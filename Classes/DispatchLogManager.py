@@ -3,6 +3,9 @@ from nest_asyncio import apply
 
 apply()
 
+from discord import Webhook, AsyncWebhookAdapter
+import aiohttp
+
 
 class DispatchLogManager:
     def __init__(self, bot):
@@ -15,8 +18,11 @@ class DispatchLogManager:
                 break
 
     @classmethod
-    def start(cls, bot):
+    async def start(cls, bot, dispatch_webhook_url):
         instance = cls(bot)
+        
+        async with aiohttp.ClientSession() as session:
+            instance.webhook = Webhook.from_url(dispatch_webhook_url, adapter=AsyncWebhookAdapter(session))
 
         return instance
 
@@ -35,7 +41,10 @@ class DispatchLogManager:
             ),
         )
         send_message = f"Required Backup: {backup_type} {backup_emoji}\n\nWorld: {world}\n\nSituation: {situation}\n\nSquad: {self.bot.officer_manager.guild.get_channel(squad_id).name}\n\nStatus: In-progress\n----------------------------------------"
-        message = await self.dispatch_log.send(send_message)
+        # message = await self.dispatch_log.send(send_message)
+
+        await self.webhook.send('Hello World', username='Foo')
+
         await self.bot.sql.request(
             "INSERT INTO DispatchLog (message_id, backup_type, squad_id, world, situation, complete) VALUES (%s, %s, %s, %s, %s, %s)",
             (message.id, backup_type, squad_id, world, situation, False),

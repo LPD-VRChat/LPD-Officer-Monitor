@@ -22,7 +22,7 @@
             {% if not officer[2] %}
             <td>
                 <form action="/moderation/inactivity" method="post"><button type="submit" name="officer_id"
-                        value="{{ officer.id }}" class="btn-link">Mark inactive</button></form>
+                        value="{{ officer[0].id }}" class="btn-link">Mark inactive</button></form>
             </td>
             {% endif %}
         </tr>

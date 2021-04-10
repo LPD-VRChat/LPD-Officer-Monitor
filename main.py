@@ -36,7 +36,7 @@ from Classes.commands import (
     Other,
 )
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, restart
+from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
 import Classes.errors as errors
 
 
@@ -111,64 +111,59 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    try:
-        print("on_ready")
-        global bot
+    print("on_ready")
+    global bot
 
-        # Make sure this function does not create the officer manager twice
-        if bot.officer_manager is not None:
-            return
+    # Make sure this function does not create the officer manager twice
+    if bot.officer_manager is not None:
+        return
 
-        if bot.sql is not None:
-            return
+    if bot.sql is not None:
+        return
 
-        # Create the function to run before officer removal
-        async def before_officer_removal(bot, officer_id):
-            await bot.user_manager.remove_user(officer_id)
+    # Create the function to run before officer removal
+    async def before_officer_removal(bot, officer_id):
+        await bot.user_manager.remove_user(officer_id)
 
-        # Start the SQL Manager
-        print("Starting SQL Manager...")
-        bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
+    # Start the SQL Manager
+    print("Starting SQL Manager...")
+    bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
 
-        # Start the Officer Manager
-        print("Starting Officer Manager...")
-        bot.officer_manager = await OfficerManager.start(
-            bot, run_before_officer_removal=before_officer_removal
-        )
+    # Start the Officer Manager
+    print("Starting Officer Manager...")
+    bot.officer_manager = await OfficerManager.start(
+        bot, run_before_officer_removal=before_officer_removal
+    )
 
-        # Start the VRChatUserManager
-        print("Starting VRChat User Manager...")
-        bot.user_manager = await VRChatUserManager.start(bot)
+    # Start the VRChatUserManager
+    print("Starting VRChat User Manager...")
+    bot.user_manager = await VRChatUserManager.start(bot)
 
-        # Start the WebManager
-        print("Starting Web Manager...")
-        bot.web_manager = await WebManager.start(
-            bot,
-            id=keys["Client_ID"],
-            secret=keys["Client_secret"],
-            token=keys["Discord_token"],
-            callback=keys["Callback_URL"],
-            certfile=keys["certfile"]
-            if "certfile" in keys and "keyfile" in keys
-            else "/...",  # This will fail out the check in WebManager if the certfile and keyfile aren't specified
-            keyfile=keys["keyfile"]
-            if "certfile" in keys and "keyfile" in keys
-            else "/...",
-            _run_insecure=args.run_insecure
-            if "certfile" in keys and "keyfile" in keys
-            else True,
-        )
+    # Start the WebManager
+    print("Starting Web Manager...")
+    bot.web_manager = await WebManager.start(
+        bot,
+        id=keys["Client_ID"],
+        secret=keys["Client_secret"],
+        token=keys["Discord_token"],
+        callback=keys["Callback_URL"],
+        certfile=keys["certfile"]
+        if "certfile" in keys and "keyfile" in keys
+        else "/...",  # This will fail out the check in WebManager if the certfile and keyfile aren't specified
+        keyfile=keys["keyfile"]
+        if "certfile" in keys and "keyfile" in keys
+        else "/...",
+        _run_insecure=args.run_insecure
+        if "certfile" in keys and "keyfile" in keys
+        else True,
+    )
 
-        # Start the LogManager
-        print("Starting DispatchLogManager...")
-        bot.dispatch_log = DispatchLogManager.start(bot)
+    # Start the LogManager
+    print("Starting DispatchLogManager...")
+    bot.dispatch_log = await DispatchLogManager.start(bot, keys["dispatch_webhook_url"])
 
-        # Mark everything ready
-        bot.everything_ready = True
-
-    except KeyboardInterrupt:
-        restart(bot, "the console by KeyboardInterrupt")
-
+    # Mark everything ready
+    bot.everything_ready = True
 
 @bot.event
 async def on_message(message):
@@ -377,8 +372,15 @@ bot.add_cog(Other(bot))
 # Start
 # ====================
 
+async def runner():
+    try:
+        await bot.start(keys["Discord_token"])
+    finally:
+        if not bot.is_closed():
+            await bot.close()
 
+future = asyncio.ensure_future(runner(), loop=loop)
 try:
-    bot.run(keys["Discord_token"])
+    loop.run_forever()
 except KeyboardInterrupt:
-    print("DON'T DO THAT")
+    loop.run_until_complete(clean_shutdown(bot, "the console by KeyboardInterrupt"))
