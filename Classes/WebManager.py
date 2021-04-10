@@ -48,7 +48,7 @@ class WebManager:
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
         app.config["DISCORD_REDIRECT_URI"] = callback  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
-        app.config['SCOPES'] = ['identify', 'bot']
+        app.config['SCOPES'] = ['identify']
         app.config["BOT"] = _Bot
         
         _Discord = DiscordOAuth2Session(app)
@@ -83,7 +83,7 @@ class WebManager:
     @app.route("/login/")
     async def login():
         discord = app.config["DISCORD"]
-        return await discord.create_session()
+        return await discord.create_session(scope=app.config["SCOPES"])
 
     @app.route("/callback/")
     async def _callback():
@@ -121,7 +121,7 @@ class WebManager:
             officer_id = int(data["officer_id"])
             specified_officer = bot.officer_manager.get_officer(officer_id)
 
-            if specified_officer is not None and officer.is_moderator:
+            if specified_officer is not None and officer.is_white_shirt:
                 result = await specified_officer.get_all_activity(
                     bot.officer_manager.all_monitored_channels
                 )
@@ -138,7 +138,7 @@ class WebManager:
                 if time_results == None:
                     _no_activity = True
             
-            elif specified_officer is not None and not officer.is_moderator:
+            elif specified_officer is not None and not officer.is_white_shirt:
                 title = "LPD Moderators only"
 
             else:
@@ -148,7 +148,8 @@ class WebManager:
                 title = "No activity"
                 time_results = [{"channel_id": "No activity", "other_activity": "None"}]
 
-        if bot.officer_manager.get_officer(user.id).is_moderator:
+        role_list = []
+        if bot.officer_manager.get_officer(user.id).is_white_shirt:
             role_ids = _role_id_index(bot.settings)
             all_officers = []
             guild = bot.officer_manager.guild
@@ -196,9 +197,9 @@ class WebManager:
                     name = role.name 
 
                 role_list.append({"id": role.id, "name": name, "count": number_of_officers_with_each_role[role]})
-                
+        
 
-        return await render_template("officers.html.jinja", display_name=user.username, title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_moderator, all_officers=bot.officer_manager.all_officers.values(), method=request.method, time_results=time_results, officer=specified_officer)
+        return await render_template("officers.html.jinja", display_name=user.username, title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_white_shirt, all_officers=bot.officer_manager.all_officers.values(), method=request.method, time_results=time_results, officer=specified_officer)
         
     @app.route("/officers_only")
     @requires_authorization
@@ -221,7 +222,7 @@ class WebManager:
 
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
 
         return await render_template("under_construction.html.jinja", display_name=user.username, target="Moderators")
@@ -234,7 +235,7 @@ class WebManager:
 
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_(missing_role="LPD Moderator")
 
         loa_entries_raw = await bot.officer_manager.get_loa()
@@ -253,7 +254,7 @@ class WebManager:
 
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
 
         vrcnames = []
@@ -272,7 +273,7 @@ class WebManager:
         
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
         
         role_id_index = []
@@ -333,7 +334,7 @@ class WebManager:
         
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
 
         role = bot.officer_manager.guild.get_role(bot.settings["inactive_role"])
@@ -385,7 +386,7 @@ class WebManager:
         
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
 
         now = datetime.utcnow()
@@ -453,7 +454,7 @@ class WebManager:
         
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
-        if not officer or not officer.is_moderator:
+        if not officer or not officer.is_white_shirt:
             return await _403_('Moderator')
         
         roles = []
