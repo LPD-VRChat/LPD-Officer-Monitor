@@ -116,7 +116,7 @@ class WebManager:
     @app.route("/favicon.ico")
     async def favicon():
         return await send_file("/favicon.ico")
-    
+
     @app.route("/")
     async def home():
         return await render_template("home.html.jinja", title="Welcome to the LPD!")

@@ -150,9 +150,7 @@ async def on_ready():
         certfile=keys["certfile"]
         if "certfile" in keys and "keyfile" in keys
         else "/...",  # This will fail out the check in WebManager if the certfile and keyfile aren't specified
-        keyfile=keys["keyfile"]
-        if "certfile" in keys and "keyfile" in keys
-        else "/...",
+        keyfile=keys["keyfile"] if "certfile" in keys and "keyfile" in keys else "/...",
         _run_insecure=args.run_insecure
         if "certfile" in keys and "keyfile" in keys
         else True,
@@ -164,6 +162,7 @@ async def on_ready():
 
     # Mark everything ready
     bot.everything_ready = True
+
 
 @bot.event
 async def on_message(message):
@@ -372,12 +371,14 @@ bot.add_cog(Other(bot))
 # Start
 # ====================
 
+
 async def runner():
     try:
         await bot.start(keys["Discord_token"])
     finally:
         if not bot.is_closed():
             await bot.close()
+
 
 future = asyncio.ensure_future(runner(), loop=loop)
 try:
