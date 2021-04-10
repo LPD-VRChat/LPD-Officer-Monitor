@@ -77,3 +77,15 @@ CREATE TABLE UserStrikes
     date DATETIME,
     entry_number INT PRIMARY KEY AUTO_INCREMENT
 );
+
+DROP TABLE IF EXISTS DispatchLog;
+CREATE TABLE DispatchLog
+(
+    message_id BIGINT UNSIGNED PRIMARY KEY,
+    backup_type TINYTEXT,
+    squad_id TINYTEXT,
+    world TEXT,
+    situation MEDIUMTEXT,
+    complete BOOL,
+    time DATETIME DEFAULT CURRENT_TIMESTAMP
+);

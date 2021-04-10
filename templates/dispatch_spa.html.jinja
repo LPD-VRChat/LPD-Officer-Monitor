@@ -16,10 +16,8 @@ setInterval(function(){
 </script>
 <form class="form-horizontal" action="/dispatch/spa/backup_request" method="post">
 <fieldset>
-
 <!-- Form Name -->
 <legend>Backup Request</legend>
-
 <!-- Select Basic -->
 <div class="form-group">
   <label class="col-md-4 control-label" for="squad_id">Squad</label>
@@ -31,7 +29,6 @@ setInterval(function(){
     </select>
   </div>
 </div>
-
 <!-- Multiple Radios (inline) -->
 <div class="form-group">
   <label class="col-md-4 control-label" for="backup_type">Type</label>
@@ -50,7 +47,6 @@ setInterval(function(){
     </label>
   </div>
 </div>
-
 <!-- Text input-->
 <div class="form-group">
   <label class="col-md-4 control-label" for="world_name">World Name #1234</label>  
@@ -58,7 +54,6 @@ setInterval(function(){
   <input id="world_name" name="world_name" type="text" placeholder="" class="form-control input-md" required=""> 
   </div>
 </div>
-
 <!-- Textarea -->
 <div class="form-group">
   <label class="col-md-4 control-label" for="situation">Situation</label>
@@ -67,8 +62,32 @@ setInterval(function(){
   </div>
 </div>
 <input type="submit" value="Send Request">
-
 </fieldset>
 </form>
 
+<h2>Currently active backup calls</h2>
+<TABLE class="blueTable">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Type</th>
+      <th>Squad</th>
+      <th>World</th>
+      <th>Situation</th>
+      <th>Complete</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for entry in dispatch_logs %}
+    <tr>
+      <td>{{ dispatch_logs[entry]["time"] }}</td>
+      <td>{{ dispatch_logs[entry]["backup_type"] }}</td>
+      <td>{{ dispatch_logs[entry]["squad_name"] }}</td>
+      <td>{{ dispatch_logs[entry]["world"] }}</td>
+      <td>{{ dispatch_logs[entry]["situation"] }}</td>
+      <td><form action="/dispatch/spa/log_complete" method="post"><button type="submit" name="message_id" value="{{ entry }}">Complete</button></form></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</TABLE>
 {% endblock %}

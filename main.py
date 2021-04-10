@@ -26,6 +26,7 @@ from Classes.OfficerManager import OfficerManager
 from Classes.SQLManager import SQLManager
 from Classes.VRChatUserManager import VRChatUserManager
 from Classes.WebManager import WebManager
+from Classes.DispatchLogManager import DispatchLogManager
 from Classes.commands import (
     Time,
     Inactivity,
@@ -151,6 +152,10 @@ async def on_ready():
             keyfile=keys["keyfile"] if "certfile" in keys and "keyfile" in keys else "/...",
             _run_insecure=args.run_insecure if "certfile" in keys and "keyfile" in keys else True
         )
+
+        # Start the LogManager
+        print("Starting DispatchLogManager...")
+        bot.dispatch_log = DispatchLogManager.start(bot)
 
         # Mark everything ready
         bot.everything_ready = True

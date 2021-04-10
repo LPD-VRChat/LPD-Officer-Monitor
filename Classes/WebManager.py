@@ -526,8 +526,11 @@ class WebManager:
         for vc in bot.officer_manager.guild.voice_channels:
             if vc.category_id == bot.settings["on_duty_category"] and 'train' not in vc.name.lower():
                 squad_ids[vc.id] = vc
-            
-        return await render_template("dispatch_spa.html.jinja", display_name=user.username, squad_ids=squad_ids) #data=data)
+
+        dispatch_logs = await bot.dispatch_log.get()
+        
+
+        return await render_template("dispatch_spa.html.jinja", display_name=user.username, squad_ids=squad_ids, dispatch_logs=dispatch_logs)
 
     @app.route('/dispatch/spa/data.asp', methods=["GET", "HEAD"])
     @requires_authorization
@@ -585,19 +588,34 @@ class WebManager:
         backup_type = data["backup_type"]
         world_name = data["world_name"]
         situation = data["situation"]
-        backup_emoji = next((x for x in bot.officer_manager.guild.emojis if x.name == backup_type), None)
-        if backup_emoji is None: backup_emoji = next((x for x in bot.officer_manager.guild.emojis if x.name == "LPD_Logo"), "")
-        send_message = f"Required Backup: {backup_type} {backup_emoji}\n\nWorld: {world_name}\n\nSituation: {situation}\n\nSquad: {bot.officer_manager.guild.get_channel(squad_id).name}\n\nStatus: In-progress\n----------------------------------------"
-
-        for _channel in bot.officer_manager.all_monitored_channels:
-            channel = bot.officer_manager.guild.get_channel(_channel)
-            if channel.name.lower() == 'dispatch-log':
-                dispatch_log = channel
-                break
         
-        await dispatch_log.send(send_message)
+        await bot.dispatch_log.create(squad_id, backup_type, world_name, situation)
+               
 
         return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
+
+    @app.route('/dispatch/spa/log_complete', methods=["POST"])
+    @requires_authorization
+    async def _dispatch_log_complete():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+
+        if not officer:
+            return '<meta http-equiv="refresh" content="5; URL=/" />'
+
+        if not officer.is_dispatch and not officer.is_programming_team:
+            return '<meta http-equiv="refresh" content="5; URL=/" />'
+
+        data = await request.form
+        message_id = int(data["message_id"])
+
+        success = await bot.dispatch_log.complete(message_id)
+
+        if success: return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
+        else: return '''<script>alert('Could not update that entry! Has it been deleted?'); window.location = '/dispatch/spa';</script>"'''
 
     @app.route('/roomba/killcount/upload')
     async def _increment_roomba_killcount_():
