@@ -159,4 +159,3 @@ def is_programming_team():
             )
 
     return commands.check(predicate)
-

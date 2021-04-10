@@ -512,9 +512,7 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.utcnow() - timedelta(days=28),
-            datetime.utcnow(),
-            limit=None,
+            datetime.utcnow() - timedelta(days=28), datetime.utcnow(), limit=None
         )
 
         # Filter list for only recruits that have been active enough
@@ -908,7 +906,7 @@ class VRChatAccoutLink(commands.Cog):
         if not args:
             await ctx.channel.send("Please specify your VRChat name.")
             return
-        
+
         # Check if -s is specified
         if args[0] == "-s":
             if len(args) == 1:
@@ -1519,7 +1517,7 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
-        
+
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
