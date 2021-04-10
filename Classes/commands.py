@@ -1033,16 +1033,6 @@ class VRChatAccoutLink(commands.Cog):
                 out_string += string_being_added
         await ctx.send(out_string)
 
-    @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
-    async def debug(self, ctx):
-        """
-        This command is just for testing the bot.
-        """
-        await ctx.send(str(self.bot.user_manager.all_users))
-
-
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
 
