@@ -3,10 +3,6 @@ from typing import Optional
 import discord
 from os import _exit as exit
 from asyncio import get_event_loop
-from nest_asyncio import apply
-
-apply()
-
 from io import StringIO, BytesIO
 
 # Community
