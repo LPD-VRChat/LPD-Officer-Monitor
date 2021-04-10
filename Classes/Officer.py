@@ -49,7 +49,10 @@ class Officer:
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
         self.squad = self.member.voice.channel
-        if 'at station' not in self.member.voice.channel.name.lower() and 'train' not in self.member.voice.channel.name.lower():
+        if (
+            "at station" not in self.member.voice.channel.name.lower()
+            and "train" not in self.member.voice.channel.name.lower()
+        ):
             self.event_squad = self.member.voice.channel
 
     def update_squad(self):
@@ -60,11 +63,14 @@ class Officer:
             return
 
         print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
-        
-        
-        if 'at station' not in self.member.voice.channel.name.lower() and 'train' not in self.member.voice.channel.name.lower() and self.event_squad is None:
+
+        if (
+            "at station" not in self.member.voice.channel.name.lower()
+            and "train" not in self.member.voice.channel.name.lower()
+            and self.event_squad is None
+        ):
             self.event_squad = self.member.voice.channel
-        elif 'at station' in self.member.voice.channel.name.lower():
+        elif "at station" in self.member.voice.channel.name.lower():
             self.event_squad = None
         self.squad = self.member.voice.channel
 
@@ -288,7 +294,7 @@ class Officer:
 
     @property
     def is_dispatch(self):
-        return (self.is_on_duty and not self.is_detainable)
+        return self.is_on_duty and not self.is_detainable
 
     @property
     def is_cadet(self):
@@ -345,7 +351,6 @@ class Officer:
     @property
     def is_team_lead(self):
         return self._has_role(self.bot.settings["team_lead_role"])
-
 
     # Often used member functions
 

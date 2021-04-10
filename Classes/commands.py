@@ -31,7 +31,7 @@ from Classes.extra_functions import (
     get_rank_id,
     has_role,
     send_str_as_file,
-    restart
+    restart,
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -515,9 +515,7 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.utcnow() - timedelta(days=28),
-            datetime.utcnow(),
-            limit=None,
+            datetime.utcnow() - timedelta(days=28), datetime.utcnow(), limit=None
         )
 
         # Filter list for only recruits that have been active enough
@@ -910,7 +908,7 @@ class VRChatAccoutLink(commands.Cog):
         if not args:
             await ctx.channel.send("Please specify your VRChat name.")
             return
-        
+
         # Check if -s is specified
         if args[0] == "-s":
             if len(args) == 1:
@@ -921,7 +919,7 @@ class VRChatAccoutLink(commands.Cog):
             skip_formatting = False
 
         # if use spaces without quotes, won't add space if only one
-        vrchat_name = " ".join(args[int(skip_formatting):])
+        vrchat_name = " ".join(args[int(skip_formatting) :])
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -1525,14 +1523,14 @@ class Other(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     async def roomba_reset(self, ctx):
-        await self.bot.sql.request('DELETE FROM Roomba')
-        await self.bot.sql.request('INSERT INTO Roomba VALUES (0)')
+        await self.bot.sql.request("DELETE FROM Roomba")
+        await self.bot.sql.request("INSERT INTO Roomba VALUES (0)")
         await ctx.channel.send("Reset the Roomba's killstreak to 0")
 
     @checks.is_white_shirt()
     @commands.command()
     async def roomba_kills(self, ctx):
-        killcount = await self.bot.sql.request('SELECT count FROM Roomba')
+        killcount = await self.bot.sql.request("SELECT count FROM Roomba")
         killcount = killcount[0][0]
 
         await ctx.channel.send(f"The Roomba has {killcount} kills.")
@@ -1547,10 +1545,10 @@ class Other(commands.Cog):
 
         urls = geturls(users)
 
-        send_string = ''
+        send_string = ""
         for url in urls:
-            send_string = f'{url}\n'
-        
+            send_string = f"{url}\n"
+
         await send_long(ctx.channel, send_string, code_block=True)
 
     @checks.is_team_bot_channel()

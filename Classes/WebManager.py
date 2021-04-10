@@ -28,9 +28,13 @@ app = Quart("LPD Officer Monitor")
 async def _403_(missing_role=None):
     return await render_template("403.html.jinja", missing_role=missing_role)
 
+
 shutdown_event = asyncio.Event()
-def _signal_handler(): #*_: Any) -> None:
+
+
+def _signal_handler():  # *_: Any) -> None:
     shutdown_event.set()
+
 
 class WebManager:
     def __init__(self, bot):
@@ -38,7 +42,19 @@ class WebManager:
         self.bot = bot
 
     @classmethod
-    async def start(cls, _Bot, host="0.0.0.0", port=443, id=None, secret=None, token=None, callback=None, certfile=None, keyfile=None, _run_insecure=False):
+    async def start(
+        cls,
+        _Bot,
+        host="0.0.0.0",
+        port=443,
+        id=None,
+        secret=None,
+        token=None,
+        callback=None,
+        certfile=None,
+        keyfile=None,
+        _run_insecure=False,
+    ):
 
         instance = cls(_Bot)
 
@@ -48,36 +64,35 @@ class WebManager:
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
         app.config["DISCORD_REDIRECT_URI"] = callback  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
-        app.config['SCOPES'] = ['identify']
+        app.config["SCOPES"] = ["identify"]
         app.config["BOT"] = _Bot
-        
+
         _Discord = DiscordOAuth2Session(app)
         app.config["DISCORD"] = _Discord
 
         if path.exists(certfile) and path.exists(keyfile) and not _run_insecure:
             _run_secure = True
         else:
-            _run_secure = False        
+            _run_secure = False
 
         config = Config()
-        
+
         if _run_secure:
             config.certfile = certfile
             config.keyfile = keyfile
         else:
             port = 80
-        
+
         config.bind = [f"{host}:{port}"]
         config.worker_class = ["asyncio"]
         config.server_names = ["devbox.lolipd.com", "www.lolipd.com"]
         config.accesslog = "/var/log/LPD-Officer-Monitor/access.log"
         config.errorlog = "/var/log/LPD-Officer-Monitor/error.log"
 
-        
         loop = asyncio.get_event_loop()
         loop.add_signal_handler(signal.SIGTERM, _signal_handler)
-        #app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
-        
+        # app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
+
         loop.create_task(serve(app, config, shutdown_trigger=shutdown_event.wait))
 
     @app.route("/login/")
@@ -116,7 +131,7 @@ class WebManager:
 
         if request.method == "POST":
             officer = bot.officer_manager.get_officer(user.id)
-            
+
             data = await request.form
             officer_id = int(data["officer_id"])
             specified_officer = bot.officer_manager.get_officer(officer_id)
@@ -126,18 +141,22 @@ class WebManager:
                     bot.officer_manager.all_monitored_channels
                 )
                 time_results = sorted(
-                    result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+                    result,
+                    key=lambda x: time.mktime(x["time"].timetuple()),
+                    reverse=True,
                 )
-                
+
                 for result in time_results:
                     if result["channel_id"] is not None:
-                        result["other_activity"] = bot.get_channel(result['channel_id']).name
-                    
+                        result["other_activity"] = bot.get_channel(
+                            result["channel_id"]
+                        ).name
+
                 title = "Last Activity"
-                
+
                 if time_results == None:
                     _no_activity = True
-            
+
             elif specified_officer is not None and not officer.is_white_shirt:
                 title = "LPD Moderators only"
 
@@ -159,11 +178,11 @@ class WebManager:
                         if member in all_officers:
                             del all_officers[-1]
                         all_officers.append(member)
-            
+
             # Get a usable number of oficers, and create a dictionary for the count by role
             number_of_officers = len(all_officers)
             number_of_officers_with_each_role = {}
-            
+
             # For every role in the role list, reverse sorted to preserve higher role:
             for entry in role_ids[::-1]:
                 role = guild.get_role(entry)
@@ -172,7 +191,9 @@ class WebManager:
                 ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
                     pass
                 else:
-                    number_of_officers_with_each_role[role] = 0  # Create entry in the dictionary
+                    number_of_officers_with_each_role[
+                        role
+                    ] = 0  # Create entry in the dictionary
 
             # This actually counts the officers per role
             for officer in all_officers:
@@ -185,7 +206,7 @@ class WebManager:
             number_of_officers_with_each_role = dict(
                 reversed(list(number_of_officers_with_each_role.items()))
             )
-        
+
             # Make the embed look pretty with actual role names in server
             role_list = []
 
@@ -194,13 +215,28 @@ class WebManager:
                 if match:
                     name = "".join(match[0][1]) + "s"
                 else:
-                    name = role.name 
+                    name = role.name
 
-                role_list.append({"id": role.id, "name": name, "count": number_of_officers_with_each_role[role]})
-        
+                role_list.append(
+                    {
+                        "id": role.id,
+                        "name": name,
+                        "count": number_of_officers_with_each_role[role],
+                    }
+                )
 
-        return await render_template("officers.html.jinja", display_name=user.username, title=title, role_list=role_list, is_moderator=bot.officer_manager.get_officer(user.id).is_white_shirt, all_officers=bot.officer_manager.all_officers.values(), method=request.method, time_results=time_results, officer=specified_officer)
-        
+        return await render_template(
+            "officers.html.jinja",
+            display_name=user.username,
+            title=title,
+            role_list=role_list,
+            is_moderator=bot.officer_manager.get_officer(user.id).is_white_shirt,
+            all_officers=bot.officer_manager.all_officers.values(),
+            method=request.method,
+            time_results=time_results,
+            officer=specified_officer,
+        )
+
     @app.route("/officers_only")
     @requires_authorization
     async def _officers_page():
@@ -210,9 +246,13 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer:
-            return await _403_('Officer')
+            return await _403_("Officer")
 
-        return await render_template("under_construction.html.jinja", display_name=user.username, target="Officers")
+        return await render_template(
+            "under_construction.html.jinja",
+            display_name=user.username,
+            target="Officers",
+        )
 
     @app.route("/moderation")
     @requires_authorization
@@ -223,9 +263,13 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
+            return await _403_("Moderator")
 
-        return await render_template("under_construction.html.jinja", display_name=user.username, target="Moderators")
+        return await render_template(
+            "under_construction.html.jinja",
+            display_name=user.username,
+            target="Moderators",
+        )
 
     @app.route("/moderation/loa")
     @requires_authorization
@@ -242,9 +286,21 @@ class WebManager:
         loa_entries = []
         for entry in loa_entries_raw:
             officer = bot.officer_manager.get_officer(entry[0])
-            loa_entries.append({'id': entry[0], 'name': officer.display_name, 'start_date': entry[1], 'end_date': entry[2], 'reason': entry[3]})
+            loa_entries.append(
+                {
+                    "id": entry[0],
+                    "name": officer.display_name,
+                    "start_date": entry[1],
+                    "end_date": entry[2],
+                    "reason": entry[3],
+                }
+            )
 
-        return await render_template("leaves_of_absence.html.jinja", display_name=user.username, loa_entries=loa_entries)
+        return await render_template(
+            "leaves_of_absence.html.jinja",
+            display_name=user.username,
+            loa_entries=loa_entries,
+        )
 
     @app.route("/moderation/vrclist")
     @requires_authorization
@@ -255,34 +311,36 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
+            return await _403_("Moderator")
 
         vrcnames = []
         guild = bot.get_guild(bot.settings["Server_ID"])
         for vrcuser in bot.user_manager.all_users:
             member = guild.get_member(vrcuser[0])
-            vrcnames.append({'name': member.display_name, 'vrcname': vrcuser[1]})
+            vrcnames.append({"name": member.display_name, "vrcname": vrcuser[1]})
 
-        return await render_template("vrclist.html.jinja", display_name=user.username, vrcnames=vrcnames)
+        return await render_template(
+            "vrclist.html.jinja", display_name=user.username, vrcnames=vrcnames
+        )
 
     @app.route("/moderation/rtv", methods=["POST", "GET"])
     @requires_authorization
     async def _rtv():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
-        
+            return await _403_("Moderator")
+
         role_id_index = []
         rank_ladder = _role_id_index(bot.settings)
         sorted_roles = []
         other_roles = []
         team_roles = []
         trainer_roles = []
-        
+
         for role_id in rank_ladder:
             sorted_roles.append(bot.officer_manager.guild.get_role(role_id))
 
@@ -307,8 +365,8 @@ class WebManager:
         sorted_roles.extend(trainer_roles)
         sorted_roles.extend(other_roles)
 
-        rolename = ''
-        requested_role_id = ''
+        rolename = ""
+        requested_role_id = ""
         if request.method == "POST":
             data = await request.form
             role_id = data["role_id"]
@@ -322,20 +380,28 @@ class WebManager:
         for role_id in role_id_index:
             role = bot.officer_manager.guild.get_role(role_id)
             for member in role.members:
-                results.append({'name': member.display_name, 'role': role.name})
+                results.append({"name": member.display_name, "role": role.name})
 
-        return await render_template("rtv.html.jinja", display_name=user.username, results=results, method=request.method, requested_role_id=requested_role_id, rolename=rolename, roles=sorted_roles)
+        return await render_template(
+            "rtv.html.jinja",
+            display_name=user.username,
+            results=results,
+            method=request.method,
+            requested_role_id=requested_role_id,
+            rolename=rolename,
+            roles=sorted_roles,
+        )
 
     @app.route("/moderation/inactivity", methods=["POST", "GET"])
     @requires_authorization
     async def _mark_inactive():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
+            return await _403_("Moderator")
 
         role = bot.officer_manager.guild.get_role(bot.settings["inactive_role"])
         if request.method == "POST":
@@ -376,18 +442,23 @@ class WebManager:
                 if last_activity < oldest_valid:
                     inactive_officers.append([officer, last_activity, has_role])
 
-        return await render_template("mark_inactive.html.jinja", display_name=user.username, inactive_officers=inactive_officers, len=len(inactive_officers))
+        return await render_template(
+            "mark_inactive.html.jinja",
+            display_name=user.username,
+            inactive_officers=inactive_officers,
+            len=len(inactive_officers),
+        )
 
-    @app.route('/moderation/patrol_time', methods=["POST", "GET"])
+    @app.route("/moderation/patrol_time", methods=["POST", "GET"])
     @requires_authorization
     async def _web_patrol_time():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
+            return await _403_("Moderator")
 
         now = datetime.utcnow()
         then = datetime.utcnow() - timedelta(days=bot.settings["max_inactive_days"])
@@ -397,7 +468,6 @@ class WebManager:
         if request.method == "POST":
             data = await request.form
             sort_by = data["sort_by"]
-        
 
         multi_line = True
 
@@ -440,29 +510,38 @@ class WebManager:
                         return_str = f"{calculations[i][fetch_num]}"
                     else:
                         return_str = f"{calculations[i][fetch_num]}:{return_str}"
-            
 
-            data.append({'name': officer.display_name, 'id': officer.id, 'return_str': return_str})
-            
-        return await render_template("web_patrol_time.html.jinja", display_name=user.username, sort_by=sort_by.upper(), data=data)
+            data.append(
+                {
+                    "name": officer.display_name,
+                    "id": officer.id,
+                    "return_str": return_str,
+                }
+            )
 
-    @app.route('/moderation/rank_last_active', methods=["POST", "GET"])
+        return await render_template(
+            "web_patrol_time.html.jinja",
+            display_name=user.username,
+            sort_by=sort_by.upper(),
+            data=data,
+        )
+
+    @app.route("/moderation/rank_last_active", methods=["POST", "GET"])
     @requires_authorization
     async def _web_rank_last_active():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
+
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
         if not officer or not officer.is_white_shirt:
-            return await _403_('Moderator')
-        
+            return await _403_("Moderator")
+
         roles = []
         role_ids = _role_id_index(bot.settings)
 
         for role_id in role_ids:
             roles.append(bot.officer_manager.guild.get_role(role_id))
-
 
         last_activity_list = []
 
@@ -473,23 +552,32 @@ class WebManager:
 
             for member in role.members:
                 officer = bot.officer_manager.get_officer(member.id)
-                
+
                 result = await officer.get_all_activity(
                     bot.officer_manager.all_monitored_channels
                 )
 
                 # Send the embed
                 time_results = sorted(
-                    result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
+                    result,
+                    key=lambda x: time.mktime(x["time"].timetuple()),
+                    reverse=True,
                 )
-                
-                last_activity_list.append({'name': officer.display_name, 'date': time_results[0]['time']})
 
-            return await render_template("last_active.html.jinja", display_name=user.username, roles=roles, last_activity_list=last_activity_list, requested_role=role)
+                last_activity_list.append(
+                    {"name": officer.display_name, "date": time_results[0]["time"]}
+                )
 
-        
+            return await render_template(
+                "last_active.html.jinja",
+                display_name=user.username,
+                roles=roles,
+                last_activity_list=last_activity_list,
+                requested_role=role,
+            )
+
         for officer in bot.officer_manager.all_officers.values():
-            
+
             result = await officer.get_all_activity(
                 bot.officer_manager.all_monitored_channels
             )
@@ -498,14 +586,20 @@ class WebManager:
             time_results = sorted(
                 result, key=lambda x: time.mktime(x["time"].timetuple()), reverse=True
             )
-            
-            last_activity_list.append({'name': officer.display_name, 'date': time_results[0]['time']})
-            
 
-        
-        return await render_template("last_active.html.jinja", display_name=user.username, roles=roles, last_activity_list=last_activity_list, requested_role=None)
+            last_activity_list.append(
+                {"name": officer.display_name, "date": time_results[0]["time"]}
+            )
 
-    @app.route('/dispatch/spa', methods=["GET", "POST"])
+        return await render_template(
+            "last_active.html.jinja",
+            display_name=user.username,
+            roles=roles,
+            last_activity_list=last_activity_list,
+            requested_role=None,
+        )
+
+    @app.route("/dispatch/spa", methods=["GET", "POST"])
     @requires_authorization
     async def _dispatch_single_page_():
         discord = app.config["DISCORD"]
@@ -515,25 +609,38 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
 
         if not officer.is_dispatch and not officer.is_programming_team:
-            return await _403_('Dispatch')
+            return await _403_("Dispatch")
 
         if request.method == "POST":
             data = await request.form
             squad_id = data["squad_id"]
-            if officer.member.voice is not None and officer.member.voice.channel is not None:
-                await officer.member.move_to(bot.officer_manager.guild.get_channel(int(squad_id)), reason=f"{officer.display_name} moved themself through the online Dispatch Portal")
+            if (
+                officer.member.voice is not None
+                and officer.member.voice.channel is not None
+            ):
+                await officer.member.move_to(
+                    bot.officer_manager.guild.get_channel(int(squad_id)),
+                    reason=f"{officer.display_name} moved themself through the online Dispatch Portal",
+                )
 
         squad_ids = {}
         for vc in bot.officer_manager.guild.voice_channels:
-            if vc.category_id == bot.settings["on_duty_category"] and 'train' not in vc.name.lower():
+            if (
+                vc.category_id == bot.settings["on_duty_category"]
+                and "train" not in vc.name.lower()
+            ):
                 squad_ids[vc.id] = vc
 
         dispatch_logs = await bot.dispatch_log.get()
-        
 
-        return await render_template("dispatch_spa.html.jinja", display_name=user.username, squad_ids=squad_ids, dispatch_logs=dispatch_logs)
+        return await render_template(
+            "dispatch_spa.html.jinja",
+            display_name=user.username,
+            squad_ids=squad_ids,
+            dispatch_logs=dispatch_logs,
+        )
 
-    @app.route('/dispatch/spa/data.asp', methods=["GET", "HEAD"])
+    @app.route("/dispatch/spa/data.asp", methods=["GET", "HEAD"])
     @requires_authorization
     async def _dispatch_spa_asp():
         discord = app.config["DISCORD"]
@@ -543,33 +650,39 @@ class WebManager:
         officer = bot.officer_manager.get_officer(user.id)
 
         if not officer.is_dispatch and not officer.is_programming_team:
-            return ''
-        
+            return ""
+
         data = {}
         for vc in bot.officer_manager.guild.voice_channels:
-            if vc.category_id == bot.settings["on_duty_category"] and 'train' not in vc.name.lower():
+            if (
+                vc.category_id == bot.settings["on_duty_category"]
+                and "train" not in vc.name.lower()
+            ):
                 data[vc.id] = [vc, []]
 
         for officer in bot.officer_manager.all_officers.values():
             display_name = officer.display_name
-            if not officer.is_on_duty: continue
+            if not officer.is_on_duty:
+                continue
 
             if officer.event_squad is not None:
                 if officer.event_squad is not officer.squad:
-                    display_name = f'{officer.event_squad.name} - {officer.display_name}'
+                    display_name = (
+                        f"{officer.event_squad.name} - {officer.display_name}"
+                    )
                 else:
                     display_name = officer.display_name
 
             data[officer.squad.id][1].append([officer, display_name])
-        
+
         for squad_id in data:
             data[squad_id][1] = sorted(data[squad_id][1], key=lambda x: x[1])
 
-        data = OrderedDict(sorted(data.items(), key = lambda x: x[1][0].position))
-            
+        data = OrderedDict(sorted(data.items(), key=lambda x: x[1][0].position))
+
         return await render_template("dispatch_data.asp.jinja", data=data)
-        
-    @app.route('/dispatch/spa/backup_request', methods=["POST"])
+
+    @app.route("/dispatch/spa/backup_request", methods=["POST"])
     @requires_authorization
     async def _dispatch_backup_request():
         discord = app.config["DISCORD"]
@@ -589,13 +702,12 @@ class WebManager:
         backup_type = data["backup_type"]
         world_name = data["world_name"]
         situation = data["situation"]
-        
+
         await bot.dispatch_log.create(squad_id, backup_type, world_name, situation)
-               
 
         return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
 
-    @app.route('/dispatch/spa/log_complete', methods=["POST"])
+    @app.route("/dispatch/spa/log_complete", methods=["POST"])
     @requires_authorization
     async def _dispatch_log_complete():
         discord = app.config["DISCORD"]
@@ -615,24 +727,26 @@ class WebManager:
 
         success = await bot.dispatch_log.complete(message_id)
 
-        if success: return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
-        else: return '''<script>alert('Could not update that entry! Has it been deleted?'); window.location = '/dispatch/spa';</script>"'''
+        if success:
+            return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
+        else:
+            return '''<script>alert('Could not update that entry! Has it been deleted?'); window.location = '/dispatch/spa';</script>"'''
 
-    @app.route('/roomba/killcount/upload')
+    @app.route("/roomba/killcount/upload")
     async def _increment_roomba_killcount_():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
-        killcount = await bot.sql.request('SELECT count FROM Roomba')
+
+        killcount = await bot.sql.request("SELECT count FROM Roomba")
         killcount = killcount[0][0]
         if request.method == "HEAD":
             try:
                 killcount = killcount + 1
-            except: 
+            except:
                 killcount = 1
-            await bot.sql.request('DELETE FROM Roomba')
-            await bot.sql.request('INSERT INTO Roomba VALUES (%s)', killcount)
-        
+            await bot.sql.request("DELETE FROM Roomba")
+            await bot.sql.request("INSERT INTO Roomba VALUES (%s)", killcount)
+
             channel = bot.get_channel(bot.settings["error_log_channel"])
             await channel.send(f"""The Roomba has {killcount} kills.""")
 
@@ -648,54 +762,54 @@ class WebManager:
 
         return content
 
-    @app.route('/api/auth')
+    @app.route("/api/auth")
     async def _api_handler_():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
-        encoded_username = request.args.get('vrcuser')
+
+        encoded_username = request.args.get("vrcuser")
         try:
-            w = int(request.args.get('w'))
+            w = int(request.args.get("w"))
         except:
-            w = int(request.args.get('W'))
+            w = int(request.args.get("W"))
         try:
-            h = int(request.args.get('h'))
+            h = int(request.args.get("h"))
         except:
-            h = int(request.args.get('H'))
-        
+            h = int(request.args.get("H"))
+
         w = w if w > 8 else 8
         h = h if h > 8 else 8
 
         officer_id = bot.user_manager.get_discord_by_vrc(dec(encoded_username))
-        
+
         # Destructo's officer_id for debugging
         # officer_id = 249404332447891456
 
         # Hroi's officer_id for debugging
         # officer_id = 378666988412731404
-        
+
         officer = bot.officer_manager.get_officer(officer_id)
 
         if officer == None:
-            render_array(None, filename='/tmp/APITextemp.gif', w=w, h=h)
+            render_array(None, filename="/tmp/APITextemp.gif", w=w, h=h)
         else:
-            render_array(officer, filename='/tmp/APITextemp.gif', w=w, h=h)
-        
+            render_array(officer, filename="/tmp/APITextemp.gif", w=w, h=h)
+
         # Convert to webm
-        clip = mp.VideoFileClip('/tmp/APITextemp.gif')
-        clip.write_videofile('/tmp/APITextemp.webm', verbose=False, logger=None)
+        clip = mp.VideoFileClip("/tmp/APITextemp.gif")
+        clip.write_videofile("/tmp/APITextemp.webm", verbose=False, logger=None)
 
         # Return the webm
-        response = await send_file('/tmp/APITextemp.webm')
+        response = await send_file("/tmp/APITextemp.webm")
         response.content_type = "video/webm"
 
         return response
 
-    @app.route('/api/geturls')
+    @app.route("/api/geturls")
     async def _get_urls_():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
-        
+
         users = []
         for user in bot.user_manager.all_users:
             username = user[1]
@@ -704,6 +818,6 @@ class WebManager:
         urls = geturls(users)
 
         for url in urls:
-            result = f'{url}\n'
-        
+            result = f"{url}\n"
+
         return result

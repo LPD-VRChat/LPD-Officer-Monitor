@@ -148,9 +148,15 @@ async def on_ready():
             secret=keys["Client_secret"],
             token=keys["Discord_token"],
             callback=keys["Callback_URL"],
-            certfile=keys["certfile"] if "certfile" in keys and "keyfile" in keys else "/...",      # This will fail out the check in WebManager if the certfile and keyfile aren't specified
-            keyfile=keys["keyfile"] if "certfile" in keys and "keyfile" in keys else "/...",
-            _run_insecure=args.run_insecure if "certfile" in keys and "keyfile" in keys else True
+            certfile=keys["certfile"]
+            if "certfile" in keys and "keyfile" in keys
+            else "/...",  # This will fail out the check in WebManager if the certfile and keyfile aren't specified
+            keyfile=keys["keyfile"]
+            if "certfile" in keys and "keyfile" in keys
+            else "/...",
+            _run_insecure=args.run_insecure
+            if "certfile" in keys and "keyfile" in keys
+            else True,
         )
 
         # Start the LogManager
@@ -159,7 +165,7 @@ async def on_ready():
 
         # Mark everything ready
         bot.everything_ready = True
-    
+
     except KeyboardInterrupt:
         restart(bot, "the console by KeyboardInterrupt")
 
@@ -370,7 +376,6 @@ bot.add_cog(Other(bot))
 # ====================
 # Start
 # ====================
-
 
 
 try:

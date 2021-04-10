@@ -4,6 +4,7 @@ import discord
 from os import _exit as exit
 from asyncio import get_event_loop
 from nest_asyncio import apply
+
 apply()
 
 from io import StringIO, BytesIO
@@ -131,44 +132,48 @@ async def send_str_as_file(
 ) -> None:
     with BytesIO(file_data.encode("utf8")) as error_file:
         await channel.send(
-            msg_content,
-            file=discord.File(error_file, filename=filename),
+            msg_content, file=discord.File(error_file, filename=filename)
         )
 
 
 def member_role_dict(member, verbose=False):
     """Generates a dictionary of roles"""
-    
+
     role_dict = {}
-    
+
     for role in member.roles:
-        if role.is_default: continue
-        if role.is_bot_managed: continue
-        if role.is_integration: continue
+        if role.is_default:
+            continue
+        if role.is_bot_managed:
+            continue
+        if role.is_integration:
+            continue
         role_details = {}
         role_details["name"] = role.name
         role_details["color"] = role.color
-        if role.is_premium_subscriber: role_details["is_premium_subscriber"] = True
+        if role.is_premium_subscriber:
+            role_details["is_premium_subscriber"] = True
 
         role_dict[role.id] = role_details if verbose else True
 
     return role_dict
 
+
 async def restart(bot, source):
     """Cleanly restart the bot"""
-    
+
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
     for officer in bot.officer_manager.all_officers.values():
         if officer.is_on_duty:
             await officer.go_off_duty()
-    
+
     # Log the restart
     msg_string = f"WARNING: Bot restarted from {source}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
     print(msg_string)
-    
+
     # Stop the event loop and exit Python. The OS should be
     # calling this script inside a loop, so it will be restarted
     loop = get_event_loop()
