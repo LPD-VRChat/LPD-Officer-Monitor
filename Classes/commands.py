@@ -27,6 +27,7 @@ from Classes.extra_functions import (
     get_rank_id,
     has_role,
     send_str_as_file,
+    clean_shutdown,
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -1518,3 +1519,13 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+        
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def shutdown(self, ctx):
+        """This command shuts down the bot cleanly."""
+
+        await ctx.channel.send("Shutting down the bot now!")
+        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
+        await clean_shutdown(self.bot, whostr)
