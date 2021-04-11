@@ -866,44 +866,58 @@ class Inactivity(commands.Cog):
                 if inactive_role in message.author.roles:
                     await message.author.remove_roles(inactive_role)
                     officer = self.bot.officer_manager.get_officer(message.author.id)
-                    await officer.renew_time()
+                    if officer:
+                        await officer.renew_time()
 
         unexcused_mentions = ""
         for member in ctx.guild.members:
             if inactive_role in member.roles:
-                unexcused_mentions = f"{unexcused_mentions}{member.mention}"
+                unexcused_mentions = f"{unexcused_mentions}\n{member.mention}"
 
         if len(unexcused_mentions) == 0:
-            await ctx.channel.send(
+            await ctx.send(
                 "Looks like everyone had a reason to be inactive. Renewed time for all inactive members."
             )
             return
 
-        await ctx.channel.send(
+        await ctx.send(
             f"Looks like some people didn't give a reason for their inactivity. Renewing time for those who did. Here are the unexcused inactive members:"
         )
-        await ctx.channel.send(f"{unexcused_mentions}")
+        await send_long(ctx.channel, f"{unexcused_mentions}")
 
-        auto_remove = await Confirm(
-            f"Would you like to automatically remove the LPD, Rank, and Inactive roles from these members?"
-        ).prompt(ctx)
+        # This code has been removed from the command, however I am leaving it here just in case we want to
+        # do something with it in the future.
 
-        if not auto_remove:
-            return
+        # auto_remove = await Confirm(
+        #     f"Would you like to automatically remove the LPD, Rank, and Inactive roles from these members?"
+        # ).prompt(ctx)
 
-        all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
-        all_lpd_ranks.append(self.bot.settings["lpd_role"])
+        # if not auto_remove:
+        #     return
 
-        for member in ctx.guild.members:
-            if inactive_role in member.roles:
-                for role in member.roles:
-                    if role.id in all_lpd_ranks:
-                        await member.remove_roles(role)
-            await member.remove_roles(inactive_role)
+        # all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
+        # all_lpd_ranks.append(self.bot.settings["lpd_role"])
 
-        await ctx.channel.send(
-            f"Removed LPD, Rank, and Inactive roles from the users above."
-        )
+        # for member in ctx.guild.members:
+        #     if inactive_role in member.roles:
+        #         for role in member.roles:
+        #             if role.id in all_lpd_ranks:
+        #                 await member.remove_roles(role)
+        #     await member.remove_roles(inactive_role)
+
+        # await ctx.channel.send(
+        #     f"Removed LPD, Rank, and Inactive roles from the users above."
+        # )
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def renew_time(self, ctx):
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer:
+                await officer.renew_time()
+        await ctx.send("Renewed time for mentioned officers.")
 
 
 class VRChatAccoutLink(commands.Cog):

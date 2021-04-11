@@ -84,7 +84,7 @@ class OfficerManager:
 
         if self._number_officers_on_duty_at_launch > 0:
             print(
-                f"WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted."
+                f"WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted. (remove this code when the clean shutdown is implemented)"
             )
 
         # Set up the automatically running code

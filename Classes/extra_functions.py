@@ -126,6 +126,5 @@ async def send_str_as_file(
 ) -> None:
     with BytesIO(file_data.encode("utf8")) as error_file:
         await channel.send(
-            msg_content,
-            file=discord.File(error_file, filename=filename),
+            msg_content, file=discord.File(error_file, filename=filename)
         )

@@ -12,7 +12,8 @@ USE LPD_Officer_Monitor;
 CREATE TABLE Officers
 (
 	officer_id BIGINT UNSIGNED PRIMARY KEY,
-    started_monitoring_time DATETIME
+    started_monitoring_time DATETIME NOT NULL,
+    renewed_time DATETIME NOT NULL DEFAULT '1000-01-01 00:00:00'
 );
 
 CREATE TABLE Detainees

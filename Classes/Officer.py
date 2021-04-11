@@ -436,10 +436,10 @@ class Officer:
 
     async def renew_time(self):
         """Inserts a 1 second on duty session into the Officer's logbook to trick the inactivity hook"""
-        start_time = datetime.timestamp(datetime.utcnow())
-        end_time = start_time + 1
-
-        await self.log_time(start_time, end_time)
+        await self.bot.sql.request(
+            "UPDATE Officers SET renewed_time = %s WHERE officer_id = %s",
+            (datetime.utcnow(), self.id),
+        )
 
     # Internal functions
 
@@ -469,7 +469,7 @@ class Officer:
                 ORDER BY end_time DESC
                 LIMIT 1)
             UNION
-            (SELECT officer_id, null, null, started_monitoring_time, "Started monitoring" AS "other_activity"
+            (SELECT officer_id, null, null, GREATEST(started_monitoring_time, renewed_time), "Started monitoring" AS "other_activity"
             FROM Officers
             WHERE officer_id = %s)
             """,
