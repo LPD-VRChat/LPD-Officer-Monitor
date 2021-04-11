@@ -1526,4 +1526,4 @@ class Other(commands.Cog):
 
         await ctx.channel.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
-        await clean_shutdown(self.bot, whostr)
+        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
