@@ -354,4 +354,4 @@ future = asyncio.ensure_future(runner(), loop=loop)
 try:
     loop.run_forever()
 except KeyboardInterrupt:
-    loop.run_until_complete(clean_shutdown(bot, "the console by KeyboardInterrupt"))
+    loop.run_until_complete(clean_shutdown(bot))
