@@ -131,7 +131,7 @@ async def send_str_as_file(
         )
 
 
-async def clean_shutdown(bot, source):
+async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
     """Cleanly shutdown the bot"""
 
     # Put all on-duty officers off duty - don't worry,
