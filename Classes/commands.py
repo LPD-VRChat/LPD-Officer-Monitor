@@ -5,12 +5,14 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import time
 import math
 import traceback
 import json
 import asyncio
+from typing import List, Tuple
+import fuzzywuzzy.process
 
 # Community
 import discord
@@ -128,10 +130,10 @@ class Time(commands.Cog):
     def get_officer_id(self, officer_string):
 
         # Check for an @ mention
-        p = re.compile(r"<@\![0-9]+>")
+        p = re.compile(r"<@!{0,1}([0-9]+?)>")
         match = p.match(officer_string)
         if match:
-            return int(match.group()[3:-1])
+            return int(match.group(1))
 
         # Check for an ID
         p = re.compile(r"[0-9]+")
@@ -231,7 +233,7 @@ class Time(commands.Cog):
                 # The user is giving from_time and thus wants from_time
                 # to be the current time
                 from_datetime = self.parse_date(parsed.from_date)
-                to_datetime = datetime.now(timezone.utc)
+                to_datetime = datetime.utcnow()
 
             else:
                 # Both are here, they can just be parsed
@@ -298,7 +300,7 @@ class Time(commands.Cog):
         # Get the officer ID
         officer_id = self.get_officer_id(parsed.officer)
         if officer_id == None:
-            ctx.send("Make sure to mention an officer.")
+            await ctx.send("Make sure to mention an officer.")
             return
         print(f"officer_id: {officer_id}")
 
@@ -509,8 +511,8 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.now(timezone.utc) - timedelta(days=28),
-            datetime.now(timezone.utc),
+            datetime.utcnow() - timedelta(days=28),
+            datetime.utcnow(),
             limit=None,
         )
 
@@ -645,7 +647,7 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now(timezone.utc) - last_activity["time"]).days
+            active_days_ago = (datetime.utcnow() - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
@@ -707,7 +709,7 @@ class Time(commands.Cog):
         # This opens a virtual file in memory that can be written to by the CSV module
         with StringIO() as virtual_bot_1_time_file:
             csv_writer = csv.writer(virtual_bot_1_time_file)
-            for officer in self.bot.officer_manager.all_officers:
+            for id, officer in self.bot.officer_manager.all_officers.items():
 
                 # Get the last active time for the officer
                 last_active_time_datetime = (
@@ -722,7 +724,7 @@ class Time(commands.Cog):
                     last_active_time = 0
 
                 # Get the patrol time
-                to_time = datetime.now(tz=timezone.utc)
+                to_time = datetime.utcnow()
                 from_time = to_time - timedelta(28)
                 patrol_time = await officer.get_time(from_time, to_time)
 
@@ -774,7 +776,7 @@ class Inactivity(commands.Cog):
         inactive_officers = []
         role_ids = role_id_index(self.bot.settings)
 
-        for officer in self.bot.officer_manager.all_officers:
+        for id, officer in self.bot.officer_manager.all_officers.items():
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(
                     self.bot.officer_manager.all_monitored_channels
@@ -968,24 +970,21 @@ class VRChatAccoutLink(commands.Cog):
         debug console can be enabled with a button under the front desk.
         """
 
-        parser = ArgumentParser(description="Argparse user command", add_help=False)
-        parser.add_argument("name", nargs="+")
-        parser.add_argument("-s", "--skip", action="store_true")
-        # Parse command and check errors
-        try:
-            parsed = parser.parse_args("link", args)
-        except argparse.ArgumentError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
-            return None
-        except argparse.ArgumentTypeError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
+        if not args:
+            await ctx.channel.send("Please specify your VRChat name.")
             return
-        except errors.ArgumentParsingError as error:
-            await ctx.send(ctx.author.mention + " " + str(error))
-            return
+        
+        # Check if -s is specified
+        if args[0] == "-s":
+            if len(args) == 1:
+                await ctx.channel.send("Please specify your VRChat name.")
+                return
+            skip_formatting = True
+        else:
+            skip_formatting = False
 
         # if use spaces without quotes, won't add space if only one
-        vrchat_name = " ".join(parsed.name)
+        vrchat_name = " ".join(args[int(skip_formatting) :])
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -1010,7 +1009,7 @@ class VRChatAccoutLink(commands.Cog):
                 return
 
         # Format the VRChat name if that was asked for
-        if parsed.skip:
+        if skip_formatting:
             vrchat_formated_name = vrchat_name
         else:
             vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
@@ -1021,7 +1020,7 @@ class VRChatAccoutLink(commands.Cog):
         ).prompt(ctx)
         if confirm:
             await self.bot.user_manager.add_user(
-                ctx.author.id, vrchat_name, parsed.skip
+                ctx.author.id, vrchat_name, skip_formatting
             )
             await ctx.send(
                 f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
@@ -1099,16 +1098,6 @@ class VRChatAccoutLink(commands.Cog):
             else:
                 out_string += string_being_added
         await ctx.send(out_string)
-
-    @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
-    async def debug(self, ctx):
-        """
-        This command is just for testing the bot.
-        """
-        await ctx.send(str(self.bot.user_manager.all_users))
-
 
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
@@ -1363,42 +1352,71 @@ class Other(commands.Cog):
             lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
         )
 
-    def get_role_by_name(self, role_name):
+    @staticmethod
+    def remove_name_decoration(name: str) -> str:
+        """
+        Remove the discord special characters at the start and end of the string
+        """
+        return name.strip("| ⠀ ")
+
+    def get_role_by_name(self, role_name: str) -> discord.Role:
+        """
+        Return a discord role if found, else raise `errors.GetRoleMembersError`
+        """
+        role_names = []
 
         # Get the role
         for role in self.bot.officer_manager.guild.roles:
-            if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
+            undecorated_name = self.remove_name_decoration(role.name)
+            role_names.append(undecorated_name)
+            if (
+                undecorated_name.lower() == role_name.lower()
+            ):  # non case sensitive comparaison
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        msg = f"The role `{role_name}` was not found.\nDid you mean :"
+        cutoff_score = 75
+        suggestions: List[Tuple[str, int]] = []
 
-    def get_role_members(self, role):
+        # usually you get something on the first run, sometimes if you write really badly you won't get anything
+        # lower the score to get more suggestions
+        while len(suggestions) < 1 and len(role_name) > 1 and cutoff_score > 0:
+            suggestions = fuzzywuzzy.process.extractBests(
+                role_name, role_names, score_cutoff=cutoff_score
+            )
+            # if only one suggestion, give result imediatly instead of suggest and having to type cmd again
+            if cutoff_score == 75 and len(suggestions) == 1:
+                try:
+                    return self.get_role_by_name(suggestions[0][0])
+                except errors.GetRoleMembersError as e:
+                    print(
+                        f"ERROR: rtv, Could not find role `{suggestions[0][0]}`, msg:",
+                        e,
+                    )
+                    pass  # if role not found, we use original name to find suggestions
 
+            cutoff_score -= 25
+
+        for suggest in suggestions:
+            # it's better to include quotes for copy paste correct role
+            if " " in suggest[0]:
+                msg += f'  `"{suggest[0]}"`'
+            else:
+                msg += f"  `{suggest[0]}`"
+        raise errors.GetRoleMembersError(message=msg)
+
+    def get_role_members(self, role: discord.Role) -> list:
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role.name} is empty.")
+            raise errors.GetRoleMembersError(message=f"`{role.name}` is empty.")
 
         # Sort the members
-        return sorted(role.members, key=self.get_vrc_name)
-
-    @staticmethod
-    def filter_start_end(string, list_of_characters_to_filter):
-        while True:
-            if string[0] in list_of_characters_to_filter:
-                string = string[1::]
-            else:
-                break
-
-        while True:
-            if string[-1] in list_of_characters_to_filter:
-                string = string[0:-1]
-            else:
-                break
-
-        return string
+        return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
 
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
+    @commands.check_any(
+        checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
+    )
     @commands.command()
     async def rtv(self, ctx, role_name):
         """
@@ -1408,7 +1426,8 @@ class Other(commands.Cog):
         """
 
         try:
-            members = self.get_role_members(self.get_role_by_name(role_name))
+            discord_role = self.get_role_by_name(role_name)
+            members = self.get_role_members(discord_role)
         except errors.GetRoleMembersError as error:
             await ctx.send(error)
             return
@@ -1416,7 +1435,9 @@ class Other(commands.Cog):
         members_str = "\n".join(self.get_vrc_name(x) for x in members)
 
         # Send everyone
-        await ctx.send(f"Here is everyone in the role {role_name}:")
+        await ctx.send(
+            f"Here is everyone in the role `{self.remove_name_decoration(discord_role.name)}`:"
+        )
         await send_long(ctx.channel, members_str, code_block=True)
 
     @checks.is_admin_bot_channel()
@@ -1457,7 +1478,7 @@ class Other(commands.Cog):
             json_out.append(
                 {
                     "id": role_dict["id"],
-                    "name": self.filter_start_end(role.name, ["|", " ", "⠀", " "]),
+                    "name": self.remove_name_decoration(role.name),
                     "name_id": role_dict["name_id"],
                     "member_count": len(members),
                     "members": [self.get_vrc_name(m) for m in members],

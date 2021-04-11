@@ -27,7 +27,7 @@ class Officer:
 
         self._on_duty_start_time = None
         self.is_on_duty = False
-        self.squad = ""
+        self.squad = None
 
     def go_on_duty(self):
 
@@ -44,7 +44,7 @@ class Officer:
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
-        self.squad = self.member.voice.channel.name
+        self.squad = self.member.voice.channel
 
     def update_squad(self):
 
@@ -54,7 +54,7 @@ class Officer:
             return
 
         print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
-        self.squad = self.member.voice.channel.name
+        self.squad = self.member.voice.channel
 
     async def go_off_duty(self):
 
@@ -71,7 +71,7 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
-        self.squad = ""
+        self.squad = None
 
     async def remove(self, reason=None):
 
@@ -109,9 +109,16 @@ class Officer:
                 "NOV": 11,
                 "DEC": 12,
             }
+
+            # Ensure day is numeric
             int(date_start[0])
             int(date_end[0])
 
+            # Ensure year is numeric
+            int(date_start[2])
+            int(date_end[2])
+
+            # Get month number from dictionary
             date_start[1] = date_start[1].upper()[0:3]
             date_start[1] = months[date_start[1]]
             date_end[1] = date_end[1].upper()[0:3]
@@ -265,6 +272,10 @@ class Officer:
     @property
     def is_detainable(self):
         return self._has_role(*self._get_roles_with_tag("is_detainable"))
+
+    @property
+    def is_team_lead(self):
+        return self._has_role(self.bot.settings["team_lead_role"])
 
     # Often used member functions
 
