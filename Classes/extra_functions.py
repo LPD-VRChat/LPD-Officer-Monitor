@@ -141,6 +141,8 @@ async def clean_shutdown(bot, source):
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
+        bot.officer_manager.loa_loop.stop()
+        bot.officer_manager.main_loop.stop()
     else:
         print("Couldn't find the OfficerManager...")
         print("Stopping the bot without stopping time...")
