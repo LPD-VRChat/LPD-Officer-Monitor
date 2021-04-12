@@ -6,6 +6,7 @@
 import asyncio
 import traceback
 from datetime import datetime, timezone
+from typing import Dict, Iterable, List, Optional, TYPE_CHECKING
 
 # Community
 import aiomysql
@@ -13,25 +14,40 @@ import discord.errors as discord_errors
 from pymysql import err as mysql_errors
 import discord
 from discord.ext import tasks
+from discord.ext import commands
 
 # Mine
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error
 
+from CustomTyping.modified_bot import Bot as TypingBot
+
 
 class OfficerManager:
-    def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
+    def __init__(
+        self,
+        all_officer_ids: Iterable[int],
+        bot: TypingBot,
+        run_before_officer_removal=None,  # TODO: Determine the type for this parameter
+    ):
+        """
+        This function creates the officer manager class, however
+        it expects to get the list of all officers, so start()
+        should be used instead unless you're trying to start
+        the officer manager in some custom way.
+        """
         self.bot = bot
         self._before_officer_removal = run_before_officer_removal
         self.all_officer_ids = all_officer_ids
 
         # Get the guild
-        self.guild = bot.get_guild(bot.settings["Server_ID"])
-        if self.guild is None:
+        guild = bot.get_guild(bot.settings["Server_ID"])
+        if guild is None:
             print("ERROR Guild with ID", bot.settings["Server_ID"], "not found")
             print("Shutting down...")
             exit()
+        self.guild = guild
 
         # Get all monitored channels
         self.all_monitored_channels = [
@@ -43,8 +59,8 @@ class OfficerManager:
         ]
 
         # Add all the officers to the list
-        self._all_officers = dict()
-        self._officers_needing_removal = []
+        self._all_officers: Dict[int, Officer] = dict()
+        self._officers_needing_removal: List[int] = []
         self._number_officers_on_duty_at_launch = 0
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
@@ -91,7 +107,16 @@ class OfficerManager:
         bot.loop.create_task(self.loop())
 
     @classmethod
-    async def start(cls, bot, run_before_officer_removal=None):
+    async def start(cls, bot: TypingBot, run_before_officer_removal=None):
+        """
+        This is the recommended way to start the officer manager as it runs
+        asynchronously and fetches the officers from the discord automatically.
+
+        Make sure to provide functions that clear out all connected forign key
+        when an officer is removed through run_before_officer_removal as the
+        class expects to be able to delete the officer from the Officers table,
+        and that will not be possible unless all forign keys are removed first.
+        """
 
         # Fetch all the officers from the database
         try:
