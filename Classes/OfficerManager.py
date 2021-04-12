@@ -147,6 +147,10 @@ class OfficerManager:
             print(error)
             print(traceback.format_exc())
 
+    @tasks.loop(hours=1)
+    async def loa_loop(self):
+        await self.get_loa()
+
     # =====================
     #    modify officers
     # =====================
@@ -349,7 +353,3 @@ class OfficerManager:
                 loa_entries = tuple(templist)
 
         return loa_entries
-
-    @tasks.loop(hours=1)
-    async def loa_loop(self):
-        await self.get_loa()
