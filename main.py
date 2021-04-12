@@ -30,9 +30,10 @@ from Classes.commands import (
     Other,
 )
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file
+from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
 import Classes.errors as errors
 
+loop = asyncio.get_event_loop()
 
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
@@ -340,4 +341,17 @@ bot.add_cog(Other(bot))
 # Start
 # ====================
 
-bot.run(keys["Discord_token"])
+
+async def runner():
+    try:
+        await bot.start(keys["Discord_token"])
+    finally:
+        if not bot.is_closed():
+            await bot.close()
+
+
+future = asyncio.ensure_future(runner(), loop=loop)
+try:
+    loop.run_forever()
+except KeyboardInterrupt:
+    loop.run_until_complete(clean_shutdown(bot))

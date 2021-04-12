@@ -1,7 +1,8 @@
 # Standard
 from typing import Optional
 import discord
-
+from os import _exit as exit
+from asyncio import get_event_loop
 from io import StringIO, BytesIO
 
 # Community
@@ -126,6 +127,34 @@ async def send_str_as_file(
 ) -> None:
     with BytesIO(file_data.encode("utf8")) as error_file:
         await channel.send(
-            msg_content,
-            file=discord.File(error_file, filename=filename),
+            msg_content, file=discord.File(error_file, filename=filename)
         )
+
+
+async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
+    """Cleanly shutdown the bot"""
+
+    # Put all on-duty officers off duty - don't worry,
+    # they'll be put back on duty next startup
+    if bot.officer_manager is not None:
+        print("")
+        for officer in bot.officer_manager.all_officers.values():
+            if officer.is_on_duty:
+                await officer.go_off_duty()
+        bot.officer_manager.loa_loop.stop()
+        bot.officer_manager.main_loop.stop()
+    else:
+        print("Couldn't find the OfficerManager...")
+        print("Stopping the bot without stopping time...")
+
+    # Log the shutdown
+    msg_string = f"WARNING: Bot shut down from {location} by {person}"
+    channel = bot.get_channel(bot.settings["error_log_channel"])
+    await channel.send(msg_string)
+    print(msg_string)
+
+    # Stop the event loop and exit Python. The OS should be
+    # calling this script inside a loop if you want the bot to restart
+    loop = get_event_loop()
+    loop.stop()
+    exit(0)
