@@ -74,8 +74,7 @@ class OfficerManager:
         print(f"Officers needing removal: {self._officers_needing_removal}")
 
         # Set up the automatically running code
-        print("Running officer check loop in officer_manager")
-        self.main_loop.start()
+        self.loop.start()
         self.loa_loop.start()
 
     @classmethod
@@ -105,7 +104,10 @@ class OfficerManager:
     #    Loop
     # =====================
 
-    async def running_loop(self):
+    @tasks.loop(minutes=1)
+    async def loop(self):
+        print("Running officer check loop in officer_manager")
+
         try:
             # Add missing officers
             for member in self.all_server_members_in_LPD:
@@ -348,10 +350,3 @@ class OfficerManager:
     @tasks.loop(hours=1)
     async def loa_loop(self):
         await self.get_loa()
-
-    @tasks.loop(minutes=1)
-    async def main_loop(self):
-        # Wait until everything is ready
-        while not self.bot.everything_ready:
-            await asyncio.sleep(2)
-        await self.running_loop()
