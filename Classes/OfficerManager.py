@@ -107,7 +107,7 @@ class OfficerManager:
     #    Loop
     # =====================
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=60)
     async def loop(self):
         print("Running officer check loop in officer_manager")
 
