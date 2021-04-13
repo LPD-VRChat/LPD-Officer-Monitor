@@ -142,7 +142,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
             if officer.is_on_duty:
                 await officer.go_off_duty()
         bot.officer_manager.loa_loop.stop()
-        bot.officer_manager.main_loop.stop()
+        bot.officer_manager.loop.stop()
     else:
         print("Couldn't find the OfficerManager...")
         print("Stopping the bot without stopping time...")
