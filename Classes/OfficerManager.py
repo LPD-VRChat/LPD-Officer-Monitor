@@ -99,10 +99,6 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args=None):
-        """This function is being deprecated in favor of self.bot.sql.request()"""
-        return await self.bot.sql.request(query, args)
-
     # =====================
     #    Loop
     # =====================
@@ -326,12 +322,12 @@ class OfficerManager:
         Delete the specified Leave of Absence
         """
 
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
         )
 
     async def get_loa(self):
-        loa_entries = await self.send_db_request(
+        loa_entries = await self.bot.sql.request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
 
