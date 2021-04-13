@@ -7,9 +7,11 @@ import asyncio
 import math
 import time
 from datetime import datetime
+import datetime as dt
 
 # Community
 from discord import Member
+from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
 
 # Mine
@@ -25,19 +27,34 @@ class Officer:
 
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = None
 
     def go_on_duty(self):
 
-        print(f"{self.discord_name} is going on duty")
-
         # Print an error if the user is going on duty even though he is already on duty
         if self.is_on_duty is True:
-            print("WARNING A user is going on duty even though he is already on duty")
+            print(
+                "WARNING: A user is going on duty even though he is already on duty..."
+            )
             return
 
+        print(
+            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
+        )
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
+        self.squad = self.member.voice.channel
+
+    def update_squad(self):
+
+        # Print an error if the user is going on duty even though he is already on duty
+        if self.is_on_duty is False:
+            print("WARNING: Tried to update squad for a user not on duty...")
+            return
+
+        print(f"{self.discord_name} is moving to {self.member.voice.channel.name}")
+        self.squad = self.member.voice.channel
 
     async def go_off_duty(self):
 
@@ -45,7 +62,7 @@ class Officer:
 
         # Print an error if the user is going off duty even though he is already off duty
         if self.is_on_duty is False:
-            print("WARNING A user is going off duty even though he isn't on duty")
+            print("WARNING: A user is going off duty even though he isn't on duty...")
             return
 
         # Calculate the on duty time and store it
@@ -54,11 +71,161 @@ class Officer:
         # Set the variables
         self._on_duty_start_time = None
         self.is_on_duty = False
+        self.squad = None
 
     async def remove(self):
 
         # Remove itself
-        await self.bot.officer_manager.remove_officer(self.id)
+        display_name = self.member.display_name
+        await self.bot.officer_manager.remove_officer(
+            self.id, display_name=display_name
+        )
+
+    async def process_loa(self, message):
+        try:
+            date_range = message.content.split(":")[0]
+            date_a = date_range.split("-")[0]
+            date_b = date_range.split("-")[1]
+            date_start = ["", "", ""]
+            date_end = ["", "", ""]
+            date_start[0] = date_a.split("/")[0].strip()
+            date_start[1] = date_a.split("/")[1].strip()
+            date_start[2] = date_a.split("/")[2].strip()
+            date_end[0] = date_b.split("/")[0].strip()
+            date_end[1] = date_b.split("/")[1].strip()
+            date_end[2] = date_b.split("/")[2].strip()
+            reason = message.content.split(":")[1].strip()
+            months = {
+                "JAN": 1,
+                "FEB": 2,
+                "MAR": 3,
+                "APR": 4,
+                "MAY": 5,
+                "JUN": 6,
+                "JUL": 7,
+                "AUG": 8,
+                "SEP": 9,
+                "OCT": 10,
+                "NOV": 11,
+                "DEC": 12,
+            }
+
+            # Ensure day is numeric
+            int(date_start[0])
+            int(date_end[0])
+
+            # Ensure year is numeric
+            int(date_start[2])
+            int(date_end[2])
+
+            # Get month number from dictionary
+            date_start[1] = date_start[1].upper()[0:3]
+            date_start[1] = months[date_start[1]]
+            date_end[1] = date_end[1].upper()[0:3]
+            date_end[1] = months[date_end[1]]
+
+        except (TypeError, ValueError, KeyError, IndexError):
+            # If all of that failed, let the user know with an autodeleting message
+            await message.channel.send(
+                message.author.mention
+                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        date_start = [int(i) for i in date_start]
+        date_end = [int(i) for i in date_end]
+
+        if (
+            date_start[1] < 1
+            or date_start[1] > 12
+            or date_end[1] < 1
+            or date_end[1] > 12
+        ):
+            # If the month isn't 1-12, let the user know they dumb
+            await message.channel.send(
+                message.author.mention + " There are only 12 months in a year.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        # Convert our separate data into a usable datetime
+        date_start_complex = (
+            str(date_start[0]) + "/" + str(date_start[1]) + "/" + str(date_start[2])
+        )
+        date_end_complex = (
+            str(date_end[0]) + "/" + str(date_end[1]) + "/" + str(date_end[2])
+        )
+
+        try:
+            date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
+            date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+        except (ValueError, TypeError):
+            await message.channel.send(
+                message.author.mention
+                + " There was a problem with your day. Please use a valid day number.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        if date_end > date_start + dt.timedelta(
+            weeks=+12
+        ) or date_end < date_start + dt.timedelta(weeks=+3):
+            # If more than 12 week LOA, inform user
+            await message.channel.send(
+                message.author.mention
+                + " Leaves of Absence are limited to 3-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        # Make sure the LOA isn't over yet
+        if date_end < datetime.utcnow():
+            await message.channel.send(
+                f"{message.author.mention} The leave of absence you supplied has already expired.",
+                delete_after=10,
+            )
+            await message.delete()
+            return
+
+        # Fire the script to save the entry
+        request_id = message.id
+        old_messages = await self.bot.officer_manager.send_db_request(
+            "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
+
+        if len(old_messages) == 0:
+            pass
+        else:
+            ctx = await self.bot.get_context(message)
+            for old_msg_id in old_messages[0]:
+                old_msg = await ctx.fetch_message(old_msg_id)
+                await old_msg.delete()
+
+        await self.save_loa(date_start, date_end, reason, request_id)
+        await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+
+    async def save_loa(self, date_start, date_end, reason, request_id):
+        """
+        Pass all 5 required fields to save_loa()
+        If record with matching officer_id is found,
+        record will be updated with new dates and reason.
+        """
+
+        # Delete any existing entries
+        await self.bot.officer_manager.send_db_request(
+            "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
+        )
+
+        # Save the new entry
+        await self.bot.officer_manager.send_db_request(
+            "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
+            (self.id, date_start, date_end, reason, request_id),
+        )
 
     # ====================
     # properties
@@ -79,6 +246,14 @@ class Officer:
         return self._has_role(self.bot.settings["recruiter_role"])
 
     @property
+    def is_chat_moderator(self):
+        return self._has_role(self.bot.settings["chat_moderator_role"])
+
+    @property
+    def is_moderator(self):
+        return self._has_role(self.bot.settings["moderator_role"])
+
+    @property
     def is_trainer(self):
         return self._has_role(self.bot.settings["trainer_role"])
 
@@ -93,6 +268,18 @@ class Officer:
     @property
     def is_dev_member(self):
         return self._has_role(self.bot.settings["dev_team_role"])
+
+    @property
+    def is_detainable(self):
+        return self._has_role(*self._get_roles_with_tag("is_detainable"))
+
+    @property
+    def is_team_lead(self):
+        return self._has_role(self.bot.settings["team_lead_role"])
+
+    @property
+    def is_programming_team(self):
+        return self._has_role(self.bot.settings["programming_team_role"])
 
     # Often used member functions
 
@@ -153,7 +340,7 @@ class Officer:
             + str(math.floor(end_time - start_time))
         )
 
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "INSERT INTO TimeLog(officer_id, start_time, end_time) VALUES (%s, %s, %s)",
             (self.id, string_start_time, string_end_time),
         )
@@ -166,7 +353,7 @@ class Officer:
         to_db_time = to_datetime_object.strftime(self.bot.settings["db_time_format"])
 
         # Execute the query to get the time information
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS 'Time'
             FROM TimeLog
@@ -186,7 +373,7 @@ class Officer:
     async def get_full_time(self, from_datetime_object, to_datetime_object):
 
         # Execute the query to get the time information
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT start_time, end_time, TIMESTAMPDIFF(SECOND, start_time, end_time) AS 'duration'
             FROM TimeLog
@@ -244,7 +431,7 @@ class Officer:
         )
 
         # Get the row ID for the last activity in the channel
-        row_id = await self.bot.officer_manager.send_db_request(
+        row_id = await self.bot.sql.request(
             "SELECT entry_number FROM MessageActivityLog WHERE officer_id = %s AND channel_id = %s",
             (self.id, msg.channel.id),
         )
@@ -252,12 +439,12 @@ class Officer:
         # Insert the data into the database
         if row_id:
             row_id = row_id[0][0]
-            await self.bot.officer_manager.send_db_request(
+            await self.bot.sql.request(
                 "UPDATE MessageActivityLog SET message_id = %s, send_time = %s WHERE entry_number = %s",
                 (msg.id, string_send_time, row_id),
             )
         else:
-            await self.bot.officer_manager.send_db_request(
+            await self.bot.sql.request(
                 "INSERT INTO MessageActivityLog(message_id, channel_id, officer_id, send_time) VALUES (%s, %s, %s, %s)",
                 (msg.id, msg.channel.id, self.id, string_send_time),
             )
@@ -278,7 +465,7 @@ class Officer:
         #     1) The messages from MessageActivityLog        - other_activity is null
         #     2) Last on duty activity                       - other_activity is On duty activity
         #     3) When the bot started monitoring the officer - other_activity is Started monitoring
-        result = await self.bot.officer_manager.send_db_request(
+        result = await self.bot.sql.request(
             """
             SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
             FROM MessageActivityLog

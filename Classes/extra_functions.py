@@ -1,6 +1,8 @@
 # Standard
 from typing import Optional
 import discord
+from os import _exit as exit
+from asyncio import get_event_loop
 from io import StringIO, BytesIO
 
 # Community
@@ -16,6 +18,7 @@ def is_number(string):
 
 
 async def send_long(channel, string, code_block=False):
+    """Send output as a text file, or optionally a code block if code_block=True is passed"""
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -84,6 +87,8 @@ async def handle_error(bot, title, traceback_string):
 
 
 def get_rank_id(settings, name_id):
+    """Returns the Discord Role ID for specified name_id"""
+
     role_ladder = settings["role_ladder"]
 
     for role in role_ladder:
@@ -98,9 +103,8 @@ def has_role(role_list, role_id):
 
 
 def role_id_index(settings):
-    """
-    Process the role_ladder into a usable list when called
-    """
+    """Process the role_ladder into a usable list when called"""
+
     role_id_ladder = []
     for entry in settings["role_ladder"]:
         role_id_ladder.append(entry["id"])
@@ -108,9 +112,8 @@ def role_id_index(settings):
 
 
 def get_role_name_by_id(settings, bad_role):
-    """
-    Identify a role's expected name by its ID
-    """
+    """Identify a role's expected name by its ID"""
+
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
@@ -124,6 +127,34 @@ async def send_str_as_file(
 ) -> None:
     with BytesIO(file_data.encode("utf8")) as error_file:
         await channel.send(
-            msg_content,
-            file=discord.File(error_file, filename=filename),
+            msg_content, file=discord.File(error_file, filename=filename)
         )
+
+
+async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
+    """Cleanly shutdown the bot"""
+
+    # Put all on-duty officers off duty - don't worry,
+    # they'll be put back on duty next startup
+    if bot.officer_manager is not None:
+        print("")
+        for officer in bot.officer_manager.all_officers.values():
+            if officer.is_on_duty:
+                await officer.go_off_duty()
+        bot.officer_manager.loa_loop.stop()
+        bot.officer_manager.loop.stop()
+    else:
+        print("Couldn't find the OfficerManager...")
+        print("Stopping the bot without stopping time...")
+
+    # Log the shutdown
+    msg_string = f"WARNING: Bot shut down from {location} by {person}"
+    channel = bot.get_channel(bot.settings["error_log_channel"])
+    await channel.send(msg_string)
+    print(msg_string)
+
+    # Stop the event loop and exit Python. The OS should be
+    # calling this script inside a loop if you want the bot to restart
+    loop = get_event_loop()
+    loop.stop()
+    exit(0)

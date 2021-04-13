@@ -15,6 +15,24 @@ CREATE TABLE Officers
     started_monitoring_time DATETIME
 );
 
+CREATE TABLE Detainees
+(
+	member_id BIGINT UNSIGNED PRIMARY KEY,
+    roles MEDIUMTEXT,
+	date DATETIME
+);
+
+CREATE TABLE LeaveTimes
+(
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
+    date_start DATETIME,
+    date_end DATETIME,
+    reason TEXT,
+	request_id BIGINT UNSIGNED,
+	
+	CONSTRAINT officer_id_FK_LOA FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+);
+
 /*CREATE TABLE TimePeriods
 (
 	time_period_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -61,4 +79,13 @@ CREATE TABLE Events
     attendees TEXT,
 
     CONSTRAINT host_id_FK_EVENTS FOREIGN KEY (host_id) REFERENCES Officers(officer_id)
+);
+
+DROP TABLE IF EXISTS UserStrikes;
+CREATE TABLE UserStrikes
+(
+    member_id BIGINT UNSIGNED,
+    reason TEXT,
+    date DATETIME,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT
 );
