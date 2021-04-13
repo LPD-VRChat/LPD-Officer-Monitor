@@ -4,14 +4,12 @@ import discord
 from os import _exit as exit
 from asyncio import get_event_loop
 from nest_asyncio import apply
-
-apply()
-
 from io import StringIO, BytesIO
 
 # Community
 import commentjson as json
 
+apply()
 
 def is_number(string):
     try:
@@ -158,7 +156,7 @@ def member_role_dict(member, verbose=False):
     return role_dict
 
 
-async def clean_shutdown(bot, source):
+async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
     """Cleanly shutdown the bot"""
 
     # Put all on-duty officers off duty - don't worry,
@@ -168,12 +166,14 @@ async def clean_shutdown(bot, source):
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
+        bot.officer_manager.loa_loop.stop()
+        bot.officer_manager.loop.stop()
     else:
         print("Couldn't find the OfficerManager...")
         print("Stopping the bot without stopping time...")
 
     # Log the shutdown
-    msg_string = f"WARNING: Bot shut down from {source}"
+    msg_string = f"WARNING: Bot shut down from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
     print(msg_string)

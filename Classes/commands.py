@@ -136,10 +136,10 @@ class Time(commands.Cog):
     def get_officer_id(self, officer_string):
 
         # Check for an @ mention
-        p = re.compile(r"<@\![0-9]+>")
+        p = re.compile(r"<@!{0,1}([0-9]+?)>")
         match = p.match(officer_string)
         if match:
-            return int(match.group()[3:-1])
+            return int(match.group(1))
 
         # Check for an ID
         p = re.compile(r"[0-9]+")
@@ -306,7 +306,7 @@ class Time(commands.Cog):
         # Get the officer ID
         officer_id = self.get_officer_id(parsed.officer)
         if officer_id == None:
-            ctx.send("Make sure to mention an officer.")
+            await ctx.send("Make sure to mention an officer.")
             return
 
         # Make sure the person mentioned is an LPD officer
@@ -1034,16 +1034,6 @@ class VRChatAccoutLink(commands.Cog):
                 out_string += string_being_added
         await ctx.send(out_string)
 
-    @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
-    async def debug(self, ctx):
-        """
-        This command is just for testing the bot.
-        """
-        await ctx.send(str(self.bot.user_manager.all_users))
-
-
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
 
@@ -1558,5 +1548,4 @@ class Other(commands.Cog):
         """This command shuts down the bot cleanly."""
 
         await ctx.channel.send("Shutting down the bot now!")
-        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
-        await clean_shutdown(self.bot, whostr)
+        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)

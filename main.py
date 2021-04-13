@@ -39,6 +39,7 @@ from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
 import Classes.errors as errors
 
+loop = asyncio.get_event_loop()
 
 # Before we do anything else, make sure that we have an event loop to use for
 # graceful shutdown purpopses.
@@ -384,4 +385,4 @@ future = asyncio.ensure_future(runner(), loop=loop)
 try:
     loop.run_forever()
 except KeyboardInterrupt:
-    loop.run_until_complete(clean_shutdown(bot, "the console by KeyboardInterrupt"))
+    loop.run_until_complete(clean_shutdown(bot))

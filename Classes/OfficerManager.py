@@ -77,7 +77,11 @@ class OfficerManager:
         print(f"Officers needing removal: {self._officers_needing_removal}")
 
         # Set up the automatically running code
-        bot.loop.create_task(self.loop())
+        self.loop.start()
+        self.loop.change_interval(
+            minutes=bot.settings["sleep_time_between_officer_checks"]
+        )
+        self.loa_loop.start()
 
     @classmethod
     async def start(cls, bot, run_before_officer_removal=None):
@@ -106,11 +110,8 @@ class OfficerManager:
     #    Loop
     # =====================
 
+    @tasks.loop(minutes=60)
     async def loop(self):
-        # Wait until everything is ready
-        while not self.bot.everything_ready:
-            await asyncio.sleep(2)
-
         print("Running officer check loop in officer_manager")
 
         try:
@@ -149,7 +150,9 @@ class OfficerManager:
             print(error)
             print(traceback.format_exc())
 
-        await asyncio.sleep(self.bot.settings["sleep_time_between_officer_checks"])
+    @tasks.loop(hours=1)
+    async def loa_loop(self):
+        await self.get_loa()
 
     # =====================
     #    modify officers
@@ -353,7 +356,3 @@ class OfficerManager:
                 loa_entries = tuple(templist)
 
         return loa_entries
-
-    @tasks.loop(hours=1)
-    async def get_loa_hourly(self):
-        await self.get_loa()
