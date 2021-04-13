@@ -12,8 +12,7 @@ USE LPD_Officer_Monitor;
 CREATE TABLE Officers
 (
 	officer_id BIGINT UNSIGNED PRIMARY KEY,
-    started_monitoring_time DATETIME NOT NULL,
-    renewed_time DATETIME NOT NULL DEFAULT '1000-01-01 00:00:00'
+    started_monitoring_time DATETIME
 );
 
 CREATE TABLE Detainees
@@ -77,4 +76,15 @@ CREATE TABLE UserStrikes
     reason TEXT,
     date DATETIME,
     entry_number INT PRIMARY KEY AUTO_INCREMENT
+);
+
+DROP TABLE IF EXISTS RenewalTimes;
+CREATE TABLE RenewalTimes
+(
+    officer_id BIGINT UNSIGNED,
+    renewed_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    renewed_by BIGINT UNSIGNED,
+    reason TEXT,
+
+    CONSTRAINT officer_id_FK_RT FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
 );

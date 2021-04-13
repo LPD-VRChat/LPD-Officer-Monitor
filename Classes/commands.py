@@ -302,7 +302,6 @@ class Time(commands.Cog):
         if officer_id == None:
             await ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
@@ -406,7 +405,6 @@ class Time(commands.Cog):
         if officer_id == None:
             ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
@@ -511,9 +509,7 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.utcnow() - timedelta(days=28),
-            datetime.utcnow(),
-            limit=None,
+            datetime.utcnow() - timedelta(days=28), datetime.utcnow(), limit=None
         )
 
         # Filter list for only recruits that have been active enough
@@ -869,7 +865,7 @@ class Inactivity(commands.Cog):
                     await message.author.remove_roles(inactive_role)
                     officer = self.bot.officer_manager.get_officer(message.author.id)
                     if officer:
-                        await officer.renew_time()
+                        await officer.renew_time(ctx.author.id, message.content)
 
         unexcused_mentions = ""
         for member in ctx.guild.members:
@@ -915,11 +911,35 @@ class Inactivity(commands.Cog):
     @checks.is_white_shirt()
     @commands.command()
     async def renew_time(self, ctx):
+        """Renew the time of an officer to protect them from inactivity"""
         for member in ctx.message.mentions:
             officer = self.bot.officer_manager.get_officer(member.id)
             if officer:
-                await officer.renew_time()
+                await officer.renew_time(
+                    ctx.author.id, "Renewed by direct discord command"
+                )
         await ctx.send("Renewed time for mentioned officers.")
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def renewal_reasons(self, ctx):
+        """List all the previous time renewal reasons for an officer"""
+        send_string = ""
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer:
+                result = await officer.get_inactivity_reasons()
+                if result:
+                    for row in result:
+                        renewer = self.bot.officer_manager.guild.get_member(int(row[1]))
+                        send_string = f"{send_string}{member.mention}'s time was renewed by {renewer.mention} at {row[0]} for reason:\n{row[2]}\n"
+                else:
+                    send_string = f"{send_string}{member.mention} has not had their time renewed.\n"
+            else:
+                send_string = f"{send_string}{member.mention} does not appear to be an officer. Check with the Programming Team if you're absolutely sure they've had renewal time in the past, and you must know it.\n"
+
+        await send_long(ctx.channel, send_string)
 
 
 class VRChatAccoutLink(commands.Cog):
@@ -973,7 +993,7 @@ class VRChatAccoutLink(commands.Cog):
         if not args:
             await ctx.channel.send("Please specify your VRChat name.")
             return
-        
+
         # Check if -s is specified
         if args[0] == "-s":
             if len(args) == 1:
@@ -1098,6 +1118,7 @@ class VRChatAccoutLink(commands.Cog):
             else:
                 out_string += string_being_added
         await ctx.send(out_string)
+
 
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
