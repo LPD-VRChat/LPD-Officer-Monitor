@@ -1032,6 +1032,7 @@ class VRChatAccoutLink(commands.Cog):
                 out_string += string_being_added
         await ctx.send(out_string)
 
+
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
 
