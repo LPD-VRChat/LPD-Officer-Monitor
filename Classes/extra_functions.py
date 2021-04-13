@@ -11,6 +11,7 @@ import commentjson as json
 
 apply()
 
+
 def is_number(string):
     try:
         int(string)
