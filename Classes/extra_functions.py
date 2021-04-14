@@ -173,6 +173,9 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
         print("Couldn't find the OfficerManager...")
         print("Stopping the bot without stopping time...")
 
+    # Shut down WebManager
+    bot.web_manager.stop()
+
     # Log the shutdown
     msg_string = f"WARNING: Bot shut down from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])

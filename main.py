@@ -33,6 +33,7 @@ from Classes.commands import (
     VRChatAccoutLink,
     Applications,
     Moderation,
+    Programming,
     Other,
 )
 from Classes.help_command import Help
@@ -79,6 +80,8 @@ else:
 bot = commands.Bot(command_prefix=settings["bot_prefix"], intents=intents)
 bot.settings = settings
 bot.officer_manager = None
+bot.web_manager = None
+bot.dispatch_log = None
 bot.sql = None
 bot.everything_ready = False
 
@@ -142,7 +145,7 @@ async def on_ready():
 
     # Start the WebManager
     print("Starting Web Manager...")
-    bot.web_manager = await WebManager.start(
+    bot.web_manager = await WebManager.configure(
         bot,
         id=keys["Client_ID"],
         secret=keys["Client_secret"],
@@ -156,6 +159,7 @@ async def on_ready():
         if "certfile" in keys and "keyfile" in keys
         else True,
     )
+    await bot.web_manager.start()
 
     # Start the LogManager
     print("Starting DispatchLogManager...")
@@ -366,6 +370,7 @@ bot.add_cog(Inactivity(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
+bot.add_cog(Programming(bot))
 bot.add_cog(Other(bot))
 
 # ====================

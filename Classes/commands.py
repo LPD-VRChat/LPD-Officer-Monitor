@@ -1278,6 +1278,94 @@ class Moderation(commands.Cog):
             )
 
 
+class Programming(commands.Cog):
+    """Here are all the commands for the Programming Team for maintenance."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.blurple()
+
+    @checks.is_programming_team()
+    @checks.is_team_bot_channel()
+    @commands.command()
+    async def roomba_reset(self, ctx):
+        """Reset the Roomba killcounter"""
+
+        await self.bot.sql.request("DELETE FROM Roomba")
+        await self.bot.sql.request("INSERT INTO Roomba VALUES (0)")
+        await ctx.channel.send("Reset the Roomba's killstreak to 0")
+
+    @checks.is_programming_team()
+    @checks.is_team_bot_channel()
+    @commands.command()
+    async def roomba_kills(self, ctx):
+        """Show the Roomba killcounter"""
+
+        killcount = await self.bot.sql.request("SELECT count FROM Roomba")
+        killcount = killcount[0][0]
+
+        await ctx.channel.send(f"The Roomba has {killcount} kills.")
+
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_dev_team(), checks.is_programming_team())
+    @commands.command()
+    async def get_urls(self, ctx):
+        """Returns URLs for the imageperms API"""
+
+        users = []
+        for user in self.bot.user_manager.all_users:
+            username = user[1]
+            users.append(username)
+
+        urls = geturls(users)
+
+        send_string = ""
+        for url in urls:
+            send_string = f"{url}\n"
+
+        await send_long(ctx.channel, send_string, code_block=True)
+
+    @checks.is_programming_team()
+    @checks.is_team_bot_channel()
+    @commands.command()
+    async def shutdown(self, ctx):
+        """This command shuts down the bot cleanly."""
+
+        await ctx.channel.send("Shutting down the bot now!")
+        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
+
+    @checks.is_programming_team()
+    @checks.is_team_bot_channel()
+    @commands.command(usage="`[ restart | reload | start | stop ]`")
+    async def web(self, ctx, *args):
+        """Control the webserver"""
+
+        if len(args) == 0:
+            await ctx.send(
+                "Action required.\n`Usage: [ restart | reload | start | stop ]`"
+            )
+            return
+
+        action = args[0].lower()
+
+        if action == "restart":
+            await self.bot.web_manager.restart()
+            await ctx.send("Restarted...")
+        elif action == "start":
+            await self.bot.web_manager.start()
+            await ctx.send("Started...")
+        elif action == "stop":
+            self.bot.web_manager.stop()
+            await ctx.send("Stopped...")
+        elif action == "reload":
+            await self.bot.web_manager.reload()
+            # await ctx.send("Reloaded...")
+        else:
+            await ctx.send(
+                f"`{args[0]}``: action not found.\n`Usage: [ restart | reload | start | stop ]`"
+            )
+
+
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
@@ -1510,43 +1598,3 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
-
-    @checks.is_white_shirt()
-    @commands.command()
-    async def roomba_reset(self, ctx):
-        await self.bot.sql.request("DELETE FROM Roomba")
-        await self.bot.sql.request("INSERT INTO Roomba VALUES (0)")
-        await ctx.channel.send("Reset the Roomba's killstreak to 0")
-
-    @checks.is_white_shirt()
-    @commands.command()
-    async def roomba_kills(self, ctx):
-        killcount = await self.bot.sql.request("SELECT count FROM Roomba")
-        killcount = killcount[0][0]
-
-        await ctx.channel.send(f"The Roomba has {killcount} kills.")
-
-    @checks.is_dev_team()
-    @commands.command()
-    async def get_urls(self, ctx):
-        users = []
-        for user in self.bot.user_manager.all_users:
-            username = user[1]
-            users.append(username)
-
-        urls = geturls(users)
-
-        send_string = ""
-        for url in urls:
-            send_string = f"{url}\n"
-
-        await send_long(ctx.channel, send_string, code_block=True)
-
-    @checks.is_team_bot_channel()
-    @checks.is_programming_team()
-    @commands.command()
-    async def shutdown(self, ctx):
-        """This command shuts down the bot cleanly."""
-
-        await ctx.channel.send("Shutting down the bot now!")
-        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)

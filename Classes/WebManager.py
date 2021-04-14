@@ -21,7 +21,6 @@ from Classes.extra_functions import role_id_index as _role_id_index
 from Classes.APITex import render_array
 from Classes.URLGen import geturls
 
-
 app = Quart("LPD Officer Monitor")
 
 
@@ -29,20 +28,18 @@ async def _403_(missing_role=None):
     return await render_template("403.html.jinja", missing_role=missing_role)
 
 
-shutdown_event = asyncio.Event()
-
-
-def _signal_handler():  # *_: Any) -> None:
-    shutdown_event.set()
-
-
 class WebManager:
-    def __init__(self, bot):
+    def __init__(self, bot, app, config, loop):
 
         self.bot = bot
+        self.app = app
+        self.config = config
+        self.loop = loop
+        self.shutdown_event = asyncio.Event()
+        self.__stop_the_server__ = False
 
     @classmethod
-    async def start(
+    async def configure(
         cls,
         _Bot,
         host="0.0.0.0",
@@ -56,14 +53,13 @@ class WebManager:
         _run_insecure=False,
     ):
 
-        instance = cls(_Bot)
-
         app.secret_key = b"random bytes representing quart secret key"
 
         app.config["DISCORD_CLIENT_ID"] = id  # Discord client ID.
         app.config["DISCORD_CLIENT_SECRET"] = secret  # Discord client secret.
         app.config["DISCORD_REDIRECT_URI"] = callback  # URL to your callback endpoint.
         app.config["DISCORD_BOT_TOKEN"] = token  # Required to access BOT resources.
+        app.config["SERVER_NAMES"] = ["devbox.lolipd.com", "www.lolipd.com"]
         app.config["SCOPES"] = ["identify"]
         app.config["BOT"] = _Bot
 
@@ -90,10 +86,32 @@ class WebManager:
         config.errorlog = "/var/log/LPD-Officer-Monitor/error.log"
 
         loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGTERM, _signal_handler)
-        # app.run(loop=loop, host=host, port=port, certfile='/etc/letsencrypt/live/devbox.lolipd.com/cert.pem', keyfile='/etc/letsencrypt/live/devbox.lolipd.com/privkey.pem')
 
-        loop.create_task(serve(app, config, shutdown_trigger=shutdown_event.wait))
+        instance = cls(_Bot, app, config, loop)
+        return instance
+
+    async def shutdown_trigger(self):
+        await asyncio.sleep(1)
+        if self.__stop_the_server__:
+            self.__stop_the_server__ = False
+            return
+        await self.shutdown_trigger()
+    
+    async def start(self):
+        self.task = self.loop.create_task(
+            serve(self.app, self.config, shutdown_trigger=self.shutdown_trigger)
+        )
+
+    def stop(self):
+        self.__stop_the_server__ = True
+
+    async def restart(self, wait_time=5):
+        self.stop()
+        await asyncio.sleep(wait_time)
+        await self.start()
+
+    async def reload(self):
+        pass
 
     @app.route("/login/")
     async def login():
@@ -112,7 +130,7 @@ class WebManager:
     @app.errorhandler(Unauthorized)
     async def redirect_unauthorized(e):
         return redirect(url_for("login"))
-
+    
     @app.route("/favicon.ico")
     async def favicon():
         return await send_file("/favicon.ico")
