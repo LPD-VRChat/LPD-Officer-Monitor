@@ -1285,8 +1285,8 @@ class Programming(commands.Cog):
         self.bot = bot
         self.color = discord.Color.blurple()
 
-    @checks.is_programming_team()
     @checks.is_team_bot_channel()
+    @checks.is_programming_team()
     @commands.command()
     async def roomba_reset(self, ctx):
         """Reset the Roomba killcounter"""
@@ -1295,8 +1295,8 @@ class Programming(commands.Cog):
         await self.bot.sql.request("INSERT INTO Roomba VALUES (0)")
         await ctx.channel.send("Reset the Roomba's killstreak to 0")
 
-    @checks.is_programming_team()
     @checks.is_team_bot_channel()
+    @checks.is_programming_team()
     @commands.command()
     async def roomba_kills(self, ctx):
         """Show the Roomba killcounter"""
@@ -1325,8 +1325,8 @@ class Programming(commands.Cog):
 
         await send_long(ctx.channel, send_string, code_block=True)
 
-    @checks.is_programming_team()
     @checks.is_team_bot_channel()
+    @checks.is_programming_team()
     @commands.command()
     async def shutdown(self, ctx):
         """This command shuts down the bot cleanly."""
@@ -1334,8 +1334,8 @@ class Programming(commands.Cog):
         await ctx.channel.send("Shutting down the bot now!")
         await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
 
-    @checks.is_programming_team()
     @checks.is_team_bot_channel()
+    @checks.is_programming_team()
     @commands.command(usage="`[ restart | reload | start | stop ]`")
     async def web(self, ctx, *args):
         """Control the webserver"""
@@ -1364,7 +1364,43 @@ class Programming(commands.Cog):
             await ctx.send(
                 f"`{args[0]}``: action not found.\n`Usage: [ restart | reload | start | stop ]`"
             )
+    
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command(usage="`[python code]`")
+    async def exec(self, ctx, *args):
+        """
+        Execute a python function. Double-quotes are forbidden.
+        If you require output to be sent back to the channel, 
+        set `self.result` to your output at the end of your code. 
+        You may run multiple lines by utilizing a code block. 
+        NOTE: asynchronous opertation is best accomplished by putting all of your code
+              into a single function having `self` as an argument, and then calling that function with
+                    `asyncio.run(__my_function__(self))`"""
+        
+        self.result = None
+        async def __return_value__():
+            if self.result:
+                await send_long(ctx.channel, str(self.result), code_block=True)
+                self.result = None
+                return
 
+        if ctx.message.content.count('```') >= 2:
+            function = ctx.message.content.split('```')[1]
+        else:
+            function = " "
+            function = function.join(args)            
+        
+        if len(args) == 0:
+            self.result = "Error: no statement provided."
+            await __return_value__()
+        else:
+            try:
+                exec(function)
+                await __return_value__()
+            except Exception as e:
+                self.result = e
+                await __return_value__()
 
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
