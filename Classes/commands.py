@@ -1531,7 +1531,7 @@ class Other(commands.Cog):
         parsed_events = []
 
         for event in self.bot.event_manager.all_events:
-            event_time = event.start_dt.to_pydatetime().replace(
+            event_time = event.start_dt.replace(
                 tzinfo=pytz('UTC')).replace(tzinfo=None)
 
             # event_time = datetime.fromtimestamp(event_time).strftime(

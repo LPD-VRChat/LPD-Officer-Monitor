@@ -23,9 +23,10 @@ class EventManager:
         instance = cls(bot)
         instance.cal_id = cal_id
         instance.api_key = api_key
-        instance.main.start()
+        instance.update_cache.start()
         return instance
 
+    @tasks.loop(hours=12)
     async def update_cache(self):
 
         # Get the TeamUp calendar and store the subcalendars for use elsewhere
@@ -38,7 +39,7 @@ class EventManager:
 
         # Store all the event objects in cache
         self.all_events = calendar.get_event_collection(
-            start_date=_start_date, end_date=_end_date)
+            start_dt=_start_date, end_dt=_end_date)
 
         # Get all the existing event IDs with no attendees - we'll skip saving duplicates to avoid overwrites
         _existing_events = await self.bot.officer_manager.send_db_request("SELECT * FROM Events WHERE attendees IS NULL")
@@ -60,9 +61,9 @@ class EventManager:
             save = True
 
             # Format the times into a database-friendly format
-            start_dt = event.start_dt.to_pydatetime().replace(
+            start_dt = event.start_dt.replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
-            end_dt = event.end_dt.to_pydatetime().replace(
+            end_dt = event.end_dt.replace(
                 tzinfo=timezone('UTC')).replace(tzinfo=None)
 
             # Assume that event.who is the VRC name of the Host
@@ -76,19 +77,10 @@ class EventManager:
                         continue
 
                     # If this event exactly matches our saved/cached one, keep it
-                    if _event[1] == host_id and _event[2] == start_dt and _event[3] == end_dt:
-                        save = False
-                        break
-                    else:
-                        await self.bot.officer_manager.send_db_request("DELETE FROM Events WHERE event_id = %s", _event[0])
-
-            # Save to the DB
-            if save:
-                await self.bot.officer_manager.send_db_request("INSERT INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
-
-    @tasks.loop(hours=12)
-    async def main(self):
-        await self.update_cache()
+                    if _event[1] != host_id  or _event[2] != start_dt or _event[3] != end_dt:
+                        await self.bot.officer_manager.send_db_request("DELETE FROM Events WHERE event_id = %s", (_event[0]))
+                        await self.bot.officer_manager.send_db_request("REPLACE INTO Events (event_id, host_id, start_time, end_time) VALUES (%s, %s, %s, %s)", (event.event_id, host_id, start_dt, end_dt))
+                    break
 
     async def log_attendance(self, event):
 
