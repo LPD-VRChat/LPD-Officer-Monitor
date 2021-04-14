@@ -662,6 +662,24 @@ class WebManager:
             dispatch_logs=dispatch_logs,
         )
 
+    @app.route("/dispatch/spa/backupCalls.asp", methods=["GET", "HEAD"])
+    @requires_authorization
+    async def _dispatch_spa_backupCalls():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+
+        if not officer.is_dispatch and not officer.is_programming_team:
+            return ""
+
+        dispatch_logs = await bot.dispatch_log.get()
+
+        return await render_template(
+            "dispatch_backupCalls.asp.jinja", dispatch_logs=dispatch_logs
+        )
+
     @app.route("/dispatch/spa/data.asp", methods=["GET", "HEAD"])
     @requires_authorization
     async def _dispatch_spa_asp():

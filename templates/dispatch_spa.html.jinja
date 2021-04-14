@@ -3,16 +3,21 @@
 {% block body %}
 <p id="squads"></p>
 <script>
-setInterval(function(){ 
+
+function loadDoc(url, element){ 
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("squads").innerHTML = this.responseText;
+      document.getElementById(element).innerHTML = this.responseText;
     }
   }
-  xhttp.open("GET", "spa/data.asp", true);
+  xhttp.open("GET", url, true);
   xhttp.send();
-}, 1000);
+}
+
+setInterval(function(){ loadDoc("spa/data.asp", "squads"); }, 1000);
+setInterval(function(){ loadDoc("spa/backupCalls.asp", "backupCalls"); }, 5000);
+
 </script>
 <form class="form-horizontal" action="/dispatch/spa/backup_request" method="post">
 <fieldset>
@@ -77,17 +82,7 @@ setInterval(function(){
       <th>Complete</th>
     </tr>
   </thead>
-  <tbody>
-  {% for entry in dispatch_logs %}
-    <tr>
-      <td>{{ dispatch_logs[entry]["time"] }}</td>
-      <td>{{ dispatch_logs[entry]["backup_type"] }}</td>
-      <td>{{ dispatch_logs[entry]["squad_name"] }}</td>
-      <td>{{ dispatch_logs[entry]["world"] }}</td>
-      <td>{{ dispatch_logs[entry]["situation"] }}</td>
-      <td><form action="/dispatch/spa/log_complete" method="post"><button type="submit" name="message_id" value="{{ entry }}">Complete</button></form></td>
-    </tr>
-  {% endfor %}
+  <tbody id="backupCalls">
   </tbody>
 </TABLE>
 {% endblock %}

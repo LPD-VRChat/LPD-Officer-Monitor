@@ -1,0 +1,10 @@
+{% for entry in dispatch_logs %}
+<tr>
+    <td>{{ dispatch_logs[entry]["time"] }}</td>
+    <td>{{ dispatch_logs[entry]["backup_type"] }}</td>
+    <td>{{ dispatch_logs[entry]["squad_name"] }}</td>
+    <td>{{ dispatch_logs[entry]["world"] }}</td>
+    <td>{{ dispatch_logs[entry]["situation"] }}</td>
+    <td><form action="/dispatch/spa/log_complete" method="post"><button type="submit" name="message_id" value="{{ entry }}">Complete</button></form></td>
+</tr>
+{% endfor %}
