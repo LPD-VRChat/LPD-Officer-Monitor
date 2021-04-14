@@ -1364,7 +1364,7 @@ class Programming(commands.Cog):
             await ctx.send(
                 f"`{args[0]}``: action not found.\n`Usage: [ restart | reload | start | stop ]`"
             )
-    
+
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command(usage="`[python code]`")
@@ -1377,20 +1377,21 @@ class Programming(commands.Cog):
         NOTE: asynchronous opertation is best accomplished by putting all of your code
               into a single function having `self` as an argument, and then calling that function with
                     `asyncio.run(__my_function__(self))`"""
-        
+
         self.result = None
+
         async def __return_value__():
             if self.result:
                 await send_long(ctx.channel, str(self.result), code_block=True)
                 self.result = None
                 return
 
-        if ctx.message.content.count('```') >= 2:
-            function = ctx.message.content.split('```')[1]
+        if ctx.message.content.count("```") >= 2:
+            function = ctx.message.content.split("```")[1]
         else:
             function = " "
-            function = function.join(args)            
-        
+            function = function.join(args)
+
         if len(args) == 0:
             self.result = "Error: no statement provided."
             await __return_value__()
@@ -1401,6 +1402,7 @@ class Programming(commands.Cog):
             except Exception as e:
                 self.result = e
                 await __return_value__()
+
 
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""

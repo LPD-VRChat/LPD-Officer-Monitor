@@ -96,7 +96,7 @@ class WebManager:
             self.__stop_the_server__ = False
             return
         await self.shutdown_trigger()
-    
+
     async def start(self):
         self.task = self.loop.create_task(
             serve(self.app, self.config, shutdown_trigger=self.shutdown_trigger)
@@ -130,7 +130,7 @@ class WebManager:
     @app.errorhandler(Unauthorized)
     async def redirect_unauthorized(e):
         return redirect(url_for("login"))
-    
+
     @app.route("/favicon.ico")
     async def favicon():
         return await send_file("/favicon.ico")
