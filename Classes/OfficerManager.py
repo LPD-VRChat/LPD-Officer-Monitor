@@ -61,7 +61,7 @@ class OfficerManager:
         # Add all the officers to the list
         self._all_officers: Dict[int, Officer] = dict()
         self._officers_needing_removal: List[int] = []
-        self._number_officers_on_duty_at_launch = 0
+
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
             try:
@@ -81,7 +81,6 @@ class OfficerManager:
                             f"Note: {new_officer.member.name}#{new_officer.member.discriminator} is on duty. Starting their time now..."
                         )
                         new_officer.go_on_duty()
-                        self._number_officers_on_duty_at_launch += 1
 
             except MemberNotFoundError:
                 print(
@@ -91,20 +90,12 @@ class OfficerManager:
 
         print(f"Officers needing removal: {self._officers_needing_removal}")
 
-        # If there were officers on duty when the OfficerManager started, put a warning in stdout
-        if self._number_officers_on_duty_at_launch > 1:
-            pretty_text = f"were {self._number_officers_on_duty_at_launch} officers"
-
-        if self._number_officers_on_duty_at_launch == 1:
-            pretty_text = f"was {self._number_officers_on_duty_at_launch} officer"
-
-        if self._number_officers_on_duty_at_launch > 0:
-            print(
-                f"WARNING: It looks like there {pretty_text} on duty when the Officer Manager was started... This is indicative of a bot crash. Any on-duty time not logged before the bot crashed will not be logged. Their time has been restarted."
-            )
-
         # Set up the automatically running code
-        bot.loop.create_task(self.loop())
+        self.loop.start()
+        self.loop.change_interval(
+            minutes=bot.settings["sleep_time_between_officer_checks"]
+        )
+        self.loa_loop.start()
 
     @classmethod
     async def start(cls, bot: TypingBot, run_before_officer_removal=None):
@@ -142,11 +133,8 @@ class OfficerManager:
     #    Loop
     # =====================
 
+    @tasks.loop(minutes=60)
     async def loop(self):
-        # Wait until everything is ready
-        while not self.bot.everything_ready:
-            await asyncio.sleep(2)
-
         print("Running officer check loop in officer_manager")
 
         try:
@@ -185,7 +173,9 @@ class OfficerManager:
             print(error)
             print(traceback.format_exc())
 
-        await asyncio.sleep(self.bot.settings["sleep_time_between_officer_checks"])
+    @tasks.loop(hours=1)
+    async def loa_loop(self):
+        await self.get_loa()
 
     # =====================
     #    modify officers
@@ -389,7 +379,3 @@ class OfficerManager:
                 loa_entries = tuple(templist)
 
         return loa_entries
-
-    @tasks.loop(hours=1)
-    async def get_loa_hourly(self):
-        await self.get_loa()

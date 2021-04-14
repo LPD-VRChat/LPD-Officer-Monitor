@@ -27,6 +27,7 @@ from Classes.extra_functions import (
     get_rank_id,
     has_role,
     send_str_as_file,
+    clean_shutdown,
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -511,9 +512,7 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.utcnow() - timedelta(days=28),
-            datetime.utcnow(),
-            limit=None,
+            datetime.utcnow() - timedelta(days=28), datetime.utcnow(), limit=None
         )
 
         # Filter list for only recruits that have been active enough
@@ -907,7 +906,7 @@ class VRChatAccoutLink(commands.Cog):
         if not args:
             await ctx.channel.send("Please specify your VRChat name.")
             return
-        
+
         # Check if -s is specified
         if args[0] == "-s":
             if len(args) == 1:
@@ -1032,6 +1031,7 @@ class VRChatAccoutLink(commands.Cog):
             else:
                 out_string += string_being_added
         await ctx.send(out_string)
+
 
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
@@ -1508,3 +1508,13 @@ class Other(commands.Cog):
 
         # Send the results
         await ctx.channel.send(embed=embed)
+
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def shutdown(self, ctx):
+        """This command shuts down the bot cleanly."""
+
+        await ctx.channel.send("Shutting down the bot now!")
+        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
+        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
