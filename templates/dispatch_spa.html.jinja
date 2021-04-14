@@ -2,24 +2,7 @@
 {% block title %}Dispatch - Single Page View{% endblock %}
 {% block body %}
 <p id="squads"></p>
-<script>
-
-function loadDoc(url, element){ 
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById(element).innerHTML = this.responseText;
-    }
-  }
-  xhttp.open("GET", url, true);
-  xhttp.send();
-}
-
-setInterval(function(){ loadDoc("spa/data.asp", "squads"); }, 1000);
-setInterval(function(){ loadDoc("spa/backupCalls.asp", "backupCalls"); }, 5000);
-
-</script>
-<form class="form-horizontal" action="/dispatch/spa/backup_request" method="post">
+<form class="form-horizontal" name="backupRequestForm">
 <fieldset>
 <!-- Form Name -->
 <legend>Backup Request</legend>
@@ -85,4 +68,31 @@ setInterval(function(){ loadDoc("spa/backupCalls.asp", "backupCalls"); }, 5000);
   <tbody id="backupCalls">
   </tbody>
 </TABLE>
+<script>
+var xhttp = new XMLHttpRequest();
+function loadDoc(url, element){ 
+  
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById(element).innerHTML = this.responseText;
+    }
+  }
+  xhttp.open("GET", url, true);
+  xhttp.send();
+}
+
+var backupRequestForm = document.forms.namedItem("backupRequestForm");
+backupRequestForm.addEventListener('submit', function(ev) {
+  var oOutput = document.querySelector("backupRequestDiv"),
+    oData = new FormData(backupRequestForm);
+  
+  xhttp.open("POST", "spa/backup_request", true);
+  xhttp.send(oData);
+  ev.preventDefault();
+}, false);
+
+setInterval(function(){ loadDoc("spa/data.asp", "squads"); }, 1000);
+setInterval(function(){ loadDoc("spa/backupCalls.asp", "backupCalls"); }, 5000);
+
+</script>
 {% endblock %}

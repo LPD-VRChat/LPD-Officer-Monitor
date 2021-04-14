@@ -653,13 +653,8 @@ class WebManager:
             ):
                 squad_ids[vc.id] = vc
 
-        dispatch_logs = await bot.dispatch_log.get()
-
         return await render_template(
-            "dispatch_spa.html.jinja",
-            display_name=user.username,
-            squad_ids=squad_ids,
-            dispatch_logs=dispatch_logs,
+            "dispatch_spa.html.jinja", display_name=user.username, squad_ids=squad_ids
         )
 
     @app.route("/dispatch/spa/backupCalls.asp", methods=["GET", "HEAD"])
@@ -775,7 +770,7 @@ class WebManager:
         success = await bot.dispatch_log.complete(message_id)
 
         if success:
-            return '<meta http-equiv="refresh" content="5; URL=/dispatch/spa" />'
+            return '<meta http-equiv="refresh" content="0; URL=/dispatch/spa" />'
         else:
             return '''<script>alert('Could not update that entry! Has it been deleted?'); window.location = '/dispatch/spa';</script>"'''
 
