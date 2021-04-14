@@ -21,14 +21,14 @@ from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error
 
-from CustomTyping.modified_bot import Bot as TypingBot
+import CustomTyping.modified_bot as mb
 
 
 class OfficerManager:
     def __init__(
         self,
         all_officer_ids: Iterable[int],
-        bot: TypingBot,
+        bot: mb.Bot,
         run_before_officer_removal=None,  # TODO: Determine the type for this parameter
     ):
         """
@@ -98,7 +98,7 @@ class OfficerManager:
         self.loa_loop.start()
 
     @classmethod
-    async def start(cls, bot: TypingBot, run_before_officer_removal=None):
+    async def start(cls, bot: mb.Bot, run_before_officer_removal=None):
         """
         This is the recommended way to start the officer manager as it runs
         asynchronously and fetches the officers from the discord automatically.
