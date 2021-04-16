@@ -306,7 +306,7 @@ class OfficerManager:
 
     @property
     def all_server_members_not_in_LPD(self):
-        return [m for m in self.guild.members if self.is_officer(m)]
+        return [m for m in self.guild.members if not self.is_officer(m)]
 
     @property
     def all_officers(self):
