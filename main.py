@@ -102,14 +102,15 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
+    print("Starting the LPD Officer Monitor 2.0...")
     global bot
 
-    # Make sure this function does not create the officer manager twice
-    if bot.officer_manager is not None:
-        return
-
-    if bot.sql is not None:
+    # Make sure this function does not create the managers twice
+    if (
+        bot.officer_manager is not None
+        or bot.sql is not None
+        or bot.user_manager is not None
+    ):
         return
 
     # Create the function to run before officer removal
@@ -136,7 +137,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # print("on_message")
 
     # Early out if message from the bot itself
     if message.author.bot:
@@ -171,7 +171,7 @@ async def on_message(message):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # print("on_voice_state_update")
+
     if bot.officer_manager is None:
         return
 
@@ -259,7 +259,6 @@ async def on_member_remove(member):
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print("on_error")
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
@@ -280,8 +279,6 @@ async def on_raw_bulk_message_delete(payload):
 
 @bot.event
 async def on_command_error(ctx, exception):
-    print("on_command_error")
-
     exception_string = str(exception).replace(
         "raised an exception", "encountered a problem"
     )
