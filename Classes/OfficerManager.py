@@ -25,6 +25,7 @@ class OfficerManager:
         self.bot = bot
         self._before_officer_removal = run_before_officer_removal
         self.all_officer_ids = all_officer_ids
+        self.iterations = 0
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -109,7 +110,11 @@ class OfficerManager:
 
     @tasks.loop(minutes=60)
     async def loop(self):
-        print("Running officer check loop in officer_manager")
+        
+        if self.iterations == 0:
+            print("Running officer check loop in officer_manager")
+        
+        self.iterations += 1
 
         try:
             # Add missing officers

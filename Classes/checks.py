@@ -40,9 +40,10 @@ def is_admin():
 
 def is_admin_bot_channel():
     def predicate(ctx):
-        if ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]:
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
+        if ctx.message.channel.id != admin_bot_channel.id:
             raise errors.WrongChannelError(
-                "This command only works in the admin bot channel."
+                f"This command only works in {admin_bot_channel.mention}."
             )
         return True
 
@@ -51,12 +52,14 @@ def is_admin_bot_channel():
 
 def is_general_bot_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
+        general_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["general_bot_channel"])
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["general_bot_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != general_bot_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the general bot channel or admin bot channel."
+                f"This command only works in {general_bot_channel.mention} or {admin_bot_channel.mention}."
             )
         return True
 
@@ -65,12 +68,14 @@ def is_general_bot_channel():
 
 def is_application_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
+        application_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["application_channel"])
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["application_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != application_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the application channel."
+                f"This command only works in {application_channel.mention} or {admin_bot_channel.mention}."
             )
         return True
 
@@ -79,12 +84,14 @@ def is_application_channel():
 
 def is_team_bot_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
+        team_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["team_bot_channel"])
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["team_bot_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != team_bot_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the team bot channel."
+                f"This command only works in {team_bot_channel.mention} or {admin_bot_channel.mention}"
             )
         return True
 
