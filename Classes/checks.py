@@ -40,7 +40,9 @@ def is_admin():
 
 def is_admin_bot_channel():
     def predicate(ctx):
-        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
         if ctx.message.channel.id != admin_bot_channel.id:
             raise errors.WrongChannelError(
                 f"This command only works in {admin_bot_channel.mention}."
@@ -52,8 +54,12 @@ def is_admin_bot_channel():
 
 def is_general_bot_channel():
     def predicate(ctx):
-        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
-        general_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["general_bot_channel"])
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        general_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["general_bot_channel"]
+        )
         if (
             ctx.message.channel.id != admin_bot_channel.id
             and ctx.message.channel.id != general_bot_channel.id
@@ -68,8 +74,12 @@ def is_general_bot_channel():
 
 def is_application_channel():
     def predicate(ctx):
-        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
-        application_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["application_channel"])
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        application_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["application_channel"]
+        )
         if (
             ctx.message.channel.id != admin_bot_channel.id
             and ctx.message.channel.id != application_channel.id
@@ -84,8 +94,12 @@ def is_application_channel():
 
 def is_team_bot_channel():
     def predicate(ctx):
-        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["admin_bot_channel"])
-        team_bot_channel = ctx.bot.officer_manager.guild.get_channel(ctx.bot.settings["team_bot_channel"])
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        team_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["team_bot_channel"]
+        )
         if (
             ctx.message.channel.id != admin_bot_channel.id
             and ctx.message.channel.id != team_bot_channel.id

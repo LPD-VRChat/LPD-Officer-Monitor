@@ -13,6 +13,7 @@ from discord import Member
 from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
 
+
 class Officer:
     def __init__(self, user_id, bot):
         self.bot = bot

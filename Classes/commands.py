@@ -791,9 +791,7 @@ class Inactivity(commands.Cog):
                 ).prompt(ctx)
                 if confirm:
                     await officer.member.add_roles(role)
-                    await ctx.send(
-                        f"{officer.mention} has been marked as inactive."
-                    )
+                    await ctx.send(f"{officer.mention} has been marked as inactive.")
                 else:
                     await ctx.send(
                         f"{officer.mention} will have their inactivity reevaluated at a later date."
@@ -809,9 +807,7 @@ class Inactivity(commands.Cog):
             if confirm:
                 for officer in inactive_officers:
                     await officer.member.add_roles(role)
-                await ctx.send(
-                    f"All officers above have been marked as inactive."
-                )
+                await ctx.send(f"All officers above have been marked as inactive.")
             else:
                 await ctx.send("Cancelled.")
 
