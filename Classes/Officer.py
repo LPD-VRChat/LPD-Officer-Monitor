@@ -190,7 +190,7 @@ class Officer:
 
         # Fire the script to save the entry
         request_id = message.id
-        old_messages = await self.bot.officer_manager.send_db_request(
+        old_messages = await self.bot.sql.request(
             "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
@@ -213,12 +213,12 @@ class Officer:
         """
 
         # Delete any existing entries
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
         # Save the new entry
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
             (self.id, date_start, date_end, reason, request_id),
         )
