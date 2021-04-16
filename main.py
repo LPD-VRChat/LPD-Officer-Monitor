@@ -4,9 +4,7 @@
 
 # Standard
 import asyncio
-import nest_asyncio
-
-nest_asyncio.apply()
+from nest_asyncio import apply
 
 import datetime
 import time
@@ -40,7 +38,7 @@ from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
 import Classes.errors as errors
 
-loop = asyncio.get_event_loop()
+apply()
 
 # Before we do anything else, make sure that we have an event loop to use for
 # graceful shutdown purpopses.

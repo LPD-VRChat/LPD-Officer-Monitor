@@ -62,6 +62,7 @@ class WebManager:
         app.config["SERVER_NAMES"] = ["devbox.lolipd.com", "www.lolipd.com"]
         app.config["SCOPES"] = ["identify"]
         app.config["BOT"] = _Bot
+        app.config["TEMPLATES_AUTO_RELOAD"] = True
 
         _Discord = DiscordOAuth2Session(app)
         app.config["DISCORD"] = _Discord
