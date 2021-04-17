@@ -33,6 +33,7 @@ from Classes.help_command import Help
 from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
 import Classes.errors as errors
 
+
 loop = asyncio.get_event_loop()
 
 # Set intents for the bot - this allows the bot to see other users in the server
@@ -102,14 +103,12 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
+
     print("Starting the LPD Officer Monitor 2.0...")
     global bot
 
     # Make sure this function does not create the managers twice
-    if (
-        bot.officer_manager is not None
-        or bot.sql is not None
-    ):
+    if bot.officer_manager is not None or bot.sql is not None:
         return
 
     # Create the function to run before officer removal
