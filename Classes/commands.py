@@ -11,10 +11,7 @@ import math
 import traceback
 import json
 import asyncio
-import nest_asyncio
-
-nest_asyncio.apply()
-
+from nest_asyncio import apply
 from typing import List, Tuple
 import fuzzywuzzy.process
 
@@ -39,6 +36,8 @@ import Classes.errors as errors
 import Classes.checks as checks
 from Classes.extra_functions import role_id_index, get_role_name_by_id
 from Classes.URLGen import geturls
+
+apply()
 
 
 class Time(commands.Cog):
@@ -1336,14 +1335,12 @@ class Programming(commands.Cog):
 
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
-    @commands.command(usage="`[ restart | reload | start | stop ]`")
+    @commands.command(usage="`[ restart | start | stop ]`")
     async def web(self, ctx, *args):
         """Control the webserver"""
 
         if len(args) == 0:
-            await ctx.send(
-                "Action required.\n`Usage: [ restart | reload | start | stop ]`"
-            )
+            await ctx.send("Action required.\n`Usage: [ restart | start | stop ]`")
             return
 
         action = args[0].lower()
@@ -1357,12 +1354,9 @@ class Programming(commands.Cog):
         elif action == "stop":
             self.bot.web_manager.stop()
             await ctx.send("Stopped...")
-        elif action == "reload":
-            await self.bot.web_manager.reload()
-            # await ctx.send("Reloaded...")
         else:
             await ctx.send(
-                f"`{args[0]}``: action not found.\n`Usage: [ restart | reload | start | stop ]`"
+                f"`{args[0]}``: action not found.\n`Usage: [ restart | start | stop ]`"
             )
 
     @checks.is_team_bot_channel()
