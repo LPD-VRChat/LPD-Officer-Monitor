@@ -109,7 +109,6 @@ async def on_ready():
     if (
         bot.officer_manager is not None
         or bot.sql is not None
-        or bot.user_manager is not None
     ):
         return
 
