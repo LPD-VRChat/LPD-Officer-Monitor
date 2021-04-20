@@ -113,7 +113,7 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
+
     global bot
 
     # Make sure this function does not create the officer manager twice
