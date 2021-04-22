@@ -211,11 +211,6 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         bot.settings["watch_officer_role"]
     )
 
-    lpd_ranks = [
-        bot.officer_manager.guild.get_role(role_id)
-        for role_id in role_id_index(bot.settings)
-    ]
-
     requestables = {
         "recruit": {
             "name": "Recruit",
@@ -282,14 +277,14 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
     for key in requestables.keys():
         if key in message.content.lower():
 
-            current_rank = list(set(message.author.roles) & set(lpd_ranks))[0]
+            # current_rank = list(set(message.author.roles) & set(bot.officer_manager.all_lpd_ranks))[0]
             # If prerequisite not met, delete message and notify user
             if (
                 requestables[key]["upgrade"]
-                and current_rank != requestables[key]["prereq"]
+                and officer.rank != requestables[key]["prereq"]
             ) or (
                 not requestables[key]["upgrade"]
-                and current_rank.position < requestables[key]["prereq"].position
+                and officer.rank.position < requestables[key]["prereq"].position
             ):
                 await message.delete()
                 await message.channel.send(

@@ -299,6 +299,11 @@ class Officer:
     def id(self):
         return self.member.id
 
+    @property
+    def rank(self):
+        intersection = list(set(self.member.roles) & set(self.bot.officer_manager.all_lpd_ranks))
+        return max(intersection, key=lambda item: item.position)
+
     # Internal functions
 
     def _has_role(self, *role_ids):
