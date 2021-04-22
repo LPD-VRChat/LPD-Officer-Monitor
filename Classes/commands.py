@@ -1275,6 +1275,46 @@ class Moderation(commands.Cog):
                 f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.'
             )
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def promote(self, ctx):
+        """Promote the mentioned officers"""
+
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            try:
+                updated_rank = await officer.promote()
+                pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
+                match = pattern.findall(updated_rank.name)
+                if match:
+                    name = "".join(match[0][1])
+                else:
+                    name = officer.rank.name
+                await ctx.send(f"{officer.display_name} was promoted to {name}")
+            except IndexError as e:
+                await ctx.send(e)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def demote(self, ctx):
+        """Demote the mentioned officers"""
+
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            try:
+                updated_rank = await officer.demote()
+                pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
+                match = pattern.findall(updated_rank.name)
+                if match:
+                    name = "".join(match[0][1])
+                else:
+                    name = officer.rank.name
+                await ctx.send(f"{officer.display_name} was demoted to {name}")
+            except IndexError as e:
+                await ctx.send(e)
+
 
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
