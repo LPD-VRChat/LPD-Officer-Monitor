@@ -174,103 +174,109 @@ async def analyze_promotion_request(bot, message):
     await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
     
     cadet_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'cadet'))
+    recruit_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'recruit'))
     officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'officer'))
     senior_officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'senior_officer'))
     corporal_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'corporal'))
-    
-    valid_approvers = []
-    def get_approvers(role_id):
-        for member in message.mentions:
-            if bot.officer_manager.guild.get_role(role_id) in member.roles:
-                valid_approvers.append(member.id)
 
-    def check(reaction, user):
+    trainer_role = bot.officer_manager.guild.get_role(bot.settings["trainer_role"])
+    lmt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trainer_role"])
+    slrt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trainer_role"])
+    prison_trainer_role = bot.officer_manager.guild.get_role(bot.settings["prison_trainer_role"])
+
+    lmt_trained_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trained_role"])
+    slrt_trained_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trained_role"])
+    watch_officer_role = bot.officer_manager.guild.get_role(bot.settings["watch_officer_role"])
+
+    lpd_ranks = [ bot.officer_manager.guild.get_role(role_id) for role_id in role_id_index(bot.settings) ]
+
+
+
+    requestables = {
+                    "recruit": {
+                    "name": "Recruit",
+                    "name_id": "recruit",
+                    "role": recruit_role,
+                    "prereq": cadet_role,
+                    "approver": trainer_role,
+                    "failmessage": "You must have the LPD Cadet role before you can request promotion to Officer. Please contact a White Shirt if you feel this message is in error.",
+                    "upgrade": True},
+
+                    "senior officer": {
+                    "name": "Senior Officer",
+                    "name_id": "senior_officer",
+                    "role": senior_officer_role,
+                    "prereq": officer_role,
+                    "approver": trainer_role,
+                    "failmessage": "You must have the LPD Officer role before you can request promotion to Senior Officer. Please contact a White Shirt if you feel this message is in error.",
+                    "upgrade": True},
+
+                    "slrt": {
+                    "name": "SLRT",
+                    "name_id": "recruit",
+                    "role": slrt_trained_role,
+                    "prereq": senior_officer_role,
+                    "approver": slrt_trainer_role,
+                    "failmessage": "You must have the LPD Senior Officer rank or higher before you can request assignment to the SLRT team. Please contact a White Shirt if you feel this message is in error.",
+                    "upgrade": False},
+
+                    "watch officer": {
+                    "name": "Watch Officer",
+                    "name_id": "recruit",
+                    "role": watch_officer_role,
+                    "prereq": corporal_role,
+                    "approver": prison_trainer_role,
+                    "failmessage": "You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.",
+                    "upgrade": False},
+
+                    "lmt": {
+                    "name": "LMT",
+                    "name_id": "recruit",
+                    "role": lmt_trained_role,
+                    "prereq": officer_role,
+                    "approver": lmt_trainer_role,
+                    "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+                    "upgrade": False}
+    }
+    
+    def get_approvers(role):
+        _valid_approvers = []
+        for member in message.mentions:
+            if role in member.roles:
+                _valid_approvers.append(member.id)
+        return _valid_approvers
+
+    def check(reaction, user, valid_approvers):
         if user.id in valid_approvers and reaction.emoji == "\N{WHITE HEAVY CHECK MARK}":
             valid_approvers.remove(user.id)
             return reaction, user
 
+    for key in requestables.keys():
+        if key in message.content.lower():
+            
+            current_rank = list(set(message.author.roles) & set(lpd_ranks))[0]
+            # If prerequisite not met, delete message and notify user
+            if ((        requestables[key]["upgrade"] and current_rank != requestables[key]["prereq"] )
+                or ( not requestables[key]["upgrade"] and current_rank.position < requestables[key]["prereq"].position )):
+                await message.delete()
+                await message.channel.send(requestables[key]["failmessage"], delete_after=10)
+                return
+            
+            # Code to watch for approving checks
+            valid_approvers = get_approvers(requestables[key]["approver"])
+            try:
+                reaction, user = await bot.wait_for('reaction_add', timeout=300, check=lambda reaction, user: check(reaction, user, valid_approvers))
 
-    if 'recruit' in message.content.lower():
-        if cadet_role not in message.author.roles:
-            await message.delete()
-            await message.channel.send("You must have the LPD Cadet role before you can request promotion to Officer.", delete_after=10)
+                await message.author.add_roles(requestables[key]["role"])
+                if requestables[key]["upgrade"]:
+                    await message.author.remove_roles(requestables[key]["prereq"])
+                
+            except asyncio.TimeoutError:
+                pass
+            
+            # Only process one matching result from the for loop - nobody should be requesting multiple ranks at once
             return
-
-        # Code to watch for approving checks
-        get_approvers(bot.settings["trainer_role"])
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
-            
-            await message.author.add_roles(bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'recruit')))
-            await message.author.remove_roles(cadet_role)
-
-        except asyncio.TimeoutError:
-            pass
-        
-    elif 'senior officer' in message.content.lower():
-        if officer_role not in message.author.roles:
-            await message.delete()
-            await message.channel.send("You must have the LPD Officer role before you can request promotion to Senior Officer.", delete_after=10)
-            return
-        
-        # Code to watch for approving checks
-        get_approvers(bot.settings["trainer_role"])
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
-            
-            await message.author.add_roles(bot.officer_manager.guild.get_role(get_rank_id(bot.settings, 'senior_officer')))
-            await message.author.remove_roles(officer_role)
-
-        except asyncio.TimeoutError:
-            pass
-
-    elif 'slrt' in message.content.lower():
-        if (    senior_officer_role not in message.author.roles
-            and officer.is_detainable):
-            await message.delete()
-            await message.channel.send("You must have the LPD Senior Officer rank or higher before you can request assignment to the SLRT team. Please contact a White Shirt if you feel this message is in error.", delete_after=10)
-            return
-            
-        # Code to watch for approving checks
-        get_approvers(bot.settings["slrt_trainer_role"])
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
-            await message.author.add_roles(bot.officer_manager.guild.get_role(bot.settings["slrt_trained_role"]))
-
-        except asyncio.TimeoutError:
-            pass
-            
-    elif 'watch officer' in message.content.lower():
-        if officer.is_detainable:
-            await message.delete()
-            await message.channel.send("You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.", delete_after=10)
-            return
-            
-        # Code to watch for approving checks
-        get_approvers(bot.settings["prison_trainer_role"])
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
-            await message.author.add_roles(bot.officer_manager.guild.get_role(bot.settings["watch_officer_role"]))
-
-        except asyncio.TimeoutError:
-            pass
-            
-    elif 'lmt' in message.content.lower():
-        if (    officer_role not in message.author.roles 
-            and senior_officer_role not in message.author.roles 
-            and officer.is_detainable):
-            await message.delete()
-            await message.channel.send("You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.", delete_after=10)
-            return
-
-        # Code to watch for approving checks
-        get_approvers(bot.settings["lmt_trainer_role"])
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=300, check=check)
-            await message.author.add_roles(bot.officer_manager.guild.get_role(bot.settings["lmt_trained_role"]))
-
-        except asyncio.TimeoutError:
-            pass
-            
-    else:
-        await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
+    
+    # If we haven't returned by now, it means that we have no clue what the user sent. For the sake of forward compatibility,
+    # we aren't going to delete unknown messages. Just react with a question mark.
+    await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
