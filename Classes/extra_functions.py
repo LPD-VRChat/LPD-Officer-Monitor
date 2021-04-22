@@ -301,9 +301,10 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
                     check=lambda reaction, user: check(reaction, user, valid_approvers),
                 )
 
-                await message.author.add_roles(requestables[key]["role"])
                 if requestables[key]["upgrade"]:
-                    await message.author.remove_roles(requestables[key]["prereq"])
+                    await officer.promote()
+                else:
+                    await message.author.add_roles(requestables[key]["role"])
 
             except asyncio.TimeoutError:
                 pass
