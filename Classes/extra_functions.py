@@ -255,7 +255,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
 
     for key in requestables.keys():
         if key in message.content.lower():
-       
+
             # React with a white checkmark to give the trainers something to click
             await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 

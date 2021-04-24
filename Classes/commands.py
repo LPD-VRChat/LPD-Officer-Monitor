@@ -1275,6 +1275,7 @@ class Moderation(commands.Cog):
                 f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.'
             )
 
+
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
