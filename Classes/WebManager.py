@@ -811,17 +811,25 @@ class WebManager:
         bot = app.config["BOT"]
 
         encoded_username = request.args.get("vrcuser")
-        try:
-            w = int(request.args.get("w"))
-        except:
-            w = int(request.args.get("W"))
-        try:
-            h = int(request.args.get("h"))
-        except:
-            h = int(request.args.get("H"))
+        w = request.args.get('w')
+        h = request.args.get('h')
+        W = request.args.get('W')
+        H = request.args.get('H')
+        
+        if not w:
+            if not W or int(W) <= 8:
+                w = 8
+            else:
+                w = w
+        if not h:
+            if not H or int(H) <= 8:
+                h = 8
+            else:
+                h = H
+        
 
-        w = w if w > 8 else 8
-        h = h if h > 8 else 8
+        w = int(w) if int(w) > 8 else 8
+        h = int(h) if int(h) > 8 else 8
 
         officer_id = bot.user_manager.get_discord_by_vrc(dec(encoded_username))
 
