@@ -1280,12 +1280,11 @@ class Moderation(commands.Cog):
     @commands.command()
     async def promote(self, ctx):
         """Promote the mentioned officers"""
-
+        pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
         for member in ctx.message.mentions:
             officer = self.bot.officer_manager.get_officer(member.id)
             try:
                 updated_rank = await officer.promote()
-                pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
                 match = pattern.findall(updated_rank.name)
                 if match:
                     name = "".join(match[0][1])
@@ -1300,12 +1299,11 @@ class Moderation(commands.Cog):
     @commands.command()
     async def demote(self, ctx):
         """Demote the mentioned officers"""
-
+        pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
         for member in ctx.message.mentions:
             officer = self.bot.officer_manager.get_officer(member.id)
             try:
                 updated_rank = await officer.demote()
-                pattern = re.compile(r"(LPD )?(\w+( \w+)*)")
                 match = pattern.findall(updated_rank.name)
                 if match:
                     name = "".join(match[0][1])

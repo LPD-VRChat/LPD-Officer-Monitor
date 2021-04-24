@@ -176,40 +176,22 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
     # React with a white checkmark to give the trainers something to click
     await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
+    # fmt: off
     cadet_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "cadet"))
-    recruit_role = bot.officer_manager.guild.get_role(
-        get_rank_id(bot.settings, "recruit")
-    )
-    officer_role = bot.officer_manager.guild.get_role(
-        get_rank_id(bot.settings, "officer")
-    )
-    senior_officer_role = bot.officer_manager.guild.get_role(
-        get_rank_id(bot.settings, "senior_officer")
-    )
-    corporal_role = bot.officer_manager.guild.get_role(
-        get_rank_id(bot.settings, "corporal")
-    )
+    recruit_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "recruit"))
+    officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "officer"))
+    senior_officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "senior_officer"))
+    corporal_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "corporal"))
 
     trainer_role = bot.officer_manager.guild.get_role(bot.settings["trainer_role"])
-    lmt_trainer_role = bot.officer_manager.guild.get_role(
-        bot.settings["lmt_trainer_role"]
-    )
-    slrt_trainer_role = bot.officer_manager.guild.get_role(
-        bot.settings["slrt_trainer_role"]
-    )
-    prison_trainer_role = bot.officer_manager.guild.get_role(
-        bot.settings["prison_trainer_role"]
-    )
+    lmt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trainer_role"])
+    slrt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trainer_role"])
+    prison_trainer_role = bot.officer_manager.guild.get_role(bot.settings["prison_trainer_role"])
 
-    lmt_trained_role = bot.officer_manager.guild.get_role(
-        bot.settings["lmt_trained_role"]
-    )
-    slrt_trained_role = bot.officer_manager.guild.get_role(
-        bot.settings["slrt_trained_role"]
-    )
-    watch_officer_role = bot.officer_manager.guild.get_role(
-        bot.settings["watch_officer_role"]
-    )
+    lmt_trained_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trained_role"])
+    slrt_trained_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trained_role"])
+    watch_officer_role = bot.officer_manager.guild.get_role(bot.settings["watch_officer_role"])
+    # fmt: on
 
     requestables = {
         "recruit": {
@@ -277,7 +259,6 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
     for key in requestables.keys():
         if key in message.content.lower():
 
-            # current_rank = list(set(message.author.roles) & set(bot.officer_manager.all_lpd_ranks))[0]
             # If prerequisite not met, delete message and notify user
             if (
                 requestables[key]["upgrade"]
