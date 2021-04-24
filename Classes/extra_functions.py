@@ -173,9 +173,6 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
     ):
         return
 
-    # React with a white checkmark to give the trainers something to click
-    await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
-
     # fmt: off
     cadet_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "cadet"))
     recruit_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "recruit"))
@@ -258,6 +255,9 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
 
     for key in requestables.keys():
         if key in message.content.lower():
+       
+            # React with a white checkmark to give the trainers something to click
+            await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
             # If prerequisite not met, delete message and notify user
             if (
@@ -288,7 +288,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
                     await message.author.add_roles(requestables[key]["role"])
 
             except asyncio.TimeoutError:
-                pass
+                await message.remove_reaction("\N{WHITE HEAVY CHECK MARK}", bot.user)
 
             # Only process one matching result from the for loop - nobody should be requesting multiple ranks at once
             return
