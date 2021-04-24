@@ -631,7 +631,11 @@ class WebManager:
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
 
-        if not officer.is_dispatch and not officer.is_programming_team:
+        if (
+            not officer.is_dispatch
+            and not officer.is_programming_team
+            and not officer.is_event_host
+        ):
             return await _403_("Dispatch")
 
         if request.method == "POST":
