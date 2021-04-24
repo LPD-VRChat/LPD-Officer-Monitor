@@ -811,11 +811,11 @@ class WebManager:
         bot = app.config["BOT"]
 
         encoded_username = request.args.get("vrcuser")
-        w = request.args.get('w')
-        h = request.args.get('h')
-        W = request.args.get('W')
-        H = request.args.get('H')
-        
+        w = request.args.get("w")
+        h = request.args.get("h")
+        W = request.args.get("W")
+        H = request.args.get("H")
+
         if not w:
             if not W or int(W) <= 8:
                 w = 8
@@ -826,7 +826,6 @@ class WebManager:
                 h = 8
             else:
                 h = H
-        
 
         w = int(w) if int(w) > 8 else 8
         h = int(h) if int(h) > 8 else 8
