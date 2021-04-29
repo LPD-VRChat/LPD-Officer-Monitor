@@ -227,15 +227,15 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
             "failmessage": "You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.",
             "upgrade": False,
         },
-        "lmt": {
-            "name": "LMT",
-            "name_id": "lmt",
-            "role": lmt_trained_role,
-            "prereq": officer_role,
-            "approver": lmt_trainer_role,
-            "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
-            "upgrade": False,
-        },
+        #"lmt": {
+        #    "name": "LMT",
+        #    "name_id": "lmt",
+        #    "role": lmt_trained_role,
+        #    "prereq": officer_role,
+        #    "approver": lmt_trainer_role,
+        #    "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+        #    "upgrade": False,
+        #},
     }
 
     def get_approvers(role):
