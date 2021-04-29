@@ -1276,12 +1276,55 @@ class Moderation(commands.Cog):
             )
 
 
+class LMT(commands.Cog):
+    """Here are all the commands for the LMT Team."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.magenta()
+    
+    @checks.is_lmt_trainer()
+    @checks.is_team_bot_channel()
+    @commands.command(usage="`@officer_name`")
+    async def make_lmt(self, ctx):
+        """This command gives the LMT role to mentioned officers"""
+
+        if ctx.message.mentions == []:
+            await ctx.send("You must mention at least one officer")
+            return
+
+        officer_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "officer"))
+        lmt_trained_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lmt_trained_role"])
+
+        members_not_given_role = []
+        members_have_role = []
+
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if lmt_trained_role in member.roles:
+                members_have_role.append(member.mention)
+            elif officer.rank.position < officer_role.position:
+                members_not_given_role.append(member.mention)
+            else:
+                await member.add_roles(lmt_trained_role)
+        
+        if members_not_given_role == [] and members_have_role == []:
+            await ctx.send(f"Gave all mentioned officers the {lmt_trained_role.name} role.")
+            return
+        if members_not_given_role != []:
+            message = await ctx.send(f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.name}")
+            await message.edit(content=f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.mention}")
+        if members_have_role != []:
+            message = await ctx.send(f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.name}")
+            await message.edit(content=f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.mention}")
+
+
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.color = discord.Color.dark_magenta()
+        self.color = discord.Color.dark_gold()
         self.get_vrc_name = (
             lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
         )

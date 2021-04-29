@@ -159,3 +159,16 @@ def is_programming_team():
             )
 
     return commands.check(predicate)
+
+
+def is_lmt_trainer():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_lmt_trainer:
+            return True
+        else:
+            raise errors.NotForYouError(
+                "This command is only for the LMT Trainer Team."
+            )
+
+    return commands.check(predicate)
