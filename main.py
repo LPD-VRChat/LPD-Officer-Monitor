@@ -32,6 +32,7 @@ from Classes.commands import (
     Applications,
     Moderation,
     Programming,
+    LMT,
     Other,
 )
 from Classes.help_command import Help
@@ -377,6 +378,7 @@ bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Programming(bot))
+bot.add_cog(LMT(bot))
 bot.add_cog(Other(bot))
 
 # ====================

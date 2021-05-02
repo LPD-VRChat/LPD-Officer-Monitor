@@ -240,7 +240,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         },
         "slrt": {
             "name": "SLRT",
-            "name_id": "recruit",
+            "name_id": "slrt",
             "role": slrt_trained_role,
             "prereq": senior_officer_role,
             "approver": slrt_trainer_role,
@@ -249,22 +249,22 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         },
         "watch officer": {
             "name": "Watch Officer",
-            "name_id": "recruit",
+            "name_id": "watch_officer",
             "role": watch_officer_role,
             "prereq": corporal_role,
             "approver": prison_trainer_role,
             "failmessage": "You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.",
             "upgrade": False,
         },
-        "lmt": {
-            "name": "LMT",
-            "name_id": "recruit",
-            "role": lmt_trained_role,
-            "prereq": officer_role,
-            "approver": lmt_trainer_role,
-            "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
-            "upgrade": False,
-        },
+        #"lmt": {
+        #    "name": "LMT",
+        #    "name_id": "lmt",
+        #    "role": lmt_trained_role,
+        #    "prereq": officer_role,
+        #    "approver": lmt_trainer_role,
+        #    "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+        #    "upgrade": False,
+        #},
     }
 
     def get_approvers(role):
