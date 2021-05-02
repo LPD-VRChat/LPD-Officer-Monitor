@@ -35,7 +35,12 @@ from Classes.commands import (
     Other,
 )
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
+from Classes.extra_functions import (
+    handle_error,
+    get_settings_file,
+    clean_shutdown,
+    analyze_promotion_request,
+)
 import Classes.errors as errors
 
 apply()
@@ -190,6 +195,9 @@ async def on_message(message):
     if message.channel.id == bot.settings["leave_of_absence_channel"]:
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
+
+    if message.channel.id == bot.settings["request_rank_channel"]:
+        await analyze_promotion_request(bot, message)
 
     # Archive the message
     if (

@@ -20,7 +20,7 @@ from discord.ext import tasks
 # Mine
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
-from Classes.extra_functions import handle_error
+from Classes.extra_functions import handle_error, role_id_index
 
 
 class OfficerManager:
@@ -102,10 +102,6 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args=None):
-        """This function is being deprecated in favor of self.bot.sql.request()"""
-        return await self.bot.sql.request(query, args)
-
     # =====================
     #    Loop
     # =====================
@@ -145,6 +141,12 @@ class OfficerManager:
                 await self.remove_officer(
                     officer_id, reason="this person was not found in the server."
                 )
+
+            # Build the list of LPD Ranks, for general availability
+            self.all_lpd_ranks = [
+                self.guild.get_role(role_id)
+                for role_id in role_id_index(self.bot.settings)
+            ]
 
         except Exception as error:
             print(error)
@@ -329,12 +331,12 @@ class OfficerManager:
         Delete the specified Leave of Absence
         """
 
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
         )
 
     async def get_loa(self):
-        loa_entries = await self.send_db_request(
+        loa_entries = await self.bot.sql.request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
 

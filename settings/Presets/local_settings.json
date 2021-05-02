@@ -17,6 +17,7 @@
     "general_bot_channel": 708117281376305232,
     "error_log_channel": 670751809538752512,
     "leave_of_absence_channel": 734906620630401045,
+    "request_rank_channel": 834184946964103178,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
     "chat_moderator_role": 767437788475162641,
@@ -74,8 +75,20 @@
         {
             "name": "LPD Officer",
             "name_id": "officer",
+            "id": 834215801426018335,
+            "is_detainable": true
+        },
+        {
+            "name": "LPD Senior Officer",
+            "name_id": "senior_officer",
             "id": 594239040723615780,
             "is_detainable": true
+        },
+        {
+            "name": "LPD Corporal",
+            "name_id": "corporal",
+            "id": 834215092496629771,
+            "is_detainable": false
         },
         {
             "name": "LPD Captain",

@@ -809,8 +809,14 @@ class WebManager:
 
         return content
 
+    #####################################
+    #                                   #
+    #   API endpoints go below here     #
+    #                                   #
+    #####################################
+
     @app.route("/api/auth")
-    async def _api_handler_():
+    async def _auth_():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
@@ -875,3 +881,30 @@ class WebManager:
             result = f"{url}\n"
 
         return result
+
+
+    # Action section
+
+    @app.route("/api/action")
+    async def action():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        return 'Not implemented'
+    
+    # Resource section
+
+    @app.route("/api/resource")
+    async def resource():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        return 'Not implemented'
+
+    @app.route("/api/resource/auth")
+    async def resource_auth():
+        await _auth_()
+
+    @app.route("/api/resource/auth/urls")
+    async def resource_auth_urls():
+        await _get_urls_()
