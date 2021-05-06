@@ -112,9 +112,11 @@ async def on_ready():
 
     # Make sure this function does not create the officer manager twice
     if bot.officer_manager is not None:
+        await clean_shutdown(location="disconnection", person="automatic recovery", exit=False)
         return
 
     if bot.sql is not None:
+        await clean_shutdown(location="disconnection", person="automatic recovery", exit=False)
         return
 
     # Create the function to run before officer removal
