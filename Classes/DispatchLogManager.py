@@ -82,12 +82,6 @@ class DispatchLogManager:
         )
         send_message = f"Required Backup: {backup_type} {backup_emoji}\n\nWorld: {world}\n\nSituation: {situation}\n\nSquad: {self.bot.officer_manager.guild.get_channel(squad_id).name}\n\nStatus: Resolved\n----------------------------------------"
 
-        # message = await self.dispatch_log.fetch_message(message_id)
-        # if not message:
-        #     return False
-
-        # await message.edit(content=send_message)
-
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(
                 self.dispatch_webhook_url, adapter=AsyncWebhookAdapter(session)
