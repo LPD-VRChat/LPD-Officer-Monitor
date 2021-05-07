@@ -148,7 +148,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
         print("Stopping the bot without stopping time...")
 
     # Log the shutdown
-    msg_string = f"WARNING: Bot shut down from {location} by {person}"
+    msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
     print(msg_string)
