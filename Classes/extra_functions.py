@@ -1,7 +1,7 @@
 # Standard
 from typing import Optional
 import discord
-from os import _exit as exit
+from os import _exit
 import asyncio
 from io import StringIO, BytesIO
 
@@ -158,7 +158,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
         # calling this script inside a loop if you want the bot to restart
         loop = asyncio.get_event_loop()
         loop.stop()
-        exit(0)
+        _exit(0)
 
 
 async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
