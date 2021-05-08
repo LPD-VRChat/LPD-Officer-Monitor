@@ -9,6 +9,7 @@ import time
 import sys
 import traceback
 import argparse
+from typing import List, Dict, Tuple, Iterable, Optional
 
 # Community
 import aiomysql
@@ -37,6 +38,8 @@ from Classes.extra_functions import (
     analyze_promotion_request,
 )
 import Classes.errors as errors
+import CustomTyping.modified_bot as mb
+
 
 loop = asyncio.get_event_loop()
 
@@ -69,11 +72,12 @@ else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
 
-bot = commands.Bot(
+bot: mb.Bot = commands.Bot(
     command_prefix=settings["bot_prefix"], intents=intents
 )  # 10/12/2020 - Destructo added intents
 bot.settings = settings
 bot.officer_manager = None
+bot.user_manager = None
 bot.sql = None
 bot.everything_ready = False
 
@@ -140,7 +144,7 @@ async def on_ready():
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     # print("on_message")
 
     # Early out if message from the bot itself
@@ -178,7 +182,7 @@ async def on_message(message):
 
 
 @bot.event
-async def on_voice_state_update(member, before, after):
+async def on_voice_state_update(member: discord.Member, before, after):
     # print("on_voice_state_update")
     if bot.officer_manager is None:
         return
@@ -256,7 +260,7 @@ async def on_member_update(before, after):
 
 
 @bot.event
-async def on_member_remove(member):
+async def on_member_remove(member: discord.Member):
     if bot.officer_manager.is_officer(member):
         await bot.officer_manager.remove_officer(
             member.id,
@@ -314,7 +318,7 @@ async def on_command_error(ctx, exception):
 
 
 @bot.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     detainee_ids = await bot.sql.request(
         f"select member_id from Detainees WHERE member_id = {member.id}"
     )

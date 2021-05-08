@@ -1,37 +1,40 @@
 # Standard
 import csv
+from typing import Optional, List, Mapping
 
 # Community
 import discord
 from discord.ext import commands
 
+#Mine
+import CustomTyping.modified_bot as mb
 
 class VRChatUserManager:
     """This class handles interaction with the user storage CSV file."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: mb.Bot):
         self.bot = bot
-        self.all_users = []
+        self.all_users: List[List] = []
 
     @classmethod
-    async def start(cls, bot):
+    async def start(cls, bot: mb.Bot):
         instance = cls(bot)
         await instance.update_cache()
         return instance
 
-    def get_vrc_by_discord(self, discord_id):
+    def get_vrc_by_discord(self, discord_id: int):
         for user in self.all_users:
             if user[0] == discord_id:
                 return user[1]
         return None
 
-    def get_discord_by_vrc(self, vrchat_name):
+    def get_discord_by_vrc(self, vrchat_name: str):
         for user in self.all_users:
             if user[1] == vrchat_name:
                 return user[0]
         return None
 
-    def vrc_name_format(self, string):
+    def vrc_name_format(self, string: str) -> str:
 
         # Replace the characters VRChat replaces
         string = (
@@ -66,7 +69,7 @@ class VRChatUserManager:
 
         return string
 
-    async def add_user(self, discord_id, vrchat_name, skip_format_name=False):
+    async def add_user(self, discord_id: int, vrchat_name: str, skip_format_name: Optional[bool] = False):
         await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
@@ -87,7 +90,7 @@ class VRChatUserManager:
             (discord_id, vrchat_name),
         )
 
-    async def remove_user(self, discord_id):
+    async def remove_user(self, discord_id: int):
 
         # Remove from the cache
         self.all_users = [x for x in self.all_users if x[0] != discord_id]

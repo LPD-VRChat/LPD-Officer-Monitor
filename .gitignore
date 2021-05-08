@@ -114,3 +114,4 @@ venv.bak/
 # Local database
 LPD_database*.csv
 *.sqlite
+.run.loop

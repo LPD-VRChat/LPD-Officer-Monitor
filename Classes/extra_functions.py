@@ -1,5 +1,5 @@
 # Standard
-from typing import Optional
+from typing import Optional, Iterable, Dict, List
 import discord
 from os import _exit as exit
 import asyncio
@@ -8,8 +8,10 @@ from io import StringIO, BytesIO
 # Community
 import commentjson as json
 
+# Mine
+import CustomTyping.modified_bot as mb
 
-def is_number(string):
+def is_number(string: str) -> bool:
     try:
         int(string)
         return True
@@ -17,7 +19,7 @@ def is_number(string):
         return False
 
 
-async def send_long(channel, string, code_block=False):
+async def send_long(channel: discord.channel.TextChannel, string: str, code_block=False):
     """Send output as a text file, or optionally a code block if code_block=True is passed"""
 
     # Make a function to check the length of all the lines
@@ -29,7 +31,7 @@ async def send_long(channel, string, code_block=False):
     else:
         input_string_list = string.splitlines()
 
-    output_list = []
+    output_list: List[str] = []
     for line in input_string_list:
 
         # If the line is longer that 2000, send it as a file and exit.
@@ -63,7 +65,7 @@ async def send_long(channel, string, code_block=False):
     await channel.send("\n".join(output_list))
 
 
-def get_settings_file(settings_file_name, in_settings_folder=True):
+def get_settings_file(settings_file_name: str, in_settings_folder=True) -> Dict:
 
     # Add the stuff to the settings_file_name to make it link to the right file
     file_name = settings_file_name + ".json"
@@ -78,7 +80,7 @@ def get_settings_file(settings_file_name, in_settings_folder=True):
     return data
 
 
-async def handle_error(bot, title, traceback_string):
+async def handle_error(bot: mb.Bot, title: str, traceback_string: str):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
     print(error_text)
 
@@ -86,7 +88,7 @@ async def handle_error(bot, title, traceback_string):
     await send_long(channel, error_text)
 
 
-def get_rank_id(settings, name_id):
+def get_rank_id(settings: Dict, name_id: str):
     """Returns the Discord Role ID for specified name_id"""
 
     role_ladder = settings["role_ladder"]
@@ -98,11 +100,11 @@ def get_rank_id(settings, name_id):
     return None
 
 
-def has_role(role_list, role_id):
+def has_role(role_list: Iterable[discord.Role], role_id: int):
     return len([x for x in role_list if x.id == role_id]) > 0
 
 
-def role_id_index(settings):
+def role_id_index(settings: Dict) -> List[int]:
     """Process the role_ladder into a usable list when called"""
 
     role_id_ladder = []
@@ -111,13 +113,13 @@ def role_id_index(settings):
     return role_id_ladder
 
 
-def get_role_name_by_id(settings, bad_role):
+def get_role_name_by_id(settings: Dict, bad_role: int) -> str:
     """Identify a role's expected name by its ID"""
 
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
-
+    return ''
 
 async def send_str_as_file(
     channel: discord.TextChannel,
@@ -131,7 +133,7 @@ async def send_str_as_file(
         )
 
 
-async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
+async def clean_shutdown(bot: mb.Bot, location: Optional[str] = "the console", person: Optional[str] = "KeyboardInterrupt"):
     """Cleanly shutdown the bot"""
 
     # Put all on-duty officers off duty - don't worry,
@@ -160,7 +162,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
     exit(0)
 
 
-async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
+async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeout_in_seconds: Optional[int] = 300):
     """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
 
     officer = bot.officer_manager.get_officer(message.author.id)

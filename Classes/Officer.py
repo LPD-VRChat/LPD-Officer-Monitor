@@ -8,6 +8,7 @@ import math
 import time
 from datetime import datetime
 import datetime as dt
+from typing import Union, List, Dict, Tuple, Optional
 
 
 # Community
@@ -28,9 +29,9 @@ class Officer:
         if self.member == None:
             raise MemberNotFoundError()
 
-        self._on_duty_start_time: float = None
+        self._on_duty_start_time: Union[float, None] = None
         self.is_on_duty: bool = False
-        self.squad: VoiceChannel = None
+        self.squad: Union[VoiceChannel, None] = None
 
     def go_on_duty(self):
 
@@ -137,8 +138,8 @@ class Officer:
             await message.delete()
             return
 
-        date_start = [int(i) for i in date_start]
-        date_end = [int(i) for i in date_end]
+        date_start: List[int] = [int(i) for i in date_start]
+        date_end: List[int] = [int(i) for i in date_end]
 
         if (
             date_start[1] < 1
@@ -368,7 +369,7 @@ class Officer:
         return self.member.id
 
     @property
-    def rank(self):
+    def rank(self) -> Role:
         intersection = list(
             set(self.member.roles) & set(self.bot.officer_manager.all_lpd_ranks)
         )
