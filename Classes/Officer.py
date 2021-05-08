@@ -11,7 +11,7 @@ import datetime as dt
 
 
 # Community
-from discord import Member, Message
+from discord import Member, Role, Message
 from discord.channel import VoiceChannel
 from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
