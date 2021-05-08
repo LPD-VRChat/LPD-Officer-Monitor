@@ -14,6 +14,7 @@ import datetime as dt
 from discord import Member, Role, Message
 from discord.channel import VoiceChannel
 from discord.enums import HypeSquadHouse
+from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
 
 # Mine
@@ -196,7 +197,7 @@ class Officer:
 
         # Fire the script to save the entry
         request_id = message.id
-        old_messages = await self.bot.officer_manager.send_db_request(
+        old_messages = await self.bot.sql.request(
             "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
@@ -219,15 +220,80 @@ class Officer:
         """
 
         # Delete any existing entries
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
         # Save the new entry
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
             (self.id, date_start, date_end, reason, request_id),
         )
+
+    async def promote(self, rank=None):
+        """Try to promote this officer, and return their rank afterwards"""
+        return await self._prodemote(promote=True, rank=rank)
+
+    async def demote(self, rank=None):
+        """Try to demote this officer, and return their rank afterwards"""
+        return await self._prodemote(demote=True, rank=rank)
+
+    async def _prodemote(self, promote=False, demote=False, rank=None):
+        """Used internally to promote/demote this officer. Don't call this directly."""
+        old_rank = self.rank
+
+        if rank:
+            new_rank = rank
+
+        elif promote:
+            higher_ranks = [
+                x
+                for x in self.bot.officer_manager.all_lpd_ranks
+                if x.position > old_rank.position
+            ]
+            if higher_ranks == []:
+                raise IndexError("Highest rank available is already applied")
+                return
+            new_rank = min(higher_ranks, key=lambda r: r.position)
+
+        elif demote:
+            lower_ranks = [
+                x
+                for x in self.bot.officer_manager.all_lpd_ranks
+                if x.position < old_rank.position
+            ]
+            if lower_ranks == []:
+                raise IndexError("Lowest rank available is already applied")
+                return
+            new_rank = max(lower_ranks, key=lambda r: r.position)
+
+        else:
+            raise ValueError(
+                "Must specify promote=True, demote=True, or rank=<Discord.role object>"
+            )
+            return
+
+        if type(new_rank) != Role:
+            raise TypeError(f"Expected type Discord.role, got {type(new_rank)} instead")
+            return
+
+        try:
+            await self.member.add_roles(new_rank)
+        except Forbidden as e:
+            if promote:
+                raise IndexError(
+                    "I do not have permission to promote this officer any further"
+                )
+            return old_rank
+
+        try:
+            await self.member.remove_roles(old_rank)
+        except Forbidden as e:
+            await self.member.remove_roles(new_rank)
+            raise IndexError("I do not have permission to demote this officer")
+            return old_rank
+
+        return new_rank
 
     # ====================
     # properties
@@ -300,6 +366,13 @@ class Officer:
     @property
     def id(self) -> int:
         return self.member.id
+
+    @property
+    def rank(self):
+        intersection = list(
+            set(self.member.roles) & set(self.bot.officer_manager.all_lpd_ranks)
+        )
+        return max(intersection, key=lambda item: item.position)
 
     # Internal functions
 
