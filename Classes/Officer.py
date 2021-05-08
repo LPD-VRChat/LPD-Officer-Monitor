@@ -9,25 +9,27 @@ import time
 from datetime import datetime
 import datetime as dt
 
+
 # Community
-from discord import Member
+from discord import Member, Message
+from discord.channel import VoiceChannel
 from discord.enums import HypeSquadHouse
 from Classes.errors import MemberNotFoundError
 
 # Mine
 import Classes.extra_functions as ef
-
+import CustomTyping.modified_bot as mb
 
 class Officer:
-    def __init__(self, user_id, bot):
+    def __init__(self, user_id: int, bot: mb.Bot):
         self.bot = bot
-        self.member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
+        self.member: Member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
         if self.member == None:
             raise MemberNotFoundError()
 
-        self._on_duty_start_time = None
-        self.is_on_duty = False
-        self.squad = None
+        self._on_duty_start_time: float = None
+        self.is_on_duty: bool = False
+        self.squad: VoiceChannel = None
 
     def go_on_duty(self):
 
@@ -81,7 +83,7 @@ class Officer:
             self.id, display_name=display_name
         )
 
-    async def process_loa(self, message):
+    async def process_loa(self, message: Message):
         try:
             date_range = message.content.split(":")[0]
             date_a = date_range.split("-")[0]
@@ -209,7 +211,7 @@ class Officer:
         await self.save_loa(date_start, date_end, reason, request_id)
         await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
-    async def save_loa(self, date_start, date_end, reason, request_id):
+    async def save_loa(self, date_start, date_end, reason: str, request_id: int):
         """
         Pass all 5 required fields to save_loa()
         If record with matching officer_id is found,
@@ -234,57 +236,57 @@ class Officer:
     # External functions
 
     @property
-    def is_white_shirt(self):
+    def is_white_shirt(self) -> bool:
         return self._has_role(*self._get_roles_with_tag("is_white_shirt"))
 
     @property
-    def is_admin(self):
+    def is_admin(self) -> bool:
         return self._has_role(*self._get_roles_with_tag("is_admin"))
 
     @property
-    def is_recruiter(self):
+    def is_recruiter(self) -> bool:
         return self._has_role(self.bot.settings["recruiter_role"])
 
     @property
-    def is_chat_moderator(self):
+    def is_chat_moderator(self) -> bool:
         return self._has_role(self.bot.settings["chat_moderator_role"])
 
     @property
-    def is_moderator(self):
+    def is_moderator(self) -> bool:
         return self._has_role(self.bot.settings["moderator_role"])
 
     @property
-    def is_trainer(self):
+    def is_trainer(self) -> bool:
         return self._has_role(self.bot.settings["trainer_role"])
 
     @property
-    def is_slrt_trainer(self):
+    def is_slrt_trainer(self) -> bool:
         return self._has_role(self.bot.settings["slrt_trainer_role"])
 
     @property
-    def is_slrt_trained(self):
+    def is_slrt_trained(self) -> bool:
         return not self._has_role(self.bot.settings["slrt_trained_role"])
 
     @property
-    def is_dev_member(self):
+    def is_dev_member(self) -> bool:
         return self._has_role(self.bot.settings["dev_team_role"])
 
     @property
-    def is_detainable(self):
+    def is_detainable(self) -> bool:
         return self._has_role(*self._get_roles_with_tag("is_detainable"))
 
     @property
-    def is_team_lead(self):
+    def is_team_lead(self) -> bool:
         return self._has_role(self.bot.settings["team_lead_role"])
 
     @property
-    def is_programming_team(self):
+    def is_programming_team(self) -> bool:
         return self._has_role(self.bot.settings["programming_team_role"])
 
     # Often used member functions
 
     @property
-    def discord_name(self):
+    def discord_name(self) -> str:
         return f"{self.member.name}#{self.member.discriminator}"
 
     @property
@@ -296,12 +298,12 @@ class Officer:
         return self.member.display_name
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self.member.id
 
     # Internal functions
 
-    def _has_role(self, *role_ids):
+    def _has_role(self, *role_ids) -> bool:
         for role in self.member.roles:
             if role.id in role_ids:
                 return True
@@ -320,7 +322,7 @@ class Officer:
 
     # External functions
 
-    async def log_time(self, start_time, end_time):
+    async def log_time(self, start_time: float, end_time: float):
 
         string_start_time = datetime.fromtimestamp(math.floor(start_time)).strftime(
             self.bot.settings["db_time_format"]
