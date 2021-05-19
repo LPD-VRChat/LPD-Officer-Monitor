@@ -875,12 +875,8 @@ class WebManager:
             username = user[1]
             users.append(username)
 
-        urls = geturls(users)
-
-        for url in urls:
-            result = f"{url}\n"
-
-        return result
+        urls = geturls(users, useDict=True)
+        return urls
 
 
     # Action section
@@ -891,6 +887,24 @@ class WebManager:
         bot = app.config["BOT"]
 
         return 'Not implemented'
+    
+    @app.route("/api/action/shutdown")
+    @requires_authorization
+    async def action_shutdown():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]{
+
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+
+        if not officer:
+            return {"authenticacted": False, "shutdown": False}
+
+        if officer.is_programming_team:
+            await clean_shutdown(bot, "Web API", officer.display_name)
+            return {"authenticacted": True, "shutdown": True}
+
+        return {"authenticacted": True, "shutdown": False}
     
     # Resource section
 
