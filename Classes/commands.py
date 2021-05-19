@@ -748,7 +748,6 @@ class Inactivity(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Mark Officers inactive after running =list_inactive
     async def mark_inactive(self, ctx):
         """
         This command lists inactive officers, and prompts the user to mark them with the LPD_inactive role.
