@@ -892,7 +892,7 @@ class WebManager:
     @requires_authorization
     async def action_shutdown():
         discord = app.config["DISCORD"]
-        bot = app.config["BOT"]{
+        bot = app.config["BOT"]
 
         user = await discord.fetch_user()
         officer = bot.officer_manager.get_officer(user.id)
