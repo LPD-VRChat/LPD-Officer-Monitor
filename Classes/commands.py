@@ -757,11 +757,8 @@ class Inactivity(commands.Cog):
         # Get all fields from LeaveTimes
         loa_entries = await self.bot.officer_manager.get_loa()
 
-        loa_officer_ids = []
-
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
-        for entry in loa_entries:
-            loa_officer_ids.append(entry[0])
+        loa_officer_ids = {entry[0] for entry in loa_entries}
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
