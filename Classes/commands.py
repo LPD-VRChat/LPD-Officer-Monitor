@@ -769,9 +769,8 @@ class Inactivity(commands.Cog):
         max_inactive_days = self.bot.settings["max_inactive_days"]
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         inactive_officers = []
-        role_ids = role_id_index(self.bot.settings)
 
-        for id, officer in self.bot.officer_manager.all_officers.items():
+        for officer in self.bot.officer_manager.all_officers.values():
             if officer.id not in loa_officer_ids:
                 last_activity = await officer.get_last_activity(
                     self.bot.officer_manager.all_monitored_channels
