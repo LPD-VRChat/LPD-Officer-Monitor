@@ -123,11 +123,10 @@ async def on_ready():
     global bot
 
     # Make sure this function does not create the officer manager twice
-    if bot.officer_manager is not None:
-        return
-
     if bot.sql is not None:
-        return
+        await clean_shutdown(
+            bot, location="disconnection", person="automatic recovery", exit=False
+        )
 
     # Create the function to run before officer removal
     async def before_officer_removal(bot, officer_id):
@@ -197,8 +196,8 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
 
-    if message.channel.id == bot.settings["request_rank_channel"]:
-        await analyze_promotion_request(bot, message)
+    # if message.channel.id == bot.settings["request_rank_channel"]:
+    #     await analyze_promotion_request(bot, message)
 
     # Archive the message
     if (

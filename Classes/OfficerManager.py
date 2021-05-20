@@ -197,7 +197,7 @@ class OfficerManager:
 
         # Print
         msg_string = (
-            "DEBUG: "
+            "INFO: "
             + new_officer.display_name
             + " ("
             + str(new_officer.id)
@@ -255,7 +255,7 @@ class OfficerManager:
             )
 
         msg_string = (
-            "WARNING: " + member_name + " has been removed from the LPD Officer Monitor"
+            "INFO: " + member_name + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:
             msg_string += " because " + str(reason)

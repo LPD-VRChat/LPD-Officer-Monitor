@@ -43,12 +43,13 @@ class Officer:
             )
             return
 
-        print(
-            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
-        )
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
+
+        print(
+            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
+        )
         self.squad = self.member.voice.channel
         if (
             "at station" not in self.member.voice.channel.name.lower()
@@ -59,7 +60,7 @@ class Officer:
     def update_squad(self):
 
         # Print an error if the user is going on duty even though he is already on duty
-        if self.is_on_duty is False:
+        if not self.is_on_duty:
             print("WARNING: Tried to update squad for a user not on duty...")
             return
 

@@ -1,7 +1,7 @@
 # Standard
 from typing import Optional
 import discord
-from os import _exit as exit
+from os import _exit
 import asyncio
 from nest_asyncio import apply
 from io import StringIO, BytesIO
@@ -157,7 +157,7 @@ def member_role_dict(member, verbose=False):
     return role_dict
 
 
-async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
+async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt", exit=True):
     """Cleanly shutdown the bot"""
 
     # Put all on-duty officers off duty - don't worry,
@@ -177,16 +177,17 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
     bot.web_manager.stop()
 
     # Log the shutdown
-    msg_string = f"WARNING: Bot shut down from {location} by {person}"
+    msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
     print(msg_string)
 
-    # Stop the event loop and exit Python. The OS should be
-    # calling this script inside a loop if you want the bot to restart
-    loop = asyncio.get_event_loop()
-    loop.stop()
-    exit(0)
+    if exit:
+        # Stop the event loop and exit Python. The OS should be
+        # calling this script inside a loop if you want the bot to restart
+        loop = asyncio.get_event_loop()
+        loop.stop()
+        _exit(0)
 
 
 async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
