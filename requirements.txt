@@ -6,3 +6,5 @@ arrow
 commentjson
 aiomysql
 git+https://github.com/Rapptz/discord-ext-menus
+fuzzywuzzy
+python-Levenshtein

@@ -66,17 +66,18 @@ class VRChatUserManager:
 
         return string
 
-    async def add_user(self, discord_id, vrchat_name):
+    async def add_user(self, discord_id, vrchat_name, skip_format_name=False):
         await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
-        vrchat_name = self.vrc_name_format(vrchat_name)
+        if not skip_format_name:
+            vrchat_name = self.vrc_name_format(vrchat_name)
 
         # Add to the cache
         self.all_users.append([discord_id, vrchat_name])
 
         # Add to the permanent DB
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             """
             INSERT INTO 
                 VRChatNames(officer_id, vrc_name)
@@ -92,12 +93,12 @@ class VRChatUserManager:
         self.all_users = [x for x in self.all_users if x[0] != discord_id]
 
         # Remove from the permanent DB
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM VRChatNames WHERE officer_id = %s", (discord_id)
         )
 
     async def update_cache(self):
-        db_result = await self.bot.officer_manager.send_db_request(
+        db_result = await self.bot.sql.request(
             "SELECT officer_id, vrc_name FROM VRChatNames", ()
         )
 
