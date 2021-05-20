@@ -1,5 +1,0 @@
-while true
-do
-	sudo python3.8 main.py
-sleep 1
-done
