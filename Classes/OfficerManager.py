@@ -270,6 +270,7 @@ class OfficerManager:
         from_datetime: datetime,
         to_datetime: datetime,
         limit: Optional[int] = None,
+        include_no_activity: bool = False,
     ):
         """
         Returns list of most active officers between given dates, up to optionally specified limit.
@@ -278,13 +279,21 @@ class OfficerManager:
         officers and how active they have been over a specific amount of time.
         """
 
-        db_request = """
-            SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
-            FROM TimeLog
-            WHERE end_time > %s AND end_time < %s
-            GROUP BY officer_id
+        db_request = (
+            """
+            SELECT O.officer_id, SUM(TIMESTAMPDIFF(SECOND, TL.start_time, TL.end_time)) AS "patrol_length"
+            FROM Officers O
+                LEFT JOIN TimeLog TL
+                    ON O.officer_id = TL.officer_id
+            WHERE
+                (TL.end_time > %s AND TL.end_time < %s)
+            """
+            + ("OR TL.end_time IS NULL\n" if include_no_activity else "")
+            + """
+            GROUP BY O.officer_id
             ORDER BY patrol_length DESC
             """
+        )
         arg_list: List[Any] = [from_datetime, to_datetime]
 
         if limit:
