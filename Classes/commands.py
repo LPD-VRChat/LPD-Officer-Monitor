@@ -848,24 +848,24 @@ class Inactivity(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Review Leaves of Absence
     async def show_loa(self, ctx):
         """
         This command displays all Leave of Absence requests currently on file.
         """
         loa_entries = await self.bot.officer_manager.get_loa()
-        i = 0
-        for entry in loa_entries:
-            i = i + 1
-            officer = self.bot.get_user(entry[0])
-            string = f"There are currently Leaves of Absence on file for the following Officers:"
-            string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
-            if len(string) > 1000:
-                await ctx.channel.send(string)
-                string = ""
+        
+        if len(loa_entries) == 0:
+            string = "There are no Leaves of Absence on file at this time."        
+        
+        else:
+            for entry in loa_entries:
+                officer = self.bot.get_user(entry[0])
+                string = f"There are currently Leaves of Absence on file for the following Officers:"
+                string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
+                if len(string) > 1000:
+                    await ctx.channel.send(string)
+                    string = ""
 
-        if i == 0:
-            string = "There are no Leaves of Absence on file at this time."
         await ctx.channel.send(string)
 
 
