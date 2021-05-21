@@ -1,4 +1,5 @@
 # Standard
+from Classes.Officer import Officer
 import csv
 import sys
 from copy import deepcopy
@@ -11,7 +12,7 @@ import math
 import traceback
 import json
 import asyncio
-from typing import List, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 import fuzzywuzzy.process
 
 # Community
@@ -766,24 +767,42 @@ class Inactivity(commands.Cog):
         # determined have a valid Leave of Absence
 
         # Get a date range for our LOAs, and make some dictionaries to work in
+        min_activity = self.bot.settings["min_activity_minutes"]
         max_inactive_days = self.bot.settings["max_inactive_days"]
+        max_inactive_msg_days = self.bot.settings["max_inactive_msg_days"]
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
-        inactive_officers = []
+        oldest_valid_msg = datetime.utcnow() - timedelta(days=max_inactive_msg_days)
 
-        for officer in self.bot.officer_manager.all_officers.values():
-            if officer.id not in loa_officer_ids:
-                last_activity = await officer.get_last_activity(
-                    self.bot.officer_manager.all_monitored_channels
-                )
-                last_activity = last_activity["time"]
-                try:
-                    if last_activity < oldest_valid:
-                        inactive_officers.append(officer)
-                except:
-                    await ctx.channel.send(
-                        "There was a problem with the activity times. Make sure that there are officers with patrol times",
-                        delete_after=10,
-                    )
+        # Find officers with too little patrol time and no LOA
+        officer_activity = await self.bot.officer_manager.get_most_active_officers(
+            oldest_valid, datetime.utcnow()
+        )
+        not_enough_patrol: List[Officer] = [
+            self.bot.officer_manager.get_officer(officer_id)
+            for officer_id, active_seconds in officer_activity
+            if officer_id not in loa_officer_ids and active_seconds < min_activity * 60
+        ]
+
+        # Get their last activity in chat and make sure it's recent enough
+        monitored = self.bot.settings["monitored_channels"]
+        # Create the tasks set
+        tasks: Set[asyncio.Task[Union[Dict[str, Any], None]]] = set()
+        for officer in not_enough_patrol:
+            new_coroutine = officer.get_last_activity(monitored)
+            new_task = asyncio.create_task(new_coroutine)
+            new_task.officer = officer
+            tasks.add(new_task)
+        done, _ = await asyncio.wait(tasks)
+        # Make sure the officers have been active enough in monitored chats
+        inactive_officers = []
+        chat_activity_skipped = []
+        for finished_task in done:
+            activity_dict = finished_task.result()
+            officer = finished_task.officer
+            if activity_dict["time"] < oldest_valid_msg:
+                inactive_officers.append(officer)
+            else:
+                chat_activity_skipped.append(officer)
 
         if len(inactive_officers) == 0:
             await ctx.channel.send(
@@ -813,7 +832,7 @@ class Inactivity(commands.Cog):
             output_string = ""
             for officer in inactive_officers:
                 output_string = f"{officer.mention}\n{output_string}"
-            await send_long(ctx.channel, output_string)
+            await send_long(ctx.channel, output_string, mention=False)
             confirm = await Confirm(
                 f"Do you want to mark the officers above as inactive?"
             ).prompt(ctx)
