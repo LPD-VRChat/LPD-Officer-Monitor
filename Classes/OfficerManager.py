@@ -6,6 +6,7 @@
 import asyncio
 import traceback
 from datetime import datetime, timezone
+from typing import Any, List, Optional, Tuple
 
 # Community
 import aiomysql
@@ -264,8 +265,18 @@ class OfficerManager:
     #    check officers
     # ====================
 
-    async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
-        """Returns list of most active officers between given dates, up to optionally specified limit"""
+    async def get_most_active_officers(
+        self,
+        from_datetime: datetime,
+        to_datetime: datetime,
+        limit: Optional[int] = None,
+    ):
+        """
+        Returns list of most active officers between given dates, up to optionally specified limit.
+
+        This can both be used when the most active officers are needed or if you need to get all
+        officers and how active they have been over a specific amount of time.
+        """
 
         db_request = """
             SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
@@ -274,7 +285,7 @@ class OfficerManager:
             GROUP BY officer_id
             ORDER BY patrol_length DESC
             """
-        arg_list = [from_datetime, to_datetime]
+        arg_list: List[Any] = [from_datetime, to_datetime]
 
         if limit:
             db_request += "\nLIMIT %s"
