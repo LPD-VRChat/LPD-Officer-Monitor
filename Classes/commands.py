@@ -1591,43 +1591,31 @@ class Other(commands.Cog):
             await ctx.send(None, embed=embed_message)
             return
 
-        ### get vc members
         channel_data = dict()
-        for vc in ctx.guild.voice_channels:
-            if vc.category_id == self.bot.settings["on_duty_category"]:
-                # skip if it's not a training channel but we only want training
-                if (
-                    parsed.training
-                    and not parsed.patrol
-                    and not vc.name.startswith("Training")
-                ):
-                    continue
-                # skip if we want patrol only but it's a training channel
-                if (
-                    not parsed.training
-                    and parsed.patrol
-                    and vc.name.startswith("Training")
-                ):
-                    continue
-                # this is cached so it may be incorrect
-                if len(vc.members) > 0 and len(vc.members) == len(vc.voice_states):
-                    channel_name = vc.name
-                    channel_data[channel_name] = []
-                    for member in vc.members:
-                        channel_data[channel_name].append(member.mention)
+        for id, officer in self.bot.officer_manager.all_officers.items():
+            if officer.squad == None:
+                if officer.is_on_duty:
+                    print(f"ERROR: User {id} is on duty but squad is None")
+                continue
 
-                # docs says this should be available all the time
-                elif len(vc.voice_states) > 0:
-                    channel_name = vc.name if parsed.embed else vc.mention
-                    channel_data[channel_name] = []
-                    for member_id in vc.voice_states:
-                        member = ctx.guild.get_member(member_id)
-                        if member is None:  # will happen if permission problem
-                            channel_data[channel_name].append(
-                                f"MemberNotFound<{member_id}>"
-                            )
-                        else:
-                            channel_data[channel_name].append(member.mention)
+            # skip if it's not a training channel but we only want training
+            if (
+                parsed.training
+                and not parsed.patrol
+                and not officer.squad.name.startswith("Training")
+            ):
+                continue
+            # skip if we want patrol only but it's a training channel
+            if (
+                not parsed.training
+                and parsed.patrol
+                and officer.squad.name.startswith("Training")
+            ):
+                continue
+
+            if not officer.squad.name in channel_data:
+                channel_data[officer.squad.name] = []
+            channel_data[officer.squad.name].append(officer.mention)
 
         ### formating for output
         if parsed.embed:
