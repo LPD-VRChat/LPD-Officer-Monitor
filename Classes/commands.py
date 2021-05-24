@@ -815,46 +815,30 @@ class Inactivity(commands.Cog):
             self.bot.settings["inactive_role"]
         )
 
-        if "-i" in ctx.message.content:
+        # Output the list of officers and get confirmation
+        output_string = ""
+        for officer in inactive_officers:
+            output_string = f"{officer.mention}\n{output_string}"
+        await send_long(ctx.channel, output_string, mention=False)
+        confirm = await Confirm(
+            f"Do you want to mark the officers above as inactive?"
+        ).prompt(ctx)
+        if confirm:
+            # Add the inactive roles
+            await ctx.send("Please give me a moment to add the roles.")
             for officer in inactive_officers:
-                confirm = await Confirm(
-                    f"Do you want to mark {officer.mention} as inactive?"
-                ).prompt(ctx)
-                if confirm:
-                    await officer.member.add_roles(role)
-                    await ctx.channel.send(
-                        f"{officer.mention} has been marked as inactive."
-                    )
-                else:
-                    await ctx.channel.send(
-                        f"{officer.mention} will have their inactivity reevaluated at a later date."
-                    )
+                await officer.member.add_roles(role)
+            await ctx.channel.send(f"All officers above have been marked as inactive.")
+
+            # Notify about who was skipped because of chat activity
+            skipped_str = (
+                "The following were skipped because of recent chat activity or being new:\n"
+                + "\n".join(m.mention for m in chat_activity_skipped)
+            )
+            await send_long(ctx.channel, skipped_str, mention=False)
+
         else:
-            output_string = ""
-            for officer in inactive_officers:
-                output_string = f"{officer.mention}\n{output_string}"
-            await send_long(ctx.channel, output_string, mention=False)
-            confirm = await Confirm(
-                f"Do you want to mark the officers above as inactive?"
-            ).prompt(ctx)
-            if confirm:
-                # Add the inactive roles
-                await ctx.send("Please give me a moment to add the roles.")
-                for officer in inactive_officers:
-                    await officer.member.add_roles(role)
-                await ctx.channel.send(
-                    f"All officers above have been marked as inactive."
-                )
-
-                # Notify about who was skipped because of chat activity
-                skipped_str = (
-                    "The following were skipped because of recent chat activity or being new:\n"
-                    + "\n".join(m.mention for m in chat_activity_skipped)
-                )
-                await send_long(ctx.channel, skipped_str, mention=False)
-
-            else:
-                await ctx.channel.send("Cancelled.")
+            await ctx.channel.send("Cancelled.")
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
