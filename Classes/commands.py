@@ -838,11 +838,21 @@ class Inactivity(commands.Cog):
                 f"Do you want to mark the officers above as inactive?"
             ).prompt(ctx)
             if confirm:
+                # Add the inactive roles
+                await ctx.send("Please give me a moment to add the roles.")
                 for officer in inactive_officers:
                     await officer.member.add_roles(role)
                 await ctx.channel.send(
                     f"All officers above have been marked as inactive."
                 )
+
+                # Notify about who was skipped because of chat activity
+                skipped_str = (
+                    "The following were skipped because of recent chat activity or being new:\n"
+                    + "\n".join(m.mention for m in chat_activity_skipped)
+                )
+                await send_long(ctx.channel, skipped_str, mention=False)
+
             else:
                 await ctx.channel.send("Cancelled.")
 
