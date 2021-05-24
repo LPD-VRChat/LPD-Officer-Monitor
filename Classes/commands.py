@@ -775,13 +775,14 @@ class Inactivity(commands.Cog):
 
         # Find officers with too little patrol time and no LOA
         officer_activity = await self.bot.officer_manager.get_most_active_officers(
-            oldest_valid, datetime.utcnow()
+            oldest_valid, datetime.utcnow(), include_no_activity=True
         )
-        not_enough_patrol: List[Officer] = [
-            self.bot.officer_manager.get_officer(officer_id)
-            for officer_id, active_seconds in officer_activity
-            if officer_id not in loa_officer_ids and active_seconds < min_activity * 60
-        ]
+        not_enough_patrol: List[Officer] = []
+        for officer_id, active_seconds in officer_activity:
+            active_seconds = active_seconds or 0
+            if officer_id not in loa_officer_ids and active_seconds < min_activity * 60:
+                officer = self.bot.officer_manager.get_officer(officer_id)
+                not_enough_patrol.append(officer)
 
         # Get their last activity in chat and make sure it's recent enough
         monitored = self.bot.settings["monitored_channels"]
@@ -853,10 +854,10 @@ class Inactivity(commands.Cog):
         This command displays all Leave of Absence requests currently on file.
         """
         loa_entries = await self.bot.officer_manager.get_loa()
-        
+
         if len(loa_entries) == 0:
-            string = "There are no Leaves of Absence on file at this time."        
-        
+            string = "There are no Leaves of Absence on file at this time."
+
         else:
             for entry in loa_entries:
                 officer = self.bot.get_user(entry[0])
