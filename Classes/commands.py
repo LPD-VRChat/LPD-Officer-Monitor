@@ -758,6 +758,8 @@ class Inactivity(commands.Cog):
         # Get all fields from LeaveTimes
         loa_entries = await self.bot.officer_manager.get_loa()
 
+        # TODO: Count having a message in #leave-of-absence as having a LOA
+
         # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         loa_officer_ids = {entry[0] for entry in loa_entries}
 
@@ -780,6 +782,7 @@ class Inactivity(commands.Cog):
         not_enough_patrol: List[Officer] = []
         for officer_id, active_seconds in officer_activity:
             active_seconds = active_seconds or 0
+            # TODO: Count last_joined activity as on duty (allow two months of inactivity after joining)
             if officer_id not in loa_officer_ids and active_seconds < min_activity * 60:
                 officer = self.bot.officer_manager.get_officer(officer_id)
                 not_enough_patrol.append(officer)
