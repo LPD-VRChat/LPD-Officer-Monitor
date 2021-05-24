@@ -815,7 +815,7 @@ class Inactivity(commands.Cog):
             self.bot.settings["inactive_role"]
         )
 
-        # Output the list of officers and get confirmation
+        # Output the list of officers and get confirmation to mark them as inactive
         output_string = ""
         for officer in inactive_officers:
             output_string = f"{officer.mention}\n{output_string}"
