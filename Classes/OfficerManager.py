@@ -6,7 +6,7 @@
 import asyncio
 import traceback
 from datetime import datetime, timezone
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Community
 import aiomysql
@@ -301,6 +301,16 @@ class OfficerManager:
             arg_list.append(limit)
 
         return await self.bot.sql.request(db_request, arg_list)
+
+    async def get_officer_renew_dates(self) -> Dict[int, datetime]:
+        """
+        Returns a dictionary with the officer id as key, and then when their time was last
+        renewed or join date as the value, witch ever one is higher.
+        """
+        data = await self.bot.sql.request(
+            "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
+        )
+        return dict(zip(data[0], max(data[1], data[2])))
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""

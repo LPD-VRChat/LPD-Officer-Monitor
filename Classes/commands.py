@@ -778,6 +778,7 @@ class Inactivity(commands.Cog):
         max_inactive_msg_days = self.bot.settings["max_inactive_msg_days"]
         oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
         oldest_valid_msg = datetime.utcnow() - timedelta(days=max_inactive_msg_days)
+        last_renew = await self.bot.officer_manager.get_officer_renew_dates()
 
         # Find officers with too little patrol time and no LOA
         officer_activity = await self.bot.officer_manager.get_most_active_officers(
@@ -785,11 +786,22 @@ class Inactivity(commands.Cog):
         )
         not_enough_patrol: List[Officer] = []
         for officer_id, active_seconds in officer_activity:
-            active_seconds = active_seconds or 0
-            # TODO: Count last_joined activity as on duty (allow two months of inactivity after joining)
-            if officer_id not in loa_officer_ids and active_seconds < min_activity * 60:
-                officer = self.bot.officer_manager.get_officer(officer_id)
-                not_enough_patrol.append(officer)
+
+            # Skip new officers and recently renewed ones
+            if officer_id in last_renew and last_renew[officer_id] > min_activity * 60:
+                continue
+
+            # Skip LOA officers
+            if officer_id in loa_officer_ids:
+                continue
+
+            # Skip active officers
+            if active_seconds or 0 > min_activity * 60:
+                continue
+
+            # The officer must be inactive
+            officer = self.bot.officer_manager.get_officer(officer_id)
+            not_enough_patrol.append(officer)
 
         # Get their last activity in chat and make sure it's recent enough
         monitored = self.bot.settings["monitored_channels"]
@@ -838,11 +850,14 @@ class Inactivity(commands.Cog):
             await ctx.channel.send(f"All officers above have been marked as inactive.")
 
             # Notify about who was skipped because of chat activity
-            skipped_str = (
-                "The following were skipped because of recent chat activity or being new:\n"
-                + "\n".join(m.mention for m in chat_activity_skipped)
-            )
-            await send_long(ctx.channel, skipped_str, mention=False)
+            if len(chat_activity_skipped) == 0:
+                await ctx.send("No one was skipped because of chat activity.")
+            else:
+                skipped_str = (
+                    "The following were skipped because of recent chat activity or being new:\n"
+                    + "\n".join(m.mention for m in chat_activity_skipped)
+                )
+                await send_long(ctx.channel, skipped_str, mention=False)
 
         else:
             await ctx.channel.send("Cancelled.")
