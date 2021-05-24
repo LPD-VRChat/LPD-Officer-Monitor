@@ -755,13 +755,17 @@ class Inactivity(commands.Cog):
         Use the `-i` flag to mark officers inactive individually.
         """
 
-        # Get all fields from LeaveTimes
+        # Get the LOA Officers from the database
         loa_entries = await self.bot.officer_manager.get_loa()
-
-        # TODO: Count having a message in #leave-of-absence as having a LOA
-
-        # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
         loa_officer_ids = {entry[0] for entry in loa_entries}
+
+        # Count having a message in #leave-of-absence as having a LOA
+        # This is really slow and should be removed when we're sure all LOA's are in the database
+        loa_channel = self.bot.officer_manager.guild.get_channel(
+            self.bot.settings["leave_of_absence_channel"]
+        )
+        async for old_message in loa_channel.history(limit=None):
+            loa_officer_ids.add(old_message.author.id)
 
         # For everyone in the server where their role is in the role ladder,
         # get their last activity times, or if no last activity time, use
