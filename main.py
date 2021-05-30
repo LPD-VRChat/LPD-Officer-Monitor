@@ -65,8 +65,6 @@ parser.add_argument("-l", "--local", action="store_true")
 parser.add_argument("--run-insecure", action="store_true")
 args = parser.parse_args()
 
-_eyes_response_last_sent = None
-
 # ====================
 # Global Variables
 # ====================
