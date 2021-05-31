@@ -222,7 +222,7 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_member_update(before, after):
 
-    if bot.officer_manager is None:
+    if bot.officer_manager is None or before.bot or after.bot:
         return
 
     ############################
