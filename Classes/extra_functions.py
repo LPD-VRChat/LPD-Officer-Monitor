@@ -4,6 +4,8 @@ import discord
 from os import _exit
 import asyncio
 from io import StringIO, BytesIO
+from termcolor import colored
+from datetime import datetime
 
 # Community
 import commentjson as json
@@ -300,3 +302,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
     # If we haven't returned by now, it means that we have no clue what the user sent. For the sake of forward compatibility,
     # we aren't going to delete unknown messages. Just react with a question mark.
     await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
+
+def ts_print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False):
+    timestamp = colored(datetime.now().strftime('%b-%d-%Y %H:%M:%S'), 'green')
+    print(timestamp + *objects, sep=sep, end=end, file=file, flush=flush)
