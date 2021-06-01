@@ -6,6 +6,7 @@ import asyncio
 from io import StringIO, BytesIO
 from termcolor import colored
 from datetime import datetime
+from sys import stdout
 
 # Community
 import commentjson as json
@@ -82,7 +83,7 @@ def get_settings_file(settings_file_name, in_settings_folder=True):
 
 async def handle_error(bot, title, traceback_string):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    print(error_text)
+    ts_print(error_text)
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await send_long(channel, error_text)
@@ -142,21 +143,21 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
     if bot.officer_manager is not None:
-        print("")
+        ts_print("")
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
         bot.officer_manager.loa_loop.stop()
         bot.officer_manager.loop.stop()
     else:
-        print("Couldn't find the OfficerManager...")
-        print("Stopping the bot without stopping time...")
+        ts_print("Couldn't find the OfficerManager...")
+        ts_print("Stopping the bot without stopping time...")
 
     # Log the shutdown
     msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
-    print(msg_string)
+    ts_print(msg_string)
 
     if exit:
         # Stop the event loop and exit Python. The OS should be
@@ -303,6 +304,11 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
     # we aren't going to delete unknown messages. Just react with a question mark.
     await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
 
-def ts_print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False):
-    timestamp = colored(datetime.now().strftime('%b-%d-%Y %H:%M:%S'), 'green')
-    print(timestamp + *objects, sep=sep, end=end, file=file, flush=flush)
+def ts_print(*objects, sep=' ', end='\n', file=stdout, flush=False):
+    """Adds a colored timestamp to debugging messages in the console"""
+    
+    if objects is None or objects[0] == "":
+        print('')
+        return
+    timestamp = colored(datetime.now().strftime('%b-%d-%Y %H:%M:%S'), 'green') + ' -'
+    print(timestamp, sep.join(objects), sep=sep, end=end, file=file, flush=flush)
