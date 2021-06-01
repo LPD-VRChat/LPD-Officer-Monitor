@@ -9,18 +9,14 @@ import nest_asyncio
 nest_asyncio.apply()
 import math
 import time
-from datetime import datetime
-import datetime as dt
+from datetime import datetime, timedelta
 
 # Community
 from discord import Member, Role
 from discord.enums import HypeSquadHouse
 from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
-
-# Mine
-import Classes.extra_functions as ef
-
+from Classes.extra_functions import ts_print as print
 
 class Officer:
     def __init__(self, user_id, bot):
@@ -181,8 +177,8 @@ class Officer:
         )
 
         try:
-            date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
-            date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+            date_start = datetime.strptime(date_start_complex, "%d/%m/%Y")
+            date_end = datetime.strptime(date_end_complex, "%d/%m/%Y")
         except (ValueError, TypeError):
             await message.channel.send(
                 message.author.mention
@@ -192,9 +188,9 @@ class Officer:
             await message.delete()
             return
 
-        if date_end > date_start + dt.timedelta(
+        if date_end > date_start + timedelta(
             weeks=+12
-        ) or date_end < date_start + dt.timedelta(weeks=+3):
+        ) or date_end < date_start + timedelta(weeks=+3):
             # If more than 12 week LOA, inform user
             await message.channel.send(
                 message.author.mention

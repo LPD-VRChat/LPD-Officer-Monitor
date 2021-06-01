@@ -42,12 +42,17 @@ from Classes.extra_functions import (
     clean_shutdown,
     analyze_promotion_request,
 )
+from Classes.extra_functions import ts_print as print
 import Classes.errors as errors
 
+<<<<<<< HEAD
 apply()
 
 # Before we do anything else, make sure that we have an event loop to use for
 # graceful shutdown purpopses.
+=======
+
+>>>>>>> destructo-autopromote-lmt-patch
 loop = asyncio.get_event_loop()
 
 
@@ -117,8 +122,11 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
+<<<<<<< HEAD
 
     global bot
+=======
+>>>>>>> destructo-autopromote-lmt-patch
 
     # Make sure this function does not create the officer manager twice
     if bot.sql is not None:
@@ -172,7 +180,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # print("on_message")
 
     # Early out if message from the bot itself
     if message.author.bot:
@@ -210,7 +217,7 @@ async def on_message(message):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # print("on_voice_state_update")
+
     if bot.officer_manager is None:
         return
 
@@ -298,7 +305,6 @@ async def on_member_remove(member):
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print("on_error")
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
@@ -318,9 +324,20 @@ async def on_raw_bulk_message_delete(payload):
 
 
 @bot.event
-async def on_command_error(ctx, exception):
-    print("on_command_error")
+async def on_reaction_add(reaction, user):
+    
+    # If someone reacts :x: in the rank request channel
+    if (reaction.message.channel.id == bot.settings["request_rank_channel"] and
+        reaction.emoji == '❌'):
+        
+        officer = bot.officer_manager.get_officer(user.id)
 
+        if officer.is_trainer or officer.is_lmt_trainer or officer.is_slrt_trainer or officer.is_prison_trainer or officer.is_white_shirt:
+            await reaction.message.delete()         
+
+
+@bot.event
+async def on_command_error(ctx, exception):
     exception_string = str(exception).replace(
         "raised an exception", "encountered a problem"
     )

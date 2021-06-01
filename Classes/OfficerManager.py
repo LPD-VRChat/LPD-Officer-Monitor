@@ -21,13 +21,14 @@ from discord.ext import tasks
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error, role_id_index
-
+from Classes.extra_functions import ts_print as print
 
 class OfficerManager:
     def __init__(self, all_officer_ids, bot, run_before_officer_removal=None):
         self.bot = bot
         self._before_officer_removal = run_before_officer_removal
         self.all_officer_ids = all_officer_ids
+        self.iterations = 0
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -108,7 +109,11 @@ class OfficerManager:
 
     @tasks.loop(minutes=60)
     async def loop(self):
-        print("Running officer check loop in officer_manager")
+
+        if self.iterations == 0:
+            print("Running officer check loop in officer_manager")
+
+        self.iterations += 1
 
         try:
             # Add missing officers

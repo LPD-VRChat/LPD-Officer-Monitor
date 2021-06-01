@@ -5,6 +5,9 @@ from os import _exit
 import asyncio
 from nest_asyncio import apply
 from io import StringIO, BytesIO
+from termcolor import colored
+from datetime import datetime
+from sys import stdout
 
 # Community
 import commentjson as json
@@ -83,7 +86,7 @@ def get_settings_file(settings_file_name, in_settings_folder=True):
 
 async def handle_error(bot, title, traceback_string):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    print(error_text)
+    ts_print(error_text)
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await send_long(channel, error_text)
@@ -158,20 +161,23 @@ def member_role_dict(member, verbose=False):
 
 
 async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt", exit=True):
-    """Cleanly shutdown the bot"""
+    """
+    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
+    and ctx.author.display_name as person, assuming called from a Discord command.
+    """
 
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
     if bot.officer_manager is not None:
-        print("")
+        ts_print("")
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
         bot.officer_manager.loa_loop.stop()
         bot.officer_manager.loop.stop()
     else:
-        print("Couldn't find the OfficerManager...")
-        print("Stopping the bot without stopping time...")
+        ts_print("Couldn't find the OfficerManager...")
+        ts_print("Stopping the bot without stopping time...")
 
     # Shut down WebManager
     bot.web_manager.stop()
@@ -180,7 +186,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
     msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
-    print(msg_string)
+    ts_print(msg_string)
 
     if exit:
         # Stop the event loop and exit Python. The OS should be
@@ -190,7 +196,7 @@ async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"
         _exit(0)
 
 
-async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
+async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
     """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
 
     officer = bot.officer_manager.get_officer(message.author.id)
@@ -257,15 +263,15 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
             "failmessage": "You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.",
             "upgrade": False,
         },
-        #"lmt": {
-        #    "name": "LMT",
-        #    "name_id": "lmt",
-        #    "role": lmt_trained_role,
-        #    "prereq": officer_role,
-        #    "approver": lmt_trainer_role,
-        #    "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
-        #    "upgrade": False,
-        #},
+        "lmt": {
+           "name": "LMT",
+           "name_id": "lmt",
+           "role": lmt_trained_role,
+           "prereq": officer_role,
+           "approver": lmt_trainer_role,
+           "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+           "upgrade": False,
+        },
     }
 
     def get_approvers(role):
@@ -326,3 +332,12 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
     # If we haven't returned by now, it means that we have no clue what the user sent. For the sake of forward compatibility,
     # we aren't going to delete unknown messages. Just react with a question mark.
     await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
+
+def ts_print(*objects, sep=' ', end='\n', file=stdout, flush=False):
+    """Adds a colored timestamp to debugging messages in the console"""
+    
+    if objects is None or objects[0] == "":
+        print('')
+        return
+    timestamp = colored(datetime.now().strftime('%b-%d-%Y %H:%M:%S'), 'green') + ' -'
+    print(timestamp, sep.join(objects), sep=sep, end=end, file=file, flush=flush)
