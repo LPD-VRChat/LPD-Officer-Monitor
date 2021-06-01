@@ -11,6 +11,7 @@ import moviepy.editor as mp
 from urllib.parse import unquote_plus as dec
 from os import path
 from collections import OrderedDict
+import json
 
 from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
@@ -809,14 +810,88 @@ class WebManager:
 
         return content
 
-    #####################################
+    #######################################################################################################
     #                                   #
     #   API endpoints go below here     #
     #                                   #
+    #     Please note that all API      #
+    # responses should be returned as   #
+    # JSON. You can do this by defining #
+    # a dictionary, specifying the keys #
+    # in the order you want them        #
+    # displayed. Define one dictionary  #
+    # per row, and then enclose all of  #
+    # them into one dictionary, indexed #
+    # in the order you want rows to     #
+    # appear.                           #
+    #                                   #
+    # End your API endpoint function    #
+    # with the following:               #
+    #                                   #
+    # return json.dumps(dict_of_dicts)  #
+    #                                   #
+    # See below for example             #
+    #                                   #
     #####################################
+    #
+    # @app.route("/api/[ action | resource ]/path_to_endpoint")
+    # async def my_api_endpoint():        # This function name should follow the naming convention
+    #                                     # of actionorresource_level1_level2_level3_etc_endpoint()
+    #     row1 = {}
+    #     row1['name'] = "Darth Vader"
+    #     row1['team'] = "Sith"
+    #     row1['power'] = "Over 9000"
+    #     row2 = {}
+    #     row2['name'] = "Luke Skywalker"
+    #     row2['team'] = "Jedi"
+    #     row2['power'] = "Less than 9000"
+    #
+    #     returnDict = {}
+    #     returnDict['1'] = row1
+    #     returnDict['2'] = row2
+    #
+    #     return json.dumps(returnDict)
+    #
+    #######################################################################################################
+    
+    # Action section
 
-    @app.route("/api/auth")
-    async def _auth_():
+    @app.route("/api/action")
+    async def action():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        return 'Not implemented'
+    
+    @app.route("/api/action/shutdown")
+    @requires_authorization
+    async def action_shutdown():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        user = await discord.fetch_user()
+        officer = bot.officer_manager.get_officer(user.id)
+
+        if not officer:
+            return {"authenticacted": False, "shutdown": False}
+
+        if officer.is_programming_team:
+            await clean_shutdown(bot, "Web API", officer.display_name)
+            return {"authenticacted": True, "shutdown": True}
+
+        return {"authenticacted": True, "shutdown": False}
+    
+    # Resource section
+
+    @app.route("/api/resource")
+    async def resource():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        return 'Not implemented'
+
+    @app.route("/api/resource/auth")
+    async def resource_auth():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
@@ -865,8 +940,8 @@ class WebManager:
 
         return response
 
-    @app.route("/api/geturls")
-    async def _get_urls_():
+    @app.route("/api/resource/auth/urls")
+    async def resource_auth_urls():
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
@@ -876,49 +951,8 @@ class WebManager:
             users.append(username)
 
         urls = geturls(users, useDict=True)
-        return urls
+        return json.dumps(urls)
 
-
-    # Action section
-
-    @app.route("/api/action")
-    async def action():
-        discord = app.config["DISCORD"]
-        bot = app.config["BOT"]
-
-        return 'Not implemented'
-    
-    @app.route("/api/action/shutdown")
-    @requires_authorization
-    async def action_shutdown():
-        discord = app.config["DISCORD"]
-        bot = app.config["BOT"]
-
-        user = await discord.fetch_user()
-        officer = bot.officer_manager.get_officer(user.id)
-
-        if not officer:
-            return {"authenticacted": False, "shutdown": False}
-
-        if officer.is_programming_team:
-            await clean_shutdown(bot, "Web API", officer.display_name)
-            return {"authenticacted": True, "shutdown": True}
-
-        return {"authenticacted": True, "shutdown": False}
-    
-    # Resource section
-
-    @app.route("/api/resource")
-    async def resource():
-        discord = app.config["DISCORD"]
-        bot = app.config["BOT"]
-
-        return 'Not implemented'
-
-    @app.route("/api/resource/auth")
-    async def resource_auth():
-        await _auth_()
-
-    @app.route("/api/resource/auth/urls")
-    async def resource_auth_urls():
-        await _get_urls_()
+    @app.route("/spa")
+    async def spa():
+        return await render_template("spa.html")

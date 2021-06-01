@@ -1,0 +1,70 @@
+<HTML>
+
+<HEAD>
+    <TITLE id="TITLE">Loli Police Department</TITLE>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.9.3/brython.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.9.3/brython_stdlib.min.js" defer
+        onload="brython ();"></script>
+    <SCRIPT type="text/python">
+        """This is a comment"""
+        """Put Python here  """
+        from browser import document, ajax
+        import json
+        from browser.html import TABLE, TR, TH, TD
+        
+        def on_ajax_load(req):
+            print('on ajax load')
+            if req.status == 200:
+                data = json.loads(req.text)
+                json_to_table(data)
+            else:
+                print("There was an error")
+        
+        def fetch_data(url):
+            mainDiv = document['mainDiv']
+            mainDiv.clear()
+            print('called fetcher')
+            req = ajax.ajax()
+            req.open('GET', url, True)
+            req.bind('complete', on_ajax_load)
+            req.send()
+            print('completed fetcher')
+
+        def json_to_table(dict_in):
+            mainDiv = document['mainDiv']
+            table = TABLE()
+            keylist = list(list(dict_in.values())[0].keys())
+            
+            row = TR()
+            for key in keylist:
+                row <= TH(str(key))
+            
+            table <= row
+            
+            for item in list(dict_in.values()):
+                row = TR()
+                for col in list(item.values()):
+                    row <= TD(col)
+                table <= row
+            
+            mainDiv.clear()
+            mainDiv <= table
+
+            
+            
+
+        default_url = "https://devbox.lolipd.com/api/resource/auth/urls"
+        
+        loadPageButton = document['loadPage']
+        loadPageButton.bind('click', lambda ev: fetch_data(default_url))
+    </SCRIPT>
+</HEAD>
+
+<BODY id="BODY">
+    <button id="loadPage" name="loadPage">Load Page</button>
+    <DIV id="mainDiv">
+        This is just a blank page
+    </DIV>
+</BODY>
+
+</HTML>
