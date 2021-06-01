@@ -39,6 +39,7 @@ from Classes.extra_functions import (
 )
 import Classes.errors as errors
 
+
 loop = asyncio.get_event_loop()
 
 # Set intents for the bot - this allows the bot to see other users in the server
@@ -106,8 +107,6 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
-    global bot
 
     # Make sure this function does not create the officer manager twice
     if bot.sql is not None:
@@ -139,7 +138,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # print("on_message")
 
     # Early out if message from the bot itself
     if message.author.bot:
@@ -177,7 +175,7 @@ async def on_message(message):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # print("on_voice_state_update")
+
     if bot.officer_manager is None:
         return
 
@@ -265,7 +263,6 @@ async def on_member_remove(member):
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print("on_error")
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
@@ -299,8 +296,6 @@ async def on_reaction_add(reaction, user):
 
 @bot.event
 async def on_command_error(ctx, exception):
-    print("on_command_error")
-
     exception_string = str(exception).replace(
         "raised an exception", "encountered a problem"
     )

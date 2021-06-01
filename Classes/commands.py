@@ -84,22 +84,6 @@ class Time(commands.Cog):
             second_if_end, first = divmod(calculations[i][0], divisions[i])
             calculations[i].append(first)
             calculations.append([second_if_end])
-        # Old Code:
-        # seconds_if_end = seconds
-        # minutes_if_end, seconds = divmod(seconds_if_end, 60)
-        # hours_if_end, minutes = divmod(minutes_if_end, 60)
-        # days_if_end, hours = divmod(hours_if_end, 24)
-        # weeks_if_end, days = divmod(days_if_end, 7)
-
-        # # Set up the list
-        # calculations = [
-        #     [seconds_if_end, seconds],
-        #     [minutes_if_end, minutes],
-        #     [hours_if_end,   hours],
-        #     [days_if_end,    days],
-        #     [weeks_if_end]
-        # ]
-        # print(calculations)
 
         # Move the time to the string
         return_str = ""
@@ -786,13 +770,13 @@ class Inactivity(commands.Cog):
                     if last_activity < oldest_valid:
                         inactive_officers.append(officer)
                 except:
-                    await ctx.channel.send(
+                    await ctx.send(
                         "There was a problem with the activity times. Make sure that there are officers with patrol times",
                         delete_after=10,
                     )
 
         if len(inactive_officers) == 0:
-            await ctx.channel.send(
+            await ctx.send(
                 "There are no inactive officers found without a leave of absence."
             )
             return
@@ -808,11 +792,9 @@ class Inactivity(commands.Cog):
                 ).prompt(ctx)
                 if confirm:
                     await officer.member.add_roles(role)
-                    await ctx.channel.send(
-                        f"{officer.mention} has been marked as inactive."
-                    )
+                    await ctx.send(f"{officer.mention} has been marked as inactive.")
                 else:
-                    await ctx.channel.send(
+                    await ctx.send(
                         f"{officer.mention} will have their inactivity reevaluated at a later date."
                     )
         else:
@@ -826,11 +808,9 @@ class Inactivity(commands.Cog):
             if confirm:
                 for officer in inactive_officers:
                     await officer.member.add_roles(role)
-                await ctx.channel.send(
-                    f"All officers above have been marked as inactive."
-                )
+                await ctx.send(f"All officers above have been marked as inactive.")
             else:
-                await ctx.channel.send("Cancelled.")
+                await ctx.send("Cancelled.")
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
@@ -848,12 +828,12 @@ class Inactivity(commands.Cog):
             string = f"There are currently Leaves of Absence on file for the following Officers:"
             string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
             if len(string) > 1000:
-                await ctx.channel.send(string)
+                await ctx.send(string)
                 string = ""
 
         if i == 0:
             string = "There are no Leaves of Absence on file at this time."
-        await ctx.channel.send(string)
+        await ctx.send(string)
 
 
 class VRChatAccoutLink(commands.Cog):
@@ -905,13 +885,13 @@ class VRChatAccoutLink(commands.Cog):
         """
 
         if not args:
-            await ctx.channel.send("Please specify your VRChat name.")
+            await ctx.send("Please specify your VRChat name.")
             return
 
         # Check if -s is specified
         if args[0] == "-s":
             if len(args) == 1:
-                await ctx.channel.send("Please specify your VRChat name.")
+                await ctx.send("Please specify your VRChat name.")
                 return
             skip_formatting = True
         else:
@@ -1146,11 +1126,11 @@ class Moderation(commands.Cog):
             )
 
         if len(detainee_mentions) > 0:
-            await ctx.channel.send(
+            await ctx.send(
                 f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.'
             )
         if len(undet_string) > 0:
-            await ctx.channel.send(
+            await ctx.send(
                 f"Sorry, you can't detain {undet_string}. Only Senior Officers and below may be detained."
             )
 
@@ -1203,9 +1183,9 @@ class Moderation(commands.Cog):
 
         string = f"{string} from detention."
         if send_string == 1:
-            await ctx.channel.send(string, delete_after=10)
+            await ctx.send(string, delete_after=10)
         else:
-            await ctx.channel.send(
+            await ctx.send(
                 "Please mention valid users you wish to release from detention.",
                 delete_after=10,
             )
@@ -1263,16 +1243,16 @@ class Moderation(commands.Cog):
                 # await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
 
         if len(strikee_mentions) > 0:
-            await ctx.channel.send(
+            await ctx.send(
                 f"{strikee_mentions} received a strike against their record.",
                 delete_after=10,
             )
         if len(undet_string) > 0:
-            await ctx.channel.send(
+            await ctx.send(
                 f"Sorry, {undet_string} cannot be given a strike. Only Senior Officers and below can be given a strike."
             )
         if len(users_detained) > 0:
-            await ctx.channel.send(
+            await ctx.send(
                 f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.'
             )
 
@@ -1418,57 +1398,6 @@ class Other(commands.Cog):
         )
         await send_long(ctx.channel, members_str, code_block=True)
 
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    # @commands.command()
-    async def team_json(self, ctx):
-        """
-        This command outputs a json object that stores all the team and white shirt info.
-
-        It is used to transport information from the bot to the LPD Station efficiently.
-        """
-
-        teams = deepcopy(self.bot.settings["teams"])
-        json_out = []
-
-        # Add the white shirts onto the teams list
-        for rank in self.bot.settings["role_ladder"]:
-            try:
-                rank["is_white_shirt"]
-            except KeyError:
-                pass
-            else:
-                rank["has_unlock_all_button"] = True
-                teams.append(rank)
-
-        # Create the JSON from the team list
-        for role_dict in teams:
-
-            # Get the members
-            role = self.bot.officer_manager.guild.get_role(role_dict["id"])
-            try:
-                members = self.get_role_members(role)
-            except errors.GetRoleMembersError as error:
-                await ctx.send(error)
-                return
-
-            # Add the JSON role object
-            json_out.append(
-                {
-                    "id": role_dict["id"],
-                    "name": self.remove_name_decoration(role.name),
-                    "name_id": role_dict["name_id"],
-                    "member_count": len(members),
-                    "members": [self.get_vrc_name(m) for m in members],
-                    "has_unlock_all_button": role_dict.get(
-                        "has_unlock_all_button", False
-                    ),
-                    "is_white_shirt": role_dict.get("is_white_shirt", False),
-                }
-            )
-
-        # Send the JSON file
-        await send_long(ctx.channel, json.dumps(json_out), code_block=True)
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
@@ -1502,7 +1431,7 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(
+                await ctx.send(
                     f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
                 )
             else:
@@ -1540,18 +1469,12 @@ class Other(commands.Cog):
             else:
                 name = role.name
 
-            """
-            elif role.name == "||  ⠀⠀⠀⠀⠀⠀Cadet ⠀⠀⠀⠀⠀⠀  ||":
-                name = 'Cadets'
-            Leaving this here for future use if needed.
-            """
-
             embed.add_field(
                 name=name + ":", value=number_of_officers_with_each_role[role]
             )
 
         # Send the results
-        await ctx.channel.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
@@ -1559,6 +1482,6 @@ class Other(commands.Cog):
     async def shutdown(self, ctx):
         """This command shuts down the bot cleanly."""
 
-        await ctx.channel.send("Shutting down the bot now!")
+        await ctx.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
         await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)

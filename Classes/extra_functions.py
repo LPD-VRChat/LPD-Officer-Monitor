@@ -132,7 +132,10 @@ async def send_str_as_file(
 
 
 async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt", exit=True):
-    """Cleanly shutdown the bot"""
+    """
+    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
+    and ctx.author.display_name as person, assuming called from a Discord command.
+    """
 
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
