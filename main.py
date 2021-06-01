@@ -45,14 +45,11 @@ from Classes.extra_functions import (
 from Classes.extra_functions import ts_print as print
 import Classes.errors as errors
 
-<<<<<<< HEAD
 apply()
 
 # Before we do anything else, make sure that we have an event loop to use for
 # graceful shutdown purpopses.
-=======
 
->>>>>>> destructo-autopromote-lmt-patch
 loop = asyncio.get_event_loop()
 
 
