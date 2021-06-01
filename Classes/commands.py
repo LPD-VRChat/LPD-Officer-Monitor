@@ -1598,18 +1598,4 @@ class Other(commands.Cog):
             )
 
         # Send the results
-<<<<<<< HEAD
-        await ctx.channel.send(embed=embed)
-=======
         await ctx.send(embed=embed)
-
-    @checks.is_team_bot_channel()
-    @checks.is_programming_team()
-    @commands.command()
-    async def shutdown(self, ctx):
-        """This command shuts down the bot cleanly."""
-
-        await ctx.send("Shutting down the bot now!")
-        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
-        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
->>>>>>> destructo-autopromote-lmt-patch

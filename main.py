@@ -119,11 +119,8 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-<<<<<<< HEAD
 
     global bot
-=======
->>>>>>> destructo-autopromote-lmt-patch
 
     # Make sure this function does not create the officer manager twice
     if bot.sql is not None:
