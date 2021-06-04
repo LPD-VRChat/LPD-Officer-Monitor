@@ -791,6 +791,11 @@ class Inactivity(commands.Cog):
             if officer_id in last_renew and last_renew[officer_id] > min_activity * 60:
                 continue
 
+            # Skip White Shirts, they're handled in a different way
+            officer: Officer = self.bot.officer_manager.get_officer(officer_id)
+            if officer and officer.is_white_shirt:
+                continue
+
             # Skip LOA officers
             if officer_id in loa_officer_ids:
                 continue
