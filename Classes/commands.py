@@ -1656,8 +1656,7 @@ class Other(commands.Cog):
                 result += f"**{channel_name}** :\n"
                 result += "\n".join(channel_data[channel_name])
                 result += "\n\n"
-            await ctx.send(f"```{result}```")
-
+            await send_long(ctx.channel, result, code_block=True)
 
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
@@ -1668,7 +1667,6 @@ class Other(commands.Cog):
         await ctx.channel.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
         await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
-
 
 
 class Debug(commands.Cog):
