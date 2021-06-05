@@ -1,4 +1,5 @@
 # Standard
+from Classes.Officer import Officer
 import csv
 import sys
 from copy import deepcopy
@@ -11,8 +12,8 @@ import math
 import traceback
 import json
 import asyncio
+from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 import inspect
-from typing import List, Tuple
 import fuzzywuzzy.process
 
 # Community
@@ -746,113 +747,219 @@ class Inactivity(commands.Cog):
         self.bot = bot
         self.color = discord.Color.blurple()
 
+    async def _get_loa_officers(self) -> Set[Officer]:
+
+        # Get the LOA Officers from the database
+        loa_entries = await self.bot.officer_manager.get_loa()
+        loa_officers: Set[Officer] = {
+            self.bot.officer_manager.get_officer(entry[0])
+            for entry in loa_entries
+            if entry[1] < datetime.utcnow().date()
+        }
+
+        # Count having a message in #leave-of-absence as having a LOA
+        # This is really slow and should be removed when we're sure all LOA's are in the database
+        loa_channel = self.bot.officer_manager.guild.get_channel(
+            self.bot.settings["leave_of_absence_channel"]
+        )
+        async for old_message in loa_channel.history(limit=None):
+            loa_officers.add(
+                self.bot.officer_manager.get_officer(old_message.author.id)
+            )
+
+        return loa_officers
+
+    async def _to_little_patrol_officers(
+        self, loa_officers: Iterable[Officer]
+    ) -> List[Officer]:
+
+        # Calculate some time info
+        min_activity = self.bot.settings["min_activity_minutes"]
+        oldest_valid = datetime.utcnow() - timedelta(
+            days=self.bot.settings["max_inactive_days"]
+        )
+        last_renew = await self.bot.officer_manager.get_officer_renew_dates()
+
+        # Find officers with too little patrol time and no LOA or another excuse
+        officer_activity = await self.bot.officer_manager.get_most_active_officers(
+            oldest_valid, datetime.utcnow(), include_no_activity=True
+        )
+        not_enough_patrol: List[Officer] = []
+        for officer_id, active_seconds in officer_activity:
+            officer: Officer = self.bot.officer_manager.get_officer(officer_id)
+
+            # Skip new officers and recently renewed ones
+            if officer_id in last_renew and last_renew[officer_id] > oldest_valid:
+                continue
+
+            # Skip White Shirts, they're handled in a different way
+            if officer and officer.is_white_shirt:
+                continue
+
+            # Skip LOA officers
+            if officer in loa_officers:
+                continue
+
+            # Skip active officers
+            if active_seconds and active_seconds > min_activity * 60:
+                continue
+
+            # The officer must be inactive
+            not_enough_patrol.append(officer)
+
+        return not_enough_patrol
+
+    async def _get_officer_chat_activity(
+        self, officers: List[Officer]
+    ) -> Tuple[List[Officer], List[Officer]]:
+
+        # Calculate some time settings
+        oldest_valid_msg = datetime.utcnow() - timedelta(
+            days=self.bot.settings["max_inactive_msg_days"]
+        )
+        monitored = self.bot.settings["monitored_channels"]
+
+        # Generate tasks for getting everyone's activity at the same time
+        tasks: Set[asyncio.Task[Union[Dict[str, Any], None]]] = set()
+        for officer in officers:
+            new_coroutine = officer.get_last_activity(monitored)
+            new_task = asyncio.create_task(new_coroutine)
+            new_task.officer = officer  # type: ignore
+            tasks.add(new_task)
+
+        # Run the tasks
+        try:
+            done, _ = await asyncio.wait(tasks)
+        except ValueError:
+            # The tasks array was empty so there must be no inactive or chat activity officer
+            return [], []
+
+        # Use the task results to separate officers into inactive and chat activity
+        inactive_officers = []
+        chat_activity_skipped = []
+        for finished_task in done:
+            officer: Officer = finished_task.officer  # type: ignore
+            activity_dict = finished_task.result()
+            if activity_dict is None or activity_dict["time"] < oldest_valid_msg:
+                inactive_officers.append(officer)
+            else:
+                chat_activity_skipped.append(officer)
+
+        return inactive_officers, chat_activity_skipped
+
+    async def _mark_inactive(self, officers: List[Officer]) -> None:
+        inactive_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+
+        for officer in officers:
+            await officer.member.add_roles(inactive_role)
+
+    async def _show_skipped_officers(
+        self, ctx: commands.Context, skipped_officers: List[Officer]
+    ) -> None:
+        if len(skipped_officers) == 0:
+            await ctx.send("No one was skipped because of chat activity.")
+        else:
+            skipped_str = (
+                "The following were skipped because of recent chat activity, on duty activity or being new:\n"
+                + "\n".join(m.mention for m in skipped_officers)
+            )
+            await send_long(ctx.channel, skipped_str, mention=False)
+
+    async def _confirm_officer_removal(
+        self,
+        ctx: commands.Context,
+        inactive_officers: List[Officer],
+        chat_activity_skipped: List[Officer],
+    ) -> None:
+        output_string = ""
+        for officer in inactive_officers:
+            output_string = f"{officer.mention}\n{output_string}"
+        await send_long(ctx.channel, output_string, mention=False)
+
+        confirm = await Confirm(
+            f"Do you want to mark the officers above as inactive?"
+        ).prompt(ctx)
+        if confirm:
+            # Add the inactive roles
+            await ctx.send("Please give me a moment to add the roles.")
+            await self._mark_inactive(inactive_officers)
+            await ctx.send(f"All officers above have been marked as inactive.")
+
+            # Notify about who was skipped because of chat activity
+            await self._show_skipped_officers(ctx, chat_activity_skipped)
+
+        else:
+            await ctx.channel.send("Cancelled.")
+
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Mark Officers inactive after running =list_inactive
     async def mark_inactive(self, ctx):
         """
-        This command lists inactive officers, and prompts the user to mark them with the LPD_inactive role.
-        Use the `-i` flag to mark officers inactive individually.
+        This command lists inactive officers, and prompts the user to mark them with the
+        LPD_inactive role.
+
+        **Explanation of command logic:**
+        Anything within quotes ("") is a number that can change based on the bots settings, consult
+        a bot developer if you want to know the specifics of what a variable is set to.
+
+        To be marked as inactive you must fill all of the below requirements:
+        * Not have patrolled "min_activity_minutes" minutes within the last "max_inactive_days" days
+        * Not have joined the LPD or had your time renewed within that time
+        * Not have an active LOA
+        * Not be a white shirt (they're handled in a different way)
+        * Not be skipped because of chat activity (explained below)
+
+        To be skipped because of chat activity you can fill either of the requirements below:
+        * Have a message in a monitored channel in the last "max_inactive_msg_days" days.
+        * Have gone on duty in that time
+
+        Being skipped because of chat activity means that that person will not be marked as inactive
+        automatically, however, will go onto a list that is displayed after this command completes.
         """
 
-        # Get all fields from LeaveTimes
-        loa_entries = await self.bot.officer_manager.get_loa()
+        # Get the inactive officers
+        loa_officers = await self._get_loa_officers()
+        not_enough_patrol = await self._to_little_patrol_officers(loa_officers)
+        (
+            inactive_officers,
+            chat_activity_skipped,
+        ) = await self._get_officer_chat_activity(not_enough_patrol)
 
-        loa_officer_ids = []
-
-        # If the entry is still good, add the officer to our exclusion list. Otherwise, delete the entry if expired.
-        for entry in loa_entries:
-            loa_officer_ids.append(entry[0])
-
-        # For everyone in the server where their role is in the role ladder,
-        # get their last activity times, or if no last activity time, use
-        # the time we started monitoring them. Exclude those we have already
-        # determined have a valid Leave of Absence
-
-        # Get a date range for our LOAs, and make some dictionaries to work in
-        max_inactive_days = self.bot.settings["max_inactive_days"]
-        oldest_valid = datetime.utcnow() - timedelta(days=max_inactive_days)
-        inactive_officers = []
-        role_ids = role_id_index(self.bot.settings)
-
-        for id, officer in self.bot.officer_manager.all_officers.items():
-            if officer.id not in loa_officer_ids:
-                last_activity = await officer.get_last_activity(
-                    self.bot.officer_manager.all_monitored_channels
-                )
-                last_activity = last_activity["time"]
-                try:
-                    if last_activity < oldest_valid:
-                        inactive_officers.append(officer)
-                except:
-                    await ctx.channel.send(
-                        "There was a problem with the activity times. Make sure that there are officers with patrol times",
-                        delete_after=10,
-                    )
-
+        # Output data and get confirmation
         if len(inactive_officers) == 0:
             await ctx.channel.send(
                 "There are no inactive officers found without a leave of absence."
             )
-            return
-
-        role = self.bot.officer_manager.guild.get_role(
-            self.bot.settings["inactive_role"]
-        )
-
-        if "-i" in ctx.message.content:
-            for officer in inactive_officers:
-                confirm = await Confirm(
-                    f"Do you want to mark {officer.mention} as inactive?"
-                ).prompt(ctx)
-                if confirm:
-                    await officer.member.add_roles(role)
-                    await ctx.channel.send(
-                        f"{officer.mention} has been marked as inactive."
-                    )
-                else:
-                    await ctx.channel.send(
-                        f"{officer.mention} will have their inactivity reevaluated at a later date."
-                    )
         else:
-            output_string = ""
-            for officer in inactive_officers:
-                output_string = f"{officer.mention}\n{output_string}"
-            await send_long(ctx.channel, output_string)
-            confirm = await Confirm(
-                f"Do you want to mark the officers above as inactive?"
-            ).prompt(ctx)
-            if confirm:
-                for officer in inactive_officers:
-                    await officer.member.add_roles(role)
-                await ctx.channel.send(
-                    f"All officers above have been marked as inactive."
-                )
-            else:
-                await ctx.channel.send("Cancelled.")
+            # Output the list of officers and get confirmation to mark them as inactive
+            await self._confirm_officer_removal(
+                ctx, inactive_officers, chat_activity_skipped
+            )
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    # Review Leaves of Absence
     async def show_loa(self, ctx):
         """
         This command displays all Leave of Absence requests currently on file.
         """
         loa_entries = await self.bot.officer_manager.get_loa()
-        i = 0
-        for entry in loa_entries:
-            i = i + 1
-            officer = self.bot.get_user(entry[0])
-            string = f"There are currently Leaves of Absence on file for the following Officers:"
-            string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
-            if len(string) > 1000:
-                await ctx.channel.send(string)
-                string = ""
 
-        if i == 0:
+        if len(loa_entries) == 0:
             string = "There are no Leaves of Absence on file at this time."
+
+        else:
+            string = f"There are currently Leaves of Absence on file for the following Officers:"
+            for entry in loa_entries:
+                officer = self.bot.get_user(entry[0])
+                string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
+                if len(string) > 1000:
+                    await ctx.channel.send(string)
+                    string = ""
+
         await ctx.channel.send(string)
 
 
