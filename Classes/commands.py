@@ -11,6 +11,7 @@ import math
 import traceback
 import json
 import asyncio
+import inspect
 from typing import List, Tuple
 import fuzzywuzzy.process
 
@@ -1512,6 +1513,154 @@ class Other(commands.Cog):
         # Send the results
         await ctx.channel.send(embed=embed)
 
+    @checks.is_event_bot_channel()
+    @checks.is_event_host_or_any_trainer()
+    @commands.command(usage="<options>")
+    async def who(self, ctx, *args):
+        """
+        This command list officers in Voice Channels.
+        The bot will try to guess what type of information the user wants
+        using the voice channel of the user that execute the command.
+
+        OPTIONS
+
+        -t, --training
+            list all officers in training channels
+
+        -p, --patrol
+            list all officers in patrol channels
+
+        -a, --all
+            list all officers in on-duty category channels
+
+        -e, --embed
+            use Discord Embed (fancy frame)
+
+        PARSE RAW
+        """
+
+        # Setup parser
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("-t", "--training", action="store_true")
+        parser.add_argument("-p", "--patrol", action="store_true")
+        parser.add_argument("-a", "--all", action="store_true")
+        parser.add_argument("-e", "--embed", action="store_true")
+
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("who", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        if parsed.all:
+            parsed.training = True
+            parsed.patrol = True
+        elif parsed.training and parsed.patrol:
+            parsed.all = True
+
+        ### automatic guess depending of cmd author VC
+        if ctx.author.voice and not (parsed.training or parsed.patrol):
+            # user could be in another server so we can't check just for names
+            if (
+                ctx.author.voice.channel.guild.id == self.bot.settings["Server_ID"]
+                and ctx.author.voice.channel.category_id
+                and ctx.author.voice.channel.category_id
+                == self.bot.settings["on_duty_category"]
+            ):
+
+                if ctx.author.voice.channel.name.startswith("Training"):
+                    parsed.training = True
+                else:
+                    parsed.patrol = True
+
+        ### autoguess failed so we tell user
+        if ctx.author.voice == None and not parsed.training and not parsed.patrol:
+            help_lines = self.who.help.splitlines()
+            help_only_args = "\n".join(help_lines[5 : len(help_lines) - 2])
+            error_text = f"Could not guess what information you want, Join one `On Duty` voice channel or use arguments from the list bellow\n```\n{help_only_args}\n```"
+
+            embed_message = discord.Embed(
+                title="Error while executing `=who` command",
+                description=error_text,
+                color=discord.Color.red(),
+            )
+            await ctx.send(None, embed=embed_message)
+            return
+
+        channel_data = dict()
+        for id, officer in self.bot.officer_manager.all_officers.items():
+            if officer.squad == None:
+                if officer.is_on_duty:
+                    print(f"ERROR: User {id} is on duty but squad is None")
+                continue
+
+            # skip if it's not a training channel but we only want training
+            if (
+                parsed.training
+                and not parsed.patrol
+                and not officer.squad.name.startswith("Training")
+            ):
+                continue
+            # skip if we want patrol only but it's a training channel
+            if (
+                not parsed.training
+                and parsed.patrol
+                and officer.squad.name.startswith("Training")
+            ):
+                continue
+
+            if not officer.squad.name in channel_data:
+                channel_data[officer.squad.name] = []
+            channel_data[officer.squad.name].append(officer.mention)
+
+        ### formating for output
+        if parsed.embed:
+            attend_embed = discord.Embed(
+                title="Attendees List", description="", color=self.color
+            )
+
+            for channel_name in channel_data:
+                attend_embed.add_field(
+                    name=channel_name,
+                    value="\n".join(channel_data[channel_name]),
+                    inline=True,
+                )
+            if len(channel_data) == 0:
+                attend_embed.description = "Communication channels are empty"
+            # mention doesn't work for author field :(
+            attend_embed.set_author(
+                name=ctx.author.display_name,
+                icon_url=ctx.author.avatar_url,
+            )
+            # discord client convert to local time on display
+            attend_embed.timestamp = datetime.utcnow()
+            if parsed.all:
+                attend_embed.set_footer(text="All On-duty")
+            elif parsed.patrol:
+                attend_embed.set_footer(text="Patrol")
+            else:
+                attend_embed.set_footer(text="Training")
+
+            await ctx.send(None, embed=attend_embed)
+
+        else:
+            result = "Event Host:\nDispatch:\nGroup Leads:\n\n"
+            if len(channel_data) == 0:
+                await ctx.send("Communication channels are empty")
+                return
+            for channel_name in channel_data:
+                result += f"**{channel_name}:**\n"
+                result += "\n".join(channel_data[channel_name])
+                result += "\n\n"
+            await send_long(ctx.channel, result, code_block=True)
+
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
@@ -1521,3 +1670,58 @@ class Other(commands.Cog):
         await ctx.channel.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
         await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
+
+
+class Debug(commands.Cog):
+    """this class is added only in local environement"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.blue()
+
+    @commands.command()
+    async def dbg_officer(self, ctx):
+        # member = self.bot.get_guild(self.bot.settings["Server_ID"]).get_member(mention)
+        if len(ctx.message.mentions) == 0:
+            await ctx.send("You need to mention the users")
+            return
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer is None:
+                embed = discord.Embed(
+                    title="Not an LPD Officer !!!",
+                    description=f"{member.display_name}#{member.discriminator}",
+                    color=discord.Color.red(),
+                    footer="not found in records",
+                )
+                await ctx.send(None, embed=embed)
+                return
+
+            embed = discord.Embed(
+                title="LPD Officer",
+                description=f"{member.display_name}#{member.discriminator}",
+                color=self.color,
+            )
+
+            for attrib in dir(officer):
+                if attrib.startswith("_") or attrib == "mention" or attrib == "bot":
+                    continue
+                value = None
+                try:
+                    value = getattr(officer, attrib)
+                except AttributeError:
+                    continue
+                if (
+                    callable(value)
+                    or inspect.isclass(value)
+                    or inspect.ismethod(value)
+                    or inspect.ismodule(value)
+                    or inspect.isfunction(value)
+                ):
+                    continue
+                embed.add_field(
+                    name=attrib,
+                    value=value,
+                    inline=True,
+                )
+            await ctx.send(None, embed=embed)

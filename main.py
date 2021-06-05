@@ -342,6 +342,12 @@ bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Other(bot))
 
+if not args.server:
+    from Classes.commands import Debug
+
+    bot.add_cog(Debug(bot))
+
+
 # ====================
 # Start
 # ====================
