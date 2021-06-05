@@ -861,7 +861,7 @@ class Inactivity(commands.Cog):
             await ctx.send("No one was skipped because of chat activity.")
         else:
             skipped_str = (
-                "The following were skipped because of recent chat activity or being new:\n"
+                "The following were skipped because of recent chat activity, on duty activity or being new:\n"
                 + "\n".join(m.mention for m in skipped_officers)
             )
             await send_long(ctx.channel, skipped_str, mention=False)
