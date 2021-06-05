@@ -33,6 +33,7 @@
     ],
     // Roles
     "lpd_role": 654438235950415902,
+    "event_host_role": 647216389886705684,
     "trainer_role": 654438056656371736,
     "slrt_trainer_role": 663137582317568001,
     "slrt_trained_role": 665996573981016103,
