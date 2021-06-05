@@ -15,6 +15,7 @@ from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import ts_print as print
 
+
 class Officer:
     def __init__(self, user_id, bot):
         self.bot = bot
@@ -327,7 +328,7 @@ class Officer:
     @property
     def is_slrt_trained(self):
         return not self._has_role(self.bot.settings["slrt_trained_role"])
-    
+
     @property
     def is_lmt_trained(self):
         return self._has_role(self.bot.settings["lmt_trained_role"])
