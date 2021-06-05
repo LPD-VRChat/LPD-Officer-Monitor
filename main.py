@@ -283,15 +283,23 @@ async def on_raw_bulk_message_delete(payload):
 
 @bot.event
 async def on_reaction_add(reaction, user):
-    
+
     # If someone reacts :x: in the rank request channel
-    if (reaction.message.channel.id == bot.settings["request_rank_channel"] and
-        reaction.emoji == '❌'):
-        
+    if (
+        reaction.message.channel.id == bot.settings["request_rank_channel"]
+        and reaction.emoji == "❌"
+    ):
+
         officer = bot.officer_manager.get_officer(user.id)
 
-        if officer.is_trainer or officer.is_lmt_trainer or officer.is_slrt_trainer or officer.is_prison_trainer or officer.is_white_shirt:
-            await reaction.message.delete()         
+        if (
+            officer.is_trainer
+            or officer.is_lmt_trainer
+            or officer.is_slrt_trainer
+            or officer.is_prison_trainer
+            or officer.is_white_shirt
+        ):
+            await reaction.message.delete()
 
 
 @bot.event

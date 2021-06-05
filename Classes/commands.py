@@ -29,7 +29,7 @@ from Classes.extra_functions import (
     send_str_as_file,
     clean_shutdown,
     role_id_index,
-    get_role_name_by_id
+    get_role_name_by_id,
 )
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
@@ -1261,7 +1261,7 @@ class LMT(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = discord.Color.magenta()
-    
+
     @checks.is_lmt_trainer()
     @checks.is_team_bot_channel()
     @commands.command(usage="`@officer_name`")
@@ -1272,8 +1272,12 @@ class LMT(commands.Cog):
             await ctx.send("You must mention at least one officer")
             return
 
-        officer_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "officer"))
-        lmt_trained_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lmt_trained_role"])
+        officer_role = self.bot.officer_manager.guild.get_role(
+            get_rank_id(self.bot.settings, "officer")
+        )
+        lmt_trained_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["lmt_trained_role"]
+        )
 
         members_not_given_role = []
         members_have_role = []
@@ -1286,16 +1290,26 @@ class LMT(commands.Cog):
                 members_not_given_role.append(member.mention)
             else:
                 await member.add_roles(lmt_trained_role)
-        
+
         if members_not_given_role == [] and members_have_role == []:
-            await ctx.send(f"Gave all mentioned officers the {lmt_trained_role.name} role.")
+            await ctx.send(
+                f"Gave all mentioned officers the {lmt_trained_role.name} role."
+            )
             return
         if members_not_given_role != []:
-            message = await ctx.send(f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.name}")
-            await message.edit(content=f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.mention}")
+            message = await ctx.send(
+                f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.name}"
+            )
+            await message.edit(
+                content=f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.mention}"
+            )
         if members_have_role != []:
-            message = await ctx.send(f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.name}")
-            await message.edit(content=f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.mention}")
+            message = await ctx.send(
+                f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.name}"
+            )
+            await message.edit(
+                content=f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.mention}"
+            )
 
 
 class Other(commands.Cog):
@@ -1395,7 +1409,6 @@ class Other(commands.Cog):
             f"Here is everyone in the role `{self.remove_name_decoration(discord_role.name)}`:"
         )
         await send_long(ctx.channel, members_str, code_block=True)
-
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
