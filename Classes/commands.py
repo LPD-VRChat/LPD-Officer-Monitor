@@ -1653,7 +1653,7 @@ class Other(commands.Cog):
                 await ctx.send("Communication channels are empty")
                 return
             for channel_name in channel_data:
-                result += f"**{channel_name}** :\n"
+                result += f"**{channel_name}:**\n"
                 result += "\n".join(channel_data[channel_name])
                 result += "\n\n"
             await send_long(ctx.channel, result, code_block=True)
