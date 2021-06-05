@@ -951,9 +951,9 @@ class Inactivity(commands.Cog):
             string = "There are no Leaves of Absence on file at this time."
 
         else:
+            string = f"There are currently Leaves of Absence on file for the following Officers:"
             for entry in loa_entries:
                 officer = self.bot.get_user(entry[0])
-                string = f"There are currently Leaves of Absence on file for the following Officers:"
                 string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
                 if len(string) > 1000:
                     await ctx.channel.send(string)
