@@ -1356,7 +1356,7 @@ class Other(commands.Cog):
         """
         This command takes in a name of a role and outputs the VRC names of the people in it.
 
-        This command ignores the decoration on the role if it has any and will try to found the role if mistyped.
+        This command ignores the decoration on the role if it has any and will try to find the role if it is mistyped.
         """
 
         # fix if user write role with space and forget quotes
