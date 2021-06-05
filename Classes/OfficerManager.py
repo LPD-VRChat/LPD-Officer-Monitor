@@ -310,7 +310,7 @@ class OfficerManager:
         data = await self.bot.sql.request(
             "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
         )
-        return dict(zip(data[0], max(data[1], data[2])))
+        return {d[0]: max(d[1], d[2]) for d in data}
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""
