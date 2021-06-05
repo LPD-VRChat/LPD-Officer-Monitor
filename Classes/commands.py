@@ -1351,13 +1351,16 @@ class Other(commands.Cog):
     @commands.check_any(
         checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
     )
-    @commands.command()
-    async def rtv(self, ctx, role_name):
+    @commands.command(usage="discordRole")
+    async def rtv(self, ctx, *role_name):
         """
         This command takes in a name of a role and outputs the VRC names of the people in it.
 
-        This command ignores the decoration on the role if it has any and it also requires
+        This command ignores the decoration on the role if it has any and will try to find the role if it is mistyped.
         """
+
+        # fix if user write role with space and forget quotes
+        role_name = " ".join(role_name)
 
         try:
             discord_role = self.get_role_by_name(role_name)
@@ -1370,7 +1373,7 @@ class Other(commands.Cog):
 
         # Send everyone
         await ctx.send(
-            f"Here is everyone in the role `{self.remove_name_decoration(discord_role.name)}`:"
+            f"Here are {len(members)} people in the role `{self.remove_name_decoration(discord_role.name)}`:"
         )
         await send_long(ctx.channel, members_str, code_block=True)
 
