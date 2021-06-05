@@ -1514,7 +1514,10 @@ class Other(commands.Cog):
         await ctx.channel.send(embed=embed)
 
     @checks.is_event_bot_channel()
-    @checks.is_event_host_or_any_trainer()
+    @commands.check_any(
+        commands.check(checks.is_event_host_or_any_trainer()),
+        commands.check(checks.is_white_shirt())
+    )
     @commands.command(usage="<options>")
     async def who(self, ctx, *args):
         """
