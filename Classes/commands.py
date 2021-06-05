@@ -897,8 +897,26 @@ class Inactivity(commands.Cog):
     @commands.command()
     async def mark_inactive(self, ctx):
         """
-        This command lists inactive officers, and prompts the user to mark them with the LPD_inactive role.
-        Use the `-i` flag to mark officers inactive individually.
+        This command lists inactive officers, and prompts the user to mark them with the
+        LPD_inactive role.
+
+        **Explanation of command logic:**
+        Anything within quotes ("") is a number that can change based on the bots settings, consult
+        a bot developer if you want to know the specifics of what a variable is set to.
+
+        To be marked as inactive you must fill all of the below requirements:
+        * Not have patrolled "min_activity_minutes" minutes within the last "max_inactive_days" days
+        * Not have joined the LPD or had your time renewed within that time
+        * Not have an active LOA
+        * Not be a white shirt (they're handled in a different way)
+        * Not be skipped because of chat activity (explained below)
+
+        To be skipped because of chat activity you can fill either of the requirements below:
+        * Have a message in a monitored channel in the last "max_inactive_msg_days" days.
+        * Have gone on duty in that time
+
+        Being skipped because of chat activity means that that person will not be marked as inactive
+        automatically, however, will go onto a list that is displayed after this command completes.
         """
 
         # Get the inactive officers
