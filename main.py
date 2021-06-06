@@ -38,6 +38,7 @@ from Classes.extra_functions import (
 )
 import Classes.errors as errors
 
+
 loop = asyncio.get_event_loop()
 
 # Set intents for the bot - this allows the bot to see other users in the server
@@ -105,8 +106,6 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
-    global bot
 
     # Make sure this function does not create the officer manager twice
     if bot.sql is not None:
@@ -138,7 +137,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # print("on_message")
 
     # Early out if message from the bot itself
     if message.author.bot:
@@ -160,8 +158,8 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
 
-    # if message.channel.id == bot.settings["request_rank_channel"]:
-    #     await analyze_promotion_request(bot, message)
+    if message.channel.id == bot.settings["request_rank_channel"]:
+        await analyze_promotion_request(bot, message)
 
     # Archive the message
     if (
@@ -176,7 +174,7 @@ async def on_message(message):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # print("on_voice_state_update")
+
     if bot.officer_manager is None:
         return
 
@@ -264,7 +262,6 @@ async def on_member_remove(member):
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print("on_error")
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
@@ -284,9 +281,34 @@ async def on_raw_bulk_message_delete(payload):
 
 
 @bot.event
-async def on_command_error(ctx, exception):
-    print("on_command_error")
+async def on_raw_reaction_add(payload):
 
+    if not bot.everything_ready:
+        return
+
+    # If someone reacts :x: in the rank request channel
+    if (
+        payload.channel_id == bot.settings["request_rank_channel"]
+        and payload.emoji.name == "❌"
+    ):
+
+        officer = bot.officer_manager.get_officer(payload.user_id)
+
+        if (
+            officer.is_trainer
+            or officer.is_lmt_trainer
+            or officer.is_slrt_trainer
+            or officer.is_prison_trainer
+            or officer.is_white_shirt
+        ):
+            message = await bot.officer_manager.guild.get_channel(
+                payload.channel_id
+            ).fetch_message(payload.message_id)
+            await message.delete()
+
+
+@bot.event
+async def on_command_error(ctx, exception):
     exception_string = str(exception).replace(
         "raised an exception", "encountered a problem"
     )

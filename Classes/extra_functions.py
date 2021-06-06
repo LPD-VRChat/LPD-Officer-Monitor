@@ -4,6 +4,8 @@ import discord
 from os import _exit
 import asyncio
 from io import StringIO, BytesIO
+from termcolor import colored
+from datetime import datetime
 
 # Community
 import commentjson as json
@@ -142,7 +144,10 @@ async def send_str_as_file(
 async def clean_shutdown(
     bot, location="the console", person="KeyboardInterrupt", exit=True
 ):
-    """Cleanly shutdown the bot"""
+    """
+    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
+    and ctx.author.display_name as person, assuming called from a Discord command.
+    """
 
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
@@ -171,7 +176,7 @@ async def clean_shutdown(
         _exit(0)
 
 
-async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
+async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
     """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
 
     officer = bot.officer_manager.get_officer(message.author.id)
@@ -222,7 +227,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         },
         "slrt": {
             "name": "SLRT",
-            "name_id": "recruit",
+            "name_id": "slrt",
             "role": slrt_trained_role,
             "prereq": senior_officer_role,
             "approver": slrt_trainer_role,
@@ -231,7 +236,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         },
         "watch officer": {
             "name": "Watch Officer",
-            "name_id": "recruit",
+            "name_id": "watch_officer",
             "role": watch_officer_role,
             "prereq": corporal_role,
             "approver": prison_trainer_role,
@@ -240,7 +245,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=300):
         },
         "lmt": {
             "name": "LMT",
-            "name_id": "recruit",
+            "name_id": "lmt",
             "role": lmt_trained_role,
             "prereq": officer_role,
             "approver": lmt_trainer_role,
