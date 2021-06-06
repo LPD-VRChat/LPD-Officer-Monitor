@@ -321,5 +321,12 @@ def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
     if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
         print("")
         return
-    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " -"
-    print(timestamp, sep.join(objects), sep=sep, end=end, file=file, flush=flush)
+    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " - "
+    print(
+        timestamp + str(objects[0]),
+        *objects[1:],
+        sep=sep,
+        end=end,
+        file=file,
+        flush=flush,
+    )
