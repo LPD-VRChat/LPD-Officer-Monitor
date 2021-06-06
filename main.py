@@ -307,6 +307,7 @@ async def on_raw_reaction_add(payload):
             ).fetch_message(payload.message_id)
             await message.delete()
 
+
 @bot.event
 async def on_command_error(ctx, exception):
     exception_string = str(exception).replace(
