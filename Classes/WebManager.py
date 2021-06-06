@@ -955,4 +955,9 @@ class WebManager:
 
     @app.route("/spa")
     async def spa():
+        return await send_file("lpd-officer-monitor/public/index.html")
         return await render_template("spa.html")
+
+    @app.route("/vue.js")
+    async def vuejs():
+        return await send_file("lpd-officer-monitor/public/vue.js")
