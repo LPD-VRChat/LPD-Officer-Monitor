@@ -13,6 +13,7 @@ from discord import Member, Role
 from discord.enums import HypeSquadHouse
 from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
+from Classes.extra_functions import ts_print as print
 
 
 class Officer:
@@ -333,12 +334,12 @@ class Officer:
         return self._has_role(self.bot.settings["event_host_role"])
 
     @property
-    def is_lmt_trainer(self):
-        return self._has_role(self.bot.settings["lmt_trainer_role"])
-
-    @property
     def is_lmt_trained(self):
         return self._has_role(self.bot.settings["lmt_trained_role"])
+
+    @property
+    def is_lmt_trainer(self):
+        return self._has_role(self.bot.settings["lmt_trainer_role"])
 
     @property
     def is_dev_member(self):

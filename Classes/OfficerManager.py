@@ -19,6 +19,7 @@ from discord.ext import tasks
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import handle_error, role_id_index
+from Classes.extra_functions import ts_print as print
 
 
 class OfficerManager:

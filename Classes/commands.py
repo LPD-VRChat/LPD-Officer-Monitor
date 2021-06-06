@@ -33,6 +33,7 @@ from Classes.extra_functions import (
     role_id_index,
     get_role_name_by_id,
 )
+from Classes.extra_functions import ts_print as print
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors

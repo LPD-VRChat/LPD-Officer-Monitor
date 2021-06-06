@@ -36,6 +36,7 @@ from Classes.extra_functions import (
     clean_shutdown,
     analyze_promotion_request,
 )
+from Classes.extra_functions import ts_print as print
 import Classes.errors as errors
 
 
