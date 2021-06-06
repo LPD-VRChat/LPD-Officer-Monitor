@@ -169,7 +169,9 @@ def member_role_dict(member, verbose=False):
     return role_dict
 
 
-async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt", exit=True):
+async def clean_shutdown(
+    bot, location="the console", person="KeyboardInterrupt", exit=True
+):
     """
     Cleanly shutdown the bot. Please specify ctx.channel.name as location,
     and ctx.author.display_name as person, assuming called from a Discord command.
@@ -353,7 +355,9 @@ def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
     print(timestamp, sep.join(objects), sep=sep, end=end, file=file, flush=flush)
 
 
-def geturls(input, useDict=False, baseURL="https://devbox.lolipd.com/api/auth?W=8&H=8&vrcuser="):
+def geturls(
+    input, useDict=False, baseURL="https://devbox.lolipd.com/api/auth?W=8&H=8&vrcuser="
+):
 
     output = []
     outputDict = {}
@@ -363,9 +367,10 @@ def geturls(input, useDict=False, baseURL="https://devbox.lolipd.com/api/auth?W=
         url = f"""{baseURL}{encoded_username}"""
         output.append(url)
         tempDict = {}
-        tempDict['username'] = username
-        tempDict['url'] = url
+        tempDict["username"] = username
+        tempDict["url"] = url
         outputDict[username] = tempDict
 
-    if useDict: return outputDict
+    if useDict:
+        return outputDict
     return output

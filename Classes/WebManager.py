@@ -853,7 +853,7 @@ class WebManager:
     #     return json.dumps(returnDict)
     #
     #######################################################################################################
-    
+
     # Action section
 
     @app.route("/api/action")
@@ -861,8 +861,8 @@ class WebManager:
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
-        return 'Not implemented'
-    
+        return "Not implemented"
+
     @app.route("/api/action/shutdown")
     @requires_authorization
     async def action_shutdown():
@@ -880,7 +880,7 @@ class WebManager:
             return {"authenticacted": True, "shutdown": True}
 
         return {"authenticacted": True, "shutdown": False}
-    
+
     # Resource section
 
     @app.route("/api/resource")
@@ -888,7 +888,7 @@ class WebManager:
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
-        return 'Not implemented'
+        return "Not implemented"
 
     @app.route("/api/resource/auth")
     async def resource_auth():

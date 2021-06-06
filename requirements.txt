@@ -11,3 +11,4 @@ quart
 quart-discord
 fuzzywuzzy
 python-Levenshtein
+termcolor
