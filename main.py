@@ -27,7 +27,6 @@ from Classes.commands import (
     VRChatAccoutLink,
     Applications,
     Moderation,
-    LMT,
     Other,
 )
 from Classes.help_command import Help
@@ -363,7 +362,6 @@ bot.add_cog(Inactivity(bot))
 bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
-bot.add_cog(LMT(bot))
 bot.add_cog(Other(bot))
 
 if not args.server:
