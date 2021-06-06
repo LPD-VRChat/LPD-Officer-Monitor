@@ -141,8 +141,9 @@ async def send_str_as_file(
         )
 
 
-
-async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt", exit=True):
+async def clean_shutdown(
+    bot, location="the console", person="KeyboardInterrupt", exit=True
+):
     """
     Cleanly shutdown the bot. Please specify ctx.channel.name as location,
     and ctx.author.display_name as person, assuming called from a Discord command.
@@ -243,13 +244,13 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
             "upgrade": False,
         },
         "lmt": {
-           "name": "LMT",
-           "name_id": "lmt",
-           "role": lmt_trained_role,
-           "prereq": officer_role,
-           "approver": lmt_trainer_role,
-           "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
-           "upgrade": False,
+            "name": "LMT",
+            "name_id": "lmt",
+            "role": lmt_trained_role,
+            "prereq": officer_role,
+            "approver": lmt_trainer_role,
+            "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": False,
         },
     }
 
