@@ -257,7 +257,7 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_member_update(before, after):
 
-    if bot.officer_manager is None:
+    if bot.officer_manager is None or before.bot or after.bot:
         return
 
     ############################
@@ -388,6 +388,12 @@ bot.add_cog(Moderation(bot))
 bot.add_cog(Programming(bot))
 bot.add_cog(LMT(bot))
 bot.add_cog(Other(bot))
+
+if not args.server:
+    from Classes.commands import Debug
+
+    bot.add_cog(Debug(bot))
+
 
 # ====================
 # Start

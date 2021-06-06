@@ -9,6 +9,7 @@ import nest_asyncio
 nest_asyncio.apply()
 import traceback
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 # Community
 import aiomysql
@@ -272,23 +273,52 @@ class OfficerManager:
     #    check officers
     # ====================
 
-    async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
-        """Returns list of most active officers between given dates, up to optionally specified limit"""
+    async def get_most_active_officers(
+        self,
+        from_datetime: datetime,
+        to_datetime: datetime,
+        limit: Optional[int] = None,
+        include_no_activity: bool = False,
+    ):
+        """
+        Returns list of most active officers between given dates, up to optionally specified limit.
 
-        db_request = """
-            SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
-            FROM TimeLog
-            WHERE end_time > %s AND end_time < %s
-            GROUP BY officer_id
+        This can both be used when the most active officers are needed or if you need to get all
+        officers and how active they have been over a specific amount of time.
+        """
+
+        db_request = (
+            """
+            SELECT O.officer_id, SUM(TIMESTAMPDIFF(SECOND, TL.start_time, TL.end_time)) AS "patrol_length"
+            FROM Officers O
+                LEFT JOIN TimeLog TL
+                    ON O.officer_id = TL.officer_id
+            WHERE
+                (TL.end_time > %s AND TL.end_time < %s)
+            """
+            + ("OR TL.end_time IS NULL\n" if include_no_activity else "")
+            + """
+            GROUP BY O.officer_id
             ORDER BY patrol_length DESC
             """
-        arg_list = [from_datetime, to_datetime]
+        )
+        arg_list: List[Any] = [from_datetime, to_datetime]
 
         if limit:
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
         return await self.bot.sql.request(db_request, arg_list)
+
+    async def get_officer_renew_dates(self) -> Dict[int, datetime]:
+        """
+        Returns a dictionary with the officer id as key, and then when their time was last
+        renewed or join date as the value, witch ever one is higher.
+        """
+        data = await self.bot.sql.request(
+            "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
+        )
+        return {d[0]: max(d[1], d[2]) for d in data}
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""

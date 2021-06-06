@@ -24,8 +24,13 @@ def is_number(string):
         return False
 
 
-async def send_long(channel, string, code_block=False):
+async def send_long(channel, string, code_block=False, mention=True):
     """Send output as a text file, or optionally a code block if code_block=True is passed"""
+
+    # Set allowed mentions
+    allowed_mentions = (
+        discord.AllowedMentions.all() if mention else discord.AllowedMentions.none()
+    )
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -63,11 +68,14 @@ async def send_long(channel, string, code_block=False):
             output_list.append(line)
         else:
             # Send the full message and add backticks if needed
-            await channel.send("\n".join(output_list) + ("```" if code_block else ""))
+            await channel.send(
+                "\n".join(output_list) + ("```" if code_block else ""),
+                allowed_mentions=allowed_mentions,
+            )
             # Add the backticks if the message should be in a codeblock
             output_list = [("```" if code_block else "") + line]
 
-    await channel.send("\n".join(output_list))
+    await channel.send("\n".join(output_list), allowed_mentions=allowed_mentions)
 
 
 def get_settings_file(settings_file_name, in_settings_folder=True):
