@@ -318,7 +318,7 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
 def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
     """Adds a colored timestamp to debugging messages in the console"""
 
-    if objects is None or (objects[0] == "" and len(objects) == 1):
+    if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
         print("")
         return
     timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " -"
