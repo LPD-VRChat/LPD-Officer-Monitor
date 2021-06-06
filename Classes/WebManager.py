@@ -20,7 +20,7 @@ from hypercorn.config import Config
 
 from Classes.extra_functions import role_id_index as _role_id_index
 from Classes.APITex import render_array
-from Classes.URLGen import geturls
+from Classes.extra_functions import geturls
 
 app = Quart("LPD Officer Monitor")
 
