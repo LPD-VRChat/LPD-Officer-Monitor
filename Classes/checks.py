@@ -92,20 +92,6 @@ def is_application_channel():
     return commands.check(predicate)
 
 
-def is_event_bot_channel():
-    def predicate(ctx):
-        if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["event_bot_channel"]
-        ):
-            raise errors.WrongChannelError(
-                "This command only works in the event bot channel."
-            )
-        return True
-
-    return commands.check(predicate)
-
-
 def is_team_bot_channel():
     def predicate(ctx):
         admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
