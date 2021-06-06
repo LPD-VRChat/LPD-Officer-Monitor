@@ -158,8 +158,8 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
 
-    # if message.channel.id == bot.settings["request_rank_channel"]:
-    #     await analyze_promotion_request(bot, message)
+    if message.channel.id == bot.settings["request_rank_channel"]:
+        await analyze_promotion_request(bot, message)
 
     # Archive the message
     if (
