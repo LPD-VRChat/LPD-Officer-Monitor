@@ -108,10 +108,7 @@ class OfficerManager:
     @tasks.loop(minutes=60)
     async def loop(self):
 
-        if self.iterations == 0:
-            print("Running officer check loop in officer_manager")
-
-        self.iterations += 1
+        print("Running officer check loop in officer_manager")
 
         try:
             # Add missing officers
