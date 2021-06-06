@@ -39,8 +39,7 @@ from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import role_id_index, get_role_name_by_id
-from Classes.URLGen import geturls
+from Classes.extra_functions import role_id_index, get_role_name_by_id, geturls
 
 apply()
 
