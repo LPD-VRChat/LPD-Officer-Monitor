@@ -331,15 +331,7 @@ class Officer:
     @property
     def is_event_host(self):
         return self._has_role(self.bot.settings["event_host_role"])
-
-    @property
-    def is_lmt_trainer(self):
-        return self._has_role(self.bot.settings["lmt_trainer_role"])
-
-    @property
-    def is_lmt_trained(self):
-        return self._has_role(self.bot.settings["lmt_trained_role"])
-
+    
     @property
     def is_lmt_trained(self):
         return self._has_role(self.bot.settings["lmt_trained_role"])
