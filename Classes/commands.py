@@ -1606,7 +1606,7 @@ class Other(commands.Cog):
     @checks.is_event_bot_channel()
     @commands.check_any(
         commands.check(checks.is_event_host_or_any_trainer()),
-        commands.check(checks.is_white_shirt())
+        commands.check(checks.is_white_shirt()),
     )
     @commands.command(usage="<options>")
     async def who(self, ctx, *args):
@@ -1729,8 +1729,7 @@ class Other(commands.Cog):
                 attend_embed.description = "Communication channels are empty"
             # mention doesn't work for author field :(
             attend_embed.set_author(
-                name=ctx.author.display_name,
-                icon_url=ctx.author.avatar_url,
+                name=ctx.author.display_name, icon_url=ctx.author.avatar_url
             )
             # discord client convert to local time on display
             attend_embed.timestamp = datetime.utcnow()
@@ -1812,9 +1811,5 @@ class Debug(commands.Cog):
                     or inspect.isfunction(value)
                 ):
                     continue
-                embed.add_field(
-                    name=attrib,
-                    value=value,
-                    inline=True,
-                )
+                embed.add_field(name=attrib, value=value, inline=True)
             await ctx.send(None, embed=embed)
