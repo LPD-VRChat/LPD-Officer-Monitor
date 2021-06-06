@@ -32,7 +32,6 @@ from Classes.commands import (
     Applications,
     Moderation,
     Programming,
-    LMT,
     Other,
 )
 from Classes.help_command import Help
@@ -195,8 +194,8 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
 
-    # if message.channel.id == bot.settings["request_rank_channel"]:
-    #     await analyze_promotion_request(bot, message)
+    if message.channel.id == bot.settings["request_rank_channel"]:
+        await analyze_promotion_request(bot, message)
 
     # Archive the message
     if (
@@ -318,16 +317,30 @@ async def on_raw_bulk_message_delete(payload):
 
 
 @bot.event
-async def on_reaction_add(reaction, user):
-    
-    # If someone reacts :x: in the rank request channel
-    if (reaction.message.channel.id == bot.settings["request_rank_channel"] and
-        reaction.emoji == '❌'):
-        
-        officer = bot.officer_manager.get_officer(user.id)
+async def on_raw_reaction_add(payload):
 
-        if officer.is_trainer or officer.is_lmt_trainer or officer.is_slrt_trainer or officer.is_prison_trainer or officer.is_white_shirt:
-            await reaction.message.delete()         
+    if not bot.everything_ready:
+        return
+
+    # If someone reacts :x: in the rank request channel
+    if (
+        payload.channel_id == bot.settings["request_rank_channel"]
+        and payload.emoji.name == "❌"
+    ):
+
+        officer = bot.officer_manager.get_officer(payload.user_id)
+
+        if (
+            officer.is_trainer
+            or officer.is_lmt_trainer
+            or officer.is_slrt_trainer
+            or officer.is_prison_trainer
+            or officer.is_white_shirt
+        ):
+            message = await bot.officer_manager.guild.get_channel(
+                payload.channel_id
+            ).fetch_message(payload.message_id)
+            await message.delete()
 
 
 @bot.event
@@ -386,7 +399,6 @@ bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Programming(bot))
-bot.add_cog(LMT(bot))
 bot.add_cog(Other(bot))
 
 if not args.server:

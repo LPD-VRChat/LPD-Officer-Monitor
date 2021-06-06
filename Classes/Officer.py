@@ -18,6 +18,7 @@ from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import ts_print as print
 
+
 class Officer:
     def __init__(self, user_id, bot):
         self.bot = bot

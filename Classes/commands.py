@@ -32,7 +32,7 @@ from Classes.extra_functions import (
     send_str_as_file,
     clean_shutdown,
     role_id_index,
-    get_role_name_by_id
+    get_role_name_by_id,
 )
 from Classes.extra_functions import ts_print as print
 from Classes.custom_arg_parse import ArgumentParser
@@ -1493,49 +1493,6 @@ class Programming(commands.Cog):
                 await __return_value__()
 
 
-class LMT(commands.Cog):
-    """Here are all the commands for the LMT Team."""
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.color = discord.Color.magenta()
-    
-    @checks.is_lmt_trainer()
-    @checks.is_team_bot_channel()
-    @commands.command(usage="`@officer_name`")
-    async def make_lmt(self, ctx):
-        """This command gives the LMT role to mentioned officers"""
-
-        if ctx.message.mentions == []:
-            await ctx.send("You must mention at least one officer")
-            return
-
-        officer_role = self.bot.officer_manager.guild.get_role(get_rank_id(self.bot.settings, "officer"))
-        lmt_trained_role = self.bot.officer_manager.guild.get_role(self.bot.settings["lmt_trained_role"])
-
-        members_not_given_role = []
-        members_have_role = []
-
-        for member in ctx.message.mentions:
-            officer = self.bot.officer_manager.get_officer(member.id)
-            if lmt_trained_role in member.roles:
-                members_have_role.append(member.mention)
-            elif officer.rank.position < officer_role.position:
-                members_not_given_role.append(member.mention)
-            else:
-                await member.add_roles(lmt_trained_role)
-        
-        if members_not_given_role == [] and members_have_role == []:
-            await ctx.send(f"Gave all mentioned officers the {lmt_trained_role.name} role.")
-            return
-        if members_not_given_role != []:
-            message = await ctx.send(f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.name}")
-            await message.edit(content=f"Could not give LMT role to {' '.join(members_not_given_role)} because they do not hold the prerequisite role of {officer_role.mention}")
-        if members_have_role != []:
-            message = await ctx.send(f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.name}")
-            await message.edit(content=f"Could not give LMT role to {' '.join(members_have_role)} because they already have the role {lmt_trained_role.mention}")
-
-
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
@@ -1637,7 +1594,6 @@ class Other(commands.Cog):
         )
         await send_long(ctx.channel, members_str, code_block=True)
 
-
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
@@ -1718,7 +1674,7 @@ class Other(commands.Cog):
     @checks.is_event_bot_channel()
     @commands.check_any(
         commands.check(checks.is_event_host_or_any_trainer()),
-        commands.check(checks.is_white_shirt())
+        commands.check(checks.is_white_shirt()),
     )
     @commands.command(usage="<options>")
     async def who(self, ctx, *args):
@@ -1841,8 +1797,7 @@ class Other(commands.Cog):
                 attend_embed.description = "Communication channels are empty"
             # mention doesn't work for author field :(
             attend_embed.set_author(
-                name=ctx.author.display_name,
-                icon_url=ctx.author.avatar_url,
+                name=ctx.author.display_name, icon_url=ctx.author.avatar_url
             )
             # discord client convert to local time on display
             attend_embed.timestamp = datetime.utcnow()
@@ -1914,9 +1869,5 @@ class Debug(commands.Cog):
                     or inspect.isfunction(value)
                 ):
                     continue
-                embed.add_field(
-                    name=attrib,
-                    value=value,
-                    inline=True,
-                )
+                embed.add_field(name=attrib, value=value, inline=True)
             await ctx.send(None, embed=embed)

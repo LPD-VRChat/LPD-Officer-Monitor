@@ -273,13 +273,13 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
             "upgrade": False,
         },
         "lmt": {
-           "name": "LMT",
-           "name_id": "lmt",
-           "role": lmt_trained_role,
-           "prereq": officer_role,
-           "approver": lmt_trainer_role,
-           "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
-           "upgrade": False,
+            "name": "LMT",
+            "name_id": "lmt",
+            "role": lmt_trained_role,
+            "prereq": officer_role,
+            "approver": lmt_trainer_role,
+            "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": False,
         },
     }
 
@@ -342,13 +342,14 @@ async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
     # we aren't going to delete unknown messages. Just react with a question mark.
     await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
 
-def ts_print(*objects, sep=' ', end='\n', file=stdout, flush=False):
+
+def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
     """Adds a colored timestamp to debugging messages in the console"""
-    
-    if objects is None or objects[0] == "":
-        print('')
+
+    if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
+        print("")
         return
-    timestamp = colored(datetime.now().strftime('%b-%d-%Y %H:%M:%S'), 'green') + ' -'
+    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " -"
     print(timestamp, sep.join(objects), sep=sep, end=end, file=file, flush=flush)
 
 
