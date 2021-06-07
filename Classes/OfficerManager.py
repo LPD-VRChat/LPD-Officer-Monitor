@@ -243,9 +243,12 @@ class OfficerManager:
             "DELETE FROM LeaveTimes WHERE officer_id = %s", (officer_id)
         )
         await self.bot.sql.request(
+            "DELETE FROM RenewalTimes WHERE officer_id = %s", (officer_id)
+        )
+        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
-
+        
         # Remove the officer from the officer list
         try:
             del self._all_officers[officer_id]
@@ -309,10 +312,19 @@ class OfficerManager:
         Returns a dictionary with the officer id as key, and then when their time was last
         renewed or join date as the value, witch ever one is higher.
         """
-        data = await self.bot.sql.request(
-            "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
+        officer_start_times = await self.bot.sql.request(
+            "SELECT officer_id, started_monitoring_time FROM Officers"
         )
-        return {d[0]: max(d[1], d[2]) for d in data}
+        officer_renewal_times = await self.bot.sql.request(
+            "SELECT officer_id, renewed_time FROM RenewalTimes"
+        )
+        last_renew_dates = dict(officer_start_times)
+        officer_renewal_times_dict = dict(officer_renewal_times)
+
+        for officer_id in officer_renewal_times_dict.keys():
+            last_renew_dates[officer_id] = officer_renewal_times_dict[officer_id]
+
+        return last_renew_dates
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""

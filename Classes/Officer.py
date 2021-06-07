@@ -533,7 +533,7 @@ class Officer:
             )
 
     async def renew_time(self, renewed_by, reason):
-        """Inserts a 1 second on duty session into the Officer's logbook to trick the inactivity hook"""
+        """Makes an entry into RenewalTimes for the Officer"""
         await self.bot.sql.request(
             "REPLACE INTO RenewalTimes (officer_id, renewed_by, reason) VALUES (%s, %s, %s)",
             (self.id, renewed_by, reason),
