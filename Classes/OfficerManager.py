@@ -6,6 +6,7 @@
 import asyncio
 import traceback
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 # Community
 import aiomysql
@@ -17,7 +18,8 @@ from discord.ext import tasks
 # Mine
 from Classes.Officer import Officer
 from Classes.errors import MemberNotFoundError
-from Classes.extra_functions import handle_error
+from Classes.extra_functions import handle_error, role_id_index
+from Classes.extra_functions import ts_print as print
 
 
 class OfficerManager:
@@ -99,10 +101,6 @@ class OfficerManager:
             run_before_officer_removal=run_before_officer_removal,
         )
 
-    async def send_db_request(self, query, args=None):
-        """This function is being deprecated in favor of self.bot.sql.request()"""
-        return await self.bot.sql.request(query, args)
-
     # =====================
     #    Loop
     # =====================
@@ -143,6 +141,12 @@ class OfficerManager:
                 await self.remove_officer(
                     officer_id, reason="this person was not found in the server."
                 )
+
+            # Build the list of LPD Ranks, for general availability
+            self.all_lpd_ranks = [
+                self.guild.get_role(role_id)
+                for role_id in role_id_index(self.bot.settings)
+            ]
 
         except Exception as error:
             print(error)
@@ -193,7 +197,7 @@ class OfficerManager:
 
         # Print
         msg_string = (
-            "DEBUG: "
+            "INFO: "
             + new_officer.display_name
             + " ("
             + str(new_officer.id)
@@ -251,7 +255,7 @@ class OfficerManager:
             )
 
         msg_string = (
-            "WARNING: " + member_name + " has been removed from the LPD Officer Monitor"
+            "INFO: " + member_name + " has been removed from the LPD Officer Monitor"
         )
         if reason is not None:
             msg_string += " because " + str(reason)
@@ -263,23 +267,52 @@ class OfficerManager:
     #    check officers
     # ====================
 
-    async def get_most_active_officers(self, from_datetime, to_datetime, limit=None):
-        """Returns list of most active officers between given dates, up to optionally specified limit"""
+    async def get_most_active_officers(
+        self,
+        from_datetime: datetime,
+        to_datetime: datetime,
+        limit: Optional[int] = None,
+        include_no_activity: bool = False,
+    ):
+        """
+        Returns list of most active officers between given dates, up to optionally specified limit.
 
-        db_request = """
-            SELECT officer_id, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) AS "patrol_length"
-            FROM TimeLog
-            WHERE end_time > %s AND end_time < %s
-            GROUP BY officer_id
+        This can both be used when the most active officers are needed or if you need to get all
+        officers and how active they have been over a specific amount of time.
+        """
+
+        db_request = (
+            """
+            SELECT O.officer_id, SUM(TIMESTAMPDIFF(SECOND, TL.start_time, TL.end_time)) AS "patrol_length"
+            FROM Officers O
+                LEFT JOIN TimeLog TL
+                    ON O.officer_id = TL.officer_id
+            WHERE
+                (TL.end_time > %s AND TL.end_time < %s)
+            """
+            + ("OR TL.end_time IS NULL\n" if include_no_activity else "")
+            + """
+            GROUP BY O.officer_id
             ORDER BY patrol_length DESC
             """
-        arg_list = [from_datetime, to_datetime]
+        )
+        arg_list: List[Any] = [from_datetime, to_datetime]
 
         if limit:
             db_request += "\nLIMIT %s"
             arg_list.append(limit)
 
         return await self.bot.sql.request(db_request, arg_list)
+
+    async def get_officer_renew_dates(self) -> Dict[int, datetime]:
+        """
+        Returns a dictionary with the officer id as key, and then when their time was last
+        renewed or join date as the value, witch ever one is higher.
+        """
+        data = await self.bot.sql.request(
+            "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
+        )
+        return {d[0]: max(d[1], d[2]) for d in data}
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""
@@ -304,7 +337,7 @@ class OfficerManager:
 
     @property
     def all_server_members_not_in_LPD(self):
-        return [m for m in self.guild.members if self.is_officer(m)]
+        return [m for m in self.guild.members if not self.is_officer(m)]
 
     @property
     def all_officers(self):
@@ -327,12 +360,12 @@ class OfficerManager:
         Delete the specified Leave of Absence
         """
 
-        await self.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE request_id = %s", (request_id)
         )
 
     async def get_loa(self):
-        loa_entries = await self.send_db_request(
+        loa_entries = await self.bot.sql.request(
             "SELECT officer_id, date(date_start), date(date_end), reason, request_id FROM LeaveTimes"
         )
 

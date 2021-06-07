@@ -30,8 +30,15 @@ from Classes.commands import (
     Other,
 )
 from Classes.help_command import Help
-from Classes.extra_functions import handle_error, get_settings_file, clean_shutdown
+from Classes.extra_functions import (
+    handle_error,
+    get_settings_file,
+    clean_shutdown,
+    analyze_promotion_request,
+)
+from Classes.extra_functions import ts_print as print
 import Classes.errors as errors
+
 
 loop = asyncio.get_event_loop()
 
@@ -64,9 +71,7 @@ else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
 
-bot = commands.Bot(
-    command_prefix=settings["bot_prefix"], intents=intents
-)  # 10/12/2020 - Destructo added intents
+bot = commands.Bot(command_prefix=settings["bot_prefix"], intents=intents)
 bot.settings = settings
 bot.officer_manager = None
 bot.sql = None
@@ -102,15 +107,12 @@ def officer_manager_ready(ctx):
 
 @bot.event
 async def on_ready():
-    print("on_ready")
-    global bot
 
     # Make sure this function does not create the officer manager twice
-    if bot.officer_manager is not None:
-        return
-
     if bot.sql is not None:
-        return
+        await clean_shutdown(
+            bot, location="disconnection", person="automatic recovery", exit=False
+        )
 
     # Create the function to run before officer removal
     async def before_officer_removal(bot, officer_id):
@@ -136,7 +138,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # print("on_message")
 
     # Early out if message from the bot itself
     if message.author.bot:
@@ -158,6 +159,9 @@ async def on_message(message):
         officer = bot.officer_manager.get_officer(message.author.id)
         await officer.process_loa(message)
 
+    if message.channel.id == bot.settings["request_rank_channel"]:
+        await analyze_promotion_request(bot, message)
+
     # Archive the message
     if (
         message.channel.category_id
@@ -171,7 +175,7 @@ async def on_message(message):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # print("on_voice_state_update")
+
     if bot.officer_manager is None:
         return
 
@@ -217,7 +221,7 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_member_update(before, after):
 
-    if bot.officer_manager is None:
+    if bot.officer_manager is None or before.bot or after.bot:
         return
 
     ############################
@@ -259,7 +263,6 @@ async def on_member_remove(member):
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print("on_error")
     await handle_error(
         bot, f"Error encountered in event: {event}", traceback.format_exc()
     )
@@ -279,9 +282,34 @@ async def on_raw_bulk_message_delete(payload):
 
 
 @bot.event
-async def on_command_error(ctx, exception):
-    print("on_command_error")
+async def on_raw_reaction_add(payload):
 
+    if not bot.everything_ready:
+        return
+
+    # If someone reacts :x: in the rank request channel
+    if (
+        payload.channel_id == bot.settings["request_rank_channel"]
+        and payload.emoji.name == "❌"
+    ):
+
+        officer = bot.officer_manager.get_officer(payload.user_id)
+
+        if (
+            officer.is_trainer
+            or officer.is_lmt_trainer
+            or officer.is_slrt_trainer
+            or officer.is_prison_trainer
+            or officer.is_white_shirt
+        ):
+            message = await bot.officer_manager.guild.get_channel(
+                payload.channel_id
+            ).fetch_message(payload.message_id)
+            await message.delete()
+
+
+@bot.event
+async def on_command_error(ctx, exception):
     exception_string = str(exception).replace(
         "raised an exception", "encountered a problem"
     )
@@ -336,6 +364,12 @@ bot.add_cog(VRChatAccoutLink(bot))
 bot.add_cog(Applications(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Other(bot))
+
+if not args.server:
+    from Classes.commands import Debug
+
+    bot.add_cog(Debug(bot))
+
 
 # ====================
 # Start

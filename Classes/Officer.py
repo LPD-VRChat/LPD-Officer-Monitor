@@ -6,16 +6,14 @@
 import asyncio
 import math
 import time
-from datetime import datetime
-import datetime as dt
+from datetime import datetime, timedelta
 
 # Community
-from discord import Member
+from discord import Member, Role
 from discord.enums import HypeSquadHouse
+from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
-
-# Mine
-import Classes.extra_functions as ef
+from Classes.extra_functions import ts_print as print
 
 
 class Officer:
@@ -38,18 +36,19 @@ class Officer:
             )
             return
 
-        print(
-            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
-        )
         # Start counting the officers time
         self._on_duty_start_time = time.time()
         self.is_on_duty = True
+
+        print(
+            f"{self.discord_name} is going on duty in {self.member.voice.channel.name}"
+        )
         self.squad = self.member.voice.channel
 
     def update_squad(self):
 
         # Print an error if the user is going on duty even though he is already on duty
-        if self.is_on_duty is False:
+        if not self.is_on_duty:
             print("WARNING: Tried to update squad for a user not on duty...")
             return
 
@@ -160,8 +159,8 @@ class Officer:
         )
 
         try:
-            date_start = dt.datetime.strptime(date_start_complex, "%d/%m/%Y")
-            date_end = dt.datetime.strptime(date_end_complex, "%d/%m/%Y")
+            date_start = datetime.strptime(date_start_complex, "%d/%m/%Y")
+            date_end = datetime.strptime(date_end_complex, "%d/%m/%Y")
         except (ValueError, TypeError):
             await message.channel.send(
                 message.author.mention
@@ -171,9 +170,9 @@ class Officer:
             await message.delete()
             return
 
-        if date_end > date_start + dt.timedelta(
+        if date_end > date_start + timedelta(
             weeks=+12
-        ) or date_end < date_start + dt.timedelta(weeks=+3):
+        ) or date_end < date_start + timedelta(weeks=+3):
             # If more than 12 week LOA, inform user
             await message.channel.send(
                 message.author.mention
@@ -194,7 +193,7 @@ class Officer:
 
         # Fire the script to save the entry
         request_id = message.id
-        old_messages = await self.bot.officer_manager.send_db_request(
+        old_messages = await self.bot.sql.request(
             "SELECT request_id FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
@@ -217,15 +216,80 @@ class Officer:
         """
 
         # Delete any existing entries
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM LeaveTimes WHERE officer_id = %s", self.id
         )
 
         # Save the new entry
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "REPLACE INTO `LeaveTimes` (`officer_id`,`date_start`,`date_end`,`reason`,`request_id`) VALUES (%s, %s, %s, %s, %s)",
             (self.id, date_start, date_end, reason, request_id),
         )
+
+    async def promote(self, rank=None):
+        """Try to promote this officer, and return their rank afterwards"""
+        return await self._prodemote(promote=True, rank=rank)
+
+    async def demote(self, rank=None):
+        """Try to demote this officer, and return their rank afterwards"""
+        return await self._prodemote(demote=True, rank=rank)
+
+    async def _prodemote(self, promote=False, demote=False, rank=None):
+        """Used internally to promote/demote this officer. Don't call this directly."""
+        old_rank = self.rank
+
+        if rank:
+            new_rank = rank
+
+        elif promote:
+            higher_ranks = [
+                x
+                for x in self.bot.officer_manager.all_lpd_ranks
+                if x.position > old_rank.position
+            ]
+            if higher_ranks == []:
+                raise IndexError("Highest rank available is already applied")
+                return
+            new_rank = min(higher_ranks, key=lambda r: r.position)
+
+        elif demote:
+            lower_ranks = [
+                x
+                for x in self.bot.officer_manager.all_lpd_ranks
+                if x.position < old_rank.position
+            ]
+            if lower_ranks == []:
+                raise IndexError("Lowest rank available is already applied")
+                return
+            new_rank = max(lower_ranks, key=lambda r: r.position)
+
+        else:
+            raise ValueError(
+                "Must specify promote=True, demote=True, or rank=<Discord.role object>"
+            )
+            return
+
+        if type(new_rank) != Role:
+            raise TypeError(f"Expected type Discord.role, got {type(new_rank)} instead")
+            return
+
+        try:
+            await self.member.add_roles(new_rank)
+        except Forbidden as e:
+            if promote:
+                raise IndexError(
+                    "I do not have permission to promote this officer any further"
+                )
+            return old_rank
+
+        try:
+            await self.member.remove_roles(old_rank)
+        except Forbidden as e:
+            await self.member.remove_roles(new_rank)
+            raise IndexError("I do not have permission to demote this officer")
+            return old_rank
+
+        return new_rank
 
     # ====================
     # properties
@@ -263,7 +327,19 @@ class Officer:
 
     @property
     def is_slrt_trained(self):
-        return not self._has_role(self.bot.settings["slrt_trained_role"])
+        return self._has_role(self.bot.settings["slrt_trained_role"])
+
+    @property
+    def is_event_host(self):
+        return self._has_role(self.bot.settings["event_host_role"])
+
+    @property
+    def is_lmt_trained(self):
+        return self._has_role(self.bot.settings["lmt_trained_role"])
+
+    @property
+    def is_lmt_trainer(self):
+        return self._has_role(self.bot.settings["lmt_trainer_role"])
 
     @property
     def is_dev_member(self):
@@ -298,6 +374,13 @@ class Officer:
     @property
     def id(self):
         return self.member.id
+
+    @property
+    def rank(self):
+        intersection = list(
+            set(self.member.roles) & set(self.bot.officer_manager.all_lpd_ranks)
+        )
+        return max(intersection, key=lambda item: item.position)
 
     # Internal functions
 

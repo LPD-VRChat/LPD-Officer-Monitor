@@ -1,6 +1,8 @@
 {
     "Server_ID": 645383380870889482,
-    "max_inactive_days": 28,
+    "max_inactive_days": 56,
+    "max_inactive_msg_days": 14,
+    "min_activity_minutes": 60,
     "bot_prefix": "=",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 3600,
@@ -18,11 +20,10 @@
     "application_channel": 655793001787949086,
     "team_bot_channel": 774740277235154975,
     "general_bot_channel": 708736137463726131,
-
     "error_log_channel": 677546865998168144,
     "leave_of_absence_channel": 725110720722894869,
+    "request_rank_channel": 655570475216535585,
     "inactive_channel_name": "inactive",
-    "application_channel": 655793001787949086,
     "inactive_role": 765299198148476979,
     "training_finished_channel": 655570475216535585,
     "allowed_command_channels": [
@@ -33,9 +34,14 @@
     ],
     // Roles
     "lpd_role": 654438235950415902,
+    "event_host_role": 647216389886705684,
     "trainer_role": 654438056656371736,
     "slrt_trainer_role": 663137582317568001,
     "slrt_trained_role": 665996573981016103,
+    "lmt_trainer_role": 684866780283666518,
+    "lmt_trained_role": 759780133556453386,
+    "watch_officer_role": 802721610603298836,
+    "prison_trainer_role": 802721606912180294,
     "recruiter_role": 655632175168749600,
     "programming_team_role": 730149646130741258,
     "dev_team_role": 645751942626279460,

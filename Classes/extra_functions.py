@@ -1,9 +1,12 @@
 # Standard
 from typing import Optional
 import discord
-from os import _exit as exit
-from asyncio import get_event_loop
+from os import _exit
+import asyncio
 from io import StringIO, BytesIO
+from termcolor import colored
+from datetime import datetime
+from sys import stdout
 
 # Community
 import commentjson as json
@@ -17,8 +20,13 @@ def is_number(string):
         return False
 
 
-async def send_long(channel, string, code_block=False):
+async def send_long(channel, string, code_block=False, mention=True):
     """Send output as a text file, or optionally a code block if code_block=True is passed"""
+
+    # Set allowed mentions
+    allowed_mentions = (
+        discord.AllowedMentions.all() if mention else discord.AllowedMentions.none()
+    )
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -56,11 +64,14 @@ async def send_long(channel, string, code_block=False):
             output_list.append(line)
         else:
             # Send the full message and add backticks if needed
-            await channel.send("\n".join(output_list) + ("```" if code_block else ""))
+            await channel.send(
+                "\n".join(output_list) + ("```" if code_block else ""),
+                allowed_mentions=allowed_mentions,
+            )
             # Add the backticks if the message should be in a codeblock
             output_list = [("```" if code_block else "") + line]
 
-    await channel.send("\n".join(output_list))
+    await channel.send("\n".join(output_list), allowed_mentions=allowed_mentions)
 
 
 def get_settings_file(settings_file_name, in_settings_folder=True):
@@ -80,7 +91,7 @@ def get_settings_file(settings_file_name, in_settings_folder=True):
 
 async def handle_error(bot, title, traceback_string):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    print(error_text)
+    ts_print(error_text)
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await send_long(channel, error_text)
@@ -131,30 +142,191 @@ async def send_str_as_file(
         )
 
 
-async def clean_shutdown(bot, location="the console", person="KeyboardInterrupt"):
-    """Cleanly shutdown the bot"""
+async def clean_shutdown(
+    bot, location="the console", person="KeyboardInterrupt", exit=True
+):
+    """
+    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
+    and ctx.author.display_name as person, assuming called from a Discord command.
+    """
 
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
     if bot.officer_manager is not None:
-        print("")
+        ts_print("")
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
         bot.officer_manager.loa_loop.stop()
-        bot.officer_manager.main_loop.stop()
+        bot.officer_manager.loop.stop()
     else:
-        print("Couldn't find the OfficerManager...")
-        print("Stopping the bot without stopping time...")
+        ts_print("Couldn't find the OfficerManager...")
+        ts_print("Stopping the bot without stopping time...")
 
     # Log the shutdown
-    msg_string = f"WARNING: Bot shut down from {location} by {person}"
+    msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
-    print(msg_string)
+    ts_print(msg_string)
 
-    # Stop the event loop and exit Python. The OS should be
-    # calling this script inside a loop if you want the bot to restart
-    loop = get_event_loop()
-    loop.stop()
-    exit(0)
+    if exit:
+        # Stop the event loop and exit Python. The OS should be
+        # calling this script inside a loop if you want the bot to restart
+        loop = asyncio.get_event_loop()
+        loop.stop()
+        _exit(0)
+
+
+async def analyze_promotion_request(bot, message, timeout_in_seconds=7200):
+    """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
+
+    officer = bot.officer_manager.get_officer(message.author.id)
+
+    if (
+        "trained by" not in message.content.lower()
+        or "request rank" not in message.content.lower()
+        or not officer
+        or len(message.mentions) == 0
+    ):
+        return
+
+    # fmt: off
+    cadet_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "cadet"))
+    recruit_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "recruit"))
+    officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "officer"))
+    senior_officer_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "senior_officer"))
+    corporal_role = bot.officer_manager.guild.get_role(get_rank_id(bot.settings, "corporal"))
+
+    trainer_role = bot.officer_manager.guild.get_role(bot.settings["trainer_role"])
+    lmt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trainer_role"])
+    slrt_trainer_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trainer_role"])
+    prison_trainer_role = bot.officer_manager.guild.get_role(bot.settings["prison_trainer_role"])
+
+    lmt_trained_role = bot.officer_manager.guild.get_role(bot.settings["lmt_trained_role"])
+    slrt_trained_role = bot.officer_manager.guild.get_role(bot.settings["slrt_trained_role"])
+    watch_officer_role = bot.officer_manager.guild.get_role(bot.settings["watch_officer_role"])
+    # fmt: on
+
+    requestables = {
+        "recruit": {
+            "name": "Recruit",
+            "name_id": "recruit",
+            "role": recruit_role,
+            "prereq": cadet_role,
+            "approver": trainer_role,
+            "failmessage": "You must have the LPD Cadet role before you can request promotion to Officer. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": True,
+        },
+        "senior officer": {
+            "name": "Senior Officer",
+            "name_id": "senior_officer",
+            "role": senior_officer_role,
+            "prereq": officer_role,
+            "approver": trainer_role,
+            "failmessage": "You must have the LPD Officer role before you can request promotion to Senior Officer. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": True,
+        },
+        "slrt": {
+            "name": "SLRT",
+            "name_id": "slrt",
+            "role": slrt_trained_role,
+            "prereq": senior_officer_role,
+            "approver": slrt_trainer_role,
+            "failmessage": "You must have the LPD Senior Officer rank or higher before you can request assignment to the SLRT team. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": False,
+        },
+        "watch officer": {
+            "name": "Watch Officer",
+            "name_id": "watch_officer",
+            "role": watch_officer_role,
+            "prereq": corporal_role,
+            "approver": prison_trainer_role,
+            "failmessage": "You must have the LPD Corporal rank or higher before you can request assignment to the Watch Officer team. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": False,
+        },
+        "lmt": {
+            "name": "LMT",
+            "name_id": "lmt",
+            "role": lmt_trained_role,
+            "prereq": officer_role,
+            "approver": lmt_trainer_role,
+            "failmessage": "You must have the LPD Officer rank or higher before you can request assignment to the LMT team. Please contact a White Shirt if you feel this message is in error.",
+            "upgrade": False,
+        },
+    }
+
+    def get_approvers(role):
+        _valid_approvers = []
+        for member in message.mentions:
+            if role in member.roles:
+                _valid_approvers.append(member.id)
+        return _valid_approvers
+
+    def check(reaction, user, valid_approvers):
+        if (
+            user.id in valid_approvers
+            and reaction.emoji == "\N{WHITE HEAVY CHECK MARK}"
+        ):
+            valid_approvers.remove(user.id)
+            return reaction, user
+
+    for key in requestables.keys():
+        if key in message.content.lower():
+
+            # React with a white checkmark to give the trainers something to click
+            await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+
+            # If prerequisite not met, delete message and notify user
+            if (
+                requestables[key]["upgrade"]
+                and officer.rank != requestables[key]["prereq"]
+            ) or (
+                not requestables[key]["upgrade"]
+                and officer.rank.position < requestables[key]["prereq"].position
+            ):
+                await message.delete()
+                await message.channel.send(
+                    requestables[key]["failmessage"], delete_after=10
+                )
+                return
+
+            # Code to watch for approving checks
+            valid_approvers = get_approvers(requestables[key]["approver"])
+            try:
+                reaction, user = await bot.wait_for(
+                    "reaction_add",
+                    timeout=timeout_in_seconds,
+                    check=lambda reaction, user: check(reaction, user, valid_approvers),
+                )
+
+                if requestables[key]["upgrade"]:
+                    await officer.promote()
+                else:
+                    await message.author.add_roles(requestables[key]["role"])
+
+            except asyncio.TimeoutError:
+                await message.remove_reaction("\N{WHITE HEAVY CHECK MARK}", bot.user)
+
+            # Only process one matching result from the for loop - nobody should be requesting multiple ranks at once
+            return
+
+    # If we haven't returned by now, it means that we have no clue what the user sent. For the sake of forward compatibility,
+    # we aren't going to delete unknown messages. Just react with a question mark.
+    await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
+
+
+def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
+    """Adds a colored timestamp to debugging messages in the console"""
+
+    if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
+        print("")
+        return
+    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " - "
+    print(
+        timestamp + str(objects[0]),
+        *objects[1:],
+        sep=sep,
+        end=end,
+        file=file,
+        flush=flush,
+    )
