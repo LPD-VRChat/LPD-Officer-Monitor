@@ -1035,7 +1035,10 @@ class Inactivity(commands.Cog):
             else:
                 send_string = f"{send_string}{member.mention} does not appear to be an officer. Check with the Programming Team if you're absolutely sure they've had renewal time in the past, and you must know it.\n"
 
-        await send_long(ctx.channel, send_string)
+        if send_string == "":
+            await ctx.send("Please mention at least one Officer", delete_after=10)
+        else:
+            await send_long(ctx.channel, send_string)
 
 
 class VRChatAccoutLink(commands.Cog):
