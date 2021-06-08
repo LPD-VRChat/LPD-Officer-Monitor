@@ -309,9 +309,16 @@ class OfficerManager:
         renewed or join date as the value, witch ever one is higher.
         """
         data = await self.bot.sql.request(
-            "SELECT officer_id, renewed_time, started_monitoring_time FROM Officers"
+            """
+            SELECT
+                o.officer_id,
+                TIMESTAMP(GREATEST(o.started_monitoring_time, IFNULL(MAX(RT.renewed_time), '1970-1-1 0:0:0')))
+            FROM Officers o
+                LEFT JOIN RenewalTimes RT ON o.officer_id = RT.officer_id
+            GROUP BY o.officer_id
+            """
         )
-        return {d[0]: max(d[1], d[2]) for d in data}
+        return dict(data)
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""
