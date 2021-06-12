@@ -233,15 +233,6 @@ class OfficerManager:
             member_name = f"{display_name} ({officer_id})"
 
         await self.bot.sql.request(
-            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
-            "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
-            "DELETE FROM LeaveTimes WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
 
