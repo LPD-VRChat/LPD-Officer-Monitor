@@ -234,18 +234,6 @@ class OfficerManager:
             member_name = f"{display_name} ({officer_id})"
 
         await self.bot.sql.request(
-            "DELETE FROM MessageActivityLog WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
-            "DELETE FROM TimeLog WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
-            "DELETE FROM LeaveTimes WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
-            "DELETE FROM RenewalTimes WHERE officer_id = %s", (officer_id)
-        )
-        await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
         
@@ -312,19 +300,17 @@ class OfficerManager:
         Returns a dictionary with the officer id as key, and then when their time was last
         renewed or join date as the value, witch ever one is higher.
         """
-        officer_start_times = await self.bot.sql.request(
-            "SELECT officer_id, started_monitoring_time FROM Officers"
+        data = await self.bot.sql.request(
+            """
+            SELECT
+                o.officer_id,
+                TIMESTAMP(GREATEST(o.started_monitoring_time, IFNULL(MAX(RT.renewed_time), '1970-1-1 0:0:0')))
+            FROM Officers o
+                LEFT JOIN RenewalTimes RT ON o.officer_id = RT.officer_id
+            GROUP BY o.officer_id
+            """
         )
-        officer_renewal_times = await self.bot.sql.request(
-            "SELECT officer_id, renewed_time FROM RenewalTimes"
-        )
-        last_renew_dates = dict(officer_start_times)
-        officer_renewal_times_dict = dict(officer_renewal_times)
-
-        for officer_id in officer_renewal_times_dict.keys():
-            last_renew_dates[officer_id] = officer_renewal_times_dict[officer_id]
-
-        return last_renew_dates
+        return dict(data)
 
     def is_officer(self, member):
         """Returns true if specified member object has and of the LPD roles"""
