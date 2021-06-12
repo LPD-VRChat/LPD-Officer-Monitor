@@ -6,8 +6,9 @@ from typing import Optional, List, Mapping
 import discord
 from discord.ext import commands
 
-#Mine
+# Mine
 import CustomTyping.modified_bot as mb
+
 
 class VRChatUserManager:
     """This class handles interaction with the user storage CSV file."""
@@ -69,7 +70,12 @@ class VRChatUserManager:
 
         return string
 
-    async def add_user(self, discord_id: int, vrchat_name: str, skip_format_name: Optional[bool] = False):
+    async def add_user(
+        self,
+        discord_id: int,
+        vrchat_name: str,
+        skip_format_name: Optional[bool] = False,
+    ):
         await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does

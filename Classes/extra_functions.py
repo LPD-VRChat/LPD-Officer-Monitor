@@ -14,6 +14,7 @@ import commentjson as json
 # Mine
 import CustomTyping.modified_bot as mb
 
+
 def is_number(string: str) -> bool:
     try:
         int(string)
@@ -22,7 +23,9 @@ def is_number(string: str) -> bool:
         return False
 
 
-async def send_long(channel: discord.channel.TextChannel, string: str, code_block=False, mentiong=True):
+async def send_long(
+    channel: discord.channel.TextChannel, string: str, code_block=False, mentiong=True
+):
     """Send output as a text file, or optionally a code block if code_block=True is passed"""
 
     # Set allowed mentions
@@ -130,7 +133,8 @@ def get_role_name_by_id(settings: Dict, bad_role: int) -> str:
     for entry in settings["role_ladder"]:
         if entry["id"] == bad_role:
             return entry["name"]
-    return ''
+    return ""
+
 
 async def send_str_as_file(
     channel: discord.TextChannel,
@@ -144,7 +148,12 @@ async def send_str_as_file(
         )
 
 
-async def clean_shutdown(bot: mb.Bot, location: Optional[str] = "the console", person: Optional[str] = "KeyboardInterrupt", exit: bool = True):
+async def clean_shutdown(
+    bot: mb.Bot,
+    location: Optional[str] = "the console",
+    person: Optional[str] = "KeyboardInterrupt",
+    exit: bool = True,
+):
     """
     Cleanly shutdown the bot. Please specify ctx.channel.name as location,
     and ctx.author.display_name as person, assuming called from a Discord command.
@@ -177,7 +186,9 @@ async def clean_shutdown(bot: mb.Bot, location: Optional[str] = "the console", p
         _exit(0)
 
 
-async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeout_in_seconds: Optional[int] = 7200):
+async def analyze_promotion_request(
+    bot: mb.Bot, message: discord.Message, timeout_in_seconds: Optional[int] = 7200
+):
     """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
 
     officer = bot.officer_manager.get_officer(message.author.id)

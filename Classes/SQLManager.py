@@ -11,6 +11,7 @@ import aiomysql
 from pymysql import err as mysql_errors
 import CustomTyping.modified_bot as mb
 
+
 class SQLManager:
     def __init__(self, db_pool, bot: mb.Bot):
         self.bot = bot

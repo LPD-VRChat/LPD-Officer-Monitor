@@ -42,7 +42,6 @@ import Classes.errors as errors
 import CustomTyping.modified_bot as mb
 
 
-
 loop = asyncio.get_event_loop()
 
 # Set intents for the bot - this allows the bot to see other users in the server

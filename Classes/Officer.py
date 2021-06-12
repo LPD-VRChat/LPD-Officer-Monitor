@@ -25,7 +25,9 @@ from Classes.extra_functions import ts_print as print
 class Officer:
     def __init__(self, user_id: int, bot: mb.Bot):
         self.bot = bot
-        self.member: Member = bot.get_guild(bot.settings["Server_ID"]).get_member(user_id)
+        self.member: Member = bot.get_guild(bot.settings["Server_ID"]).get_member(
+            user_id
+        )
         if self.member == None:
             raise MemberNotFoundError()
 
