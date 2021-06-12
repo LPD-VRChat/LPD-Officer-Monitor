@@ -10,3 +10,4 @@ fuzzywuzzy
 discord.py-stubs
 discord-ext-typed-commands
 python-Levenshtein
+termcolor

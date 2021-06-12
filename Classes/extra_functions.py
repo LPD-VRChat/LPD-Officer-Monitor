@@ -4,6 +4,9 @@ import discord
 from os import _exit
 import asyncio
 from io import StringIO, BytesIO
+from termcolor import colored
+from datetime import datetime
+from sys import stdout
 
 # Community
 import commentjson as json
@@ -19,8 +22,13 @@ def is_number(string: str) -> bool:
         return False
 
 
-async def send_long(channel: discord.channel.TextChannel, string: str, code_block=False):
+async def send_long(channel: discord.channel.TextChannel, string: str, code_block=False, mentiong=True):
     """Send output as a text file, or optionally a code block if code_block=True is passed"""
+
+    # Set allowed mentions
+    allowed_mentions = (
+        discord.AllowedMentions.all() if mention else discord.AllowedMentions.none()
+    )
 
     # Make a function to check the length of all the lines
     str_list_len = lambda str_list: sum(len(i) + 1 for i in str_list)
@@ -58,11 +66,14 @@ async def send_long(channel: discord.channel.TextChannel, string: str, code_bloc
             output_list.append(line)
         else:
             # Send the full message and add backticks if needed
-            await channel.send("\n".join(output_list) + ("```" if code_block else ""))
+            await channel.send(
+                "\n".join(output_list) + ("```" if code_block else ""),
+                allowed_mentions=allowed_mentions,
+            )
             # Add the backticks if the message should be in a codeblock
             output_list = [("```" if code_block else "") + line]
 
-    await channel.send("\n".join(output_list))
+    await channel.send("\n".join(output_list), allowed_mentions=allowed_mentions)
 
 
 def get_settings_file(settings_file_name: str, in_settings_folder=True) -> Dict:
@@ -82,7 +93,7 @@ def get_settings_file(settings_file_name: str, in_settings_folder=True) -> Dict:
 
 async def handle_error(bot: mb.Bot, title: str, traceback_string: str):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    print(error_text)
+    ts_print(error_text)
 
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await send_long(channel, error_text)
@@ -134,26 +145,29 @@ async def send_str_as_file(
 
 
 async def clean_shutdown(bot: mb.Bot, location: Optional[str] = "the console", person: Optional[str] = "KeyboardInterrupt", exit: bool = True):
-    """Cleanly shutdown the bot"""
+    """
+    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
+    and ctx.author.display_name as person, assuming called from a Discord command.
+    """
 
     # Put all on-duty officers off duty - don't worry,
     # they'll be put back on duty next startup
     if bot.officer_manager is not None:
-        print("")
+        ts_print("")
         for officer in bot.officer_manager.all_officers.values():
             if officer.is_on_duty:
                 await officer.go_off_duty()
         bot.officer_manager.loa_loop.stop()
         bot.officer_manager.loop.stop()
     else:
-        print("Couldn't find the OfficerManager...")
-        print("Stopping the bot without stopping time...")
+        ts_print("Couldn't find the OfficerManager...")
+        ts_print("Stopping the bot without stopping time...")
 
     # Log the shutdown
     msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
     channel = bot.get_channel(bot.settings["error_log_channel"])
     await channel.send(msg_string)
-    print(msg_string)
+    ts_print(msg_string)
 
     if exit:
         # Stop the event loop and exit Python. The OS should be
@@ -163,7 +177,7 @@ async def clean_shutdown(bot: mb.Bot, location: Optional[str] = "the console", p
         _exit(0)
 
 
-async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeout_in_seconds: Optional[int] = 300):
+async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeout_in_seconds: Optional[int] = 7200):
     """This function analyzes a message to determine eleigbility for promotion, and automatically apply the promotion when reactions are received."""
 
     officer = bot.officer_manager.get_officer(message.author.id)
@@ -214,7 +228,7 @@ async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeo
         },
         "slrt": {
             "name": "SLRT",
-            "name_id": "recruit",
+            "name_id": "slrt",
             "role": slrt_trained_role,
             "prereq": senior_officer_role,
             "approver": slrt_trainer_role,
@@ -223,7 +237,7 @@ async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeo
         },
         "watch officer": {
             "name": "Watch Officer",
-            "name_id": "recruit",
+            "name_id": "watch_officer",
             "role": watch_officer_role,
             "prereq": corporal_role,
             "approver": prison_trainer_role,
@@ -232,7 +246,7 @@ async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeo
         },
         "lmt": {
             "name": "LMT",
-            "name_id": "recruit",
+            "name_id": "lmt",
             "role": lmt_trained_role,
             "prereq": officer_role,
             "approver": lmt_trainer_role,
@@ -299,3 +313,20 @@ async def analyze_promotion_request(bot: mb.Bot, message: discord.Message, timeo
     # If we haven't returned by now, it means that we have no clue what the user sent. For the sake of forward compatibility,
     # we aren't going to delete unknown messages. Just react with a question mark.
     await message.add_reaction("\N{BLACK QUESTION MARK ORNAMENT}")
+
+
+def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
+    """Adds a colored timestamp to debugging messages in the console"""
+
+    if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
+        print("")
+        return
+    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " - "
+    print(
+        timestamp + str(objects[0]),
+        *objects[1:],
+        sep=sep,
+        end=end,
+        file=file,
+        flush=flush,
+    )
