@@ -272,21 +272,27 @@ class OfficerManager:
         officers and how active they have been over a specific amount of time.
         """
 
-        db_request = (
-            """
-            SELECT O.officer_id, SUM(TIMESTAMPDIFF(SECOND, TL.start_time, TL.end_time)) AS "patrol_length"
-            FROM Officers O
-                LEFT JOIN TimeLog TL
-                    ON O.officer_id = TL.officer_id
-            WHERE
-                (TL.end_time > %s AND TL.end_time < %s)
-            """
-            + ("OR TL.end_time IS NULL\n" if include_no_activity else "")
-            + """
-            GROUP BY O.officer_id
+        db_request = """
+            SELECT TL.officer_id, SUM(TIMESTAMPDIFF(SECOND, TL.start_time, TL.end_time)) AS "patrol_length"
+            FROM TimeLog TL
+            WHERE TL.end_time > %s AND TL.end_time < %s
+            GROUP BY TL.officer_id
             ORDER BY patrol_length DESC
             """
-        )
+        if include_no_activity:
+            db_request = (
+                """
+                SELECT O.officer_id, IFNULL(A.patrol_length, 0) AS "patrol_length"
+                FROM Officers O
+                    LEFT JOIN (
+                        """
+                + db_request
+                + """
+                    ) A
+                        ON O.officer_id = A.officer_id
+                """
+            )
+
         arg_list: List[Any] = [from_datetime, to_datetime]
 
         if limit:

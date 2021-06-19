@@ -801,12 +801,12 @@ class Inactivity(commands.Cog):
         oldest_valid_msg = datetime.utcnow() - timedelta(
             days=self.bot.settings["max_inactive_msg_days"]
         )
-        monitored = self.bot.settings["monitored_channels"]
+        monitored = self.bot.officer_manager.all_monitored_channels
 
         # Generate tasks for getting everyone's activity at the same time
         tasks: Set[asyncio.Task[Union[Dict[str, Any], None]]] = set()
         for officer in officers:
-            new_coroutine = officer.get_last_activity(monitored)
+            new_coroutine = officer.get_last_chat_activity(monitored)
             new_task = asyncio.create_task(new_coroutine)
             new_task.officer = officer  # type: ignore
             tasks.add(new_task)
@@ -846,7 +846,7 @@ class Inactivity(commands.Cog):
             await ctx.send("No one was skipped because of chat activity.")
         else:
             skipped_str = (
-                "The following were skipped because of recent chat activity, on duty activity or being new:\n"
+                "The following were skipped because of recent chat activity:\n"
                 + "\n".join(m.mention for m in skipped_officers)
             )
             await send_long(ctx.channel, skipped_str, mention=False)
@@ -857,9 +857,14 @@ class Inactivity(commands.Cog):
         inactive_officers: List[Officer],
         chat_activity_skipped: List[Officer],
     ) -> None:
-        output_string = ""
-        for officer in inactive_officers:
-            output_string = f"{officer.mention}\n{output_string}"
+        output_string = "\n".join(
+            [
+                "Chat activity skipped (need manual review):",
+                "\n".join(o.mention for o in chat_activity_skipped),
+                "Inactive officers (will be added to inactive role):",
+                "\n".join(o.mention for o in inactive_officers),
+            ]
+        )
         await send_long(ctx.channel, output_string, mention=False)
 
         confirm = await Confirm(
@@ -867,9 +872,9 @@ class Inactivity(commands.Cog):
         ).prompt(ctx)
         if confirm:
             # Add the inactive roles
-            await ctx.send("Please give me a moment to add the roles.")
+            await ctx.send("Please give me a moment to add the roles...")
             await self._mark_inactive(inactive_officers)
-            await ctx.send(f"All officers above have been marked as inactive.")
+            await ctx.send(f"**All officers above have been marked as inactive.**")
 
             # Notify about who was skipped because of chat activity
             await self._show_skipped_officers(ctx, chat_activity_skipped)
@@ -896,9 +901,7 @@ class Inactivity(commands.Cog):
         * Not be a white shirt (they're handled in a different way)
         * Not be skipped because of chat activity (explained below)
 
-        To be skipped because of chat activity you can fill either of the requirements below:
-        * Have a message in a monitored channel in the last "max_inactive_msg_days" days.
-        * Have gone on duty in that time
+        To be skipped because of chat activity you must have a message in a monitored channel in the last "max_inactive_msg_days" days.
 
         Being skipped because of chat activity means that that person will not be marked as inactive
         automatically, however, will go onto a list that is displayed after this command completes.
@@ -1641,7 +1644,7 @@ class Other(commands.Cog):
         await ctx.send(embed=embed)
 
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_event_host_or_any_trainer(),checks.is_white_shirt())
+    @commands.check_any(checks.is_event_host_or_any_trainer(), checks.is_white_shirt())
     @commands.command(usage="<options>")
     async def who(self, ctx, *args):
         """
