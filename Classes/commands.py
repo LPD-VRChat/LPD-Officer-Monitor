@@ -846,7 +846,7 @@ class Inactivity(commands.Cog):
             await ctx.send("No one was skipped because of chat activity.")
         else:
             skipped_str = (
-                "The following were skipped because of recent chat activity, on duty activity or being new:\n"
+                "The following were skipped because of recent chat activity:\n"
                 + "\n".join(m.mention for m in skipped_officers)
             )
             await send_long(ctx.channel, skipped_str, mention=False)
@@ -872,9 +872,9 @@ class Inactivity(commands.Cog):
         ).prompt(ctx)
         if confirm:
             # Add the inactive roles
-            await ctx.send("Please give me a moment to add the roles.")
+            await ctx.send("Please give me a moment to add the roles...")
             await self._mark_inactive(inactive_officers)
-            await ctx.send(f"All officers above have been marked as inactive.")
+            await ctx.send(f"**All officers above have been marked as inactive.**")
 
             # Notify about who was skipped because of chat activity
             await self._show_skipped_officers(ctx, chat_activity_skipped)
