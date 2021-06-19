@@ -980,7 +980,7 @@ class Inactivity(commands.Cog):
         await ctx.send(
             f"Looks like some people didn't give a reason for their inactivity. Renewing time for those who did. Here are the unexcused inactive members:"
         )
-        await send_long(ctx.channel, f"{unexcused_mentions}")
+        await send_long(ctx.channel, f"{unexcused_mentions}", mention=False)
 
         # This code has been removed from the command, however I am leaving it here just in case we want to
         # do something with it in the future.
