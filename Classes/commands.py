@@ -1007,8 +1007,11 @@ class Inactivity(commands.Cog):
                 result = await officer.get_inactivity_reasons()
                 if result:
                     for row in result:
-                        renewer = self.bot.officer_manager.guild.get_member(int(row[1]))
-                        send_string = f"{send_string}{member.mention}'s time was renewed by {renewer.mention} at {row[0]} for reason:\n{row[2]}\n"
+                        if row[1] is None:
+                            renewer_str = "unknown"
+                        else:
+                            renewer_str = self.bot.officer_manager.guild.get_member(int(row[1])).mention
+                        send_string = f"{send_string}{member.mention}'s time was renewed by {renewer_str} at {row[0]} for reason:\n{row[2]}\n"
                 else:
                     send_string = f"{send_string}{member.mention} has not had their time renewed.\n"
             else:
