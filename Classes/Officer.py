@@ -592,11 +592,10 @@ class Officer:
             FROM Officers
             WHERE officer_id = %s)
             UNION
-            (SELECT officer_id, null, null, renewed_time, concat("Time renewed by ", renewed_by) AS "other_activity"
+            (SELECT officer_id, null, null, renewed_time, CONCAT('Time renewed by ', IFNULL(renewed_by, 0)) AS "other_activity"
             FROM RenewalTimes
             WHERE officer_id = %s
-                ORDER BY renewed_time DESC
-                LIMIT 1)
+                ORDER BY renewed_time DESC)
             """,
             (self.id, self.id, self.id, self.id),
         )
@@ -609,12 +608,13 @@ class Officer:
             result.append(list(tup))
 
         for row in result:
-            if row[4]:
-                if "Time renewed by " in row[4]:
-                    renewer_id = row[4].split("Time renewed by ", 1)[1]
-                    renewer = self.bot.officer_manager.guild.get_member(int(renewer_id))
+            if row[4] and "Time renewed by " in row[4]:
+                renewer_id = row[4].split("Time renewed by ", 1)[1]
+                renewer = self.bot.officer_manager.guild.get_member(int(renewer_id))
+                if renewer is not None:
                     row[4] = f"Time renewed by {renewer.mention}"
-                    break
+                else:
+                    row[4] = f"Time renewed by unknown"
 
         # Filter all non-counted channels out
         return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)

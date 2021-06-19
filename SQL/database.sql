@@ -88,5 +88,5 @@ CREATE TABLE RenewalTimes
     reason TEXT,
 
     CONSTRAINT officer_id_FK_RT FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT renewed_by_FK FOREIGN KEY (renewed_by) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT renewed_by_FK FOREIGN KEY (renewed_by) REFERENCES Officers(officer_id) ON DELETE SET NULL
 );
