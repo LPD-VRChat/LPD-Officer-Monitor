@@ -952,7 +952,7 @@ class Inactivity(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    async def accept_inactive_reasons(self, ctx):
+    async def accept_inactive_reasons(self, ctx, channel):
         """Approve all inactivity reasons listed in the mentioned channels"""
         inactive_role = self.bot.officer_manager.guild.get_role(
             self.bot.settings["inactive_role"]
