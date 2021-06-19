@@ -982,30 +982,6 @@ class Inactivity(commands.Cog):
         )
         await send_long(ctx.channel, f"{unexcused_mentions}", mention=False)
 
-        # This code has been removed from the command, however I am leaving it here just in case we want to
-        # do something with it in the future.
-
-        # auto_remove = await Confirm(
-        #     f"Would you like to automatically remove the LPD, Rank, and Inactive roles from these members?"
-        # ).prompt(ctx)
-
-        # if not auto_remove:
-        #     return
-
-        # all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
-        # all_lpd_ranks.append(self.bot.settings["lpd_role"])
-
-        # for member in ctx.guild.members:
-        #     if inactive_role in member.roles:
-        #         for role in member.roles:
-        #             if role.id in all_lpd_ranks:
-        #                 await member.remove_roles(role)
-        #     await member.remove_roles(inactive_role)
-
-        # await ctx.channel.send(
-        #     f"Removed LPD, Rank, and Inactive roles from the users above."
-        # )
-
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
