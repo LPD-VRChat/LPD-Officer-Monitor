@@ -903,7 +903,6 @@ class Inactivity(commands.Cog):
 
         To be skipped because of chat activity you can fill either of the requirements below:
         * Have a message in a monitored channel in the last "max_inactive_msg_days" days.
-        * Have gone on duty in that time
 
         Being skipped because of chat activity means that that person will not be marked as inactive
         automatically, however, will go onto a list that is displayed after this command completes.
