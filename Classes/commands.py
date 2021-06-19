@@ -801,12 +801,12 @@ class Inactivity(commands.Cog):
         oldest_valid_msg = datetime.utcnow() - timedelta(
             days=self.bot.settings["max_inactive_msg_days"]
         )
-        monitored = self.bot.settings["monitored_channels"]
+        monitored = self.bot.officer_manager.all_monitored_channels
 
         # Generate tasks for getting everyone's activity at the same time
         tasks: Set[asyncio.Task[Union[Dict[str, Any], None]]] = set()
         for officer in officers:
-            new_coroutine = officer.get_last_activity(monitored)
+            new_coroutine = officer.get_last_chat_activity(monitored)
             new_task = asyncio.create_task(new_coroutine)
             new_task.officer = officer  # type: ignore
             tasks.add(new_task)
@@ -857,9 +857,14 @@ class Inactivity(commands.Cog):
         inactive_officers: List[Officer],
         chat_activity_skipped: List[Officer],
     ) -> None:
-        output_string = ""
-        for officer in inactive_officers:
-            output_string = f"{officer.mention}\n{output_string}"
+        output_string = "\n".join(
+            [
+                "Chat activity skipped (need manual review):",
+                "\n".join(o.mention for o in chat_activity_skipped),
+                "Inactive officers (will be added to inactive role):",
+                "\n".join(o.mention for o in inactive_officers),
+            ]
+        )
         await send_long(ctx.channel, output_string, mention=False)
 
         confirm = await Confirm(
@@ -1547,7 +1552,7 @@ class Other(commands.Cog):
         await ctx.send(embed=embed)
 
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_event_host_or_any_trainer(),checks.is_white_shirt())
+    @commands.check_any(checks.is_event_host_or_any_trainer(), checks.is_white_shirt())
     @commands.command(usage="<options>")
     async def who(self, ctx, *args):
         """
