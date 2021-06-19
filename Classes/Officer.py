@@ -7,6 +7,7 @@ import asyncio
 import math
 import time
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 # Community
 from discord import Member, Role
@@ -487,6 +488,25 @@ class Officer:
         if result == None:
             return None
         max_result = max(result, key=lambda x: time.mktime(x[3].timetuple()))
+        return self._create_activity_dict(max_result)
+
+    async def get_last_chat_activity(
+        self, counted_channel_ids
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Returns the date of an officer's last message, along with some other
+        data like the message id and channel id or None if the officer doesn't
+        have any messages in the bot.
+        """
+        result = await self._get_all_activity(counted_channel_ids)
+
+        if result == None:
+            return None
+
+        message_results = [r for r in result if r[2] is not None]
+        if len(message_results) == 0:
+            return None
+        max_result = max(message_results, key=lambda x: time.mktime(x[3].timetuple()))
         return self._create_activity_dict(max_result)
 
     async def get_all_activity(self, counted_channel_ids):
