@@ -73,12 +73,12 @@ class Officer:
         self.is_on_duty = False
         self.squad = None
 
-    async def remove(self):
+    async def remove(self, reason=None):
 
         # Remove itself
         display_name = self.member.display_name
         await self.bot.officer_manager.remove_officer(
-            self.id, display_name=display_name
+            self.id, reason=reason, display_name=display_name
         )
 
     async def process_loa(self, message):
@@ -552,6 +552,13 @@ class Officer:
                 (msg.id, msg.channel.id, self.id, string_send_time),
             )
 
+    async def renew_time(self, renewed_by, reason):
+        """Makes an entry into RenewalTimes for the Officer"""
+        await self.bot.sql.request(
+            "REPLACE INTO RenewalTimes (officer_id, renewed_by, reason) VALUES (%s, %s, %s)",
+            (self.id, renewed_by, reason),
+        )
+
     # Internal functions
 
     def _create_activity_dict(self, activity_tuple):
@@ -566,9 +573,10 @@ class Officer:
     async def _get_all_activity(self, counted_channel_ids):
         # This database request includes 3 combined queries, they are described here below:
         #     1) The messages from MessageActivityLog        - other_activity is null
-        #     2) Last on duty activity                       - other_activity is On duty activity
-        #     3) When the bot started monitoring the officer - other_activity is Started monitoring
-        result = await self.bot.sql.request(
+        #     2) Last on duty activity                       - other_activity is "On duty activity"
+        #     3) When the bot started monitoring the officer - other_activity is "Started monitoring"
+        #     4) The last renewal time from inactivity       - other_activity is "Time renewed by {renewer's display_name}" as returned by this function
+        tuple_result = await self.bot.sql.request(
             """
             SELECT officer_id, channel_id, message_id, send_time, null AS "other_activity"
             FROM MessageActivityLog
@@ -580,14 +588,41 @@ class Officer:
                 ORDER BY end_time DESC
                 LIMIT 1)
             UNION
-            (SELECT officer_id, null, null, started_monitoring_time, "Started monitoring" AS "other_activity"
+            (SELECT officer_id, null, null, started_monitoring_time, "Started monitoring " AS "other_activity"
             FROM Officers
             WHERE officer_id = %s)
+            UNION
+            (SELECT officer_id, null, null, renewed_time, CONCAT('Time renewed by ', IFNULL(renewed_by, 0)) AS "other_activity"
+            FROM RenewalTimes
+            WHERE officer_id = %s
+                ORDER BY renewed_time DESC)
             """,
-            (self.id, self.id, self.id),
+            (self.id, self.id, self.id, self.id),
         )
 
-        if result == None:
+        if tuple_result == None:
             return None
+
+        result = []
+        for tup in tuple_result:
+            result.append(list(tup))
+
+        for row in result:
+            if row[4] and "Time renewed by " in row[4]:
+                renewer_id = row[4].split("Time renewed by ", 1)[1]
+                renewer = self.bot.officer_manager.guild.get_member(int(renewer_id))
+                if renewer is not None:
+                    row[4] = f"Time renewed by {renewer.mention}"
+                else:
+                    row[4] = f"Time renewed by unknown"
+
         # Filter all non-counted channels out
         return filter(lambda x: x[1] in counted_channel_ids or x[1] == None, result)
+
+    async def get_inactivity_reasons(self):
+        result = await self.bot.sql.request(
+            "SELECT renewed_time, renewed_by, reason FROM RenewalTimes WHERE officer_id = %s ORDER BY renewed_time DESC",
+            (self.id),
+        )
+
+        return result

@@ -132,6 +132,7 @@ class OfficerManager:
                     await self.remove_officer(
                         member_id,
                         reason="this person is in the server but does no longer have an LPD Officer role",
+                        display_name=member.display_name,
                     )
                     continue
 
@@ -235,7 +236,7 @@ class OfficerManager:
         await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
-
+        
         # Remove the officer from the officer list
         try:
             del self._all_officers[officer_id]
