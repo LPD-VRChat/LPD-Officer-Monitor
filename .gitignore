@@ -114,6 +114,6 @@ venv.bak/
 # Local database
 LPD_database*.csv
 output.py
-.vs/slnx.sqlite
 settings/settings.json
+*.sqlite
 .run.loop
