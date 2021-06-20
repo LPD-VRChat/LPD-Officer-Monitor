@@ -66,63 +66,39 @@ class VRChatUserManager:
 
         return string
 
-    async def add_user(self, discord_id, vrchat_name):
-        
-        # Detect if we're replacing an existing link
-        for user in self.all_users:
-            if user[0] == discord_id and user[1] != vrchat_name:
-                await self.update_user(discord_id, vrchat_name)
-                return
-        #await self.remove_user(discord_id)
+    async def add_user(self, discord_id, vrchat_name, skip_format_name=False):
+        await self.remove_user(discord_id)
 
         # Format the name with modifications VRChat does
-        vrchat_name = self.vrc_name_format(vrchat_name)
+        if not skip_format_name:
+            vrchat_name = self.vrc_name_format(vrchat_name)
 
         # Add to the cache
         self.all_users.append([discord_id, vrchat_name])
 
         # Add to the permanent DB
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             """
-            REPLACE INTO 
+            INSERT INTO 
                 VRChatNames(officer_id, vrc_name)
             VALUES
                 (%s, %s);
             """,
             (discord_id, vrchat_name),
         )
-        
-    async def update_user(self, discord_id, vrchat_name):
-    
-        vrchat_name = self.vrc_name_format(vrchat_name)
-        self.all_users = [x for x in self.all_users if x[0] != discord_id]
-        
-        # Add to the cache
-        self.all_users.append([discord_id, vrchat_name])
 
-        # Add to the permanent DB
-        await self.bot.officer_manager.send_db_request(f"SET FOREIGN_KEY_CHECKS=0;")
-        await self.bot.officer_manager.send_db_request(f"UPDATE VRChatActivity WHERE officer_id = {discord_id} SET vrc_name = '{vrc_name}'")
-        await self.bot.officer_manager.send_db_request(f"UPDATE VRChatNames WHERE officer_id = {discord_id} SET vrc_name = '{vrc_name}'")
-        await self.bot.officer_manager.send_db_request(f"SET FOREIGN_KEY_CHECKS=1;")
-        
-        
-        
     async def remove_user(self, discord_id):
 
         # Remove from the cache
         self.all_users = [x for x in self.all_users if x[0] != discord_id]
 
         # Remove from the permanent DB
-        await self.bot.officer_manager.send_db_request(
-            "DELETE FROM VRChatActivity WHERE officer_id = %s", (discord_id)
-        )
-        await self.bot.officer_manager.send_db_request(
+        await self.bot.sql.request(
             "DELETE FROM VRChatNames WHERE officer_id = %s", (discord_id)
         )
 
     async def update_cache(self):
-        db_result = await self.bot.officer_manager.send_db_request(
+        db_result = await self.bot.sql.request(
             "SELECT officer_id, vrc_name FROM VRChatNames", ()
         )
 

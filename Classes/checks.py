@@ -33,16 +33,19 @@ def is_admin():
         if officer and officer.is_admin:
             return True
         else:
-            raise errors.NotForYouError("This command is only for LPD Cheifs.")
+            raise errors.NotForYouError("This command is only for LPD Chiefs.")
 
     return commands.check(predicate)
 
 
 def is_admin_bot_channel():
     def predicate(ctx):
-        if ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]:
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        if ctx.message.channel.id != admin_bot_channel.id:
             raise errors.WrongChannelError(
-                "This command only works in the admin bot channel."
+                f"This command only works in {admin_bot_channel.mention}."
             )
         return True
 
@@ -51,12 +54,18 @@ def is_admin_bot_channel():
 
 def is_general_bot_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        general_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["general_bot_channel"]
+        )
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["general_bot_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != general_bot_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the general bot channel or admin bot channel."
+                f"This command only works in {general_bot_channel.mention} or {admin_bot_channel.mention}."
             )
         return True
 
@@ -65,12 +74,18 @@ def is_general_bot_channel():
 
 def is_application_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        application_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["application_channel"]
+        )
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["application_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != application_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the application channel."
+                f"This command only works in {application_channel.mention} or {admin_bot_channel.mention}."
             )
         return True
 
@@ -79,12 +94,18 @@ def is_application_channel():
 
 def is_team_bot_channel():
     def predicate(ctx):
+        admin_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["admin_bot_channel"]
+        )
+        team_bot_channel = ctx.bot.officer_manager.guild.get_channel(
+            ctx.bot.settings["team_bot_channel"]
+        )
         if (
-            ctx.message.channel.id != ctx.bot.settings["admin_bot_channel"]
-            and ctx.message.channel.id != ctx.bot.settings["team_bot_channel"]
+            ctx.message.channel.id != admin_bot_channel.id
+            and ctx.message.channel.id != team_bot_channel.id
         ):
             raise errors.WrongChannelError(
-                "This command only works in the team bot channel."
+                f"This command only works in {team_bot_channel.mention} or {admin_bot_channel.mention}"
             )
         return True
 
@@ -102,6 +123,24 @@ def is_recruiter():
     return commands.check(predicate)
 
 
+def is_event_host_or_any_trainer():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and (
+            officer.is_event_host
+            or officer.is_trainer
+            or officer.is_slrt_trainer
+            or officer.is_lmt_trainer
+        ):
+            return True
+        else:
+            raise errors.NotForYouError(
+                "This command is only for LPD event Host or Trainers."
+            )
+
+    return commands.check(predicate)
+
+
 def is_dev_team():
     def predicate(ctx):
         officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
@@ -109,5 +148,66 @@ def is_dev_team():
             return True
         else:
             raise errors.NotForYouError("This command is only for the LPD Dev Team.")
+
+    return commands.check(predicate)
+
+
+def is_chat_moderator():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_chat_moderator:
+            return True
+        elif officer and officer.is_moderator:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Chat Moderators.")
+
+    return commands.check(predicate)
+
+
+def is_moderator():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_moderator:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Moderators.")
+
+    return commands.check(predicate)
+
+
+def is_team_lead():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_team_lead:
+            return True
+        else:
+            raise errors.NotForYouError("This command is only for LPD Team Leads.")
+
+    return commands.check(predicate)
+
+
+def is_programming_team():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_programming_team:
+            return True
+        else:
+            raise errors.NotForYouError(
+                "This command is only for the LPD Programming Team."
+            )
+
+    return commands.check(predicate)
+
+
+def is_lmt_trainer():
+    def predicate(ctx):
+        officer = ctx.bot.officer_manager.get_officer(ctx.author.id)
+        if officer and officer.is_lmt_trainer:
+            return True
+        else:
+            raise errors.NotForYouError(
+                "This command is only for the LMT Trainer Team."
+            )
 
     return commands.check(predicate)

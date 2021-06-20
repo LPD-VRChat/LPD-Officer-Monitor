@@ -1,16 +1,20 @@
 # Standard
+from Classes.Officer import Officer
+import csv
 import sys
 from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta, timezone, time
+from datetime import datetime, timedelta
 import time
 import math
 import traceback
 import json
-import aiomysql
 import asyncio
+from typing import Any, Dict, Iterable, List, Set, Tuple, Union
+import inspect
+import fuzzywuzzy.process
 
 # Community
 import discord
@@ -19,13 +23,22 @@ import texttable
 import arrow
 
 # Mine
-from Classes.extra_functions import send_long, handle_error, get_rank_id, has_role
+from Classes.extra_functions import (
+    send_long,
+    handle_error,
+    get_rank_id,
+    has_role,
+    send_str_as_file,
+    clean_shutdown,
+    role_id_index,
+    get_role_name_by_id,
+)
+from Classes.extra_functions import ts_print as print
 from Classes.custom_arg_parse import ArgumentParser
 from Classes.menus import Confirm
 import Classes.errors as errors
 import Classes.checks as checks
-from Classes.extra_functions import role_id_index, get_role_name_by_id
-from Classes.VRChatListener import add_officer_as_friend, join_user
+
 
 class Time(commands.Cog):
     """Here are all the commands relating to managing the time of officers."""
@@ -74,22 +87,6 @@ class Time(commands.Cog):
             second_if_end, first = divmod(calculations[i][0], divisions[i])
             calculations[i].append(first)
             calculations.append([second_if_end])
-        # Old Code:
-        # seconds_if_end = seconds
-        # minutes_if_end, seconds = divmod(seconds_if_end, 60)
-        # hours_if_end, minutes = divmod(minutes_if_end, 60)
-        # days_if_end, hours = divmod(hours_if_end, 24)
-        # weeks_if_end, days = divmod(days_if_end, 7)
-
-        # # Set up the list
-        # calculations = [
-        #     [seconds_if_end, seconds],
-        #     [minutes_if_end, minutes],
-        #     [hours_if_end,   hours],
-        #     [days_if_end,    days],
-        #     [weeks_if_end]
-        # ]
-        # print(calculations)
 
         # Move the time to the string
         return_str = ""
@@ -122,10 +119,10 @@ class Time(commands.Cog):
     def get_officer_id(self, officer_string):
 
         # Check for an @ mention
-        p = re.compile(r"<@\![0-9]+>")
+        p = re.compile(r"<@!{0,1}([0-9]+?)>")
         match = p.match(officer_string)
         if match:
-            return int(match.group()[3:-1])
+            return int(match.group(1))
 
         # Check for an ID
         p = re.compile(r"[0-9]+")
@@ -225,7 +222,7 @@ class Time(commands.Cog):
                 # The user is giving from_time and thus wants from_time
                 # to be the current time
                 from_datetime = self.parse_date(parsed.from_date)
-                to_datetime = datetime.now(timezone.utc)
+                to_datetime = datetime.utcnow()
 
             else:
                 # Both are here, they can just be parsed
@@ -292,9 +289,8 @@ class Time(commands.Cog):
         # Get the officer ID
         officer_id = self.get_officer_id(parsed.officer)
         if officer_id == None:
-            ctx.send("Make sure to mention an officer.")
+            await ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
@@ -342,7 +338,8 @@ class Time(commands.Cog):
             table.header(["From      ", "To        ", "hr:min:sec"])
 
             # This is a lambda to add the discord code block on the table to keep it monospace
-            draw_table = lambda table: "```\n" + table.draw() + "\n```"
+            def draw_table(table):
+                return "```\n" + table.draw() + "\n```"
 
             # Loop through all the patrols to add them to a string and send them
             for patrol in all_patrols:
@@ -397,7 +394,6 @@ class Time(commands.Cog):
         if officer_id == None:
             ctx.send("Make sure to mention an officer.")
             return
-        print(f"officer_id: {officer_id}")
 
         # Make sure the person mentioned is an LPD officer
         officer = self.bot.officer_manager.get_officer(officer_id)
@@ -489,7 +485,7 @@ class Time(commands.Cog):
     @commands.command()
     async def officer_promotions(self, ctx, required_hours):
         """
-        This command lists all the recruits that have been active enough in the last 28 
+        This command lists all the recruits that have been active enough in the last 28
         days to get promoted to officer.
         """
 
@@ -502,9 +498,7 @@ class Time(commands.Cog):
 
         # Get everyone that has been active enough
         all_times = await self.bot.officer_manager.get_most_active_officers(
-            datetime.now(timezone.utc) - timedelta(days=28),
-            datetime.now(timezone.utc),
-            limit=None,
+            datetime.utcnow() - timedelta(days=28), datetime.utcnow(), limit=None
         )
 
         # Filter list for only recruits that have been active enough
@@ -593,7 +587,7 @@ class Time(commands.Cog):
     @commands.command()
     async def remove_inactive_cadets(self, ctx, inactive_days_required):
         """
-        This command removes all cadets that have been inactive for 
+        This command removes all cadets that have been inactive for
         28 days.
         """
 
@@ -638,7 +632,7 @@ class Time(commands.Cog):
             last_activity = await officer.get_last_activity(
                 ctx.bot.officer_manager.all_monitored_channels
             )
-            active_days_ago = (datetime.now() - last_activity["time"]).days
+            active_days_ago = (datetime.utcnow() - last_activity["time"]).days
             if active_days_ago > inactive_days_required:
                 officers_to_remove.append(officer)
 
@@ -687,6 +681,347 @@ class Time(commands.Cog):
             f"{ctx.author.mention} I have now removed all the inactive cadets."
         )
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def time_to_1_csv(self, ctx):
+        """
+        This command converts the time to the LPD Officer Monitor 1.0s csv format and
+        sends it throguh discord.
+        """
+        await ctx.send("Please give me some time, this may take several minutes.")
+
+        # This opens a virtual file in memory that can be written to by the CSV module
+        with StringIO() as virtual_bot_1_time_file:
+            csv_writer = csv.writer(virtual_bot_1_time_file)
+            for id, officer in self.bot.officer_manager.all_officers.items():
+
+                # Get the last active time for the officer
+                last_active_time_datetime = (
+                    await officer.get_last_activity(
+                        self.bot.settings["monitored_channels"]
+                    )
+                )["time"]
+                last_active_time = (
+                    last_active_time_datetime - datetime(1970, 1, 1)
+                ).total_seconds()
+                if last_active_time is None:
+                    last_active_time = 0
+
+                # Get the patrol time
+                to_time = datetime.utcnow()
+                from_time = to_time - timedelta(28)
+                patrol_time = await officer.get_time(from_time, to_time)
+
+                # Add both to the CSV file
+                csv_writer.writerow([officer.id, last_active_time, patrol_time])
+
+            await send_str_as_file(
+                channel=ctx.channel,
+                file_data=virtual_bot_1_time_file.getvalue(),
+                filename="LPD_database.csv",
+                msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
+            )
+
+
+class Inactivity(commands.Cog):
+    """Here are all the commands relating to Leaves of Absence and Inactivity"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.blurple()
+
+    async def _get_loa_officers(self) -> Set[Officer]:
+
+        # Get the LOA Officers from the database
+        loa_entries = await self.bot.officer_manager.get_loa()
+        loa_officers: Set[Officer] = {
+            self.bot.officer_manager.get_officer(entry[0])
+            for entry in loa_entries
+            if entry[1] < datetime.utcnow().date()
+        }
+
+        # Count having a message in #leave-of-absence as having a LOA
+        # This is really slow and should be removed when we're sure all LOA's are in the database
+        loa_channel = self.bot.officer_manager.guild.get_channel(
+            self.bot.settings["leave_of_absence_channel"]
+        )
+        async for old_message in loa_channel.history(limit=None):
+            loa_officers.add(
+                self.bot.officer_manager.get_officer(old_message.author.id)
+            )
+
+        return loa_officers
+
+    async def _to_little_patrol_officers(
+        self, loa_officers: Iterable[Officer]
+    ) -> List[Officer]:
+
+        # Calculate some time info
+        min_activity = self.bot.settings["min_activity_minutes"]
+        oldest_valid = datetime.utcnow() - timedelta(
+            days=self.bot.settings["max_inactive_days"]
+        )
+        last_renew = await self.bot.officer_manager.get_officer_renew_dates()
+
+        # Find officers with too little patrol time and no LOA or another excuse
+        officer_activity = await self.bot.officer_manager.get_most_active_officers(
+            oldest_valid, datetime.utcnow(), include_no_activity=True
+        )
+        not_enough_patrol: List[Officer] = []
+        for officer_id, active_seconds in officer_activity:
+            officer: Officer = self.bot.officer_manager.get_officer(officer_id)
+
+            # Skip new officers and recently renewed ones
+            if officer_id in last_renew and last_renew[officer_id] > oldest_valid:
+                continue
+
+            # Skip White Shirts, they're handled in a different way
+            if officer and officer.is_white_shirt:
+                continue
+
+            # Skip LOA officers
+            if officer in loa_officers:
+                continue
+
+            # Skip active officers
+            if active_seconds and active_seconds > min_activity * 60:
+                continue
+
+            # The officer must be inactive
+            not_enough_patrol.append(officer)
+
+        return not_enough_patrol
+
+    async def _get_officer_chat_activity(
+        self, officers: List[Officer]
+    ) -> Tuple[List[Officer], List[Officer]]:
+
+        # Calculate some time settings
+        oldest_valid_msg = datetime.utcnow() - timedelta(
+            days=self.bot.settings["max_inactive_msg_days"]
+        )
+        monitored = self.bot.officer_manager.all_monitored_channels
+
+        # Generate tasks for getting everyone's activity at the same time
+        tasks: Set[asyncio.Task[Union[Dict[str, Any], None]]] = set()
+        for officer in officers:
+            new_coroutine = officer.get_last_chat_activity(monitored)
+            new_task = asyncio.create_task(new_coroutine)
+            new_task.officer = officer  # type: ignore
+            tasks.add(new_task)
+
+        # Run the tasks
+        try:
+            done, _ = await asyncio.wait(tasks)
+        except ValueError:
+            # The tasks array was empty so there must be no inactive or chat activity officer
+            return [], []
+
+        # Use the task results to separate officers into inactive and chat activity
+        inactive_officers = []
+        chat_activity_skipped = []
+        for finished_task in done:
+            officer: Officer = finished_task.officer  # type: ignore
+            activity_dict = finished_task.result()
+            if activity_dict is None or activity_dict["time"] < oldest_valid_msg:
+                inactive_officers.append(officer)
+            else:
+                chat_activity_skipped.append(officer)
+
+        return inactive_officers, chat_activity_skipped
+
+    async def _mark_inactive(self, officers: List[Officer]) -> None:
+        inactive_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+
+        for officer in officers:
+            await officer.member.add_roles(inactive_role)
+
+    async def _show_skipped_officers(
+        self, ctx: commands.Context, skipped_officers: List[Officer]
+    ) -> None:
+        if len(skipped_officers) == 0:
+            await ctx.send("No one was skipped because of chat activity.")
+        else:
+            skipped_str = (
+                "The following were skipped because of recent chat activity:\n"
+                + "\n".join(m.mention for m in skipped_officers)
+            )
+            await send_long(ctx.channel, skipped_str, mention=False)
+
+    async def _confirm_officer_removal(
+        self,
+        ctx: commands.Context,
+        inactive_officers: List[Officer],
+        chat_activity_skipped: List[Officer],
+    ) -> None:
+        output_string = "\n".join(
+            [
+                "Chat activity skipped (need manual review):",
+                "\n".join(o.mention for o in chat_activity_skipped),
+                "Inactive officers (will be added to inactive role):",
+                "\n".join(o.mention for o in inactive_officers),
+            ]
+        )
+        await send_long(ctx.channel, output_string, mention=False)
+
+        confirm = await Confirm(
+            f"Do you want to mark the officers above as inactive?"
+        ).prompt(ctx)
+        if confirm:
+            # Add the inactive roles
+            await ctx.send("Please give me a moment to add the roles...")
+            await self._mark_inactive(inactive_officers)
+            await ctx.send(f"**All officers above have been marked as inactive.**")
+
+            # Notify about who was skipped because of chat activity
+            await self._show_skipped_officers(ctx, chat_activity_skipped)
+
+        else:
+            await ctx.channel.send("Cancelled.")
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def mark_inactive(self, ctx):
+        """
+        This command lists inactive officers, and prompts the user to mark them with the
+        LPD_inactive role.
+
+        **Explanation of command logic:**
+        Anything within quotes ("") is a number that can change based on the bots settings, consult
+        a bot developer if you want to know the specifics of what a variable is set to.
+
+        To be marked as inactive you must fill all of the below requirements:
+        * Not have patrolled "min_activity_minutes" minutes within the last "max_inactive_days" days
+        * Not have joined the LPD or had your time renewed within that time
+        * Not have an active LOA
+        * Not be a white shirt (they're handled in a different way)
+        * Not be skipped because of chat activity (explained below)
+
+        To be skipped because of chat activity you must have a message in a monitored channel in the last "max_inactive_msg_days" days.
+
+        Being skipped because of chat activity means that that person will not be marked as inactive
+        automatically, however, will go onto a list that is displayed after this command completes.
+        """
+
+        # Get the inactive officers
+        loa_officers = await self._get_loa_officers()
+        not_enough_patrol = await self._to_little_patrol_officers(loa_officers)
+        (
+            inactive_officers,
+            chat_activity_skipped,
+        ) = await self._get_officer_chat_activity(not_enough_patrol)
+
+        # Output data and get confirmation
+        if len(inactive_officers) == 0:
+            await ctx.send(
+                "There are no inactive officers found without a leave of absence."
+            )
+        else:
+            # Output the list of officers and get confirmation to mark them as inactive
+            await self._confirm_officer_removal(
+                ctx, inactive_officers, chat_activity_skipped
+            )
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def show_loa(self, ctx):
+        """
+        This command displays all Leave of Absence requests currently on file.
+        """
+        loa_entries = await self.bot.officer_manager.get_loa()
+
+        if len(loa_entries) == 0:
+            string = "There are no Leaves of Absence on file at this time."
+
+        else:
+            string = f"There are currently Leaves of Absence on file for the following Officers:"
+            for entry in loa_entries:
+                officer = self.bot.get_user(entry[0])
+                string = f"{string}\n{officer.mention} from {entry[1]} to {entry[2]} for reason: {entry[3]}"
+                if len(string) > 1000:
+                    await ctx.channel.send(string)
+                    string = ""
+
+        await ctx.channel.send(string)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def accept_inactive_reasons(self, ctx, channel):
+        """Approve all inactivity reasons listed in the mentioned channels"""
+        inactive_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+
+        for channel in ctx.message.channel_mentions:
+            async for message in channel.history(limit=None):
+                if inactive_role in message.author.roles:
+                    await message.author.remove_roles(inactive_role)
+                    officer = self.bot.officer_manager.get_officer(message.author.id)
+                    if officer:
+                        await officer.renew_time(ctx.author.id, message.content)
+
+        unexcused_mentions = ""
+        for member in ctx.guild.members:
+            if inactive_role in member.roles:
+                unexcused_mentions = f"{unexcused_mentions}\n{member.mention}"
+
+        if len(unexcused_mentions) == 0:
+            await ctx.send(
+                "Looks like everyone had a reason to be inactive. Renewed time for all inactive members."
+            )
+            return
+
+        await ctx.send(
+            f"Looks like some people didn't give a reason for their inactivity. Renewing time for those who did. Here are the unexcused inactive members:"
+        )
+        await send_long(ctx.channel, f"{unexcused_mentions}", mention=False)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def renew_time(self, ctx):
+        """Renew the time of an officer to protect them from inactivity"""
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer:
+                await officer.renew_time(
+                    ctx.author.id, "Renewed by direct discord command"
+                )
+        await ctx.send("Renewed time for mentioned officers.")
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def renewal_reasons(self, ctx):
+        """List all the previous time renewal reasons for an officer"""
+        send_string = ""
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer:
+                result = await officer.get_inactivity_reasons()
+                if result:
+                    for row in result:
+                        if row[1] is None:
+                            renewer_str = "unknown"
+                        else:
+                            renewer_str = self.bot.officer_manager.guild.get_member(int(row[1])).mention
+                        send_string = f"{send_string}{member.mention}'s time was renewed by {renewer_str} at {row[0]} for reason:\n{row[2]}\n"
+                else:
+                    send_string = f"{send_string}{member.mention} has not had their time renewed.\n"
+            else:
+                send_string = f"{send_string}{member.mention} does not appear to be an officer. Check with the Programming Team if you're absolutely sure they've had renewal time in the past, and you must know it.\n"
+
+        if send_string == "":
+            await ctx.send("Please mention at least one Officer", delete_after=10)
+        else:
+            await send_long(ctx.channel, send_string)
+
 
 class VRChatAccoutLink(commands.Cog):
     """This stores all the VRChatAccoutLink commands."""
@@ -715,17 +1050,12 @@ class VRChatAccoutLink(commands.Cog):
                 "You do not have a VRChat account linked, to connect your VRChat account do =link your_vrchat_name."
             )
 
-    @commands.command()
+    @commands.command(usage='[-s] "my username"')
     @checks.is_lpd()
     @checks.is_general_bot_channel()
-    async def link(self, ctx, vrchat_name):
+    async def link(self, ctx, *args):
         r"""
         This command is used to tell the bot your VRChat name.
-        
-        When you successfully link your VRChat account with the bot,
-        you will receive a friend request from LPD Officer Monitor.
-        Please accept this friend request as soon as possible, to
-        ensure the most accurate logging of on-duty time.
 
         This information is used for detecting if you are in
         the LPD when entering the LPD Station. To use the
@@ -740,6 +1070,22 @@ class VRChatAccoutLink(commands.Cog):
         copy your VRChat name from the debug console in the LPD Station. The
         debug console can be enabled with a button under the front desk.
         """
+
+        if not args:
+            await ctx.send("Please specify your VRChat name.")
+            return
+
+        # Check if -s is specified
+        if args[0] == "-s":
+            if len(args) == 1:
+                await ctx.send("Please specify your VRChat name.")
+                return
+            skip_formatting = True
+        else:
+            skip_formatting = False
+
+        # if use spaces without quotes, won't add space if only one
+        vrchat_name = " ".join(args[int(skip_formatting) :])
 
         # Make sure the name does not contain the seperation character
         if self.bot.settings["name_separator"] in vrchat_name:
@@ -763,25 +1109,27 @@ class VRChatAccoutLink(commands.Cog):
                 )
                 return
 
+        # Format the VRChat name if that was asked for
+        if skip_formatting:
+            vrchat_formated_name = vrchat_name
+        else:
+            vrchat_formated_name = self.bot.user_manager.vrc_name_format(vrchat_name)
+
         # Confirm the VRC name
         confirm = await Confirm(
-            f"Are you sure `{self.bot.user_manager.vrc_name_format(vrchat_name)}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
+            f"Are you sure `{vrchat_formated_name}` is your full VRChat name?\n**You will be held responsible of the actions of the VRChat user with this name.**"
         ).prompt(ctx)
         if confirm:
-            await self.bot.user_manager.add_user(ctx.author.id, vrchat_name)
+            await self.bot.user_manager.add_user(
+                ctx.author.id, vrchat_name, skip_formatting
+            )
             await ctx.send(
-                f"Your VRChat name has been set to `{vrchat_name}`\nIf you want to unlink it you can use the command `=unlink`"
+                f"Your VRChat name has been set to `{vrchat_formated_name}`\nIf you want to unlink it you can use the command =unlink"
             )
         else:
             await ctx.send(
-                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command `=link` again."
+                "Your account linking has been cancelled, if you did not intend to cancel the linking you can use the command =link again."
             )
-            return
-        
-        already_friends = await add_officer_as_friend(vrchat_name)
-        if not already_friends:
-            await ctx.send(f"Please check your VRChat incoming friend requests for a request from `{self.bot.settings['VRC_Username']}`. This will ensure correct logging of on-duty time.")
-
 
     @commands.command()
     @checks.is_lpd()
@@ -852,15 +1200,6 @@ class VRChatAccoutLink(commands.Cog):
                 out_string += string_being_added
         await ctx.send(out_string)
 
-    @commands.command()
-    @checks.is_white_shirt()
-    @checks.is_admin_bot_channel()
-    async def debug(self, ctx):
-        """
-        This command is just for testing the bot.
-        """
-        await ctx.send(str(self.bot.user_manager.all_users))
-
 
 class Applications(commands.Cog):
     """Here are all the commands relating to managing the applications."""
@@ -926,62 +1265,274 @@ class Applications(commands.Cog):
                 await message.delete()
 
 
+class Moderation(commands.Cog):
+    """Here are all commands that relate to moderation in general."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = discord.Color.green()
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    # Put a user in detention
+    async def detain(self, ctx):
+        """
+        This command places a user in detention by assigning the Detention and Detention Waiting Area roles.
+        Chat moderators may use this to effectively temp ban a user without having the ban permission.
+        This command should only be used when the severity of violation is extreme. Use strike when possible.
+        """
+        detainees = ctx.message.mentions
+        detention_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_role"]
+        )
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_waiting_area_role"]
+        )
+        detainee_mentions = ""
+        undet_string = ""
+
+        for user in detainees:
+
+            # If the user is an officer and holds a non-detainable rank: skip them
+            officer = self.bot.officer_manager.get_officer(user.id)
+            if officer and not officer.is_detainable:
+                undet_string = f"{undet_string}{user.mention}"
+                continue
+
+            user_role_ids = ""
+            for role in user.roles:
+                if role.name == "@everyone":
+                    continue
+                user_role_ids = f"{role.id},{user_role_ids}"
+                await user.remove_roles(role)
+            await user.add_roles(detention_role)
+            await user.add_roles(detention_waiting_area_role)
+            detainee_mentions = f"{detainee_mentions}{user.mention}"
+            await self.bot.sql.request(
+                f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')"
+            )
+
+        if len(detainee_mentions) > 0:
+            await ctx.send(
+                f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} Moved {detainee_mentions} to detention.'
+            )
+        if len(undet_string) > 0:
+            await ctx.send(
+                f"Sorry, you can't detain {undet_string}. Only Senior Officers and below may be detained."
+            )
+
+    @checks.is_moderator()
+    @commands.command()
+    # Remove a user from detention
+    async def restore(self, ctx):
+        """
+        This command removes a non-LPD user from detention by removing the Detention and Detention Waiting Area roles.
+        Use of this command is restricted to Moderators and above.
+        """
+        detainees = ctx.message.mentions
+        detention_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_role"]
+        )
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_waiting_area_role"]
+        )
+        string = "Removing"
+        send_string = 0
+
+        for user in detainees:
+            remove_from_db = 0
+            for role in user.roles:
+                if role.id == detention_role.id:
+                    send_string = 1
+                    remove_from_db = 1
+                    await user.remove_roles(detention_role)
+                if role.id == detention_waiting_area_role.id:
+                    send_string = 1
+                    remove_from_db = 1
+                    await user.remove_roles(detention_waiting_area_role)
+            if remove_from_db == 1:
+                user_role_list = list(
+                    await self.bot.sql.request(
+                        f"SELECT roles FROM Detainees WHERE member_id = {user.id}"
+                    )
+                )
+                for role_id in user_role_list[0][0].split(","):
+                    if role_id == "":
+                        continue
+                    await user.add_roles(
+                        self.bot.officer_manager.guild.get_role(int(role_id))
+                    )
+                await self.bot.sql.request(
+                    f"DELETE FROM Detainees WHERE member_id = {user.id}"
+                )
+                remove_from_db = 0
+                string = f"{string} {user.mention}"
+
+        string = f"{string} from detention."
+        if send_string == 1:
+            await ctx.send(string, delete_after=10)
+        else:
+            await ctx.send(
+                "Please mention valid users you wish to release from detention.",
+                delete_after=10,
+            )
+
+    @checks.is_chat_moderator()
+    @commands.command()
+    async def strike(self, ctx):
+        """
+        This command issues a warning strike to the user(s) mentioned.
+        """
+
+        detention_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_role"]
+        )
+        detention_waiting_area_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["detention_waiting_area_role"]
+        )
+
+        users_detained = ""
+        strikee_mentions = ""
+        undet_string = ""
+        for user in ctx.message.mentions:
+
+            # If the user is an officer and holds a non-detainable rank: skip them
+            officer = self.bot.officer_manager.get_officer(user.id)
+            if officer and not officer.is_detainable:
+                undet_string = f"{undet_string}{user.mention}"
+                continue
+
+            await self.bot.sql.request(
+                f"INSERT INTO UserStrikes (member_id, reason, date) VALUES ({user.id}, '{ctx.message.content}', '{datetime.utcnow()}')"
+            )
+            strikee_mentions = f"{strikee_mentions}{user.mention}"
+            old_strikes = list(
+                await self.bot.sql.request(
+                    f"SELECT date FROM UserStrikes WHERE member_id = {user.id}"
+                )
+            )
+            for date in old_strikes:
+                if date[0] <= datetime.utcnow() - timedelta(days=14):
+                    old_strikes.remove(date)
+                    await self.bot.sql.request(
+                        f"DELETE FROM UserStrikes WHERE member_id = {user.id} and date = '{date[0]}'"
+                    )
+                    continue
+            if len(old_strikes) >= 3:
+                users_detained = f"{users_detained}{user.mention}"
+                # user_role_ids = ""
+                # for role in user.roles:
+                #     if role.name == '@everyone': continue
+                #     user_role_ids = f"{role.id},{user_role_ids}"
+                #     await user.remove_roles(role)
+                # await user.add_roles(detention_role)
+                # await user.add_roles(detention_waiting_area_role)
+                # await self.bot.sql.request(f"REPLACE INTO Detainees (member_id, roles, date) VALUES ({user.id}, '{user_role_ids}', '{datetime.utcnow()}')")
+
+        if len(strikee_mentions) > 0:
+            await ctx.send(
+                f"{strikee_mentions} received a strike against their record.",
+                delete_after=10,
+            )
+        if len(undet_string) > 0:
+            await ctx.send(
+                f"Sorry, {undet_string} cannot be given a strike. Only Senior Officers and below can be given a strike."
+            )
+        if len(users_detained) > 0:
+            await ctx.send(
+                f'{self.bot.officer_manager.guild.get_role(self.bot.settings["moderator_role"]).mention} {users_detained} have received 3 strikes in the last two weeks.'
+            )
+
+
 class Other(commands.Cog):
     """Here are all the one off commands that I have created and are not apart of any group."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.color = discord.Color.dark_magenta()
+        self.color = discord.Color.dark_gold()
         self.get_vrc_name = (
             lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
         )
 
-    def get_role_by_name(self, role_name):
+    @staticmethod
+    def remove_name_decoration(name: str) -> str:
+        """
+        Remove the discord special characters at the start and end of the string
+        """
+        return name.strip("| ⠀ ")
+
+    def get_role_by_name(self, role_name: str) -> discord.Role:
+        """
+        Return a discord role if found, else raise `errors.GetRoleMembersError`
+        """
+        role_names = []
 
         # Get the role
         for role in self.bot.officer_manager.guild.roles:
-            if self.filter_start_end(role.name, ["|", " ", "⠀", " "]) == role_name:
+            undecorated_name = self.remove_name_decoration(role.name)
+            role_names.append(undecorated_name)
+            if (
+                undecorated_name.lower() == role_name.lower()
+            ):  # non case sensitive comparaison
                 return role
 
-        raise errors.GetRoleMembersError(message=f"The role {role_name} was not found.")
+        msg = f"The role `{role_name}` was not found.\nDid you mean :"
+        cutoff_score = 75
+        suggestions: List[Tuple[str, int]] = []
 
-    def get_role_members(self, role):
+        # usually you get something on the first run, sometimes if you write really badly you won't get anything
+        # lower the score to get more suggestions
+        while len(suggestions) < 1 and len(role_name) > 1 and cutoff_score > 0:
+            suggestions = fuzzywuzzy.process.extractBests(
+                role_name, role_names, score_cutoff=cutoff_score
+            )
+            # if only one suggestion, give result imediatly instead of suggest and having to type cmd again
+            if cutoff_score == 75 and len(suggestions) == 1:
+                try:
+                    return self.get_role_by_name(suggestions[0][0])
+                except errors.GetRoleMembersError as e:
+                    print(
+                        f"ERROR: rtv, Could not find role `{suggestions[0][0]}`, msg:",
+                        e,
+                    )
+                    pass  # if role not found, we use original name to find suggestions
 
+            cutoff_score -= 25
+
+        for suggest in suggestions:
+            # it's better to include quotes for copy paste correct role
+            if " " in suggest[0]:
+                msg += f'  `"{suggest[0]}"`'
+            else:
+                msg += f"  `{suggest[0]}`"
+        raise errors.GetRoleMembersError(message=msg)
+
+    def get_role_members(self, role: discord.Role) -> list:
         # Make sure that people have the role
         if not role.members:
-            raise errors.GetRoleMembersError(message=f"{role_name} is empty.")
+            raise errors.GetRoleMembersError(message=f"`{role.name}` is empty.")
 
         # Sort the members
-        return sorted(role.members, key=self.get_vrc_name)
-
-    @staticmethod
-    def filter_start_end(string, list_of_characters_to_filter):
-        while True:
-            if string[0] in list_of_characters_to_filter:
-                string = string[1::]
-            else:
-                break
-
-        while True:
-            if string[-1] in list_of_characters_to_filter:
-                string = string[0:-1]
-            else:
-                break
-
-        return string
+        return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
 
     @checks.is_team_bot_channel()
-    @commands.check_any(checks.is_white_shirt(), checks.is_dev_team())
-    @commands.command()
-    async def rtv(self, ctx, role_name):
+    @commands.check_any(
+        checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
+    )
+    @commands.command(usage="discordRole")
+    async def rtv(self, ctx, *role_name):
         """
         This command takes in a name of a role and outputs the VRC names of the people in it.
 
-        This command ignores the decoration on the role if it has any and it also requires
+        This command ignores the decoration on the role if it has any and will try to find the role if it is mistyped.
         """
 
+        # fix if user write role with space and forget quotes
+        role_name = " ".join(role_name)
+
         try:
-            members = self.get_role_members(self.get_role_by_name(role_name))
+            discord_role = self.get_role_by_name(role_name)
+            members = self.get_role_members(discord_role)
         except errors.GetRoleMembersError as error:
             await ctx.send(error)
             return
@@ -989,60 +1540,10 @@ class Other(commands.Cog):
         members_str = "\n".join(self.get_vrc_name(x) for x in members)
 
         # Send everyone
-        await ctx.send(f"Here is everyone in the role {role_name}:")
+        await ctx.send(
+            f"Here are {len(members)} people in the role `{self.remove_name_decoration(discord_role.name)}`:"
+        )
         await send_long(ctx.channel, members_str, code_block=True)
-
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    # @commands.command()
-    async def team_json(self, ctx):
-        """
-        This command outputs a json object that stores all the team and white shirt info.
-
-        It is used to transport information from the bot to the LPD Station efficiently.
-        """
-
-        teams = deepcopy(self.bot.settings["teams"])
-        json_out = []
-
-        # Add the white shirts onto the teams list
-        for rank in self.bot.settings["role_ladder"]:
-            try:
-                rank["is_white_shirt"]
-            except KeyError:
-                pass
-            else:
-                rank["has_unlock_all_button"] = True
-                teams.append(rank)
-
-        # Create the JSON from the team list
-        for role_dict in teams:
-
-            # Get the members
-            role = self.bot.officer_manager.guild.get_role(role_dict["id"])
-            try:
-                members = self.get_role_members(role)
-            except errors.GetRoleMembersError as error:
-                await ctx.send(error)
-                return
-
-            # Add the JSON role object
-            json_out.append(
-                {
-                    "id": role_dict["id"],
-                    "name": self.filter_start_end(role.name, ["|", " ", "⠀", " "]),
-                    "name_id": role_dict["name_id"],
-                    "member_count": len(members),
-                    "members": [self.get_vrc_name(m) for m in members],
-                    "has_unlock_all_button": role_dict.get(
-                        "has_unlock_all_button", False
-                    ),
-                    "is_white_shirt": role_dict.get("is_white_shirt", False),
-                }
-            )
-
-        # Send the JSON file
-        await send_long(ctx.channel, json.dumps(json_out), code_block=True)
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
@@ -1076,7 +1577,9 @@ class Other(commands.Cog):
             if (
                 role is None
             ):  # If the role ID is invalid, let the user know what the role name should be, and that the ID in settings is invalid
-                await ctx.channel.send(f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles.")
+                await ctx.send(
+                    f"{ctx.message.author.mention} The role ID for {get_role_name_by_id(settings, entry)} has been corrupted in the bot configuration, therefore I cannot provide an accurate count. Please alert the Programming Team. Displayed below are the results of counting all other roles."
+                )
             else:
                 number_of_officers_with_each_role[
                     role
@@ -1108,6 +1611,7 @@ class Other(commands.Cog):
             match = pattern.findall(role.name)
             if match:
                 name = "".join(match[0][1]) + "s"
+
             else:
                 name = role.name
 
@@ -1116,103 +1620,212 @@ class Other(commands.Cog):
             )
 
         # Send the results
-        await ctx.channel.send(embed=embed)
+        await ctx.send(embed=embed)
+
+    @checks.is_team_bot_channel()
+    @commands.check_any(checks.is_event_host_or_any_trainer(), checks.is_white_shirt())
+    @commands.command(usage="<options>")
+    async def who(self, ctx, *args):
+        """
+        This command list officers in Voice Channels.
+        The bot will try to guess what type of information the user wants
+        using the voice channel of the user that execute the command.
+
+        OPTIONS
+
+        -t, --training
+            list all officers in training channels
+
+        -p, --patrol
+            list all officers in patrol channels
+
+        -a, --all
+            list all officers in on-duty category channels
+
+        -e, --embed
+            use Discord Embed (fancy frame)
+
+        PARSE RAW
+        """
+
+        # Setup parser
+        parser = ArgumentParser(description="Argparse user command", add_help=False)
+        parser.add_argument("-t", "--training", action="store_true")
+        parser.add_argument("-p", "--patrol", action="store_true")
+        parser.add_argument("-a", "--all", action="store_true")
+        parser.add_argument("-e", "--embed", action="store_true")
+
+        # Parse command and check errors
+        try:
+            parsed = parser.parse_args("who", args)
+        except argparse.ArgumentError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return None
+        except argparse.ArgumentTypeError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+        except errors.ArgumentParsingError as error:
+            await ctx.send(ctx.author.mention + " " + str(error))
+            return
+
+        if parsed.all:
+            parsed.training = True
+            parsed.patrol = True
+        elif parsed.training and parsed.patrol:
+            parsed.all = True
+
+        ### automatic guess depending of cmd author VC
+        if ctx.author.voice and not (parsed.training or parsed.patrol):
+            # user could be in another server so we can't check just for names
+            if (
+                ctx.author.voice.channel.guild.id == self.bot.settings["Server_ID"]
+                and ctx.author.voice.channel.category_id
+                and ctx.author.voice.channel.category_id
+                == self.bot.settings["on_duty_category"]
+            ):
+
+                if ctx.author.voice.channel.name.startswith("Training"):
+                    parsed.training = True
+                else:
+                    parsed.patrol = True
+
+        ### autoguess failed so we tell user
+        if ctx.author.voice == None and not parsed.training and not parsed.patrol:
+            help_lines = self.who.help.splitlines()
+            help_only_args = "\n".join(help_lines[5 : len(help_lines) - 2])
+            error_text = f"Could not guess what information you want, Join one `On Duty` voice channel or use arguments from the list bellow\n```\n{help_only_args}\n```"
+
+            embed_message = discord.Embed(
+                title="Error while executing `=who` command",
+                description=error_text,
+                color=discord.Color.red(),
+            )
+            await ctx.send(None, embed=embed_message)
+            return
+
+        channel_data = dict()
+        for id, officer in self.bot.officer_manager.all_officers.items():
+            if officer.squad == None:
+                if officer.is_on_duty:
+                    print(f"ERROR: User {id} is on duty but squad is None")
+                continue
+
+            # skip if it's not a training channel but we only want training
+            if (
+                parsed.training
+                and not parsed.patrol
+                and not officer.squad.name.startswith("Training")
+            ):
+                continue
+            # skip if we want patrol only but it's a training channel
+            if (
+                not parsed.training
+                and parsed.patrol
+                and officer.squad.name.startswith("Training")
+            ):
+                continue
+
+            if not officer.squad.name in channel_data:
+                channel_data[officer.squad.name] = []
+            channel_data[officer.squad.name].append(officer.mention)
+
+        ### formating for output
+        if parsed.embed:
+            attend_embed = discord.Embed(
+                title="Attendees List", description="", color=self.color
+            )
+
+            for channel_name in channel_data:
+                attend_embed.add_field(
+                    name=channel_name,
+                    value="\n".join(channel_data[channel_name]),
+                    inline=True,
+                )
+            if len(channel_data) == 0:
+                attend_embed.description = "Communication channels are empty"
+            # mention doesn't work for author field :(
+            attend_embed.set_author(
+                name=ctx.author.display_name, icon_url=ctx.author.avatar_url
+            )
+            # discord client convert to local time on display
+            attend_embed.timestamp = datetime.utcnow()
+            if parsed.all:
+                attend_embed.set_footer(text="All On-duty")
+            elif parsed.patrol:
+                attend_embed.set_footer(text="Patrol")
+            else:
+                attend_embed.set_footer(text="Training")
+
+            await ctx.send(None, embed=attend_embed)
+
+        else:
+            result = "Event Host:\nDispatch:\nGroup Leads:\n\n"
+            if len(channel_data) == 0:
+                await ctx.send("Communication channels are empty")
+                return
+            for channel_name in channel_data:
+                result += f"**{channel_name}:**\n"
+                result += "\n".join(channel_data[channel_name])
+                result += "\n\n"
+            await send_long(ctx.channel, result, code_block=True)
+
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def shutdown(self, ctx):
+        """This command shuts down the bot cleanly."""
+
+        await ctx.send("Shutting down the bot now!")
+        whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
+        await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
 
 
-
-class VRChatIntegration(commands.Cog):
-    """Here are all the commands regarding VRChat in-game integration."""
+class Debug(commands.Cog):
+    """this class is added only in local environement"""
 
     def __init__(self, bot):
         self.bot = bot
-        self.color = discord.Color.dark_blue()
-        
-    @checks.is_lpd()
+        self.color = discord.Color.blue()
+
     @commands.command()
-    async def join(self, ctx):
-        officer_id = ctx.message.mentions[0].id
-        vrc_name = self.bot.user_manager.get_vrc_by_discord(officer_id)
-        join_link = await join_user(vrc_name)
-        if join_link == "This user is in a Private World.":
-            string = f"{ctx.message.mentions[0].mention} is in a Private World."
-        else:
-            string = f"Join {ctx.message.mentions[0].mention} {join_link}"
-        await ctx.message.delete()
-        await ctx.channel.send(string)
-    
-    @checks.is_lpd()
-    @commands.command()
-    async def invite(self, ctx):
-        author_id = ctx.message.author.id
-        vrc_name = self.bot.user_manager.get_vrc_by_discord(author_id)
-        join_link = await join_user(vrc_name)
-        if join_link == "This user is in a Private World.":
-            string = "Could not generate an invite link for your location. It appears that you are in a Private World, or have your status set to Red or Orange."
-        else:
-            string = f"{ctx.message.mentions[0].mention} please join {ctx.message.author.mention} {join_link}"
-        await ctx.message.delete()
-        await ctx.channel.send(string)
-        
-        
-        
-    @checks.is_lpd()
-    @commands.command()
-    async def whereis(self, ctx):
-        string = ''
-        for target in ctx.message.mentions:
-            officer = self.bot.officer_manager.get_officer(target.id)
-            if officer.is_on_duty:
-                
-                location = officer.location
-                
-                string = f"{string}{target.mention} is in {location}\n"
-            else:
-                string = f"{string}{target.mention} is not on duty"
-        await ctx.channel.send(string)
-        
-    
-    @checks.is_admin_bot_channel()
-    @checks.is_white_shirt()
-    @commands.command()
-    async def mug_stats(self, ctx):
-        mugshots = await self.bot.officer_manager.send_db_request("select * from Mugshots order by officer_id", None)
-                
-        statistics_dict = {}
-        
-        all_officers = self.bot.officer_manager.all_officers
-        
-        for officer in all_officers:
-            statistics_dict[str(officer.id)] = 0
-            
-        
-        for mugshot in mugshots:
-            arresting_officer_id = mugshot[0]
-            world_name = mugshot[1]
-            criminal_name = mugshot[2]
-            officers_involved_string = mugshot[5]
-            
-            officers_involved_list = officers_involved_string.split(',')
-            officers_involved = []
-                        
-            for officer_id in officers_involved_list:
-                if officer_id == '':
+    async def dbg_officer(self, ctx):
+        # member = self.bot.get_guild(self.bot.settings["Server_ID"]).get_member(mention)
+        if len(ctx.message.mentions) == 0:
+            await ctx.send("You need to mention the users")
+            return
+        for member in ctx.message.mentions:
+            officer = self.bot.officer_manager.get_officer(member.id)
+            if officer is None:
+                embed = discord.Embed(
+                    title="Not an LPD Officer !!!",
+                    description=f"{member.display_name}#{member.discriminator}",
+                    color=discord.Color.red(),
+                    footer="not found in records",
+                )
+                await ctx.send(None, embed=embed)
+                return
+
+            embed = discord.Embed(
+                title="LPD Officer",
+                description=f"{member.display_name}#{member.discriminator}",
+                color=self.color,
+            )
+
+            for attrib in dir(officer):
+                if attrib.startswith("_") or attrib == "mention" or attrib == "bot":
                     continue
-                officers_involved.append(int(float(officer_id)))
-            
-            if arresting_officer_id not in officers_involved:
-                officers_involved.append(arresting_officer_id)
-                
-                
-            for officer_id in officers_involved:
-                statistics_dict[str(officer_id)] += 1
-                
-                
-        sorted_stats = sorted(statistics_dict.items(), key=lambda x: x[1], reverse=True)
-        stat_embed = discord.Embed(title="Arrest Statistics", colour=discord.Colour.from_rgb(255, 255, 0))
-        
-        for entry in sorted_stats:
-            officer_id = entry[0]
-            officer = self.bot.officer_manager.get_officer(int(officer_id))
-            stat_embed.add_field(name=officer.display_name + ":", value=entry[1])
-        
-        await ctx.channel.send(embed=stat_embed)
+                value = None
+                try:
+                    value = getattr(officer, attrib)
+                except AttributeError:
+                    continue
+                if (
+                    callable(value)
+                    or inspect.isclass(value)
+                    or inspect.ismethod(value)
+                    or inspect.ismodule(value)
+                    or inspect.isfunction(value)
+                ):
+                    continue
+                embed.add_field(name=attrib, value=value, inline=True)
+            await ctx.send(None, embed=embed)

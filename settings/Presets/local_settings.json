@@ -1,11 +1,12 @@
 {
     "Server_ID": 566315650864381953,
-    "max_inactive_days": 28,
-    "bot_prefix": "!",
+    "max_inactive_days": 2,
+    "max_inactive_msg_days": 1,
+    "min_activity_minutes": 1,
+    "bot_prefix": "=",
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 60,
     "name_separator": ";",
-    
     // Channels
     "monitored_channels": {
         "ignored_categories": [
@@ -16,27 +17,40 @@
     "application_channel": 723234394524876882,
     "team_bot_channel": 774748395972722688,
     "general_bot_channel": 708117281376305232,
-
+    "event_bot_channel": 768198897776328736,
     "error_log_channel": 670751809538752512,
+    "leave_of_absence_channel": 734906620630401045,
+    "request_rank_channel": 834184946964103178,
     "training_finished_channel": 655128316373762121,
     "inactive_channel_name": "inactive",
-	"mugshot_channel": 792045947508228106,
+    "chat_moderator_role": 767437788475162641,
+    "moderator_role": 569166391891197964,
+    "detention_role": 767436972804538418,
+    "detention_waiting_area_role": 767437105948655666,
+    "mugshot_channel": 792045947508228106,
     "allowed_command_channels": [
         566777522252152883,
         708117281376305232,
         723234394524876882,
+        768198897776328736,
         774748395972722688
     ],
-    
     // Roles
     "lpd_role": 655133459714670592,
     "trainer_role": 655128037993742337,
     "slrt_trainer_role": 670305215265636386,
     "slrt_trained_role": 670305435332378624,
+    "lmt_trainer_role": 773997789939761204,
+    "lmt_trained_role": 773997905631248416,
+    "watch_officer_role": 820117275532066838,
+    "prison_trainer_role": 820117446672384021,
     "recruiter_role": 633018289777410068,
+    "programming_team_role": 820416948613152808,
     "dev_team_role": 746362203225063454,
     "civilian_role": 723276594935758998,
-    "inactive_role": "LPD_inactive",
+    "event_host_role": 768205907770867732,
+    "inactive_role": 590684921534873620,
+    "team_lead_role": 828430724583129119,
     "teams": [
         {
             "id": 746362203225063454,
@@ -48,43 +62,57 @@
         {
             "name": "LPD Cadet",
             "name_id": "cadet",
-            "id": 666005873679663134
+            "id": 666005873679663134,
+            "is_detainable": true
         },
         {
             "name": "LPD Recruit",
             "name_id": "recruit",
-            "id": 594238854102515735
+            "id": 594238854102515735,
+            "is_detainable": true
         },
         {
             "name": "LPD Officer",
             "name_id": "officer",
-            "id": 594239040723615780
+            "id": 834215801426018335,
+            "is_detainable": true
+        },
+        {
+            "name": "LPD Senior Officer",
+            "name_id": "senior_officer",
+            "id": 594239040723615780,
+            "is_detainable": true
+        },
+        {
+            "name": "LPD Corporal",
+            "name_id": "corporal",
+            "id": 834215092496629771,
+            "is_detainable": false
         },
         {
             "name": "LPD Captain",
             "name_id": "captain",
             "id": 584111242705371138,
-            "is_white_shirt": true
+            "is_white_shirt": true,
+            "is_detainable": false
         },
         {
             "name": "LPD Chief",
             "name_id": "chief",
             "id": 717803321569837216,
             "is_white_shirt": true,
-            "is_admin": true
+            "is_admin": true,
+            "is_detainable": false
         }
     ],
-    
     // On duty
     "on_duty_category": 599764719212953610,
     "on_duty_role": 581553952550551564,
-    
     // Database
     "DB_name": "LPD_Officer_Monitor",
-    "DB_user": "ubuntu",
+    "DB_user": "root",
     "DB_host": "127.0.0.1",
     "DB_socket": "/run/mysqld/mysqld.sock",
-    
     // VRChat
     "VRC_Username": "Officer Monitor"
 }

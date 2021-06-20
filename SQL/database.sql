@@ -11,8 +11,26 @@ USE LPD_Officer_Monitor;
 
 CREATE TABLE Officers
 (
-	officer_id BIGINT UNSIGNED PRIMARY KEY,
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
     started_monitoring_time DATETIME
+);
+
+CREATE TABLE Detainees
+(
+    member_id BIGINT UNSIGNED PRIMARY KEY,
+    roles MEDIUMTEXT,
+    date DATETIME
+);
+
+CREATE TABLE LeaveTimes
+(
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
+    date_start DATETIME,
+    date_end DATETIME,
+    reason TEXT,
+    request_id BIGINT UNSIGNED,
+
+    CONSTRAINT officer_id_FK_LOA FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 /*CREATE TABLE TimePeriods
@@ -23,56 +41,52 @@ CREATE TABLE Officers
 
 CREATE TABLE TimeLog
 (
-	entry_number INT PRIMARY KEY AUTO_INCREMENT,
-	officer_id BIGINT UNSIGNED,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT,
+    officer_id BIGINT UNSIGNED,
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     
-    CONSTRAINT officer_id_FK FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+    CONSTRAINT officer_id_FK FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE MessageActivityLog
 (
-	entry_number INT PRIMARY KEY AUTO_INCREMENT,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT,
     officer_id BIGINT UNSIGNED,
     channel_id BIGINT UNSIGNED,
-	message_id BIGINT UNSIGNED,
+    message_id BIGINT UNSIGNED,
     send_time TIMESTAMP,
     
-    CONSTRAINT officer_id_FK_2 FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+    CONSTRAINT officer_id_FK_2 FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 DROP TABLE IF EXISTS VRChatNames;
 CREATE TABLE VRChatNames
 (
-	officer_id BIGINT UNSIGNED PRIMARY KEY,
-    vrc_name VARCHAR(255) UNIQUE,
-    
-    CONSTRAINT officer_id_FK_VRC_NAMES FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
-);
-
-CREATE TABLE VRChatActivity
-(
-    datetime TIMESTAMP,
-	officer_id BIGINT UNSIGNED,
+    officer_id BIGINT UNSIGNED PRIMARY KEY,
     vrc_name VARCHAR(255),
-    world_name TEXT,
-    instance_number TINYTEXT,
-    enter_time TIMESTAMP,
-    exit_time TIMESTAMP,
-    avatar_image_url MEDIUMTEXT,
-    allow_avatar_copying BOOLEAN,
-	    
-    CONSTRAINT officer_id_FK_VRC_ACTIVITY FOREIGN KEY (officer_id) REFERENCES Officers(officer_id),
-    CONSTRAINT vrc_name_FK_VRC_ACTIVITY FOREIGN KEY (vrc_name) REFERENCES VRChatNames(vrc_name)
+    
+    CONSTRAINT officer_id_FK_VRC_NAMES FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE Mugshots
+DROP TABLE IF EXISTS UserStrikes;
+CREATE TABLE UserStrikes
 (
-	officer_id BIGINT UNSIGNED,
-	world_name TEXT,
-	criminal_name TEXT,
-	datetime TIMESTAMP,
-	
-	CONSTRAINT officer_id_FK_MUGSHOTS FOREIGN KEY (officer_id) REFERENCES Officers(officer_id)
+    member_id BIGINT UNSIGNED,
+    reason TEXT,
+    date DATETIME,
+    entry_number INT PRIMARY KEY AUTO_INCREMENT
+);
+
+DROP TABLE IF EXISTS RenewalTimes;
+CREATE TABLE RenewalTimes
+(
+    renewal_id INT PRIMARY KEY AUTO_INCREMENT,
+    officer_id BIGINT UNSIGNED,
+    renewed_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    renewed_by BIGINT UNSIGNED,
+    reason TEXT,
+
+    CONSTRAINT officer_id_FK_RT FOREIGN KEY (officer_id) REFERENCES Officers(officer_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT renewed_by_FK FOREIGN KEY (renewed_by) REFERENCES Officers(officer_id) ON DELETE SET NULL
 );
