@@ -107,11 +107,11 @@ class OfficerManager:
 
     @tasks.loop(minutes=60)
     async def loop(self):
-        print("Running officer check loop in officer_manager")
-
         # Wait for the bot to be ready before running this function
         while not self.bot.everything_ready:
             await asyncio.sleep(10);
+
+        print("Running officer check loop in officer_manager")
 
         try:
             # Add missing officers
@@ -122,7 +122,7 @@ class OfficerManager:
                     )
 
             # Remove extra users from the officer_monitor
-            for member_id in self._all_officers:
+            for member_id in list(self._all_officers.keys()):
 
                 member = self.guild.get_member(member_id)
 
