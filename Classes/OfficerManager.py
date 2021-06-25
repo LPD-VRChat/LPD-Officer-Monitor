@@ -109,6 +109,10 @@ class OfficerManager:
     async def loop(self):
         print("Running officer check loop in officer_manager")
 
+        # Wait for the bot to be ready before running this function
+        while not self.bot.everything_ready:
+            await asyncio.sleep(10);
+
         try:
             # Add missing officers
             for member in self.all_server_members_in_LPD:
