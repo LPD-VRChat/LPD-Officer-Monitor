@@ -1009,14 +1009,16 @@ class Inactivity(commands.Cog):
             await ctx.send("Canceled purge")
             return
         
-        officers_removed = False
+        officers_removed = []
         for officer in self.bot.officer_manager.all_officers.values():
             if inactive_role in officer.member.roles:
+                officers_removed.append(officer)
+                
+                
+        if officers_removed != []:
+            for officer in officers_removed:
                 await officer.remove(reason='they were inactive')
                 await officer.member.remove_roles(inactive_role)
-                officers_removed = True
-                
-        if officers_removed:
             await ctx.send(f"All officers with the {inactive_role.name} role were removed from the LPD")
         else:
             await ctx.send(f"Could not find any officers with the {inactive_role.name} role")
