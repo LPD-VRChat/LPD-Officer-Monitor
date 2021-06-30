@@ -74,14 +74,7 @@ class Officer:
         self.squad = None
 
     async def remove(self, reason=None):
-
-        # Check to see if the member still has LPD roles, if so remove them
-        roles_to_remove = self.bot.officer_manager.all_lpd_ranks + self.bot.officer_manager.all_lpd_roles
         
-        for role in self.member.roles:
-            if role in roles_to_remove:
-                await self.member.remove_roles(role)
-                
         display_name = self.member.display_name
         await self.bot.officer_manager.remove_officer(
             self.id, reason=reason, display_name=display_name
