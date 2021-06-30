@@ -155,7 +155,7 @@ class OfficerManager:
             # Build a list of all LPD roles besides ranks, for general availability
             all_lpd_role_ids = []
             for key, value in self.bot.settings.items():
-                if 'role' in key and 'detention' not in key and 'LPD_role' not in key and isinstance(value, int):
+                if 'role' in key and 'detention' not in key and 'lpd_role' not in key and isinstance(value, int):
                     all_lpd_role_ids.append(value)
                     
             self.all_lpd_roles = [
