@@ -27,6 +27,7 @@ class OfficerManager:
         self.bot = bot
         self._before_officer_removal = run_before_officer_removal
         self.all_officer_ids = all_officer_ids
+        self.officers_we_just_removed = []
 
         # Get the guild
         self.guild = bot.get_guild(bot.settings["Server_ID"])
@@ -155,7 +156,7 @@ class OfficerManager:
             # Build a list of all LPD roles besides ranks, for general availability
             all_lpd_role_ids = []
             for key, value in self.bot.settings.items():
-                if 'role' in key and 'detention' not in key and 'lpd_role' not in key and isinstance(value, int):
+                if 'role' in key and 'detention' not in key and isinstance(value, int):
                     all_lpd_role_ids.append(value)
                     
             self.all_lpd_roles = [
@@ -244,6 +245,7 @@ class OfficerManager:
         
         member = self.guild.get_member(officer_id)
         if member:
+            self.officers_we_just_removed.append(member.id)
             roles_to_remove = self.all_lpd_ranks + self.all_lpd_roles
             
             for role in member.roles:
@@ -345,6 +347,9 @@ class OfficerManager:
         """Returns true if specified member object has and of the LPD roles"""
 
         if member is None:
+            return False
+        if member.id in self.officers_we_just_removed:
+            self.officers_we_just_removed.remove(member.id)
             return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
         all_lpd_ranks.append(self.bot.settings["lpd_role"])
