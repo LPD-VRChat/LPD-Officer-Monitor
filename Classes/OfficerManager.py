@@ -241,6 +241,14 @@ class OfficerManager:
                 "Error encountered in before_officer_removal function",
                 traceback.format_exc(),
             )
+        
+        member = self.guild.get_member(officer_id)
+        if member:
+            roles_to_remove = self.all_lpd_ranks + self.all_lpd_roles
+            
+            for role in member.roles:
+                if role in roles_to_remove:
+                    await member.remove_roles(role)
 
         # Get display name for the Officer to be removed
         if display_name == None:
