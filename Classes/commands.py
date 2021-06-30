@@ -994,7 +994,33 @@ class Inactivity(commands.Cog):
                     ctx.author.id, "Renewed by direct discord command"
                 )
         await ctx.send("Renewed time for mentioned officers.")
-
+    
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def purge_inactive(self, ctx):
+        """Remove all LPD_inactive Officers from the LPD"""
+        inactive_role = self.bot.officer_manager.guild.get_role(
+            self.bot.settings["inactive_role"]
+        )
+        
+        confirm = await Confirm(f"Do you want to remove all officers with the {inactive_role.name} role?").prompt(ctx)
+        if not confirm:
+            await ctx.send("Canceled purge")
+            return
+        
+        officers_removed = False
+        for officer in self.bot.officer_manager.all_officers.values():
+            if inactive_role in officer.member.roles:
+                await officer.remove(reason='they were inactive')
+                await officer.member.remove_roles(inactive_role)
+                officers_removed = True
+                
+        if officers_removed:
+            await ctx.send(f"All officers with the {inactive_role.name} role were removed from the LPD")
+        else:
+            await ctx.send(f"Could not find any officers with the {inactive_role.name} role")
+            
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
