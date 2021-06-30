@@ -151,6 +151,17 @@ class OfficerManager:
                 self.guild.get_role(role_id)
                 for role_id in role_id_index(self.bot.settings)
             ]
+            
+            # Build a list of all LPD roles besides ranks, for general availability
+            all_lpd_role_ids = []
+            for key, value in self.bot.settings.items():
+                if 'role' in key and 'detention' not in key:
+                    all_lpd_role_ids.append(int(value))
+                    
+            self.all_lpd_roles = [
+                self.guild.get_role(role_id)
+                for role_id in all_lpd_role_ids
+            ]
 
         except Exception as error:
             print(error)
