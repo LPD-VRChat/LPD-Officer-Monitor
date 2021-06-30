@@ -251,6 +251,7 @@ class OfficerManager:
             for role in member.roles:
                 if role in roles_to_remove:
                     await member.remove_roles(role)
+            self.officers_we_just_removed.remove(member.id)
 
         # Get display name for the Officer to be removed
         if display_name == None:
@@ -349,7 +350,6 @@ class OfficerManager:
         if member is None:
             return False
         if member.id in self.officers_we_just_removed:
-            self.officers_we_just_removed.remove(member.id)
             return False
         all_lpd_ranks = [x["id"] for x in self.bot.settings["role_ladder"]]
         all_lpd_ranks.append(self.bot.settings["lpd_role"])
