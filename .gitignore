@@ -103,9 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Ignore the keys
-*keys.json
-/settings/settings.json
+# Ignore the keys and local settings
+Keys/dev.py
+Keys/production.py
+Keys/local.py
+Settings/local.py
 
 # Visual Studio/VSCode
 .vscode/*
