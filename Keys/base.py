@@ -2,9 +2,6 @@
 # Do not upload modified dev.py, production.py, or local.py.
 
 # The bot token, Client ID, and Callback URL from the Discord Developer Portal
-from Keys.local import CLIENT_SECRET
-
-
 DISCORD_TOKEN = "yigbuq3cfr98by7wvefgrt78b9ywv34t8ib7uiybgw3f4ubigycuvifuv4uigy"
 CLIENT_ID = 0
 CLIENT_SECRET = "wg43tgw4gw4gwgyhsae54ty35y35"

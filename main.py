@@ -40,6 +40,7 @@ intents.members = True
 bot = commands.Bot(command_prefix=Settings.BOT_PREFIX, intents=intents)
 bot.remove_command("help")
 
+bot.has_been_started = False
 bot.everything_ready = False
 
 ##############
@@ -245,7 +246,7 @@ async def on_member_join(member):
 
 async def runner():
     try:
-        await bot.start(Settings.DISCORD_TOKEN)
+        await bot.start(Keys.DISCORD_TOKEN)
     finally:
         if not bot.is_closed():
             await bot.close()
