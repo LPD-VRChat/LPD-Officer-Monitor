@@ -29,8 +29,6 @@ from discord.ext import commands
 
 # Custom Library Imports
 from BusinessLayer.test_functions import *
-from DataLayer import *
-from UILayer import *
 
 apply()
 
@@ -133,6 +131,7 @@ async def on_voice_state_update(member, before, after):
         # Archive the voice activity
         pass
 
+
 @bot.event
 async def on_member_update(before, after):
     if before.bot or after.bot:
@@ -143,25 +142,28 @@ async def on_member_update(before, after):
 
     if officer_before and officer_after:
         return
-    
+
     elif not officer_before and not officer_after:
         return
-    
+
     elif not officer_before and officer_after:
         create_officer(after.id)
-    
+
     elif officer_before and not officer_after:
         remove_officer(after.id)
+
 
 @bot.event
 async def on_member_remove(member):
     if is_officer(member.id):
         remove_officer(member.id)
 
+
 @bot.event
 async def on_member_ban(member):
     if is_officer(member.id):
         remove_officer(member.id)
+
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -171,11 +173,13 @@ async def on_error(event, *args, **kwargs):
     print(f"Error in {event}: {args}")
     traceback.print_exc()
 
+
 @bot.event
 async def on_raw_message_delete(payload):
     # If the channel the LEAVE_OF_ABSENCE_CHANNEL, delete the LOA
     if payload.channel_id == Settings.LEAVE_OF_ABSENCE_CHANNEL:
         pass
+
 
 @bot.event
 async def on_raw_bulk_message_delete(payload):
@@ -183,15 +187,21 @@ async def on_raw_bulk_message_delete(payload):
     if payload.channel_id == Settings.LEAVE_OF_ABSENCE_CHANNEL:
         pass
 
+
 @bot.event
 async def on_raw_reaction_add(payload):
     if not bot.everything_ready:
         return
-    
+
     # if someone reacts :x: in REQUEST_RANK_CHANNEL, and they are a trainer, delete the message
-    if payload.channel_id == Settings.REQUEST_RANK_CHANNEL and and payload.emoji.name == "❌" and is_any_trainer(payload.user_id):
+    if (
+        payload.channel_id == Settings.REQUEST_RANK_CHANNEL
+        and payload.emoji.name == "❌"
+        and is_any_trainer(payload.user_id)
+    ):
         message = await bot.get_message(payload.channel_id, payload.message_id)
         await bot.delete_message(message)
+
 
 @bot.event
 async def on_command_error(ctx, exception):
@@ -202,17 +212,22 @@ async def on_command_error(ctx, exception):
     try:
         await ctx.send(exception_string)
     except discord.Forbidden:
-        bot.get_channel(Settings.ERROR_LOG_CHANNEL).send(f"**{ctx.author}**, I'm not allowed to send messages in {ctx.channel}**")
+        bot.get_channel(Settings.ERROR_LOG_CHANNEL).send(
+            f"**{ctx.author}**, I'm not allowed to send messages in {ctx.channel}**"
+        )
         pass
-    
+
     if exception_string.find("encountered a problem") != -1:
-        print(exception_string, "".join(traceback.format_exception(None, exception, None)))
+        print(
+            exception_string, "".join(traceback.format_exception(None, exception, None))
+        )
+
 
 @bot.event
 async def on_member_join(member):
     if member.bot:
         return
-    
+
     # If the member is a detainee, make sure to give them the detention role
     pass
 
@@ -227,15 +242,17 @@ async def on_member_join(member):
 ### Start the bot ###
 #####################
 
+
 async def runner():
     try:
         await bot.start(Settings.DISCORD_TOKEN)
     finally:
         if not bot.is_closed():
             await bot.close()
-    
+
+
 future = asyncio.ensure_future(runner(), loop=loop)
 try:
     loop.run_forever()
 except KeyboardInterrupt:
-    loop.run_until_complete(clean_shutdown(bot)
+    loop.run_until_complete(clean_shutdown(bot))
