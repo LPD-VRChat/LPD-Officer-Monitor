@@ -118,3 +118,5 @@ LPD_database*.csv
 *.sqlite
 .run.loop
 run
+Settings/local.py
+Keys/local.py
