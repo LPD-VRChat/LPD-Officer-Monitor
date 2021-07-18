@@ -24,7 +24,7 @@ class role_ladder_element:
         self.position = next(self.position_counter)
 
 
-if _os.environ.get("LPD_OFFICER_MONITOR_SETTINGS") == "Settings.dev":
+if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
     from .dev import *
 else:
     from .production import *
