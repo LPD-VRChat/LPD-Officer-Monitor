@@ -1,6 +1,3 @@
-from .base import *
-
-
 # fmt: off
 # Rank Role Ladder ###############################################
 

@@ -1,5 +1,9 @@
 import os as _os
 
+try:
+    from .base import *
+except ImportError:
+    pass
 
 try:
     if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
