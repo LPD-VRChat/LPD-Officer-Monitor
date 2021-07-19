@@ -68,7 +68,10 @@ else:
 
 print("Generating the code now...")
 
-outputCode = f"""# Standard
+outputCode = f"""# Settings import
+import Settings
+
+# Standard
 import traceback
 import asyncio
 import argparse
