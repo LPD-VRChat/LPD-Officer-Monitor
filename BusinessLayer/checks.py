@@ -40,6 +40,7 @@ def is_team_bot_channel():
     def predicate(ctx):
         return (
             ctx.channel.id == Settings.TEAM_BOT_CHANNEL
+            or ctx.channel.id == Settings.ADMIN_BOT_CHANNEL
         )  # This is for now, but later we'll need to write this correctly
 
     return commands.check(predicate)
@@ -49,6 +50,8 @@ def is_general_bot_channel():
     def predicate(ctx):
         return (
             ctx.channel.id == Settings.GENERAL_BOT_CHANNEL
+            or ctx.channel.id == Settings.ADMIN_BOT_CHANNEL
+            or ctx.channel.id == Settings.TEAM_BOT_CHANNEL
         )  # This is for now, but later we'll need to write this correctly
 
     return commands.check(predicate)
