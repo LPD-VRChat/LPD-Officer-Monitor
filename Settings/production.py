@@ -92,3 +92,5 @@ DB_NAME = "LPD_Officer_Monitor"
 DB_USER = "lpd"
 DB_HOST = "localhost"
 DB_SOCK = "/run/mysqld/mysqld.sock"
+DB_TYPE = "mysql"
+DB_PORT = 3306
