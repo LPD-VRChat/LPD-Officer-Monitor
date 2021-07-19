@@ -28,6 +28,7 @@ from discord.ext import commands
 
 # Custom Library Imports
 from BusinessLayer.test_functions import *
+from BusinessLayer.extra_functions import *
 import UILayer
 
 apply()

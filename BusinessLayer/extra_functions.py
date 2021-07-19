@@ -8,6 +8,7 @@ from io import StringIO, BytesIO
 from termcolor import colored
 from datetime import datetime
 from sys import stdout
+import Settings
 
 apply()
 
@@ -70,7 +71,7 @@ async def handle_error(bot, title, traceback_string):
     error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
     ts_print(error_text)
 
-    channel = bot.get_channel(bot.settings["error_log_channel"])
+    channel = bot.get_channel(Settings.ERROR_LOG_CHANNEL)
     await send_long(channel, error_text)
 
 
@@ -96,7 +97,7 @@ async def clean_shutdown(
 
     # Log the shutdown
     msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
-    channel = bot.get_channel(bot.settings["error_log_channel"])
+    channel = bot.get_channel(Settings.ERROR_LOG_CHANNEL)
     await channel.send(msg_string)
     ts_print(msg_string)
 

@@ -19,7 +19,3 @@ def remove_officer(officer_id):
 
 def is_any_trainer(officer_id):
     return True
-
-
-def clean_shutdown(bot, location="w", person="a", exit=True):
-    print(location, person, exit)
