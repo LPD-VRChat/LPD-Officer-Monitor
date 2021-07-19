@@ -2,6 +2,7 @@
 from typing import Optional
 import discord
 from os import _exit
+import traceback
 import asyncio
 from nest_asyncio import apply
 from io import StringIO, BytesIO
