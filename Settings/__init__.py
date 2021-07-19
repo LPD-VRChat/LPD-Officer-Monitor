@@ -25,11 +25,6 @@ class role_ladder_element:
 
 
 try:
-    from .base import *
-except ImportError:
-    pass
-
-try:
     if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
         from .dev import *
     else:
