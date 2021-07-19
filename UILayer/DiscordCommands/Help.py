@@ -176,5 +176,6 @@ class Help(commands.Cog):
             await ctx.send("Something failed with the help command.")
             await handle_error(self.bot, error, traceback.format_exc())
 
+
 def setup(bot):
     bot.add_cog(Help(bot))
