@@ -15,7 +15,7 @@ VRC_PASS = "AnEvenMoreSecurePasswordIndeed"
 
 # TeamUp key and secret for calendar integration
 TEAMUP_KEY = "TheAPIKeyFromTeamUp"
-TEAMUP_Secret = "TheSecretFromTeamUp"
+TEAMUP_SECRET = "TheSecretFromTeamUp"
 
 # The certfile and keyfile for the bot's SSL certificate
 CERTFILE = "certs/cert.pem"
