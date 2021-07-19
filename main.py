@@ -1,4 +1,4 @@
-# Set environment to DEV and import Settings and Keys
+# Set environment to DEV and import Settings and Keys - remove these lines if using production
 import os
 
 os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
@@ -15,7 +15,6 @@ import logging
 import asyncio
 import nest_asyncio
 from nest_asyncio import apply
-
 import datetime
 import time
 import sys
@@ -29,6 +28,7 @@ from discord.ext import commands
 
 # Custom Library Imports
 from BusinessLayer.test_functions import *
+import UILayer
 
 apply()
 
@@ -42,6 +42,7 @@ bot.remove_command("help")
 
 bot.has_been_started = False
 bot.everything_ready = False
+
 
 ##############
 ### Checks ###
@@ -237,7 +238,9 @@ async def on_member_join(member):
 ### Add cogs ###
 ################
 
-# Add all command cogs from the UILayer to the bot
+for cog in UILayer.cogs:
+    bot.add_cog(cog(bot))
+
 
 #####################
 ### Start the bot ###
