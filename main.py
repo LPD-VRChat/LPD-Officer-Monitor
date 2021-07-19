@@ -27,9 +27,10 @@ from discord.errors import HTTPException
 from discord.ext import commands
 
 # Custom Library Imports
+from UILayer.DiscordCommands import setup as setup_commands
+
 from BusinessLayer.test_functions import *
 from BusinessLayer.extra_functions import *
-import UILayer
 
 apply()
 
@@ -235,12 +236,11 @@ async def on_member_join(member):
     pass
 
 
-################
-### Add cogs ###
-################
+#######################################################
+### Add cogs and anything else for discord commands ###
+#######################################################
 
-for cog in UILayer.cogs:
-    bot.add_cog(cog(bot))
+setup_commands(bot)
 
 
 #####################
