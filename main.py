@@ -29,8 +29,13 @@ from discord.ext import commands
 # Custom Library Imports
 from UILayer.DiscordCommands import setup as setup_commands
 
-from BusinessLayer.test_functions import *
-from BusinessLayer.extra_functions import *
+from BusinessLayer.test_functions import (
+    is_officer,
+    create_officer,
+    remove_officer,
+    is_any_trainer,
+)
+from BusinessLayer.extra_functions import clean_shutdown
 
 apply()
 
