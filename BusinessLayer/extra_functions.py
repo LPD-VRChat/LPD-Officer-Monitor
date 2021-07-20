@@ -1,5 +1,5 @@
 # Standard
-from typing import Optional
+from typing import Optional, Union
 import discord
 from os import _exit
 import traceback
@@ -125,3 +125,8 @@ def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
         file=file,
         flush=flush,
     )
+
+
+def has_role_id(member: discord.Member, role_id: str) -> bool:
+    """Returns true if the member has the given role"""
+    return role_id in [r.id for r in member.roles]

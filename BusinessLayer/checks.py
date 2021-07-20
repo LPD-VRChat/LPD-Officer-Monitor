@@ -5,6 +5,7 @@ from discord.ext import commands
 
 # Mine
 import discord.errors as errors
+from BusinessLayer.extra_functions import has_role_id
 
 
 def template_check():
@@ -53,6 +54,22 @@ def is_general_bot_channel():
             or ctx.channel.id == Settings.ADMIN_BOT_CHANNEL
             or ctx.channel.id == Settings.TEAM_BOT_CHANNEL
         )  # This is for now, but later we'll need to write this correctly
+
+    return commands.check(predicate)
+
+
+def is_chat_moderator():
+    def predicate(ctx):
+        return has_role_id(ctx.author, Settings.CHAT_MODERATOR_ROLE_ID) or has_role_id(
+            ctx.author, Settings.MODERATOR_ROLE_ID
+        )
+
+    return commands.check(predicate)
+
+
+def is_moderator():
+    def predicate(ctx):
+        return has_role_id(ctx.author, Settings.MODERATOR_ROLE_ID)
 
     return commands.check(predicate)
 
