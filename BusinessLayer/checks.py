@@ -70,4 +70,3 @@ def is_moderator():
         return has_role_id(ctx.author, Settings.MODERATOR_ROLE_ID)
 
     return commands.check(predicate)
-
