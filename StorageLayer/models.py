@@ -25,7 +25,11 @@ class User(ormar.Model):
         metadata = metadata
 
     id: int = ormar.Integer(primary_key: bool = True)
-    member: discord.Member
+    
+    @property
+    def member(self, bot) -> discord.Member:
+        """Return the discord.Member object with ID = self.id"""
+        return bot.guild.get_member(self.id)
 
 class Officer(User):
 
