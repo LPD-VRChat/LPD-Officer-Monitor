@@ -24,13 +24,6 @@ from UILayer.DiscordCommands import setup as setup_commands
 from BusinessLayer.DiscordEvents import setup as setup_events
 from BusinessLayer.DiscordChecks import setup as setup_checks
 
-
-from BusinessLayer.test_functions import (
-    is_officer,
-    create_officer,
-    remove_officer,
-    is_any_trainer,
-)
 from BusinessLayer.extra_functions import clean_shutdown
 
 apply()
@@ -42,6 +35,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=Settings.BOT_PREFIX, intents=intents)
 bot.remove_command("help")
+bot.guild = bot.get_guild(Settings.SERVER_ID)
 
 bot.has_been_started = False
 bot.everything_ready = False
