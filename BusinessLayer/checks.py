@@ -21,9 +21,7 @@ def template_check():
 
 def is_programming_team():
     def predicate(ctx):
-        return (
-            True
-        )  # This is for now, but later we'll need to check if the user is in the programming team
+        return has_role_id(ctx.author.id, Settings.PROGRAMMING_TEAM_ROLE)
 
     return commands.check(predicate)
 
