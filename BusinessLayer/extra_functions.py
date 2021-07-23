@@ -127,6 +127,6 @@ def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
     )
 
 
-def has_role_id(member: discord.Member, role_id: str) -> bool:
+def has_role_id(member: discord.Member, role_id: int) -> bool:
     """Returns true if the member has the given role"""
     return role_id in [r.id for r in member.roles]
