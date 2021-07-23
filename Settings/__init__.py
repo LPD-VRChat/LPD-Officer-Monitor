@@ -23,6 +23,11 @@ class role_ladder_element:
         self.is_admin = is_admin
         self.position = next(self.position_counter)
 
+    @property
+    def role(self, bot):
+        """Returns the discord.Role object for this role ladder element"""
+        return bot.get_role(self.id)
+
 
 try:
     if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
