@@ -1,6 +1,7 @@
 import asyncio
 import traceback
 from discord.ext import commands
+from discord.errors import HTTPException
 
 
 def _on_error(bot: commands.Bot):
