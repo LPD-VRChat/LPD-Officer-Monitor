@@ -73,8 +73,12 @@ class Programming(commands.Cog):
                 print(
                     f"{ctx.author.display_name} reloaded {module_name} from #{ctx.channel.name}"
                 )
+            except discord.ext.commands.errors.ExtensionNotLoaded:
+                await ctx.send(
+                    f"Could not find a module matching the name `{module_name}`"
+                )
             except Exception as e:
-                await ctx.send(f"Failed to reload {module_name}")
+                await ctx.send(f"Failed to reload `{module_name}`")
                 await handle_error(self.bot, e, traceback.format_exc())
 
 
