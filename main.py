@@ -35,7 +35,6 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=Settings.BOT_PREFIX, intents=intents)
 bot.remove_command("help")
-bot.guild = bot.get_guild(Settings.SERVER_ID)
 
 bot.has_been_started = False
 bot.everything_ready = False
