@@ -194,6 +194,58 @@ class Other(commands.Cog):
         )
         await send_long(ctx.channel, member_str, code_block=True)
 
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command()
+    async def count_officers(self, ctx):
+        """
+        This command returns an embed with a count of all officers by rank,
+        as well as a total count.
+        """
+
+        all_lpd_members = self.get_role_members(
+            self.bot.guild.get_role(Settings.LPD_ROLE)
+        )
+
+        # For every rank in Settings.ROLE_LADDER, get the number of members with the role having that rank.id
+        # Then add that to a dictionary with the role name as the key, and the number of members as the value.
+
+        # Create a dictionary of all the roles and their corresponding member count
+        # This will be used to create the embed later.
+        # The keys are the role names, and the values are the member count.
+
+        all_officer_count = len(all_lpd_members)
+
+        # Create an embed to send to the channel
+        embed = discord.Embed(
+            title="Number of all LPD Officers: " + str(all_officer_count),
+            colour=discord.Colour.dark_green(),
+        )
+
+        for rank in Settings.ROLE_LADDER.__dict__.values():
+            role = self.bot.guild.get_role(rank.id)
+            if role is None:
+                continue
+
+            rank_name = self.remove_name_decoration(role.name)
+            if rank_name == "Cadet":
+                rank_name = "LPD " + rank_name
+
+            embed.add_field(
+                name=rank_name,
+                value="**"
+                + str(len(self.get_role_members(role)))
+                + "**"
+                + " ("
+                + str(
+                    round(100 * len(self.get_role_members(role)) / all_officer_count, 2)
+                )
+                + "%)",
+                inline=True,
+            )
+
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Other(bot))
