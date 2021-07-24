@@ -21,7 +21,7 @@ def template_check():
 
 def is_programming_team():
     def predicate(ctx):
-        return has_role_id(ctx.author.id, Settings.PROGRAMMING_TEAM_ROLE)
+        return has_role_id(ctx.author, Settings.PROGRAMMING_TEAM_ROLE)
 
     return commands.check(predicate)
 
@@ -58,8 +58,8 @@ def is_general_bot_channel():
 
 def is_chat_moderator():
     def predicate(ctx):
-        return has_role_id(ctx.author, Settings.CHAT_MODERATOR_ROLE_ID) or has_role_id(
-            ctx.author, Settings.MODERATOR_ROLE_ID
+        return has_role_id(ctx.author, Settings.CHAT_MODERATOR_ROLE) or has_role_id(
+            ctx.author, Settings.MODERATOR_ROLE
         )
 
     return commands.check(predicate)
@@ -67,6 +67,40 @@ def is_chat_moderator():
 
 def is_moderator():
     def predicate(ctx):
-        return has_role_id(ctx.author, Settings.MODERATOR_ROLE_ID)
+        return has_role_id(ctx.author, Settings.MODERATOR_ROLE)
+
+    return commands.check(predicate)
+
+
+def is_team_lead():
+    def predicate(ctx):
+        return has_role_id(ctx.author, Settings.TEAM_LEAD_ROLE)
+
+    return commands.check(predicate)
+
+
+def is_dev_team():
+    def predicate(ctx):
+        return has_role_id(ctx.author, Settings.DEV_TEAM_ROLE)
+
+    return commands.check(predicate)
+
+
+def is_white_shirt():
+    def predicate(ctx):
+        for Rank in Settings.ROLE_LADDER.__dict__.values():
+            if has_role_id(ctx.author, Rank.id) and Rank.is_white_shirt:
+                return True
+        return False
+
+    return commands.check(predicate)
+
+
+def is_admin():
+    def predicate(ctx):
+        for Rank in Settings.ROLE_LADDER.__dict__.values():
+            if has_role_id(ctx.author, Rank.id) and Rank.is_admin:
+                return True
+        return False
 
     return commands.check(predicate)
