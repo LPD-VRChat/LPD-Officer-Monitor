@@ -1,3 +1,4 @@
+from re import L
 import Settings
 
 # Community
@@ -101,6 +102,28 @@ def is_admin():
         for Rank in Settings.ROLE_LADDER.__dict__.values():
             if has_role_id(ctx.author, Rank.id) and Rank.is_admin:
                 return True
+        return False
+
+    return commands.check(predicate)
+
+
+def is_any_trainer():
+    def predicate(ctx):
+        if [
+            role
+            for role in ctx.author.roles
+            if role.id in Settings.TRAINER_TEAMS.values()
+        ] != []:
+            return True
+        return False
+
+    return commands.check(predicate)
+
+
+def is_event_host():
+    def predicate(ctx):
+        if has_role_id(ctx.author, Settings.EVENT_HOST_ROLE):
+            return True
         return False
 
     return commands.check(predicate)

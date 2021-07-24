@@ -56,16 +56,21 @@ RECRUITER_ROLE = 633018289777410068
 JANITOR_ROLE = 820120880117317652
 INSTIGATOR_ROLE = 820118440165638174
 TEAMS = {
-    "Trainer Team": TRAINER_ROLE,
-    "SLRT Trainer Team": SLRT_TRAINER_ROLE,
-    "LMT Trainer Team": LMT_TRAINER_ROLE,
-    "Prison Trainer Team": PRISON_TRAINER_ROLE,
     "Programming Team": PROGRAMMING_TEAM_ROLE,
     "Dev Team": DEV_TEAM_ROLE,
     "Event Host Team": EVENT_HOST_ROLE,
     "Media Production Team": MEDIA_PRODUCTION_ROLE,
     "Instigation Team": INSTIGATOR_ROLE,
 }
+
+TRAINER_TEAMS = {
+    "Trainer Team": TRAINER_ROLE,
+    "SLRT Trainer Team": SLRT_TRAINER_ROLE,
+    "LMT Trainer Team": LMT_TRAINER_ROLE,
+    "Prison Trainer Team": PRISON_TRAINER_ROLE,
+}
+
+TEAMS.update(TRAINER_TEAMS)
 
 ##### Language Role IDs
 KOREAN_ROLE = 820122312782250024
