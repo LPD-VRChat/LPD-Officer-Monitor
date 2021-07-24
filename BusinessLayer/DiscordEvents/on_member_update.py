@@ -1,5 +1,6 @@
 import asyncio
 from discord.ext import commands
+from BusinessLayer.test_functions import is_officer
 
 
 def _on_member_update(bot: commands.Bot):
