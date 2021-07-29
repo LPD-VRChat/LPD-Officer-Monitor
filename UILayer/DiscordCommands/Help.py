@@ -5,7 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 
-# Mine
+# Custom
 from BusinessLayer.extra_functions import handle_error
 
 
