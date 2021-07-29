@@ -23,9 +23,6 @@ from discord.errors import HTTPException
 from discord.ext import commands
 import nest_asyncio
 
-# from aiologger import Logger
-# from aiologger.handlers.files import AsyncFileHandler
-
 # Custom Library Imports
 from UILayer.DiscordCommands import setup as setup_commands
 from BusinessLayer.bl_wrapper import BusinessLayerWrapper
