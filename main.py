@@ -6,29 +6,38 @@ os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
 import Settings
 import Keys
 
+
 ####################
 ### Main Imports ###
 ####################
 
 # Standard Library Imports
 import asyncio
-from nest_asyncio import apply
+import logging
+from queue import SimpleQueue
+import threading
 
 # Community Library Imports
 import discord
 from discord.errors import HTTPException
 from discord.ext import commands
+import nest_asyncio
+
+# from aiologger import Logger
+# from aiologger.handlers.files import AsyncFileHandler
 
 # Custom Library Imports
 from UILayer.DiscordCommands import setup as setup_commands
-from BusinessLayer.DiscordEvents import setup as setup_events
-from BusinessLayer.DiscordChecks import setup as setup_checks
+from BusinessLayer.bl_wrapper import BusinessLayerWrapper
+from extra_logging import setup_logging_queue, DiscordLoggingHandler
 
-from BusinessLayer.extra_functions import clean_shutdown
 
-apply()
+##############################
+### Setup Global Variables ###
+##############################
 
 loop = asyncio.get_event_loop()
+nest_asyncio.apply()
 
 intents = discord.Intents.default()
 intents.members = True
@@ -38,15 +47,29 @@ bot.remove_command("help")
 
 bot.has_been_started = False
 bot.everything_ready = False
-bot.shutdown = clean_shutdown
 
-#######################################################################
-### Add DiscordChecks, DiscordEvents and DiscordCommands to the bot ###
-#######################################################################
 
-setup_checks(bot)
-setup_events(bot)
+#####################
+### Setup logging ###
+#####################
+
+log = logging.getLogger("lpd-officer-monitor")
+log.setLevel(logging.INFO)
+log.addHandler(logging.StreamHandler())
+log.addHandler(logging.FileHandler(filename=Settings.LOG_FILE_PATH, encoding="utf-8"))
+log.addHandler(DiscordLoggingHandler(bot=bot, channel_id=Settings.ERROR_LOG_CHANNEL))
+logging_thread = threading.Thread(target=setup_logging_queue)
+logging_thread.start()
+
+
+##################################
+### Start the different layers ###
+##################################
+
+bot.bl_wrapper = BusinessLayerWrapper(bot)
 setup_commands(bot)
+# Remove the reference to the bl_wrapper from the bot to make sure it isn't interfaced with from the wrong places
+del bot.bl_wrapper
 
 
 #####################

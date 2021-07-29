@@ -2,28 +2,25 @@
 import Settings
 
 # Standard
-import traceback
-import asyncio
 import argparse
-from typing import List, Set, Tuple, Dict
+from typing import List, Set, Tuple
 
 # Community
 import discord
 from discord.ext import commands
 from fuzzywuzzy.process import extractBests
 
-# Mine
-from BusinessLayer.extra_functions import handle_error
-from BusinessLayer.extra_functions import ts_print as print
+# Custom
 import BusinessLayer.checks as checks
 import BusinessLayer.errors as errors
 
+from BusinessLayer.bl_wrapper import BusinessLayerWrapper
 from BusinessLayer.extra_functions import send_long
 
 
 class Other(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.color = discord.Color.green()
 
     @staticmethod

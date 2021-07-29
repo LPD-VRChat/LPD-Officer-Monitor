@@ -1,5 +1,7 @@
 from .__init__ import role_ladder_element
+import os as _os
 
+PROJECT_DIR = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 # fmt: off
 # Rank Role Ladder ###############################################
@@ -100,3 +102,4 @@ DB_PORT = 3306
 BOT_PREFIX = "="
 DB_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 NAME_SEPARATOR = ";"
+LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "Logs", "lpd_officer_monitor.log")

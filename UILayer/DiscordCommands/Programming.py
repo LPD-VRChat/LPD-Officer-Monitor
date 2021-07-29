@@ -11,14 +11,13 @@ import discord
 from discord.ext import commands
 
 # Mine
-from BusinessLayer.extra_functions import handle_error, clean_shutdown
-from BusinessLayer.extra_functions import ts_print as print
+from BusinessLayer.extra_functions import handle_error
 import BusinessLayer.checks as checks
 
 
 class Programming(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bl_wrapper = bot.bl_wrapper
         self.color = discord.Color.red()
 
     @checks.is_team_bot_channel()
@@ -27,8 +26,8 @@ class Programming(commands.Cog):
     async def shutdown(self, ctx):
         """This command shuts the bot down cleanly"""
         await ctx.send("Shutting the bot down...")
-        await clean_shutdown(
-            self.bot, "#" + ctx.channel.name, ctx.author.display_name, exit=True
+        await self.bl_wrapper.clean_shutdown(
+            "#" + ctx.channel.name, ctx.author.display_name, exit=True
         )
 
     @checks.is_team_bot_channel()
@@ -37,8 +36,8 @@ class Programming(commands.Cog):
     async def restart(self, ctx):
         """Restarts the bot if something is broken"""
         await ctx.send("Restarting the bot...")
-        await clean_shutdown(
-            self.bot, "#" + ctx.channel.name, ctx.author.display_name, exit=False
+        await self.bl_wrapper.clean_shutdown(
+            "#" + ctx.channel.name, ctx.author.display_name, exit=False
         )
 
     @checks.is_team_bot_channel()
