@@ -57,7 +57,7 @@ class Programming(commands.Cog):
             for m in extensions:
                 try:
                     self.bot.reload_extension(m)
-                    await ctx.send(f"""Successfull reloaded {m.split('.')[-1]}""")
+                    await ctx.send(f"""Successfully reloaded {m.split('.')[-1]}""")
                 except Exception as e:
                     await ctx.send(f"""Failed to reload {m.split('.')[-1]}""")
                     await handle_error(self.bot, e, traceback.formaW_exc())
