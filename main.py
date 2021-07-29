@@ -66,10 +66,8 @@ logging_thread.start()
 ### Start the different layers ###
 ##################################
 
-bot.bl_wrapper = BusinessLayerWrapper(bot)
-setup_commands(bot)
-# Remove the reference to the bl_wrapper from the bot to make sure it isn't interfaced with from the wrong places
-del bot.bl_wrapper
+bl_wrapper = BusinessLayerWrapper(bot)
+setup_commands(bot, bl_wrapper)
 
 
 #####################
