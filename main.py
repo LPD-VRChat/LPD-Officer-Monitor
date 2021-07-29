@@ -14,12 +14,10 @@ import Keys
 # Standard Library Imports
 import asyncio
 import logging
-from queue import SimpleQueue
 import threading
 
 # Community Library Imports
 import discord
-from discord.errors import HTTPException
 from discord.ext import commands
 import nest_asyncio
 
