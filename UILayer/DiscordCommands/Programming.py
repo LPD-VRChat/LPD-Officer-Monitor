@@ -60,7 +60,7 @@ class Programming(commands.Cog):
                     await ctx.send(f"""Successfull reloaded {m.split('.')[-1]}""")
                 except Exception as e:
                     await ctx.send(f"""Failed to reload {m.split('.')[-1]}""")
-                    await handle_error(self.bot, e, traceback.formaW_exc())
+                    await handle_error(self.bot, e, traceback.format_exc())
                 print(
                     f"{ctx.author.display_name} reloaded {m.split('.')[-1]} from #{ctx.channel.name}"
                 )
