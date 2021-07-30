@@ -50,12 +50,19 @@ bot.everything_ready = False
 
 log = logging.getLogger("lpd-officer-monitor")
 log.setLevel(logging.DEBUG)
-log.addHandler(logging.StreamHandler())
 if not os.path.exists(Settings.LOG_FILE_PATH):
     os.makedirs("/".join(Settings.LOG_FILE_PATH.split("/")[:-1]))
     os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT))
-log.addHandler(logging.FileHandler(filename=Settings.LOG_FILE_PATH, encoding="utf-8"))
-log.addHandler(DiscordLoggingHandler(bot=bot, channel_id=Settings.ERROR_LOG_CHANNEL))
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+sh = logging.StreamHandler()
+fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
+dh = DiscordLoggingHandler(bot, channel_id=Settings.ERROR_LOG_CHANNEL)
+sh.setFormatter(formatter)
+fh.setFormatter(formatter)
+dh.setFormatter(formatter)
+log.addHandler(sh)
+log.addHandler(fh)
+log.addHandler(dh)
 logging_thread = threading.Thread(target=setup_logging_queue)
 logging_thread.start()
 
@@ -90,10 +97,8 @@ async def on_ready():
 
     bot.guild = bot.get_guild(Settings.SERVER_ID)
     if bot.guild:
-        log.info(
-            f"{'Server name':<12}: {bot.guild.name}\n"
-            f"{'Server ID':<12}: {bot.guild.id}"
-        )
+        log.info(f"{'Server name':<12}: {bot.guild.name}")
+        log.info(f"{'Server ID':<12}: {bot.guild.id}")
     else:
         await bl_wrapper.clean_shutdown(location="internal", by="server lookup")
 
