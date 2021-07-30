@@ -32,6 +32,8 @@ class ProgrammingBL(BaseBL):
 
         # Log the shutdown
         msg_string = f"Bot {'shut down' if exit else 'restarted'} from {location} by {shutdown_by}"
+        if location == "the console":
+            print()
         log.warning(msg_string)
 
         if exit:
