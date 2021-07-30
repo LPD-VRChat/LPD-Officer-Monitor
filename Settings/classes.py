@@ -1,6 +1,5 @@
 from itertools import count
 from dataclasses import dataclass, field
-from typing import ClassVar
 
 position_counter = count(0)
 

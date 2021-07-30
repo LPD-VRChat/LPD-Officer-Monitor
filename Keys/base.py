@@ -20,3 +20,5 @@ TEAMUP_SECRET = "TheSecretFromTeamUp"
 # The certfile and keyfile for the bot's SSL certificate
 CERTFILE = "certs/cert.pem"
 KEYFILE = "certs/key.pem"
+
+WEB_SECRET_KEY = b"TheSecretKeyForWebSecret"

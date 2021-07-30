@@ -36,9 +36,9 @@ class ProgrammingBL(BaseBL):
             print()
         log.warning(msg_string)
 
+        # Stop the event loop
+        loop = asyncio.get_event_loop()
+        loop.call_soon_threadsafe(loop.stop)
+
         if exit:
-            # Stop the event loop and exit Python. The OS should be
-            # calling this script inside a loop if you want the bot to restart
-            loop = asyncio.get_event_loop()
-            loop.stop()
             _exit(0)
