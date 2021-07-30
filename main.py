@@ -52,7 +52,7 @@ log = logging.getLogger("lpd-officer-monitor")
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 if not os.path.exists(Settings.LOG_FILE_PATH):
-    os.makedirs('/'.join(Settings.LOG_FILE_PATH.split('/')[:-1]))
+    os.makedirs("/".join(Settings.LOG_FILE_PATH.split("/")[:-1]))
     os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT))
 log.addHandler(logging.FileHandler(filename=Settings.LOG_FILE_PATH, encoding="utf-8"))
 log.addHandler(DiscordLoggingHandler(bot=bot, channel_id=Settings.ERROR_LOG_CHANNEL))
@@ -153,4 +153,4 @@ future = asyncio.ensure_future(runner(), loop=loop)
 try:
     loop.run_forever()
 except KeyboardInterrupt:
-    loop.run_until_complete(bot.shutdown(bot))
+    loop.run_until_complete(bl_wrapper.clean_shutdown())
