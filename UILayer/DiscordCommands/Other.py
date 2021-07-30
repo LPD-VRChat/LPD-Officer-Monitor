@@ -21,6 +21,7 @@ from BusinessLayer.extra_functions import send_long
 class Other(commands.Cog):
     def __init__(self, bot):
         self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
+        self.bot = bot
         self.color = discord.Color.green()
 
     @staticmethod
@@ -133,7 +134,7 @@ class Other(commands.Cog):
             return
 
         if role_names == [123]:
-            results = set(self.bot.guild.members)
+            results = set(ctx.bot.guild.members)
             roles_search = None
 
         else:
@@ -201,7 +202,7 @@ class Other(commands.Cog):
         """
 
         all_lpd_members = self.get_role_members(
-            self.bot.guild.get_role(Settings.LPD_ROLE)
+            ctx.bot.guild.get_role(Settings.LPD_ROLE)
         )
 
         # For every rank in Settings.ROLE_LADDER, get the number of members with the role having that rank.id
@@ -220,7 +221,7 @@ class Other(commands.Cog):
         )
 
         for rank in Settings.ROLE_LADDER.__dict__.values():
-            role = self.bot.guild.get_role(rank.id)
+            role = ctx.bot.guild.get_role(rank.id)
             if role is None:
                 continue
 
