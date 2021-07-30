@@ -1,4 +1,6 @@
 from .base import *
+import os as _os
+import tracemalloc as _tracemalloc
 
 # fmt: off
 # Rank Role Ladder ###############################################
@@ -89,3 +91,7 @@ DB_HOST = "localhost"
 DB_SOCK = "/run/mysqld/mysqld.sock"
 DB_TYPE = "mysql"
 DB_PORT = 3306
+
+# Logging ########################################################
+_os.environ.setdefault("PYTHONASYNCIODDEBUG", "1")
+_tracemalloc.start()
