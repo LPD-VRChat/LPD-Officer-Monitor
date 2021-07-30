@@ -89,8 +89,7 @@ def is_dev_team():
 
 def is_white_shirt():
     def predicate(ctx):
-        for rank in Settings.ROLE_LADDER:
-            rank = rank.value
+        for rank in Settings.ROLE_LADDER.__dict__.values():
             if has_role_id(ctx.author, rank.id) and rank.is_white_shirt:
                 return True
         return False
@@ -100,7 +99,7 @@ def is_white_shirt():
 
 def is_admin():
     def predicate(ctx):
-        for rank in Settings.ROLE_LADDER:
+        for rank in Settings.ROLE_LADDER.__dict__.values():
             rank = rank.value
             if has_role_id(ctx.author, rank.id) and rank.is_admin:
                 return True
