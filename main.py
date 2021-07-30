@@ -110,7 +110,7 @@ async def on_ready():
 async def on_message(message: discord.Message) -> None:
 
     # Only process commands that are in a command channel
-    if message.channel.id not in Settings.ALLOWED_COMMAND_CHANNELS:
+    if message.channel.id in Settings.ALLOWED_COMMAND_CHANNELS:
         await bot.process_commands(message)
 
 
