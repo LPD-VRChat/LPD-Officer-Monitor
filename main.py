@@ -51,6 +51,9 @@ bot.everything_ready = False
 log = logging.getLogger("lpd-officer-monitor")
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
+if not os.path.exists(Settings.LOG_FILE_PATH):
+    os.makedirs('/'.join(Settings.LOG_FILE_PATH.split('/')[:-1]))
+    os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT))
 log.addHandler(logging.FileHandler(filename=Settings.LOG_FILE_PATH, encoding="utf-8"))
 log.addHandler(DiscordLoggingHandler(bot=bot, channel_id=Settings.ERROR_LOG_CHANNEL))
 logging_thread = threading.Thread(target=setup_logging_queue)

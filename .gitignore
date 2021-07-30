@@ -120,3 +120,4 @@ LPD_database*.csv
 run
 Settings/local.py
 Keys/local.py
+Logs/
