@@ -113,3 +113,7 @@ LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "Logs", "lpd_officer_monitor.log")
 
 # Logging ########################################################
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "0")
+
+# Web Manager settings ###########################################
+WEB_MANAGER_PORT = 443
+WEB_MANAGER_HOST = "0.0.0.0"

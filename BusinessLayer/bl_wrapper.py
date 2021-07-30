@@ -7,6 +7,7 @@ from discord.ext import commands
 from .time_bl import TimeBL
 from .vrc_name_bl import VRChatBL
 from .programming_bl import ProgrammingBL
+from .web_manager_bl import WebManagerBL
 
 
 class BusinessLayerWrapper:
@@ -18,6 +19,7 @@ class BusinessLayerWrapper:
         self._time_bl = TimeBL(bot, self)
         self._vrc_bl = VRChatBL()
         self._programming_bl = ProgrammingBL(bot, self)
+        self._web_manager_bl = WebManagerBL(bot, self)
 
         self._all_bl_layers = [self._time_bl, self._vrc_bl, self._programming_bl]
 
