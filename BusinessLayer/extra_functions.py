@@ -64,14 +64,6 @@ async def send_long(channel, string, code_block=False, mention=True):
     await channel.send("\n".join(output_list), allowed_mentions=allowed_mentions)
 
 
-async def handle_error(bot, title, traceback_string):
-    error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    ts_print(error_text)
-
-    channel = bot.get_channel(Settings.ERROR_LOG_CHANNEL)
-    await send_long(channel, error_text)
-
-
 async def send_str_as_file(
     channel: discord.TextChannel,
     file_data: str,

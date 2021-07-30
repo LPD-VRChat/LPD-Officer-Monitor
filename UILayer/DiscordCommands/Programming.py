@@ -12,7 +12,6 @@ import discord
 from discord.ext import commands
 
 # Custom
-from BusinessLayer.extra_functions import handle_error
 import BusinessLayer.checks as checks
 
 
