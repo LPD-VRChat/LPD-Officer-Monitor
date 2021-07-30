@@ -1,12 +1,16 @@
+# Standard
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 from os import _exit
 import logging
 
+# Community
 from discord.ext import commands
-import Settings
 
+# Custom
+import Settings
+from BusinessLayer.base_bl import BaseBL
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper
@@ -15,11 +19,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("lpd-officer-monitor")
 
 
-class ProgrammingBL:
-    def __init__(self, bot: commands.Bot, bl_wrapper: BusinessLayerWrapper) -> None:
-        self.bot = bot
-        self.bl_wrapper = bl_wrapper
-
+class ProgrammingBL(BaseBL):
     async def clean_shutdown(
         self,
         location: str = "the console",
