@@ -1,23 +1,24 @@
-from .__init__ import role_ladder_element
+from .classes import RoleLadderElement
 import os as _os
+from enum import Enum
 
 PROJECT_DIR = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 # fmt: off
 # Rank Role Ladder ###############################################
-ROLE_LADDER = lambda: None
-ROLE_LADDER.cadet = role_ladder_element("LPD Cadet", "cadet", 666005873679663134)
-ROLE_LADDER.recruit = role_ladder_element("LPD Recruit", "recruit", 594238854102515735)
-ROLE_LADDER.officer = role_ladder_element("LPD Officer", "officer", 834215801426018335)
-ROLE_LADDER.senior_officer = role_ladder_element("LPD Senior Officer", "senior_officer", 594239040723615780)
-ROLE_LADDER.corporal = role_ladder_element("LPD Corporal", "corporal", 834215092496629771, False)
-ROLE_LADDER.sergeant = role_ladder_element("LPD Sergeant", "sergeant", 645394647350247465, False)
-ROLE_LADDER.staff_sergeant = role_ladder_element("LPD Staff Sergeant", "staff_sergeant", 711366388186480751, False, True)
-ROLE_LADDER.advisor = role_ladder_element("LPD Advisor", "advisor", 679474638266433567, False, True)
-ROLE_LADDER.lieutenant = role_ladder_element("LPD Lieutenant", "lieutenant", 645394607714074634, False, True)
-ROLE_LADDER.captain = role_ladder_element("LPD Captain", "captain", 645394574055047198, False, True)
-ROLE_LADDER.deputy_chief = role_ladder_element("LPD Deputy Chief", "deputy_chief", 645394500717641751, False, True, True)
-ROLE_LADDER.chief = role_ladder_element("LPD Chief", "chief", 645388308158873610, False, True, True)
+class ROLE_LADDER(Enum):
+    cadet = RoleLadderElement("LPD Cadet", "cadet", 666005873679663134)
+    recruit = RoleLadderElement("LPD Recruit", "recruit", 594238854102515735)
+    officer = RoleLadderElement("LPD Officer", "officer", 834215801426018335)
+    senior_officer = RoleLadderElement("LPD Senior Officer", "senior_officer", 594239040723615780)
+    corporal = RoleLadderElement("LPD Corporal", "corporal", 834215092496629771, False)
+    sergeant = RoleLadderElement("LPD Sergeant", "sergeant", 645394647350247465, False)
+    staff_sergeant = RoleLadderElement("LPD Staff Sergeant", "staff_sergeant", 711366388186480751, False, True)
+    advisor = RoleLadderElement("LPD Advisor", "advisor", 679474638266433567, False, True)
+    lieutenant = RoleLadderElement("LPD Lieutenant", "lieutenant", 645394607714074634, False, True)
+    captain = RoleLadderElement("LPD Captain", "captain", 645394574055047198, False, True)
+    deputy_chief = RoleLadderElement("LPD Deputy Chief", "deputy_chief", 645394500717641751, False, True, True)
+    chief = RoleLadderElement("LPD Chief", "chief", 645388308158873610, False, True, True)
 # fmt: on
 
 SERVER_ID = 645383380870889482
