@@ -92,9 +92,7 @@ async def on_ready():
             f"{'Server ID':<12}: {bot.guild.id}"
         )
     else:
-        await bl_wrapper.clean_shutdown(
-            bot, location="internal", by="server lookup", exit=False
-        )
+        await bl_wrapper.clean_shutdown(bot, location="internal", by="server lookup")
 
     if bot.has_been_started:
         await bl_wrapper.clean_shutdown(
