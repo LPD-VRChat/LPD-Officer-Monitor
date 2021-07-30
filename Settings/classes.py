@@ -1,5 +1,4 @@
 from itertools import count
-from dataclasses import dataclass
 
 
 class RoleLadderElement:
