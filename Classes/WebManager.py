@@ -29,6 +29,7 @@ app = Quart("LPD Officer Monitor")
 async def _403_(missing_role=None):
     return await render_template("403.html.jinja", missing_role=missing_role)
 
+
 def render_array(officer, filename=None, w=8, h=8):
 
     if filename == None:
@@ -78,11 +79,8 @@ def render_array(officer, filename=None, w=8, h=8):
 
     dataset[0][0] = _white_value_RGB if officer.is_cadet else _black_value_RGB
     dataset[0][1] = _white_value_RGB if officer.is_white_shirt else _black_value_RGB
-    dataset[0][
-        2
-    ] = (
-        _white_value_RGB
-    )  # Since we return the blank template if not officer, then we return true here always
+    # Since we return the blank template if not officer, then we return true here always
+    dataset[0][2] = _white_value_RGB
     dataset[0][3] = _white_value_RGB if officer.is_moderator else _black_value_RGB
     dataset[0][4] = _black_value_RGB
     dataset[0][5] = _black_value_RGB
@@ -147,11 +145,8 @@ def render_array(officer, filename=None, w=8, h=8):
     dataset[6][6] = _black_value_RGB
     dataset[6][7] = _black_value_RGB
 
-    dataset[7][
-        0
-    ] = (
-        _red_value_RGB
-    )  ############### WARNING: We can't reliably check this value in an 8x8
+    ############### WARNING: We can't reliably check this value in an 8x8
+    dataset[7][0] = _red_value_RGB
     dataset[7][1] = _black_value_RGB
     dataset[7][2] = _black_value_RGB
     dataset[7][3] = _black_value_RGB
