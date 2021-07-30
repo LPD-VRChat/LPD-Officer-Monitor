@@ -1,12 +1,8 @@
 # Standard
-from typing import Optional, Union
+from typing import Optional
 import discord
-from os import _exit
-import traceback
-import asyncio
 from nest_asyncio import apply
 from io import StringIO, BytesIO
-from termcolor import colored
 from datetime import datetime
 from sys import stdout
 import Settings
@@ -68,14 +64,6 @@ async def send_long(channel, string, code_block=False, mention=True):
     await channel.send("\n".join(output_list), allowed_mentions=allowed_mentions)
 
 
-async def handle_error(bot, title, traceback_string):
-    error_text = f"***ERROR***\n\n{title}\n{traceback_string}"
-    ts_print(error_text)
-
-    channel = bot.get_channel(Settings.ERROR_LOG_CHANNEL)
-    await send_long(channel, error_text)
-
-
 async def send_str_as_file(
     channel: discord.TextChannel,
     file_data: str,
@@ -86,45 +74,6 @@ async def send_str_as_file(
         await channel.send(
             msg_content, file=discord.File(error_file, filename=filename)
         )
-
-
-async def clean_shutdown(
-    bot, location="the console", person="KeyboardInterrupt", exit=True
-):
-    """
-    Cleanly shutdown the bot. Please specify ctx.channel.name as location,
-    and ctx.author.display_name as person, assuming called from a Discord command.
-    """
-
-    # Log the shutdown
-    msg_string = f"WARNING: Bot {'shut down' if exit else 'restarted'} from {location} by {person}"
-    channel = bot.get_channel(Settings.ERROR_LOG_CHANNEL)
-    await channel.send(msg_string)
-    ts_print(msg_string)
-
-    if exit:
-        # Stop the event loop and exit Python. The OS should be
-        # calling this script inside a loop if you want the bot to restart
-        loop = asyncio.get_event_loop()
-        loop.stop()
-        _exit(0)
-
-
-def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
-    """Adds a colored timestamp to debugging messages in the console"""
-
-    if len(objects) == 0 or (objects[0] == "" and len(objects) == 1):
-        print("")
-        return
-    timestamp = colored(datetime.now().strftime("%b-%d-%Y %H:%M:%S"), "green") + " - "
-    print(
-        timestamp + str(objects[0]),
-        *objects[1:],
-        sep=sep,
-        end=end,
-        file=file,
-        flush=flush,
-    )
 
 
 def has_role_id(member: discord.Member, role_id: int) -> bool:

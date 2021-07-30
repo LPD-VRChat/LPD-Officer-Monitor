@@ -1,12 +1,13 @@
 # Standard
+import logging
 import traceback
 
 # Community
 import discord
 from discord.ext import commands
 
-# Mine
-from BusinessLayer.extra_functions import handle_error
+
+log = logging.getLogger("lpd-officer-monitor")
 
 
 class Help(commands.Cog):
@@ -174,7 +175,7 @@ class Help(commands.Cog):
 
         except Exception as error:
             await ctx.send("Something failed with the help command.")
-            await handle_error(self.bot, error, traceback.format_exc())
+            log.exception(str(error))
 
 
 def setup(bot):

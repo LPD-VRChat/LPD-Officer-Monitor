@@ -1,4 +1,5 @@
 # Settings import
+from BusinessLayer.bl_wrapper import BusinessLayerWrapper
 import Settings
 
 # Standard
@@ -10,15 +11,13 @@ import argparse
 import discord
 from discord.ext import commands
 
-# Mine
-from BusinessLayer.extra_functions import handle_error
-from BusinessLayer.extra_functions import ts_print as print
+# Custom
 import BusinessLayer.checks as checks
 
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.color = discord.Color.blue()
 
     @checks.is_chat_moderator()

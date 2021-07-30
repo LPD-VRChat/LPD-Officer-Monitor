@@ -80,7 +80,7 @@ import argparse
 import discord
 from discord.ext import commands
 
-# Mine
+# Custom
 from BusinessLayer.extra_functions import handle_error
 from BusinessLayer.extra_functions import ts_print as print
 import BusinessLayer.checks as checks

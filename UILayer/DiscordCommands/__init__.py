@@ -1,3 +1,4 @@
+from BusinessLayer.bl_wrapper import BusinessLayerWrapper
 from os import listdir
 from discord.ext import commands
 
@@ -10,6 +11,11 @@ _modules = [
 ]
 
 
-def setup(bot: commands.Bot):
+def setup(bot: commands.Bot, bl_wrapper: BusinessLayerWrapper):
+    bot.bl_wrapper = bl_wrapper
+
     for module in _modules:
         bot.load_extension(__loader__.name + "." + module)  # type: ignore
+
+    # Remove the reference to the bl_wrapper from the bot to make sure it isn't interfaced with from the wrong places
+    del bot.bl_wrapper

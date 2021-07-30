@@ -4,7 +4,7 @@ import Settings
 # Community
 from discord.ext import commands
 
-# Mine
+# Custom
 import discord.errors as errors
 from BusinessLayer.extra_functions import has_role_id
 
