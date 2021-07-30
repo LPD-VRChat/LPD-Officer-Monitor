@@ -3,3 +3,4 @@ nest_asyncio==1.5.1
 termcolor==1.1.0
 ormar>=0.1.0
 fuzzywuzzy>=0.18.0
+nest_asyncio>=1.5.1
