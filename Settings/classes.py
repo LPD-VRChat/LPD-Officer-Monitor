@@ -26,3 +26,19 @@ class RoleLadderElement:
     def as_discord_role(self, bot):
         """Returns the discord.Role object for this role ladder element"""
         return bot.get_role(self.id)
+
+
+class RoleLadder:
+
+    cadet: RoleLadderElement = None
+    recruit: RoleLadderElement = None
+    officer: RoleLadderElement = None
+    senior_officer: RoleLadderElement = None
+    corporal: RoleLadderElement = None
+    sergeant: RoleLadderElement = None
+    staff_sergeant: RoleLadderElement = None
+    lieutenant: RoleLadderElement = None
+    advisor: RoleLadderElement = None
+    captain: RoleLadderElement = None
+    deputy_chief: RoleLadderElement = None
+    chief: RoleLadderElement = None

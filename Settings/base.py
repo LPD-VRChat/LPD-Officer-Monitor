@@ -1,4 +1,4 @@
-from .classes import RoleLadderElement
+from .classes import RoleLadderElement, RoleLadder
 import os as _os
 from enum import Enum
 
@@ -6,7 +6,7 @@ PROJECT_DIR = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 # fmt: off
 # Rank Role Ladder ###############################################
-ROLE_LADDER = lambda: None
+ROLE_LADDER = RoleLadder()
 ROLE_LADDER.cadet = RoleLadderElement("LPD Cadet", "cadet", 666005873679663134)
 ROLE_LADDER.recruit = RoleLadderElement("LPD Recruit", "recruit", 594238854102515735)
 ROLE_LADDER.officer = RoleLadderElement("LPD Officer", "officer", 834215801426018335)
