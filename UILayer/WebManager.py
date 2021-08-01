@@ -12,19 +12,21 @@ import moviepy.editor as mp
 import numpy as np
 from array2gif import write_gif
 from urllib.parse import unquote_plus as dec
-from os import path
+from os import path, stat
 from collections import OrderedDict
 import json
 import logging
 
 from quart import Quart, redirect, url_for, request, send_file, render_template
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
+from quart_cors import cors
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 
 nest_asyncio.apply()
 
 app = Quart("LPD Officer Monitor")
+cors(app)
 app.config["DISCORD"] = None
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -198,8 +200,10 @@ class WebManager:
         if path.exists(certfile) and path.exists(keyfile):
             config.certfile = certfile
             config.keyfile = keyfile
+
         else:
             port = 80
+            log.warning("No SSL cert or key found, using HTTP!")
 
         config.bind = [f"{host}:{port}"]
         config.worker_class = ["asyncio"]
@@ -209,15 +213,6 @@ class WebManager:
 
         instance = cls(_Bot, app, config)
         return instance
-
-    def botgetter(function):
-        bot = app.config["BOT"]
-
-        return function
-
-    def discordgetter(function):
-        discord = app.config["DISCORD"]
-        return function
 
     async def shutdown_trigger(self):
         await asyncio.sleep(1)
@@ -232,34 +227,44 @@ class WebManager:
         )
 
     async def stop(self):
+        log.warning("WebManager has been stopped")
         self.__stop_the_server__ = True
 
     async def restart(self, wait_time=5):
-        await self.stop()
+        log.info("Restarting WebManager...")
+        self.__stop_the_server__ = True
         await asyncio.sleep(wait_time)
         await self.start()
 
     async def reload(self):
         pass
 
-    @discordgetter
     @app.route("/login/")
     async def login():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         return await discord.create_session(scope=app.config["SCOPES"])
 
-    @discordgetter
     @app.route("/logout/")
     async def logout():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         await discord.close_session()
         return redirect(url_for("home"))
 
-    @discordgetter
     @app.route("/callback/")
     async def callback():
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
         try:
             await discord.callback()
         except:
             pass
+        user = await discord.fetch_user()
+        log.info(f"{user.name} logged in")
         return redirect(url_for(".home"))
 
     @app.errorhandler(Unauthorized)
@@ -272,4 +277,21 @@ class WebManager:
 
     @app.route("/")
     async def home():
-        return "e"
+        discord = app.config["DISCORD"]
+        bot = app.config["BOT"]
+
+        username = ""
+        if discord.authorized:
+            user = await discord.fetch_user()
+            username = user.name
+
+        return f"""<html><head><title>Test page</title></head><body>Welcome {username}<br><br>This is a test page<br><br><a href="/login/">Login</a></body></html>"""
+
+    @app.route("/main.js")
+    async def main_js():
+        return await send_file("UILayer/WebApp/main.js")
+
+    @requires_authorization
+    @app.route("/app")
+    async def app_home():
+        return await send_file("UILayer/WebApp/index.html")
