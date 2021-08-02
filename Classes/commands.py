@@ -14,7 +14,7 @@ import json
 import asyncio
 from typing import Any, Dict, Iterable, List, Set, Tuple, Union
 import inspect
-import fuzzywuzzy.process
+from fuzzywuzzy.process import extractBests
 
 # Community
 import discord
@@ -1010,7 +1010,9 @@ class Inactivity(commands.Cog):
                         if row[1] is None:
                             renewer_str = "unknown"
                         else:
-                            renewer_str = self.bot.officer_manager.guild.get_member(int(row[1])).mention
+                            renewer_str = self.bot.officer_manager.guild.get_member(
+                                int(row[1])
+                            ).mention
                         send_string = f"{send_string}{member.mention}'s time was renewed by {renewer_str} at {row[0]} for reason:\n{row[2]}\n"
                 else:
                     send_string = f"{send_string}{member.mention} has not had their time renewed.\n"
@@ -1463,30 +1465,24 @@ class Other(commands.Cog):
 
     def get_role_by_name(self, role_name: str) -> discord.Role:
         """
-        Return a discord role if found, else raise `errors.GetRoleMembersError`
+        Returns a role object from a given name
         """
         role_names = []
 
-        # Get the role
         for role in self.bot.officer_manager.guild.roles:
-            undecorated_name = self.remove_name_decoration(role.name)
-            role_names.append(undecorated_name)
-            if (
-                undecorated_name.lower() == role_name.lower()
-            ):  # non case sensitive comparaison
+            sanitized_name = self.remove_name_decoration(role.name)
+            role_names.append(sanitized_name)
+            if sanitized_name.lower() == role_name.lower():
                 return role
-
-        msg = f"The role `{role_name}` was not found.\nDid you mean :"
+        msg = f"The role `{role_name}` could not be found.\n Did you mean: `{', '.join(role_names)}`?"
         cutoff_score = 75
         suggestions: List[Tuple[str, int]] = []
 
         # usually you get something on the first run, sometimes if you write really badly you won't get anything
         # lower the score to get more suggestions
         while len(suggestions) < 1 and len(role_name) > 1 and cutoff_score > 0:
-            suggestions = fuzzywuzzy.process.extractBests(
-                role_name, role_names, score_cutoff=cutoff_score
-            )
-            # if only one suggestion, give result imediatly instead of suggest and having to type cmd again
+            suggestions = extractBests(role_name, role_names, score_cutoff=cutoff_score)
+            # if only one suggestion, give result immediately instead of suggest and having to type cmd again
             if cutoff_score == 75 and len(suggestions) == 1:
                 try:
                     return self.get_role_by_name(suggestions[0][0])
@@ -1507,43 +1503,131 @@ class Other(commands.Cog):
                 msg += f"  `{suggest[0]}`"
         raise errors.GetRoleMembersError(message=msg)
 
-    def get_role_members(self, role: discord.Role) -> list:
+    def get_role_members(self, role: discord.Role) -> List[discord.Member]:
         # Make sure that people have the role
         if not role.members:
             raise errors.GetRoleMembersError(message=f"`{role.name}` is empty.")
 
         # Sort the members
-        return sorted(role.members, key=lambda m: self.get_vrc_name(m).lower())
+        return sorted(
+            role.members, key=lambda m: self.remove_name_decoration(m.name).lower()
+        )
 
     @checks.is_team_bot_channel()
     @commands.check_any(
         checks.is_white_shirt(), checks.is_dev_team(), checks.is_team_lead()
     )
-    @commands.command(usage="discordRole")
-    async def rtv(self, ctx, *role_name):
-        """
-        This command takes in a name of a role and outputs the VRC names of the people in it.
+    @commands.command(usage="discordRole | -i includedRole -x excludedRole")
+    async def rtv(self, ctx, *arguments):
+        """This command searches server members, and returns a list of members having the role"""
+        if arguments and "-i" not in arguments and "--include" not in arguments:
+            if arguments[0] == "-x" or arguments[0] == "--exclude":
+                role_names = [123]
 
-        This command ignores the decoration on the role if it has any and will try to find the role if it is mistyped.
-        """
+            if arguments and "-x" not in arguments and "--exclude" not in arguments:
+                excluded_role_names = None
 
-        # fix if user write role with space and forget quotes
-        role_name = " ".join(role_name)
+        if ctx.message.clean_content.strip() == f"{self.bot.settings['bot_prefix']}rtv":
+            raise errors.ArgumentParsingError(message="Missing arguments.")
 
-        try:
-            discord_role = self.get_role_by_name(role_name)
-            members = self.get_role_members(discord_role)
-        except errors.GetRoleMembersError as error:
-            await ctx.send(error)
+        if (
+            "-i" not in arguments
+            and "--include" not in arguments
+            and "-x" not in arguments
+            and "--exclude" not in arguments
+        ):
+            role_names = [" ".join(arguments)]
+            excluded_role_names = None
+
+        else:
+            parser = argparse.ArgumentParser()
+            parser.add_argument("-i", "--include", action="append")
+            parser.add_argument("-x", "--exclude", action="append")
+
+            try:
+                parsed = parser.parse_args(arguments)
+            except:
+                await ctx.send(
+                    "When searching for multiple roles, you must provide all roles as arguments."
+                )
+                return
+
+            if parsed.include:
+                role_names = parsed.include
+            else:
+                role_names = [123]
+
+            if parsed.exclude:
+                excluded_role_names = parsed.exclude
+            else:
+                excluded_role_names = None
+
+        results: Set[discord.Member] = set()
+
+        if role_names is None:
+            raise errors.ArgumentParsingError(
+                message="You must specify a role to search for."
+            )
             return
 
-        members_str = "\n".join(self.get_vrc_name(x) for x in members)
+        if role_names == [123]:
+            results = set(ctx.bot.officer_manager.guild.members)
+            roles_search = None
 
-        # Send everyone
-        await ctx.send(
-            f"Here are {len(members)} people in the role `{self.remove_name_decoration(discord_role.name)}`:"
+        else:
+            roles_search: List[discord.Role] = [
+                self.get_role_by_name(role_name) for role_name in role_names
+            ]
+            for role in roles_search:
+                if len(results) == 0:
+                    results.update(self.get_role_members(role))
+                else:
+                    results = results.intersection(self.get_role_members(role))
+
+        if excluded_role_names is not None:
+            roles_excluded: List[discord.Role] = [
+                self.get_role_by_name(role_name) for role_name in excluded_role_names
+            ]
+            for role in roles_excluded:
+                results.difference_update(self.get_role_members(role))
+
+        if not results:
+            raise errors.MemberNotFoundError(
+                message="No members were found with your specified criteria."
+            )
+            return
+
+        # Sort the results by display_name
+        member_names = sorted(results, key=lambda m: m.display_name.lower())
+        member_str = "\n".join(member.name for member in member_names)
+        role_or_roles = (
+            "role" if role_names == [123] or len(roles_search) == 1 else "roles"
         )
-        await send_long(ctx.channel, members_str, code_block=True)
+        role_or_roles_x = (
+            "role"
+            if excluded_role_names is None or len(roles_excluded) == 1
+            else "roles"
+        )
+
+        role_names_we_searched = (
+            role_or_roles
+            + " "
+            + ", ".join(
+                [
+                    "`" + self.remove_name_decoration(role.name) + "`"
+                    for role in roles_search
+                ]
+            )
+            if roles_search
+            else ""
+        )
+
+        await ctx.send(
+            f"Here are the {len(member_names)} people with the {role_names_we_searched}"
+            + f"{' and the ' if role_names != [123] and excluded_role_names else ''}{'excluded ' + role_or_roles_x + ' ' if excluded_role_names else ''}"
+            + f"{', '.join(['`'+self.remove_name_decoration(role.name)+'`' for role in roles_excluded]) if excluded_role_names else ''}:"
+        )
+        await send_long(ctx.channel, member_str, code_block=True)
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
