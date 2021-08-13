@@ -17,7 +17,7 @@
         ]
     },
     "admin_bot_channel": 645383848284258305,
-    "application_channel": 655793001787949086,
+    "application_channel": 853392112513712158,
     "team_bot_channel": 774740277235154975,
     "general_bot_channel": 708736137463726131,
     "error_log_channel": 677546865998168144,
@@ -29,7 +29,7 @@
     "allowed_command_channels": [
         645383848284258305,
         708736137463726131,
-        655793001787949086,
+        853392112513712158,
         774740277235154975
     ],
     // Roles
