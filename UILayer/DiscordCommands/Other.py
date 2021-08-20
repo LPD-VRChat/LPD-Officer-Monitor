@@ -85,7 +85,7 @@ class Other(commands.Cog):
     @commands.check_any(
         checks.is_dev_team(), checks.is_team_lead(), checks.is_white_shirt()
     )
-    @commands.command()
+    @commands.command(usage="discordRole | -i includedRole -x excludedRole")
     async def rtv(self, ctx, *arguments):
         """This command searches server members, and returns a list of members having the role"""
         if arguments and "-i" not in arguments and "--include" not in arguments:
@@ -112,7 +112,13 @@ class Other(commands.Cog):
             parser.add_argument("-i", "--include", action="append")
             parser.add_argument("-x", "--exclude", action="append")
 
-            parsed = parser.parse_args(arguments)
+            try:
+                parsed = parser.parse_args(arguments)
+            except:
+                await ctx.send(
+                    "When searching for multiple roles, you must provide all roles as arguments."
+                )
+                return
 
             if parsed.include:
                 role_names = parsed.include
