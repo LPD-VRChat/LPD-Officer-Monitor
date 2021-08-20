@@ -1,6 +1,7 @@
 # Standard
 import logging
 import traceback
+from typing import Union
 
 # Community
 import discord
@@ -61,6 +62,24 @@ class Help(commands.Cog):
 
     def get_long_description(self, long_help_text):
         return self._get_short_long_description(long_help_text)[1]
+
+    @staticmethod
+    async def send_embeds(
+        ctx: commands.Context, embeds: Union[discord.Embed, list[discord.Embed]]
+    ):
+        """
+        This method sends a list of embeds to the channel in ctx.
+        This method is for a future version of discord.py, and is
+        included for easy transition when the standard embed field
+        is deprecated in the next version.
+        """
+
+        if not isinstance(embeds, list) and isinstance(embeds, discord.Embed):
+            embeds = [embeds]
+
+        while len(embeds) > 0:
+            await ctx.send(None, embeds=embeds[0:10])
+            embeds = embeds[10:]
 
     @staticmethod
     async def can_use(command, ctx):
