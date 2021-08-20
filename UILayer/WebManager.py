@@ -17,16 +17,23 @@ from collections import OrderedDict
 import json
 import logging
 
-from quart import Quart, redirect, url_for, request, send_file, render_template
+from quart import (
+    Quart,
+    redirect,
+    url_for,
+    request,
+    send_file,
+    render_template,
+    jsonify,
+    send_from_directory,
+)
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
-from quart_cors import cors
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 
 nest_asyncio.apply()
 
-app = Quart("LPD Officer Monitor")
-cors(app)
+app = Quart("LPD Officer Monitor", static_folder="Webapp/")
 app.config["DISCORD"] = None
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -276,22 +283,9 @@ class WebManager:
         return await send_file("/favicon.ico")
 
     @app.route("/")
-    async def home():
-        discord = app.config["DISCORD"]
-        bot = app.config["BOT"]
-
-        username = ""
-        if discord.authorized:
-            user = await discord.fetch_user()
-            username = user.name
-
-        return f"""<html><head><title>Test page</title></head><body>Welcome {username}<br><br>This is a test page<br><br><a href="/login/">Login</a></body></html>"""
+    async def app_home():
+        return await send_file("UILayer/WebApp/index.html")
 
     @app.route("/main.js")
     async def main_js():
         return await send_file("UILayer/WebApp/main.js")
-
-    @requires_authorization
-    @app.route("/app")
-    async def app_home():
-        return await send_file("UILayer/WebApp/index.html")
