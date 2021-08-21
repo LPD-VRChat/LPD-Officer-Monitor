@@ -1,4 +1,6 @@
-discord.py==1.7.3
+# discord.py>=1.7.3
+git+https://github.com/Rapptz/discord.py.git@fbc4a51c355c029af61363038d0a8a9ac0bd8ace   # discord.py>=2.0
+
 nest_asyncio==1.5.1
 fuzzywuzzy==0.18.0
 

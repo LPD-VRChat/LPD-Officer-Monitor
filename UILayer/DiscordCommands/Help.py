@@ -152,8 +152,7 @@ class Help(commands.Cog):
                         all_help_embeds.append(cog_embed)
 
                 # Send the embed
-                for embed in all_help_embeds:
-                    await ctx.send(None, embed=embed)
+                await self.send_embeds(ctx, all_help_embeds)
 
             # The user is requesting more information about a command
             else:
