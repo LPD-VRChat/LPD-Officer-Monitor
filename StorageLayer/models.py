@@ -8,21 +8,26 @@ import databases
 import sqlalchemy
 import ormar
 import pydantic
+import pytest
 from enum import Enum
 
 import discord
 from discord.ext import commands
 
-database = databases.Database(
-    f"{Settings.DB_TYPE}://{Settings.DB_USER}:{Keys.DB_PASS}@{Settings.DB_HOST}:{Settings.DB_PORT}/{Settings.DB_NAME}"
-)
+DATABASE_URL = f"{Settings.DB_TYPE}://{Settings.DB_USER}:{Keys.DB_PASS}@{Settings.DB_HOST}:{Settings.DB_PORT}/{Settings.DB_NAME}"
+database = databases.Database(DATABASE_URL)
+database.url = DATABASE_URL
 metadata = sqlalchemy.MetaData()
 
 
+class BaseMeta(ormar.ModelMeta):
+    database = database
+    metadata = metadata
+
+
 class User(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "users"
 
     id: int = ormar.Integer(primary_key=True)
 
@@ -33,28 +38,28 @@ class User(ormar.Model):
 
 
 class Officer(User):
+    class Meta(BaseMeta):
+        tablename = "officers"
 
     started_monitoring: datetime = ormar.DateTime(timezone=True)
     vrchat_name: str = ormar.String(max_length=255)
     vrchat_id: str = ormar.String(max_length=255)
     badges: Optional[List[Badge]] = ormar.ManyToMany(Badge)
-    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(Badge)
+    pending_badges: cOptional[List[Badge]] = ormar.ManyToMany(Badge)
     trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
 
 
 class BadgeCategory(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "badgecategory"
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
 
 
 class Badge(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "badges"
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
@@ -74,27 +79,24 @@ class CallTypes(Enum):
 
 
 class TrainingCategory(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "trainingcategories"
 
     team: str = ormar.String(max_length=255, choices=list(Team))
     name: str = ormar.String(max_length=255)
 
 
 class Training(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "trainings"
 
     category: TrainingCategory = ormar.ManyToOne(TrainingCategory)
     name: str = ormar.String(max_length=255)
 
 
 class LOAEntry(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "loaentries"
 
     officer_id: int = ormar.Integer(primary_key=True)
     start: date = ormar.Date(timezone=True)
@@ -104,9 +106,8 @@ class LOAEntry(ormar.Model):
 
 
 class TimeRenewal(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "timerenewals"
 
     officer_id: int = ormar.Integer(primary_key=True)
     timestamp: datetime = ormar.DateTime(timezone=True)
@@ -114,9 +115,8 @@ class TimeRenewal(ormar.Model):
 
 
 class StrikeEntry(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "strikeentries"
 
     member_id: int = ormar.Integer(min_value=0)
     timestamp: datetime = ormar.DateTime(timezone=True)
@@ -125,13 +125,15 @@ class StrikeEntry(ormar.Model):
 
 
 class DetainedUser(User):
+    class Meta(BaseMeta):
+        tablename = "detainedusers"
+
     role_ids: pydantic.Json = ormar.Json()
 
 
 class Event(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "events"
 
     id: int = ormar.Integer(primary_key=True)
     start: datetime = ormar.DateTime(timezone=True)
@@ -140,9 +142,8 @@ class Event(ormar.Model):
 
 
 class SavedVoiceChannel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "savedvoicechannels"
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
@@ -153,9 +154,8 @@ class SavedVoiceChannel(ormar.Model):
 
 
 class Patrol(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "patrols"
 
     id: int = ormar.Integer(primary_key=True)
     officer_id: int = ormar.Integer(min_value=0)
@@ -166,9 +166,8 @@ class Patrol(ormar.Model):
 
 
 class PatrolVoice(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "patrolvoices"
 
     patrol_id: int = ormar.Integer(primary_key=True)
     channel: SavedVoiceChannel
@@ -177,9 +176,8 @@ class PatrolVoice(ormar.Model):
 
 
 class VRCLocation(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "vrclocations"
 
     instance_id: int = ormar.Integer(min_value=0)
     vrc_world_name: str = ormar.String(max_length=65536)
@@ -192,12 +190,20 @@ class VRCLocation(ormar.Model):
 
 
 class Call(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    class Meta(BaseMeta):
+        tablename = "calls"
 
     id: int = ormar.Integer(primary_key=True)
     officers: Optional[List[Officer]] = ormar.ManyToMany(Officer)
     event: Optional[Event] = ormar.ManyToOne(Event)
     squad: SavedVoiceChannel
     type: str = ormar.String(max_length=10, choices=list(CallTypes))
+
+
+@pytest.fixture(autouse=True, scope="module")
+def create_db():
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.drop_all(engine)
+    metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
