@@ -9,7 +9,7 @@ This branch contains the development version of V3. It is structured very differ
 
 create virtual environement
 ```
-python3 -m venv .
+python3 -m venv .venv
 ```
 
 Reinstall requirements

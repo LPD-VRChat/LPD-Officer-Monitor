@@ -123,5 +123,4 @@ Keys/local.py
 Logs/
 
 #python virtual environement
-Scripts/*
-pyvenv.cfg
+.venv/
