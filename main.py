@@ -50,9 +50,10 @@ def main():
 
     log = logging.getLogger("lpd-officer-monitor")
     log.setLevel(logging.DEBUG)
-    if not os.path.exists(Settings.LOG_FILE_PATH):
-        os.makedirs("/".join(Settings.LOG_FILE_PATH.split("/")[:-1]))
-        os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT))
+    logFolder = os.path.dirname(Settings.LOG_FILE_PATH)
+    if not os.path.isdir(logFolder):
+        os.makedirs(logFolder)
+        os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT)) ##TODO: remove, not needed
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     sh = logging.StreamHandler()
     fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
