@@ -4,6 +4,9 @@ nest_asyncio==1.5.1
 fuzzywuzzy==0.18.0
 
 ormar==0.10.15
+aiomysql
+mysqlclient
+alembic
 
 Hypercorn==0.11.2
 Quart==0.15.1
