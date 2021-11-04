@@ -121,3 +121,7 @@ run
 Settings/local.py
 Keys/local.py
 Logs/
+
+#python virtual environement
+Scripts/*
+pyvenv.cfg
