@@ -1,7 +1,7 @@
 import Settings
 import Keys
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List, Dict
 
 import databases
@@ -27,9 +27,10 @@ class BaseMeta(ormar.ModelMeta):
 
 class User(ormar.Model):
     class Meta(BaseMeta):
-        tablename = "users"
+        # tablename = "users"
+        abstract = True
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.BigInteger(primary_key=True)
 
     @property
     def member(self, bot) -> discord.Member:
@@ -37,16 +38,6 @@ class User(ormar.Model):
         return bot.guild.get_member(self.id)
 
 
-class Officer(User):
-    class Meta(BaseMeta):
-        tablename = "officers"
-
-    started_monitoring: datetime = ormar.DateTime(timezone=True)
-    vrchat_name: str = ormar.String(max_length=255)
-    vrchat_id: str = ormar.String(max_length=255)
-    badges: Optional[List[Badge]] = ormar.ManyToMany(Badge)
-    pending_badges: cOptional[List[Badge]] = ormar.ManyToMany(Badge)
-    trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
 
 
 class BadgeCategory(ormar.Model):
@@ -63,7 +54,7 @@ class Badge(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
-    category: BadgeCategory = ormar.ManyToOne(BadgeCategory)
+    category: Optional[BadgeCategory] = ormar.ForeignKey(BadgeCategory)
     position: int = ormar.Integer(min_value=0)
     url: str = ormar.String(max_length=65536)
 
@@ -82,7 +73,8 @@ class TrainingCategory(ormar.Model):
     class Meta(BaseMeta):
         tablename = "trainingcategories"
 
-    team: str = ormar.String(max_length=255, choices=list(Team))
+    id: int = ormar.Integer(primary_key=True)
+    team: str = ormar.String(max_length=255, choices=list(Teams))
     name: str = ormar.String(max_length=255)
 
 
@@ -90,26 +82,60 @@ class Training(ormar.Model):
     class Meta(BaseMeta):
         tablename = "trainings"
 
-    category: TrainingCategory = ormar.ManyToOne(TrainingCategory)
+    id: int = ormar.Integer(primary_key=True)
+    category: Optional[TrainingCategory] = ormar.ForeignKey(TrainingCategory)
     name: str = ormar.String(max_length=255)
 
+class OfficerBadgeOwned(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "officers_badges_owned"
+
+    id: int = ormar.Integer(primary_key=True)
+
+class OfficerBadgePrending(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "officers_badges_pending"
+
+    id: int = ormar.Integer(primary_key=True)
+class Officer(User):
+    class Meta(BaseMeta):
+        tablename = "officers"
+
+    started_monitoring: datetime = ormar.DateTime(timezone=True)
+    vrchat_name: str = ormar.String(max_length=255)
+    vrchat_id: str = ormar.String(max_length=255)
+    badges: Optional[List[Badge]] = ormar.ManyToMany(Badge,
+                                        related_name="current_badges",
+                                        through=OfficerBadgeOwned,
+                                        through_relation_name="officer_id_owned",
+                                        through_reverse_relation_name="badge_id_owned",
+                                        skip_reverse=True) ##TODO : check if relation actually works both ways
+    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(Badge,
+                                        related_name="pending_badges",
+                                        through=OfficerBadgePrending,
+                                        through_relation_name="officer_id_pending",
+                                        through_reverse_relation_name="badge_id_pending",
+                                        skip_reverse=True)
+    trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
 
 class LOAEntry(ormar.Model):
     class Meta(BaseMeta):
         tablename = "loaentries"
 
-    officer_id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer)
     start: date = ormar.Date(timezone=True)
     end: date = ormar.Date(timezone=True)
-    message_id: int = ormar.Integer(min_value=0)
-    channel_id: int = ormar.Integer(min_value=0)
+    message_id: int = ormar.BigInteger(min_value=0)
+    channel_id: int = ormar.BigInteger(min_value=0)
 
 
 class TimeRenewal(ormar.Model):
     class Meta(BaseMeta):
         tablename = "timerenewals"
 
-    officer_id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer)
     timestamp: datetime = ormar.DateTime(timezone=True)
     renewer: Officer
 
@@ -118,7 +144,8 @@ class StrikeEntry(ormar.Model):
     class Meta(BaseMeta):
         tablename = "strikeentries"
 
-    member_id: int = ormar.Integer(min_value=0)
+    id: int = ormar.Integer(primary_key=True)
+    member_id: int = ormar.BigInteger(min_value=0)
     timestamp: datetime = ormar.DateTime(timezone=True)
     reason: str = ormar.String(max_length=65536)
     submitter: Officer
@@ -128,7 +155,7 @@ class DetainedUser(User):
     class Meta(BaseMeta):
         tablename = "detainedusers"
 
-    role_ids: pydantic.Json = ormar.Json()
+    role_ids: pydantic.Json = ormar.JSON()
 
 
 class Event(ormar.Model):
@@ -138,18 +165,18 @@ class Event(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
-    hosts: pydantic.Json = ormar.Json()
+    hosts: pydantic.Json = ormar.JSON()
 
 
 class SavedVoiceChannel(ormar.Model):
     class Meta(BaseMeta):
         tablename = "savedvoicechannels"
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.BigInteger(primary_key=True)
     name: str = ormar.String(max_length=255)
-    guild_id: int = ormar.Integer(min_value=0)
+    guild_id: int = ormar.BigInteger(min_value=0)
 
-    def discord_channel(bot: commands.Bot) -> discord.VoiceChannel:
+    def discord_channel(self, bot: commands.Bot) -> discord.VoiceChannel:
         return bot.get_channel(self.id)
 
 
@@ -158,35 +185,42 @@ class Patrol(ormar.Model):
         tablename = "patrols"
 
     id: int = ormar.Integer(primary_key=True)
-    officer_id: int = ormar.Integer(min_value=0)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer)
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
-    event_id: Optional[int] = ormar.Integer(min_value=0)
-    main_channel: SavedVoiceChannel
+    event: Optional[Event] = ormar.ForeignKey(Event)
+    main_channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
 
 
 class PatrolVoice(ormar.Model):
     class Meta(BaseMeta):
         tablename = "patrolvoices"
 
-    patrol_id: int = ormar.Integer(primary_key=True)
-    channel: SavedVoiceChannel
+    id: int = ormar.Integer(primary_key=True)
+    patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)
+    channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
 
+
+class VRCInstanceAccessTypeEnum(Enum):
+    val1 = "Public"
+    val2 = "Private"
+    val3 = "Secret"
 
 class VRCLocation(ormar.Model):
     class Meta(BaseMeta):
         tablename = "vrclocations"
 
+    id: int = ormar.Integer(primary_key=True)
     instance_id: int = ormar.Integer(min_value=0)
     vrc_world_name: str = ormar.String(max_length=65536)
     vrc_world_id: str = ormar.String(max_length=65536)
     invite_token: str = ormar.String(max_length=65536)
-    instance_access_type: str = Enum(["Public", "Private", "Secret"])
+    instance_access_type: str = ormar.String(max_length=100, choices=list(VRCInstanceAccessTypeEnum))
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
-    patrol_id: int = ormar.Integer(min_value=0)
+    patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)
 
 
 class Call(ormar.Model):
@@ -195,8 +229,8 @@ class Call(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     officers: Optional[List[Officer]] = ormar.ManyToMany(Officer)
-    event: Optional[Event] = ormar.ManyToOne(Event)
-    squad: SavedVoiceChannel
+    event: Optional[Event] = ormar.ForeignKey(Event)
+    squad: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
     type: str = ormar.String(max_length=10, choices=list(CallTypes))
 
 
