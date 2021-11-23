@@ -170,7 +170,7 @@ class WebManager:
         self.app = app
         self.config = config
         self.loop = asyncio.get_event_loop()
-        self.shutdown_event = asyncio.Event(loop=self.loop)
+        self.shutdown_event = asyncio.Event()
         self.__stop_the_server__ = False
 
     @classmethod
