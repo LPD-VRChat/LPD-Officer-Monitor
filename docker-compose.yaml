@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+
+  lpd-officer-monitor:
+    build: ./
+    stdin_open: true
+    tty: true
+    volumes:
+      - ".:/app"
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: "AVerySecurePasswordIndeed"
+      TZ: "Atlantic/Reykjavik"
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql/data
+      - db-logs:/var/lib/mysql/logs
+
+volumes:
+  db-data: null
+  db-logs: null
