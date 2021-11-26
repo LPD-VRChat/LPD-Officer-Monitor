@@ -53,7 +53,9 @@ def main():
     logFolder = os.path.dirname(Settings.LOG_FILE_PATH)
     if not os.path.isdir(logFolder):
         os.makedirs(logFolder)
-        os.close(os.open(Settings.LOG_FILE_PATH, os.O_CREAT)) ##TODO: remove, not needed
+        os.close(
+            os.open(Settings.LOG_FILE_PATH, os.O_CREAT)
+        )  ##TODO: remove, not needed
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     sh = logging.StreamHandler()
     fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
