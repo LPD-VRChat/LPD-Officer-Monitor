@@ -6,7 +6,7 @@ from discord.ext import commands
 
 # Custom
 import discord.errors as errors
-from BusinessLayer.extra_functions import has_role_id
+from src.BusinessLayer.extra_functions import has_role_id
 
 
 def template_check():

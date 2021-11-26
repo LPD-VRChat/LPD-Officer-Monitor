@@ -1,7 +1,7 @@
 import os
 import inspect
 from posix import times_result
-import BusinessLayer.checks as checks
+import src.BusinessLayer.checks as checks
 
 
 def prompt(question, p="> "):
@@ -81,9 +81,9 @@ import discord
 from discord.ext import commands
 
 # Custom
-from BusinessLayer.extra_functions import handle_error
-from BusinessLayer.extra_functions import ts_print as print
-import BusinessLayer.checks as checks
+from src.BusinessLayer.extra_functions import handle_error
+from src.BusinessLayer.extra_functions import ts_print as print
+import src.BusinessLayer.checks as checks
 
 class {className}(commands.Cog):
 

@@ -7,7 +7,7 @@ import sys
 
 def setup_logger():
     import Settings
-    from extra_logging import DiscordLoggingHandler
+    from src.extra_logging import DiscordLoggingHandler
 
     log = logging.getLogger("lpd-officer-monitor")
     log.setLevel(logging.DEBUG)
@@ -26,6 +26,8 @@ def setup_logger():
     log.addHandler(fh)
     log.addHandler(dh)
 
+    return log
+
 
 def main():
     os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
@@ -42,8 +44,8 @@ def main():
     # Custom Library Imports
     import Keys
     import Settings
-    from BusinessLayer.bl_wrapper import BusinessLayerWrapper
-    from UILayer.DiscordCommands import setup as setup_commands
+    from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
+    from src.UILayer.DiscordCommands import setup as setup_commands
 
     ##############################
     ### Setup Global Variables ###
@@ -65,7 +67,7 @@ def main():
     ### Setup logging ###
     #####################
 
-    setup_logger()
+    log = setup_logger()
 
     ##################################
     ### Start the different layers ###

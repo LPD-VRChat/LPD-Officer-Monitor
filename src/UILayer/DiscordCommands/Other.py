@@ -11,11 +11,11 @@ from discord.ext import commands
 from fuzzywuzzy.process import extractBests
 
 # Custom
-import BusinessLayer.checks as checks
-import BusinessLayer.errors as errors
+import src.BusinessLayer.checks as checks
+import src.BusinessLayer.errors as errors
 
-from BusinessLayer.bl_wrapper import BusinessLayerWrapper
-from BusinessLayer.extra_functions import send_long
+from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
+from src.BusinessLayer.extra_functions import send_long
 
 
 class Other(commands.Cog):

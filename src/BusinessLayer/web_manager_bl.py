@@ -7,7 +7,7 @@ import discord
 
 # Custom
 from .base_bl import BaseBL, bl_listen
-from UILayer.WebManager import WebManager
+from src.UILayer.WebManager import WebManager
 import Settings
 import Keys
 
