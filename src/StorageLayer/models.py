@@ -1,5 +1,5 @@
-import Settings
-import Keys
+import settings
+import keys
 
 from datetime import datetime, date
 from typing import Optional, List, Dict
@@ -14,7 +14,7 @@ from enum import Enum
 import discord
 from discord.ext import commands
 
-DATABASE_URL = f"{Settings.DB_TYPE}://{Settings.DB_USER}:{Keys.DB_PASS}@{Settings.DB_HOST}:{Settings.DB_PORT}/{Settings.DB_NAME}"
+DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{keys.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 database = databases.Database(DATABASE_URL)
 database.url = DATABASE_URL
 metadata = sqlalchemy.MetaData()
@@ -36,8 +36,6 @@ class User(ormar.Model):
     def member(self, bot) -> discord.Member:
         """Return the discord.Member object with ID = self.id"""
         return bot.guild.get_member(self.id)
-
-
 
 
 class BadgeCategory(ormar.Model):
@@ -86,17 +84,21 @@ class Training(ormar.Model):
     category: Optional[TrainingCategory] = ormar.ForeignKey(TrainingCategory)
     name: str = ormar.String(max_length=255)
 
+
 class OfficerBadgeOwned(ormar.Model):
     class Meta(BaseMeta):
         tablename = "officers_badges_owned"
 
     id: int = ormar.Integer(primary_key=True)
 
+
 class OfficerBadgePrending(ormar.Model):
     class Meta(BaseMeta):
         tablename = "officers_badges_pending"
 
     id: int = ormar.Integer(primary_key=True)
+
+
 class Officer(User):
     class Meta(BaseMeta):
         tablename = "officers"
@@ -104,19 +106,24 @@ class Officer(User):
     started_monitoring: datetime = ormar.DateTime(timezone=True)
     vrchat_name: str = ormar.String(max_length=255)
     vrchat_id: str = ormar.String(max_length=255)
-    badges: Optional[List[Badge]] = ormar.ManyToMany(Badge,
-                                        related_name="current_badges",
-                                        through=OfficerBadgeOwned,
-                                        through_relation_name="officer_id_owned",
-                                        through_reverse_relation_name="badge_id_owned",
-                                        skip_reverse=True) ##TODO : check if relation actually works both ways
-    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(Badge,
-                                        related_name="pending_badges",
-                                        through=OfficerBadgePrending,
-                                        through_relation_name="officer_id_pending",
-                                        through_reverse_relation_name="badge_id_pending",
-                                        skip_reverse=True)
+    badges: Optional[List[Badge]] = ormar.ManyToMany(
+        Badge,
+        related_name="current_badges",
+        through=OfficerBadgeOwned,
+        through_relation_name="officer_id_owned",
+        through_reverse_relation_name="badge_id_owned",
+        skip_reverse=True,
+    )  ##TODO : check if relation actually works both ways
+    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(
+        Badge,
+        related_name="pending_badges",
+        through=OfficerBadgePrending,
+        through_relation_name="officer_id_pending",
+        through_reverse_relation_name="badge_id_pending",
+        skip_reverse=True,
+    )
     trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
+
 
 class LOAEntry(ormar.Model):
     class Meta(BaseMeta):
@@ -208,6 +215,7 @@ class VRCInstanceAccessTypeEnum(Enum):
     val2 = "Private"
     val3 = "Secret"
 
+
 class VRCLocation(ormar.Model):
     class Meta(BaseMeta):
         tablename = "vrclocations"
@@ -217,7 +225,9 @@ class VRCLocation(ormar.Model):
     vrc_world_name: str = ormar.String(max_length=65536)
     vrc_world_id: str = ormar.String(max_length=65536)
     invite_token: str = ormar.String(max_length=65536)
-    instance_access_type: str = ormar.String(max_length=100, choices=list(VRCInstanceAccessTypeEnum))
+    instance_access_type: str = ormar.String(
+        max_length=100, choices=list(VRCInstanceAccessTypeEnum)
+    )
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
     patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)

@@ -1,5 +1,5 @@
-import Settings
-import Keys
+import settings
+import keys
 
 import asyncio
 import nest_asyncio
@@ -188,7 +188,7 @@ class WebManager:
         _run_insecure=False,
     ):
 
-        app.secret_key = Keys.WEB_SECRET_KEY
+        app.secret_key = keys.WEB_SECRET_KEY
 
         app.config["DISCORD_CLIENT_ID"] = id
         app.config["DISCORD_CLIENT_SECRET"] = secret

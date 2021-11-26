@@ -110,7 +110,7 @@ DB_PORT = 3306
 BOT_PREFIX = "="
 DB_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 NAME_SEPARATOR = ";"
-LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "Logs", "lpd_officer_monitor.log")
+LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "logs", "lpd_officer_monitor.log")
 
 # Logging ########################################################
 LOGGING_WEBHOOK = "INSERT_WEBHOOK_HERE"

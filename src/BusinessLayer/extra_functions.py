@@ -5,7 +5,7 @@ from nest_asyncio import apply
 from io import StringIO, BytesIO
 from datetime import datetime
 from sys import stdout
-import Settings
+import settings
 
 apply()
 

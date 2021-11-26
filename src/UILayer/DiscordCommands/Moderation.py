@@ -1,6 +1,6 @@
 # Settings import
 from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
-import Settings
+import settings
 
 # Standard
 import traceback

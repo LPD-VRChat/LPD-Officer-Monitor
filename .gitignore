@@ -104,10 +104,10 @@ venv.bak/
 .mypy_cache/
 
 # Ignore the keys and local settings
-Keys/dev.py
-Keys/production.py
-Keys/local.py
-Settings/local.py
+keys/dev.py
+keys/production.py
+keys/local.py
+settings/local.py
 
 # Visual Studio/VSCode
 .vscode/*
@@ -118,7 +118,7 @@ LPD_database*.csv
 *.sqlite
 .run.loop
 run
-Settings/local.py
+settings/local.py
 Keys/local.py
 Logs/
 

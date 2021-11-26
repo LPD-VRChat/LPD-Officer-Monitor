@@ -1,5 +1,5 @@
 # Settings import
-import Settings
+import settings
 
 # Standard
 import argparse
@@ -95,7 +95,7 @@ class Other(commands.Cog):
             if arguments and "-x" not in arguments and "--exclude" not in arguments:
                 excluded_role_names = None
 
-        if ctx.message.clean_content.strip() == f"{Settings.BOT_PREFIX}rtv":
+        if ctx.message.clean_content.strip() == f"{settings.BOT_PREFIX}rtv":
             raise errors.MissingArgumentError(message="Missing arguments.")
 
         if (
@@ -208,10 +208,10 @@ class Other(commands.Cog):
         """
 
         all_lpd_members = self.get_role_members(
-            ctx.bot.guild.get_role(Settings.LPD_ROLE)
+            ctx.bot.guild.get_role(settings.LPD_ROLE)
         )
 
-        # For every rank in Settings.ROLE_LADDER, get the number of members with the role having that rank.id
+        # For every rank in settings.ROLE_LADDER, get the number of members with the role having that rank.id
         # Then add that to a dictionary with the role name as the key, and the number of members as the value.
 
         # Create a dictionary of all the roles and their corresponding member count
@@ -226,7 +226,7 @@ class Other(commands.Cog):
             colour=discord.Colour.dark_green(),
         )
 
-        for rank in Settings.ROLE_LADDER.__dict__.values():
+        for rank in settings.ROLE_LADDER.__dict__.values():
             role = ctx.bot.guild.get_role(rank.id)
             if role is None:
                 continue

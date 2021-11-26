@@ -9,7 +9,7 @@ import logging
 from discord.ext import commands
 
 # Custom
-import Settings
+import settings
 from src.BusinessLayer.base_bl import BaseBL
 
 if TYPE_CHECKING:

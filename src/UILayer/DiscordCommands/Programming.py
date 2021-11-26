@@ -1,5 +1,5 @@
 # Settings import
-import Settings
+import settings
 
 # Standard
 import traceback

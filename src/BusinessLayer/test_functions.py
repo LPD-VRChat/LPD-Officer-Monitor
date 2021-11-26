@@ -1,5 +1,5 @@
-import Settings
-import Keys
+import settings
+import keys
 
 officers = []
 

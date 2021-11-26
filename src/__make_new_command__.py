@@ -69,7 +69,7 @@ else:
 print("Generating the code now...")
 
 outputCode = f"""# Settings import
-import Settings
+import settings
 
 # Standard
 import traceback

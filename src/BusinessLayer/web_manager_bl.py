@@ -8,8 +8,8 @@ import discord
 # Custom
 from .base_bl import BaseBL, bl_listen
 from src.UILayer.WebManager import WebManager
-import Settings
-import Keys
+import settings
+import keys
 
 nest_asyncio.apply()
 
@@ -22,14 +22,14 @@ class WebManagerBL(BaseBL):
         log.info(f"Starting WebManager...")
         self.bot.web_manager = await WebManager.configure(
             self.bot,
-            host=Settings.WEB_MANAGER_HOST,
-            port=Settings.WEB_MANAGER_PORT,
-            id=Keys.CLIENT_ID,
-            secret=Keys.CLIENT_SECRET,
-            token=Keys.DISCORD_TOKEN,
-            callback=Keys.CALLBACK_URL,
-            certfile=Keys.CERTFILE,
-            keyfile=Keys.KEYFILE,
+            host=settings.WEB_MANAGER_HOST,
+            port=settings.WEB_MANAGER_PORT,
+            id=keys.CLIENT_ID,
+            secret=keys.CLIENT_SECRET,
+            token=keys.DISCORD_TOKEN,
+            callback=keys.CALLBACK_URL,
+            certfile=keys.CERTFILE,
+            keyfile=keys.KEYFILE,
             _run_insecure=False,
         )
         await self.bot.web_manager.start()

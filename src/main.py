@@ -6,19 +6,19 @@ import sys
 
 
 def setup_logger():
-    import Settings
+    import settings
     from src.extra_logging import DiscordLoggingHandler
 
     log = logging.getLogger("lpd-officer-monitor")
     log.setLevel(logging.DEBUG)
-    log_folder = os.path.dirname(Settings.LOG_FILE_PATH)
+    log_folder = os.path.dirname(settings.LOG_FILE_PATH)
     if not os.path.isdir(log_folder):
         os.makedirs(log_folder)
 
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     sh = logging.StreamHandler()
-    fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
-    dh = DiscordLoggingHandler(webhook=Settings.LOGGING_WEBHOOK)
+    fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
+    dh = DiscordLoggingHandler(webhook=settings.LOGGING_WEBHOOK)
     sh.setFormatter(formatter)
     fh.setFormatter(formatter)
     dh.setFormatter(formatter)
@@ -42,8 +42,8 @@ def main():
     from discord.ext import commands
 
     # Custom Library Imports
-    import Keys
-    import Settings
+    import keys
+    import settings
     from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
     from src.UILayer.DiscordCommands import setup as setup_commands
 
@@ -57,7 +57,7 @@ def main():
     intents = discord.Intents.default()
     intents.members = True
 
-    bot = commands.Bot(command_prefix=Settings.BOT_PREFIX, intents=intents)
+    bot = commands.Bot(command_prefix=settings.BOT_PREFIX, intents=intents)
     bot.remove_command("help")
 
     bot.has_been_started = False
@@ -94,7 +94,7 @@ def main():
     async def on_ready():
         log.info(f"{'Logged in as':<12}: {bot.user.name}")
 
-        bot.guild = bot.get_guild(Settings.SERVER_ID)
+        bot.guild = bot.get_guild(settings.SERVER_ID)
         if bot.guild:
             log.info(f"{'Server name':<12}: {bot.guild.name}")
             log.info(f"{'Server ID':<12}: {bot.guild.id}")
@@ -116,7 +116,7 @@ def main():
     async def on_message(message: discord.Message) -> None:
 
         # Only process commands that are in a command channel
-        if message.channel.id in Settings.ALLOWED_COMMAND_CHANNELS:
+        if message.channel.id in settings.ALLOWED_COMMAND_CHANNELS:
             await bot.process_commands(message)
 
     @bot.event
@@ -128,7 +128,7 @@ def main():
         try:
             await ctx.send(exception_string)
         except discord.Forbidden:
-            bot.get_channel(Settings.ERROR_LOG_CHANNEL).send(
+            bot.get_channel(settings.ERROR_LOG_CHANNEL).send(
                 f"**{ctx.author}**, I'm not allowed to send messages in {ctx.channel}**"
             )
             pass
@@ -143,7 +143,7 @@ def main():
 
     async def runner():
         try:
-            await bot.start(Keys.DISCORD_TOKEN)
+            await bot.start(keys.DISCORD_TOKEN)
         finally:
             if not bot.is_closed():
                 await bot.close()
