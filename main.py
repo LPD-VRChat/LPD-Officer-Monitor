@@ -1,32 +1,49 @@
-# Set environment to DEV and import Settings and Keys - remove these lines if using production
+# Standard Library Imports
+import asyncio
+import logging
 import os
 import sys
+
+
+def setup_logger():
+    import Settings
+    from extra_logging import DiscordLoggingHandler
+
+    log = logging.getLogger("lpd-officer-monitor")
+    log.setLevel(logging.DEBUG)
+    log_folder = os.path.dirname(Settings.LOG_FILE_PATH)
+    if not os.path.isdir(log_folder):
+        os.makedirs(log_folder)
+
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    sh = logging.StreamHandler()
+    fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
+    dh = DiscordLoggingHandler(webhook=Settings.LOGGING_WEBHOOK)
+    sh.setFormatter(formatter)
+    fh.setFormatter(formatter)
+    dh.setFormatter(formatter)
+    log.addHandler(sh)
+    log.addHandler(fh)
+    log.addHandler(dh)
 
 
 def main():
     os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
 
-    import Settings
-    import Keys
-
     ####################
     ### Main Imports ###
     ####################
 
-    # Standard Library Imports
-    import asyncio
-    import logging
-    import threading
-
     # Community Library Imports
     import discord
-    from discord.ext import commands
     import nest_asyncio
+    from discord.ext import commands
 
     # Custom Library Imports
-    from UILayer.DiscordCommands import setup as setup_commands
+    import Keys
+    import Settings
     from BusinessLayer.bl_wrapper import BusinessLayerWrapper
-    from extra_logging import setup_logging_queue, DiscordLoggingHandler
+    from UILayer.DiscordCommands import setup as setup_commands
 
     ##############################
     ### Setup Global Variables ###
@@ -48,26 +65,7 @@ def main():
     ### Setup logging ###
     #####################
 
-    log = logging.getLogger("lpd-officer-monitor")
-    log.setLevel(logging.DEBUG)
-    logFolder = os.path.dirname(Settings.LOG_FILE_PATH)
-    if not os.path.isdir(logFolder):
-        os.makedirs(logFolder)
-        os.close(
-            os.open(Settings.LOG_FILE_PATH, os.O_CREAT)
-        )  ##TODO: remove, not needed
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    sh = logging.StreamHandler()
-    fh = logging.FileHandler(Settings.LOG_FILE_PATH, encoding="utf-8")
-    dh = DiscordLoggingHandler(bot, channel_id=Settings.ERROR_LOG_CHANNEL)
-    sh.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    dh.setFormatter(formatter)
-    log.addHandler(sh)
-    log.addHandler(fh)
-    log.addHandler(dh)
-    logging_thread = threading.Thread(target=setup_logging_queue)
-    logging_thread.start()
+    setup_logger()
 
     ##################################
     ### Start the different layers ###

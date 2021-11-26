@@ -113,6 +113,7 @@ NAME_SEPARATOR = ";"
 LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "Logs", "lpd_officer_monitor.log")
 
 # Logging ########################################################
+LOGGING_WEBHOOK = "INSERT_WEBHOOK_HERE"
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "0")
 
 # Web Manager settings ###########################################

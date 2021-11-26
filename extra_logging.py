@@ -4,45 +4,9 @@ import logging.handlers
 from queue import SimpleQueue
 from typing import List
 
+import aiohttp
 import discord
 from discord.ext import commands
-
-
-class LocalQueueHandler(logging.handlers.QueueHandler):
-    def emit(self, record: logging.LogRecord) -> None:
-        # Removed the call to self.prepare(), handle task cancellation
-        try:
-            self.enqueue(record)
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            self.handleError(record)
-
-
-def setup_logging_queue() -> None:
-    """Move log handlers to a separate thread.
-
-    Replace handlers on the root logger with a LocalQueueHandler,
-    and start a logging.QueueListener holding the original
-    handlers.
-
-    """
-    queue: SimpleQueue = SimpleQueue()
-    root = logging.getLogger()
-
-    handlers: List[logging.Handler] = []
-
-    handler = LocalQueueHandler(queue)
-    root.addHandler(handler)
-    for h in root.handlers[:]:
-        if h is not handler:
-            root.removeHandler(h)
-            handlers.append(h)
-
-    listener = logging.handlers.QueueListener(
-        queue, *handlers, respect_handler_level=True
-    )
-    listener.start()
 
 
 class DiscordLoggingHandler(logging.Handler):
@@ -52,29 +16,40 @@ class DiscordLoggingHandler(logging.Handler):
 
     def __init__(
         self,
-        bot: commands.Bot,
-        channel_id: int,
+        webhook: str,
         loop: asyncio.AbstractEventLoop = None,
         min_log_level: int = logging.WARNING,
     ):
         super().__init__()
-        self._bot = bot
-        self._channel_id = channel_id
+        self._webhook = webhook
         self._loop = loop or asyncio.get_event_loop()
         self._min_log_level = min_log_level
+
+    async def _send_to_webhook(
+        self, error_level: int, error_type: str, message: str
+    ) -> None:
+        # Get a color for the embed
+        if error_level < logging.WARNING:
+            color = discord.Color.green()
+        elif error_level == logging.WARNING:
+            color = discord.Color.gold()
+        elif error_level > logging.WARNING:
+            color = discord.Color.red()
+
+        # Create the embed
+        embed = discord.Embed(title=error_type, description=message, color=color)
+
+        # Send the embed
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(
+                self._webhook, adapter=discord.AsyncWebhookAdapter(session)
+            )
+            await webhook.send(embed=embed)
 
     def emit(self, record: logging.LogRecord) -> None:
         # Only log the message if it's above the minimum level
         if record.levelno >= self._min_log_level:
-            try:
-                # Only log the message if the channel is found
-                channel: discord.TextChannel = self._bot.get_channel(self._channel_id)
-                if channel is None:
-                    return
-
-                msg = self.format(record)
-                self._loop.run_until_complete(channel.send(msg))
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
-                self.handleError(record)
+            # Add a task to send the error to Discord so that we don't stop the event loop
+            self._loop.create_task(
+                self._send_to_webhook(record.levelno, record.levelname, record.message)
+            )
