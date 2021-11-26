@@ -101,3 +101,6 @@ DB_PORT = 3306
 LOGGING_WEBHOOK = "https://discord.com/api/webhooks/913832874883575838/qYRBo1a2WHblyk1wXUpURyUNoL9bp4gLZBiItte31sKDLQFSoXFh8eoeqinQjmuwLNCw"
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "1")
 _tracemalloc.start()
+
+# Web Manager settings ###########################################
+WEB_MANAGER_HOST = "localhost"
