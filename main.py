@@ -121,7 +121,6 @@ async def on_ready():
     # Start the SQL Manager
     print("Starting SQL Manager...")
     bot.sql = await SQLManager.start(bot, keys["SQL_Password"])
-    await asyncio.sleep(2)
 
     # Start the officer Manager
     print("Starting Officer Manager...")
