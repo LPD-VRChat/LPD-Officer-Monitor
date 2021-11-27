@@ -240,7 +240,7 @@ class OfficerManager:
         await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
-        
+
         # Remove the officer from the officer list
         try:
             del self._all_officers[officer_id]

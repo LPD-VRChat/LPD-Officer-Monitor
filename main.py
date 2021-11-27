@@ -55,8 +55,6 @@ parser.add_argument("-s", "--server", action="store_true")
 parser.add_argument("-l", "--local", action="store_true")
 args = parser.parse_args()
 
-_eyes_response_last_sent = None
-
 # ====================
 # Global Variables
 # ====================
@@ -70,6 +68,17 @@ elif args.local:
 else:
     settings = get_settings_file("settings")
     keys = get_settings_file("keys")
+
+
+def set_activity():
+    activity = settings["activity"]
+
+    return discord.Activity(
+        name=activity["name"],
+        type=eval(f'discord.ActivityType.{activity["type"]}'),
+        url=activity["url"],
+    )
+
 
 bot = commands.Bot(command_prefix=settings["bot_prefix"], intents=intents)
 bot.settings = settings
@@ -131,6 +140,8 @@ async def on_ready():
     # Start the VRChatUserManager
     print("Starting VRChat User Manager...")
     bot.user_manager = await VRChatUserManager.start(bot)
+
+    await bot.change_presence(activity=set_activity())
 
     # Mark everything ready
     bot.everything_ready = True
