@@ -726,8 +726,21 @@ class Time(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
-    @commands.command()
+    @commands.command(usage="[-d] [--debug] <how_many_officers>")
     async def random_active_officer(self, ctx: commands.Context, *args):
+        """
+        Get a random officer that is active and not in staff.
+
+        This command gets a random offier that has patrolled for at least an
+        hour in the last 28 days. The officer will also not be in staff,
+        all staff members are excluded no matter their time.
+
+        If you want to make sure the command is working properly you can
+        include the debug flag, -d or --debug, that will add information
+        about who is left after each step so that you can verify that it
+        is working properly.
+        """
+
         # Handle the debug flag
         debug = False
         for arg in args:
