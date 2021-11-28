@@ -752,7 +752,7 @@ class Time(commands.Cog):
             )
 
         # Only include active officers
-        active_officers = [o[0] for o in all_officers if o[1] >= 11]
+        active_officers = [o[0] for o in all_officers if o[1] >= 3600]
         if debug:
             active_officers_str = "\n".join(str(o) for o in active_officers)
             await send_long(ctx.channel, "**Active Officers:**\n" + active_officers_str)
