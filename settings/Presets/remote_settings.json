@@ -7,6 +7,12 @@
     "db_time_format": "%Y-%m-%d %H:%M:%S",
     "sleep_time_between_officer_checks": 3600,
     "name_separator": ";",
+    // Discord Activity
+    "activity": {
+        "name": "Monitoring Officers",
+        "type": "streaming",
+        "url": "https://www.youtube.com/watch?v=oHg5SJYRHA0"
+    },
     // Channels
     "monitored_channels": {
         "ignored_categories": [
@@ -17,7 +23,7 @@
         ]
     },
     "admin_bot_channel": 645383848284258305,
-    "application_channel": 655793001787949086,
+    "application_channel": 853392112513712158,
     "team_bot_channel": 774740277235154975,
     "general_bot_channel": 708736137463726131,
     "error_log_channel": 677546865998168144,
@@ -29,7 +35,7 @@
     "allowed_command_channels": [
         645383848284258305,
         708736137463726131,
-        655793001787949086,
+        853392112513712158,
         774740277235154975
     ],
     // Roles

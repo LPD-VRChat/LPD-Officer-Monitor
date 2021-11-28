@@ -107,6 +107,10 @@ class OfficerManager:
 
     @tasks.loop(minutes=60)
     async def loop(self):
+        # Wait for the bot to be ready before running this function
+        while not self.bot.everything_ready:
+            await asyncio.sleep(10);
+
         print("Running officer check loop in officer_manager")
 
         try:
@@ -118,7 +122,7 @@ class OfficerManager:
                     )
 
             # Remove extra users from the officer_monitor
-            for member_id in self._all_officers:
+            for member_id in list(self._all_officers.keys()):
 
                 member = self.guild.get_member(member_id)
 
@@ -236,7 +240,7 @@ class OfficerManager:
         await self.bot.sql.request(
             "DELETE FROM Officers WHERE officer_id = %s", (officer_id)
         )
-        
+
         # Remove the officer from the officer list
         try:
             del self._all_officers[officer_id]
