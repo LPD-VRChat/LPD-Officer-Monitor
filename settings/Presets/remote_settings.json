@@ -9,9 +9,9 @@
     "name_separator": ";",
     // Discord Activity
     "activity": {
-        "name": "Monitoring Officers",
+        "name": "Detroit: Become Human",
         "type": "streaming",
-        "url": "https://www.youtube.com/watch?v=oHg5SJYRHA0"
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     },
     // Channels
     "monitored_channels": {
