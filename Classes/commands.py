@@ -727,7 +727,17 @@ class Time(commands.Cog):
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
     @commands.command()
-    async def random_active_officer(self, ctx: commands.Context):
+    async def random_active_officer(self, ctx: commands.Context, *args):
+        # Handle the debug flag
+        debug = False
+        for arg in args:
+            if arg in ["-d", "--debug"]:
+                debug = True
+            else:
+                await ctx.send(f'Unrecognized Argument: "{arg}"')
+                return
+
+        # Get all the officers that have some activity
         to_dt = datetime.now(tz=timezone.utc)
         from_dt = to_dt - timedelta(days=28)
 
@@ -735,14 +745,17 @@ class Time(commands.Cog):
             Tuple[int, int]
         ] = await ctx.bot.officer_manager.get_most_active_officers(from_dt, to_dt)
 
-        # Make sure no officers are missing
-        officers_str = "\n".join(f"{o[0]}: {o[1]}s" for o in all_officers)
-        await send_long(ctx.channel, "**Officers for consideration:**\n" + officers_str)
+        if debug:
+            officers_str = "\n".join(f"{o[0]}: {o[1]}s" for o in all_officers)
+            await send_long(
+                ctx.channel, "**Officers for consideration:**\n" + officers_str
+            )
 
         # Only include active officers
-        active_officers = [o[0] for o in all_officers if o[1] >= 3600]
-        active_officers_str = "\n".join(str(o) for o in active_officers)
-        await send_long(ctx.channel, "**Active Officers:**\n" + active_officers_str)
+        active_officers = [o[0] for o in all_officers if o[1] >= 11]
+        if debug:
+            active_officers_str = "\n".join(str(o) for o in active_officers)
+            await send_long(ctx.channel, "**Active Officers:**\n" + active_officers_str)
 
         # Throw out anyone above Sergeant
         active_officer_objs: List[Officer] = [
@@ -751,8 +764,11 @@ class Time(commands.Cog):
         active_non_staff = [
             o for o in active_officer_objs if o and not o.is_white_shirt
         ]
-        active_non_staff_str = "\n".join(str(o.id) for o in active_non_staff)
-        await send_long(ctx.channel, "**Active Non Staff:**\n" + active_non_staff_str)
+        if debug:
+            active_non_staff_str = "\n".join(str(o.id) for o in active_non_staff)
+            await send_long(
+                ctx.channel, "**Active Non Staff:**\n" + active_non_staff_str
+            )
 
         # Make sure there are active officers
         if len(active_non_staff) == 0:
