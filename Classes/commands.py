@@ -6,13 +6,14 @@ from copy import deepcopy
 import argparse
 import re
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta
+import random
+from datetime import datetime, timedelta, timezone
 import time
 import math
 import traceback
 import json
 import asyncio
-from typing import Any, Dict, Iterable, List, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 import inspect
 import fuzzywuzzy.process
 
@@ -722,6 +723,76 @@ class Time(commands.Cog):
                 filename="LPD_database.csv",
                 msg_content=f"{ctx.author.mention} Here is the time file compatable with LPD Officer Monitor 1.0:",
             )
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    @commands.command(usage="[-d] [--debug] <how_many_officers>")
+    async def random_active_officer(self, ctx: commands.Context, *args):
+        """
+        Get a random officer that is active and not in staff.
+
+        This command gets a random offier that has patrolled for at least an
+        hour in the last 28 days. The officer will also not be in staff,
+        all staff members are excluded no matter their time.
+
+        If you want to make sure the command is working properly you can
+        include the debug flag, -d or --debug, that will add information
+        about who is left after each step so that you can verify that it
+        is working properly.
+        """
+
+        # Handle the debug flag
+        debug = False
+        for arg in args:
+            if arg in ["-d", "--debug"]:
+                debug = True
+            else:
+                await ctx.send(f'Unrecognized Argument: "{arg}"')
+                return
+
+        # Get all the officers that have some activity
+        to_dt = datetime.now(tz=timezone.utc)
+        from_dt = to_dt - timedelta(days=28)
+
+        all_officers: List[
+            Tuple[int, int]
+        ] = await ctx.bot.officer_manager.get_most_active_officers(from_dt, to_dt)
+
+        if debug:
+            officers_str = "\n".join(f"{o[0]}: {o[1]}s" for o in all_officers)
+            await send_long(
+                ctx.channel, "**Officers for consideration:**\n" + officers_str
+            )
+
+        # Only include active officers
+        active_officers = [o[0] for o in all_officers if o[1] >= 3600]
+        if debug:
+            active_officers_str = "\n".join(str(o) for o in active_officers)
+            await send_long(ctx.channel, "**Active Officers:**\n" + active_officers_str)
+
+        # Throw out anyone above Sergeant
+        active_officer_objs: List[Officer] = [
+            ctx.bot.officer_manager.get_officer(o_id) for o_id in active_officers
+        ]
+        active_non_staff = [
+            o for o in active_officer_objs if o and not o.is_white_shirt
+        ]
+        if debug:
+            active_non_staff_str = "\n".join(str(o.id) for o in active_non_staff)
+            await send_long(
+                ctx.channel, "**Active Non Staff:**\n" + active_non_staff_str
+            )
+
+        # Make sure there are active officers
+        if len(active_non_staff) == 0:
+            await ctx.send("There are no active officers.")
+            return
+
+        # Return a random officer
+        chosen_officer = random.choice(active_non_staff)
+        await ctx.send(
+            f"{chosen_officer.mention} ({chosen_officer.display_name}) was chosen randomly."
+        )
 
 
 class Inactivity(commands.Cog):
