@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 
 # Custom
-import src.BusinessLayer.checks as checks
+import src.layers.business.checks as checks
 
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -74,7 +74,7 @@ class Programming(commands.Cog):
                             f"{ctx.author.display_name} reloaded {m.split('.')[-1]} from #{ctx.channel.name}"
                         )
             else:
-                module = f"UILayer.DiscordCommands.{module_name}"
+                module = f"layers.ui.DiscordCommands.{module_name}"
                 try:
                     self.bot.reload_extension(module)
                     await ctx.send(f"Successfully reloaded {module_name}")

@@ -44,8 +44,8 @@ def main():
     # Custom Library Imports
     import keys
     import settings
-    from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
-    from src.UILayer.DiscordCommands import setup as setup_commands
+    from src.layers.business.bl_wrapper import BusinessLayerWrapper
+    from src.layers.ui.discord_commands import setup as setup_commands
 
     ##############################
     ### Setup Global Variables ###

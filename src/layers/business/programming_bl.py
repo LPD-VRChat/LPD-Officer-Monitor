@@ -10,7 +10,7 @@ from discord.ext import commands
 
 # Custom
 import settings
-from src.BusinessLayer.base_bl import BaseBL
+from src.layers.business.base_bl import BaseBL
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper

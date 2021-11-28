@@ -1,4 +1,4 @@
-from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
+from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from os import listdir
 from discord.ext import commands
 

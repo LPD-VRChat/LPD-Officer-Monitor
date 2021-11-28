@@ -208,7 +208,7 @@ class WebManager:
             config.certfile = certfile
             config.keyfile = keyfile
 
-        else:
+        else:  # TODO: This overrides a port configuration in settings
             port = 80
             log.warning("No SSL cert or key found, using HTTP!")
 
@@ -226,7 +226,7 @@ class WebManager:
         if self.__stop_the_server__:
             self.__stop_the_server__ = False
             return
-        await self.shutdown_trigger()
+        await self.shutdown_trigger()  # TODO: This will cause a stack overflow when run for a few thousands or millions of seconds
 
     async def start(self):
         self.task = self.loop.create_task(
@@ -284,8 +284,8 @@ class WebManager:
 
     @app.route("/")
     async def app_home():
-        return await send_file("UILayer/WebApp/index.html")
+        return await send_file("src/layers/ui/web_app/index.html")
 
     @app.route("/main.js")
     async def main_js():
-        return await send_file("UILayer/WebApp/main.js")
+        return await send_file("src/layers/ui/web_app/main.js")

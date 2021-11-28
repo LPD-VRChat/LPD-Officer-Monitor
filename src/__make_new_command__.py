@@ -1,7 +1,7 @@
 import os
 import inspect
 from posix import times_result
-import src.BusinessLayer.checks as checks
+import src.layers.business.checks as checks
 
 
 def prompt(question, p="> "):
@@ -81,9 +81,9 @@ import discord
 from discord.ext import commands
 
 # Custom
-from src.BusinessLayer.extra_functions import handle_error
-from src.BusinessLayer.extra_functions import ts_print as print
-import src.BusinessLayer.checks as checks
+from src.layers.business.extra_functions import handle_error
+from src.layers.business.extra_functions import ts_print as print
+import src.layers.business.checks as checks
 
 class {className}(commands.Cog):
 
@@ -116,8 +116,8 @@ def setup(bot):
 """
 
 thisDir = os.listdir()
-if "UILayer" in thisDir:
-    os.chdir("UILayer")
+if "layers.ui" in thisDir:
+    os.chdir("layers.ui")
     thisDir = os.listdir()
     if "DiscordCommands" in thisDir:
         os.chdir("DiscordCommands")

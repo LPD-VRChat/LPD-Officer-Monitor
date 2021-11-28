@@ -1,5 +1,5 @@
 # Settings import
-from src.BusinessLayer.bl_wrapper import BusinessLayerWrapper
+from src.layers.business.bl_wrapper import BusinessLayerWrapper
 import settings
 
 # Standard
@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 
 # Custom
-import src.BusinessLayer.checks as checks
+import src.layers.business.checks as checks
 
 
 class Moderation(commands.Cog):
