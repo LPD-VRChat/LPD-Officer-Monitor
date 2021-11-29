@@ -15,19 +15,13 @@ class BusinessLayerWrapper:
     Wrapper class for all the business layer classes.
     """
 
-    def __init__(self, bot: commands.Bot, business_layers: List[Any]):
-        self._all_layers = business_layers
-        self._on_ready_events: List[Coroutine] = []
+    def __init__(self, bot: commands.Bot, **kwargs):
+        self._layers = kwargs
 
-        # Loop through the functions in the above classes and add their methods that don't start with _ to this class
-        for business_layer in self._all_layers:
-            for func in dir(business_layer):
-                if not func.startswith("_") and callable(getattr(business_layer, func)):
-                    setattr(self, func, getattr(business_layer, func))
-
-    def subscribe_on_ready(self, func: Coroutine[Any, Any, Any]) -> None:
-        self._on_ready_events.append(func)
-
-    @property
-    def on_ready_events(self):
-        return self._on_ready_events
+    def clean_shutdown(
+        self,
+        location: str = "the console",
+        shutdown_by: str = "KeyboardInterrupt",
+        exit: bool = True,
+    ):
+        return self._layers["p_bl"].clean_shutdown(location, shutdown_by, exit)

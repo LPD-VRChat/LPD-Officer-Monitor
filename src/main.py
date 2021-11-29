@@ -29,6 +29,27 @@ def setup_logger():
     return log
 
 
+async def start_webmanager(bot, log):
+    from src.layers.ui.server.web_manager import WebManager
+    import settings
+    import keys
+
+    log.info(f"Starting WebManager...")
+    web_manager = await WebManager.configure(
+        bot,
+        host=settings.WEB_MANAGER_HOST,
+        port=settings.WEB_MANAGER_PORT,
+        id=keys.CLIENT_ID,
+        secret=keys.CLIENT_SECRET,
+        token=keys.DISCORD_TOKEN,
+        callback=keys.CALLBACK_URL,
+        certfile=keys.CERTFILE,
+        keyfile=keys.KEYFILE,
+        _run_insecure=False,
+    )
+    await web_manager.start()
+
+
 def main():
     os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
 
@@ -46,7 +67,7 @@ def main():
     import settings
     from src.layers import business as bl
     from src.layers.business.bl_wrapper import BusinessLayerWrapper
-    from src.layers.ui.discord_commands import setup as setup_commands
+    from src.layers.ui.discord_commands import setup as setup_discord_commands
 
     ##############################
     ### Setup Global Variables ###
@@ -74,12 +95,18 @@ def main():
     ### Start the different layers ###
     ##################################
 
+    # Business layers
     time_bl = bl.TimeBL(bot)
     vrc_bl = bl.VRChatBL()
     p_bl = bl.ProgrammingBL(bot)
     web_bl = bl.WebManagerBL(bot)
-    bl_wrapper = BusinessLayerWrapper(bot, [time_bl, vrc_bl, p_bl])
-    setup_commands(bot, bl_wrapper)
+    bl_wrapper = BusinessLayerWrapper(
+        bot, time_bl=time_bl, vrc_bl=vrc_bl, p_bl=p_bl, web_bl=web_bl
+    )
+
+    # UI Layers
+    setup_discord_commands(bot, bl_wrapper)
+    loop.create_task(start_webmanager(bot, log))
 
     ############################
     ### Global events/checks ###
@@ -110,9 +137,6 @@ def main():
             await bl_wrapper.clean_shutdown(
                 location="internal", by="automatic recovery", exit=False
             )
-
-        # Call all events that should be called when the bot is ready
-        await asyncio.gather(*[e() for e in bl_wrapper.on_ready_events])
 
         # This should be the last line in this function
         bot.has_been_started = True
