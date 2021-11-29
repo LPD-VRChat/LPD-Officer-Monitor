@@ -12,9 +12,7 @@ class RoleLadderElement:
     is_detainable: bool = True
     is_white_shirt: bool = False
     is_admin: bool = False
-    position: int = field(
-        init=False, default_factory=lambda: next(position_counter)
-    )
+    position: int = field(init=False, default_factory=lambda: next(position_counter))
 
     def as_discord_role(self, bot):
         """Returns the discord.Role object for this role ladder element"""
@@ -35,3 +33,6 @@ class RoleLadder:
     captain: RoleLadderElement
     deputy_chief: RoleLadderElement
     chief: RoleLadderElement
+
+    def items(self):
+        return self.__dict__.items()

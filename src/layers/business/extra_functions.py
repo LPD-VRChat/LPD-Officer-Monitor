@@ -79,3 +79,16 @@ async def send_str_as_file(
 def has_role_id(member: discord.Member, role_id: int) -> bool:
     """Returns true if the member has the given role"""
     return role_id in [r.id for r in member.roles]
+
+
+def is_lpd_member(member: discord.Member):
+    """
+    Returns if a member is an LPD member based on their discord roles.
+    """
+    lpd_role_set = {v.id for k, v in settings.ROLE_LADDER.items()}
+    member_rank_roles = set(member.roles).intersection(lpd_role_set)
+    return len(member_rank_roles) != 0
+
+
+def lpd_rank(member: discord.Member):
+    pass
