@@ -33,8 +33,10 @@ from hypercorn.config import Config
 
 nest_asyncio.apply()
 
+# TODO: Somehow move these into the WebManager class to minimize global variables, I'm thinking we can use just app.route directly in main, but I'm not sure if thats the best solution
 app = Quart("LPD Officer Monitor", static_folder="Webapp/")
 app.config["DISCORD"] = None
+
 log = logging.getLogger("lpd-officer-monitor")
 
 
@@ -222,11 +224,11 @@ class WebManager:
         return instance
 
     async def shutdown_trigger(self):
-        await asyncio.sleep(1)
-        if self.__stop_the_server__:
-            self.__stop_the_server__ = False
-            return
-        await self.shutdown_trigger()  # TODO: This will cause a stack overflow when run for a few thousands or millions of seconds
+        while True:
+            await asyncio.sleep(1)
+            if self.__stop_the_server__:
+                self.__stop_the_server__ = False
+                return
 
     async def start(self):
         self.task = self.loop.create_task(
@@ -279,13 +281,13 @@ class WebManager:
         return redirect(url_for("login"))
 
     @app.route("/favicon.ico")
-    async def favicon():
+    async def favicon(self):
         return await send_file("/favicon.ico")
 
     @app.route("/")
-    async def app_home():
+    async def app_home(self):
         return await send_file("src/layers/ui/web_app/index.html")
 
     @app.route("/main.js")
-    async def main_js():
+    async def main_js(self):
         return await send_file("src/layers/ui/web_app/main.js")
