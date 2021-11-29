@@ -30,9 +30,13 @@ def setup_logger():
 
 
 async def start_webmanager(bot, log):
+    import nest_asyncio
+
     from src.layers.ui.server.web_manager import WebManager
     import settings
     import keys
+
+    nest_asyncio.apply()
 
     log.info(f"Starting WebManager...")
     web_manager = await WebManager.configure(
