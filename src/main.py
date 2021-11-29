@@ -44,6 +44,7 @@ def main():
     # Custom Library Imports
     import keys
     import settings
+    from src.layers import business as bl
     from src.layers.business.bl_wrapper import BusinessLayerWrapper
     from src.layers.ui.discord_commands import setup as setup_commands
 
@@ -73,7 +74,11 @@ def main():
     ### Start the different layers ###
     ##################################
 
-    bl_wrapper = BusinessLayerWrapper(bot)
+    time_bl = bl.TimeBL(bot)
+    vrc_bl = bl.VRChatBL()
+    p_bl = bl.ProgrammingBL(bot)
+    web_bl = bl.WebManagerBL(bot)
+    bl_wrapper = BusinessLayerWrapper(bot, [time_bl, vrc_bl, p_bl])
     setup_commands(bot, bl_wrapper)
 
     ############################

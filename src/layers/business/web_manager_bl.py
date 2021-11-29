@@ -6,7 +6,7 @@ import nest_asyncio
 import discord
 
 # Custom
-from .base_bl import BaseBL, bl_listen
+from .base_bl import DiscordListenerBL, bl_listen
 from src.layers.ui.server.web_manager import WebManager
 import settings
 import keys
@@ -16,7 +16,7 @@ nest_asyncio.apply()
 log = logging.getLogger("lpd-officer-monitor")
 
 
-class WebManagerBL(BaseBL):
+class WebManagerBL(DiscordListenerBL):
     @bl_listen("on_ready")
     async def start_web_manager(self):
         log.info(f"Starting WebManager...")

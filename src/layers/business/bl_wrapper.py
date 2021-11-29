@@ -15,21 +15,15 @@ class BusinessLayerWrapper:
     Wrapper class for all the business layer classes.
     """
 
-    def __init__(self, bot: commands.Bot):
-        self._time_bl = TimeBL(bot, self)
-        self._vrc_bl = VRChatBL()
-        self._programming_bl = ProgrammingBL(bot, self)
-        self._web_manager_bl = WebManagerBL(bot, self)
-
-        self._all_bl_layers = [self._time_bl, self._vrc_bl, self._programming_bl]
-
+    def __init__(self, bot: commands.Bot, business_layers: List[Any]):
+        self._all_layers = business_layers
         self._on_ready_events: List[Coroutine] = []
 
         # Loop through the functions in the above classes and add their methods that don't start with _ to this class
-        for bl_layer in self._all_bl_layers:
-            for func in dir(bl_layer):
-                if not func.startswith("_") and callable(getattr(bl_layer, func)):
-                    setattr(self, func, getattr(bl_layer, func))
+        for business_layer in self._all_layers:
+            for func in dir(business_layer):
+                if not func.startswith("_") and callable(getattr(business_layer, func)):
+                    setattr(self, func, getattr(business_layer, func))
 
     def subscribe_on_ready(self, func: Coroutine[Any, Any, Any]) -> None:
         self._on_ready_events.append(func)

@@ -10,7 +10,7 @@ from discord.ext import commands
 
 # Custom
 import settings
-from src.layers.business.base_bl import BaseBL
+from src.layers.business.base_bl import DiscordListenerBL
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("lpd-officer-monitor")
 
 
-class ProgrammingBL(BaseBL):
+class ProgrammingBL(DiscordListenerBL):
     async def clean_shutdown(
         self,
         location: str = "the console",

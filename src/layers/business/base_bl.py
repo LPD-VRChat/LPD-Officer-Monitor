@@ -11,16 +11,15 @@ if TYPE_CHECKING:
     from . import BusinessLayerWrapper
 
 
-class BaseBL:
-    def __init__(self, bot: commands.Bot, bl_wrapper: BusinessLayerWrapper) -> None:
+class DiscordListenerBL:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.bl_wrapper = bl_wrapper
 
-        # Loop through all methods and add them as an event to the bot if they have a _discord_event property
+        # Loop through all methods and add them as an event to the bot if they have a discord_event property
         for attr in dir(self):
             func = getattr(self, attr)
-            if callable(func) and hasattr(func, "_discord_event"):
-                self.bot.add_listener(func, func._discord_event)
+            if callable(func) and hasattr(func, "discord_event"):
+                self.bot.add_listener(func, func.discord_event)
 
 
 def bl_listen(name: Optional[str] = None):
@@ -47,7 +46,7 @@ def bl_listen(name: Optional[str] = None):
 
         # Store the discord event on the function so that it can
         # be picked upon class initialization
-        wrapper._discord_event = name or func.__name__  # type: ignore
+        wrapper.discord_event = name or func.__name__  # type: ignore
 
         return wrapper
 
