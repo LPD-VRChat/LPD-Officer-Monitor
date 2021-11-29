@@ -247,14 +247,14 @@ class WebManager:
         pass
 
     @app.route("/login/")
-    async def login():
+    async def login(self):
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
         return await discord.create_session(scope=app.config["SCOPES"])
 
     @app.route("/logout/")
-    async def logout():
+    async def logout(self):
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
@@ -262,7 +262,7 @@ class WebManager:
         return redirect(url_for("home"))
 
     @app.route("/callback/")
-    async def callback():
+    async def callback(self):
         discord = app.config["DISCORD"]
         bot = app.config["BOT"]
 
