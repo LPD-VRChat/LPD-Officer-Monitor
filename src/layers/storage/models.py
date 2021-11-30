@@ -32,8 +32,7 @@ class User(ormar.Model):
 
     id: int = ormar.BigInteger(primary_key=True)
 
-    @property
-    def member(self, bot) -> discord.Member:
+    def member(self, bot) -> Optional[discord.Member]:
         """Return the discord.Member object with ID = self.id"""
         return bot.guild.get_member(self.id)
 
