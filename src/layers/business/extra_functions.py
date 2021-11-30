@@ -86,7 +86,7 @@ def is_lpd_member(member: discord.Member):
     Returns if a member is an LPD member based on their discord roles.
     """
     lpd_role_set = {v.id for k, v in settings.ROLE_LADDER.items()}
-    member_rank_roles = set(member.roles).intersection(lpd_role_set)
+    member_rank_roles = set(r.id for r in member.roles).intersection(lpd_role_set)
     return len(member_rank_roles) != 0
 
 
