@@ -10,6 +10,7 @@ def setup_logger():
     from src.extra_logging import DiscordLoggingHandler
 
     log = logging.getLogger("lpd-officer-monitor")
+    log.propagate = False
     log.setLevel(logging.DEBUG)
     log_folder = os.path.dirname(settings.LOG_FILE_PATH)
     if not os.path.isdir(log_folder):
