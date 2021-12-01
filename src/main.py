@@ -169,7 +169,11 @@ def main():
 
         # Skip logging the exception if the user just messed up the input to a command
         if exception_string.find("encountered a problem") != -1:
-            log.exception(exception_string)
+            log.log(logging.ERROR, exception_string, exc_info=exception)
+
+    @bot.event
+    async def on_error(event, *args, **kwargs):
+        log.exception(f'Error encountered in event "{event}"')
 
     #####################
     ### Start the bot ###

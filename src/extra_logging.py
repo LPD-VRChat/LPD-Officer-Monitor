@@ -1,8 +1,10 @@
 import asyncio
+import datetime as dt
 import logging
 import logging.handlers
+import traceback
 from queue import SimpleQueue
-from typing import List
+from typing import List, Optional
 
 import aiohttp
 import discord
@@ -26,7 +28,15 @@ class DiscordLoggingHandler(logging.Handler):
         self._min_log_level = min_log_level
 
     async def _send_to_webhook(
-        self, error_level: int, error_type: str, message: str
+        self,
+        error_level: int,
+        error_type: str,
+        message: str,
+        trace: Optional[str] = None,
+        filename: Optional[str] = None,
+        line_num: Optional[int] = None,
+        func_name: Optional[str] = None,
+        time: Optional[dt.datetime] = None,
     ) -> None:
         # Get a color for the embed
         if error_level < logging.WARNING:
@@ -37,7 +47,19 @@ class DiscordLoggingHandler(logging.Handler):
             color = discord.Color.red()
 
         # Create the embed
-        embed = discord.Embed(title=error_type, description=message, color=color)
+        embed = discord.Embed(
+            title=error_type, description=message + "\n\n" + (trace or ""), color=color
+        )
+
+        # Add extra fields
+        if filename is not None:
+            embed.add_field(name="Filename", value=filename)
+        if line_num is not None:
+            embed.add_field(name="Line Number", value=line_num)
+        if func_name is not None:
+            embed.add_field(name="Function", value=func_name)
+        if time is not None:
+            embed.timestamp = time
 
         # Send the embed
         async with aiohttp.ClientSession() as session:
@@ -49,7 +71,21 @@ class DiscordLoggingHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         # Only log the message if it's above the minimum level
         if record.levelno >= self._min_log_level:
+
+            # Convert date to datetime
+            iso_time = ",".join(record.asctime.split(",")[0:-1])
+            time = dt.datetime.fromisoformat(iso_time)
+
             # Add a task to send the error to Discord so that we don't stop the event loop
             self._loop.create_task(
-                self._send_to_webhook(record.levelno, record.levelname, record.message)
+                self._send_to_webhook(
+                    error_level=record.levelno,
+                    error_type=record.levelname,
+                    message=record.msg,
+                    trace=record.exc_text,
+                    filename=record.filename,
+                    line_num=record.lineno,
+                    func_name=record.funcName,
+                    time=time,
+                )
             )
