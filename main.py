@@ -293,6 +293,12 @@ async def on_raw_bulk_message_delete(payload):
 
 
 @bot.event
+async def on_raw_message_edit(payload):
+    if payload.channel_id == bot.settings["leave_of_absence_channel"]:
+        await bot.officer_manager.update_loa(payload.message_id, payload.channel_id)
+
+
+@bot.event
 async def on_raw_reaction_add(payload):
 
     if not bot.everything_ready:

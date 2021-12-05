@@ -395,3 +395,25 @@ class OfficerManager:
                 loa_entries = tuple(templist)
 
         return loa_entries
+
+    async def update_loa(self, request_id, channel_id):
+        """
+        Update the specified Leave of Absence
+        """
+
+        # Remove the old stored entry
+        await self.remove_loa(request_id)
+
+        # Get the message fresh from the channel
+        loa_channel = self.bot.get_channel(channel_id)
+        message = await loa_channel.fetch_message(request_id)
+
+        # Get the Officer that sent the message
+        officer_id = message.author.id
+        officer = self.get_officer(officer_id)
+
+        # This shouldn't ever happen, but just in case
+        if not officer: return
+
+        # Process the message as a new LOA
+        await officer.process_loa(message)
