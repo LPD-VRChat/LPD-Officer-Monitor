@@ -3,6 +3,7 @@ import keys
 
 from datetime import datetime, date
 from typing import Optional, List, Dict
+import urllib.parse
 
 import databases
 import sqlalchemy
@@ -16,7 +17,7 @@ from discord.ext import commands
 
 DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{keys.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 database = databases.Database(DATABASE_URL)
-database.url = DATABASE_URL
+database.url = databases.DatabaseURL(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
