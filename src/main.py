@@ -93,6 +93,7 @@ def main():
     vrc_bl = bl.VRChatBL()
     p_bl = bl.ProgrammingBL(bot)
     web_bl = bl.WebManagerBL(bot)
+    mod_bl = bl.ModerationBL(bot)
     bl_wrapper = BusinessLayerWrapper(
         bot, time_bl=time_bl, vrc_bl=vrc_bl, p_bl=p_bl, web_bl=web_bl
     )

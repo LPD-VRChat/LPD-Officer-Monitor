@@ -39,6 +39,7 @@ ALLOWED_COMMAND_CHANNELS = [ADMIN_BOT_CHANNEL, TEAM_BOT_CHANNEL, GENERAL_BOT_CHA
 ERROR_LOG_CHANNEL = 677546865998168144
 LEAVE_OF_ABSENCE_CHANNEL = 725110720722894869
 REQUEST_RANK_CHANNEL = 655570475216535585
+MOD_LOG_CHANNEL = 655911961393102858
 
 # Role IDs #######################################################
 ##### Trainer Role IDs
@@ -135,3 +136,7 @@ DISCORD_TOKEN = "yigbuq3cfr98by7wvefgrt78b9ywv34t8ib7uiybgw3f4ubigycuvifuv4uigy"
 CLIENT_ID = 0
 CLIENT_SECRET = "wg43tgw4gw4gwgyhsae54ty35y35"
 CALLBACK_URL = "https://callback.url"
+
+# Scam Detection Settings ########################################
+GIFT_LINK_EXPIRATION_SECONDS = 30
+GIFT_LINK_MAX_CHANNEL_COUNT = 4
