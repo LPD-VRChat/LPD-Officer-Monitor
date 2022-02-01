@@ -27,6 +27,21 @@ class DiscordLoggingHandler(logging.Handler):
         self._loop = loop or asyncio.get_event_loop()
         self._min_log_level = min_log_level
 
+        ready_embed = discord.Embed(
+            title="Discord Logging Online",
+            description="From LPD Officer Monitor.",
+            color=discord.Color.green(),
+            timestamp=dt.datetime.now(tz=dt.timezone.utc),
+        )
+        self._loop.run_until_complete(self._send_embed(ready_embed))
+
+    async def _send_embed(self, embed: discord.Embed):
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(
+                self._webhook, adapter=discord.AsyncWebhookAdapter(session)
+            )
+            await webhook.send(embed=embed)
+
     async def _send_to_webhook(
         self,
         error_level: int,
@@ -61,12 +76,7 @@ class DiscordLoggingHandler(logging.Handler):
         if time is not None:
             embed.timestamp = time
 
-        # Send the embed
-        async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url(
-                self._webhook, adapter=discord.AsyncWebhookAdapter(session)
-            )
-            await webhook.send(embed=embed)
+        await self._send_embed(embed)
 
     def emit(self, record: logging.LogRecord) -> None:
         # Only log the message if it's above the minimum level
