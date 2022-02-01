@@ -1,5 +1,4 @@
 import settings
-import keys
 
 from datetime import datetime, date
 from typing import Optional, List, Dict
@@ -15,7 +14,7 @@ from enum import Enum
 import discord
 from discord.ext import commands
 
-DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{keys.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 database = databases.Database(DATABASE_URL)
 database.url = databases.DatabaseURL(DATABASE_URL)
 metadata = sqlalchemy.MetaData()

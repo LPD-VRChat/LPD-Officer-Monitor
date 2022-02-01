@@ -106,6 +106,9 @@ DB_SOCK = "/run/mysqld/mysqld.sock"
 DB_TYPE = "mysql"
 DB_PORT = 3306
 
+# The password for the MySQL database
+DB_PASS = "AVerySecurePasswordIndeed"
+
 # General settings ###############################################
 BOT_PREFIX = "="
 DB_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -119,3 +122,16 @@ _os.environ.setdefault("PYTHONASYNCIODDEBUG", "0")
 # Web Manager settings ###########################################
 WEB_MANAGER_PORT = 443
 WEB_MANAGER_HOST = "0.0.0.0"
+
+# The certfile and keyfile for the bot's SSL certificate
+CERTFILE = "certs/cert.pem"
+KEYFILE = "certs/key.pem"
+
+# Change this in local and keep it very secret
+WEB_SECRET_KEY = b"TheSecretKeyForWebSecret"
+
+# Discord OAuth credentials ######################################
+DISCORD_TOKEN = "yigbuq3cfr98by7wvefgrt78b9ywv34t8ib7uiybgw3f4ubigycuvifuv4uigy"
+CLIENT_ID = 0
+CLIENT_SECRET = "wg43tgw4gw4gwgyhsae54ty35y35"
+CALLBACK_URL = "https://callback.url"

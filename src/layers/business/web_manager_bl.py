@@ -9,7 +9,6 @@ import discord
 from .base_bl import DiscordListenerBL, bl_listen
 from src.layers.ui.server.web_manager import WebManager
 import settings
-import keys
 
 nest_asyncio.apply()
 

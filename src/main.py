@@ -35,7 +35,6 @@ async def start_webmanager(bot, log):
 
     from src.layers.ui.server.web_manager import WebManager
     import settings
-    import keys
 
     nest_asyncio.apply()
 
@@ -44,12 +43,12 @@ async def start_webmanager(bot, log):
         bot,
         host=settings.WEB_MANAGER_HOST,
         port=settings.WEB_MANAGER_PORT,
-        id=keys.CLIENT_ID,
-        secret=keys.CLIENT_SECRET,
-        token=keys.DISCORD_TOKEN,
-        callback=keys.CALLBACK_URL,
-        certfile=keys.CERTFILE,
-        keyfile=keys.KEYFILE,
+        id=settings.CLIENT_ID,
+        secret=settings.CLIENT_SECRET,
+        token=settings.DISCORD_TOKEN,
+        callback=settings.CALLBACK_URL,
+        certfile=settings.CERTFILE,
+        keyfile=settings.KEYFILE,
         _run_insecure=False,
     )
     await web_manager.start()
@@ -68,7 +67,6 @@ def main():
     from discord.ext import commands
 
     # Custom Library Imports
-    import keys
     import settings
     from src.layers import business as bl
     from src.layers.business.bl_wrapper import BusinessLayerWrapper
@@ -181,7 +179,7 @@ def main():
 
     async def runner():
         try:
-            await bot.start(keys.DISCORD_TOKEN)
+            await bot.start(settings.DISCORD_TOKEN)
         finally:
             if not bot.is_closed():
                 await bot.close()
