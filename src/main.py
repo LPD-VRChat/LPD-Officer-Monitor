@@ -4,11 +4,24 @@ import logging
 import os
 import sys
 
+# Community Library Imports
+import discord
+import nest_asyncio
+from discord.ext import commands
+
+# Custom Library Imports
+import settings
+from src.layers import business as bl
+from src.layers.business.bl_wrapper import BusinessLayerWrapper
+from src.layers.ui.discord_commands import setup as setup_discord_commands
+from src.layers.ui.server.web_manager import WebManager
+from src.extra_logging import DiscordLoggingHandler
+
+
+nest_asyncio.apply()
+
 
 def setup_logger():
-    import settings
-    from src.extra_logging import DiscordLoggingHandler
-
     log = logging.getLogger("lpd-officer-monitor")
     log.propagate = False
     log.setLevel(logging.DEBUG)
@@ -31,13 +44,6 @@ def setup_logger():
 
 
 async def start_webmanager(bot, log):
-    import nest_asyncio
-
-    from src.layers.ui.server.web_manager import WebManager
-    import settings
-
-    nest_asyncio.apply()
-
     log.info(f"Starting WebManager...")
     web_manager = await WebManager.configure(
         bot,
@@ -55,22 +61,6 @@ async def start_webmanager(bot, log):
 
 
 def main():
-    os.environ.setdefault("LPD_OFFICER_MONITOR_ENVIRONMENT", "dev")
-
-    ####################
-    ### Main Imports ###
-    ####################
-
-    # Community Library Imports
-    import discord
-    import nest_asyncio
-    from discord.ext import commands
-
-    # Custom Library Imports
-    import settings
-    from src.layers import business as bl
-    from src.layers.business.bl_wrapper import BusinessLayerWrapper
-    from src.layers.ui.discord_commands import setup as setup_discord_commands
 
     ##############################
     ### Setup Global Variables ###
@@ -189,8 +179,3 @@ def main():
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(bl_wrapper.clean_shutdown())
-
-
-if __name__ == "__main__":
-    main()
-    os.execv(sys.executable, ["python"] + sys.argv)

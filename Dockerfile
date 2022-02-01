@@ -9,4 +9,4 @@ RUN pip install -r requirements.txt
 
 # Run the app
 COPY . .
-CMD [ "python", "-u", "-m", "main" ]
+CMD [ "python", "-u", "-m", "src.runner" ]
