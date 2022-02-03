@@ -13,6 +13,7 @@ from discord.ext import commands
 
 # Custom
 import src.layers.business.checks as checks
+from layers.business.bl_wrapper import BusinessLayerWrapper
 
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -20,7 +21,7 @@ log = logging.getLogger("lpd-officer-monitor")
 
 class Programming(commands.Cog):
     def __init__(self, bot):
-        self.bl_wrapper = bot.bl_wrapper
+        self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.bot = bot
         self.color = discord.Color.red()
 
@@ -30,7 +31,7 @@ class Programming(commands.Cog):
     async def shutdown(self, ctx):
         """This command shuts the bot down cleanly"""
         await ctx.send("Shutting the bot down...")
-        await self.bl_wrapper.clean_shutdown(
+        await self.bl_wrapper.p.clean_shutdown(
             "#" + ctx.channel.name, ctx.author.display_name, exit=True
         )
 
@@ -40,7 +41,7 @@ class Programming(commands.Cog):
     async def restart(self, ctx):
         """Restarts the bot if something is broken"""
         await ctx.send("Restarting the bot...")
-        await self.bl_wrapper.clean_shutdown(
+        await self.bl_wrapper.p.clean_shutdown(
             "#" + ctx.channel.name, ctx.author.display_name, exit=False
         )
 

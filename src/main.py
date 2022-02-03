@@ -123,10 +123,10 @@ def main():
             log.info(f"{'Server name':<12}: {bot.guild.name}")
             log.info(f"{'Server ID':<12}: {bot.guild.id}")
         else:
-            await bl_wrapper.clean_shutdown(location="internal", by="server lookup")
+            await bl_wrapper.p.clean_shutdown(location="internal", by="server lookup")
 
         if bot.has_been_started:
-            await bl_wrapper.clean_shutdown(
+            await bl_wrapper.p.clean_shutdown(
                 location="internal", by="automatic recovery", exit=False
             )
 
@@ -177,4 +177,4 @@ def main():
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(bl_wrapper.clean_shutdown())
+        loop.run_until_complete(bl_wrapper.p.clean_shutdown())
