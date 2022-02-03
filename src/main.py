@@ -94,9 +94,7 @@ def main():
     p_bl = bl.ProgrammingBL(bot)
     web_bl = bl.WebManagerBL(bot)
     mod_bl = bl.ModerationBL(bot)
-    bl_wrapper = BusinessLayerWrapper(
-        bot, time_bl=time_bl, vrc_bl=vrc_bl, p_bl=p_bl, web_bl=web_bl
-    )
+    bl_wrapper = BusinessLayerWrapper(time_bl, vrc_bl, p_bl, web_bl, mod_bl)
 
     # UI Layers
     setup_discord_commands(bot, bl_wrapper)
