@@ -141,9 +141,9 @@ class TimeRenewal(ormar.Model):
         tablename = "timerenewals"
 
     id: int = ormar.Integer(primary_key=True)
-    officer: Optional[Officer] = ormar.ForeignKey(Officer)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer,related_name="officer")
     timestamp: datetime = ormar.DateTime(timezone=True)
-    renewer: Officer
+    renewer: Optional[Officer] = ormar.ForeignKey(Officer,related_name="renewer")
 
 
 class StrikeEntry(ormar.Model):
@@ -154,7 +154,7 @@ class StrikeEntry(ormar.Model):
     member_id: int = ormar.BigInteger(min_value=0)
     timestamp: datetime = ormar.DateTime(timezone=True)
     reason: str = ormar.String(max_length=65536)
-    submitter: Officer
+    submitter: Optional[Officer] = ormar.ForeignKey(Officer)
 
 
 class DetainedUser(User):
@@ -194,7 +194,7 @@ class Patrol(ormar.Model):
     officer: Optional[Officer] = ormar.ForeignKey(Officer)
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
-    event: Optional[Event] = ormar.ForeignKey(Event)
+    event: Optional[Event] = ormar.ForeignKey(Event, nullable=True)
     main_channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
 
 
