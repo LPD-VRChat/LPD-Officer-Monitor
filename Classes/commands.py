@@ -1,5 +1,5 @@
 # Standard
-from Classes.Officer import Officer
+import codecs
 import csv
 import sys
 from copy import deepcopy
@@ -16,6 +16,8 @@ import asyncio
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 import inspect
 import fuzzywuzzy.process
+import csv
+import datetime as dt
 
 # Community
 import discord
@@ -24,6 +26,9 @@ import texttable
 import arrow
 
 # Mine
+from Classes.Officer import Officer
+from Classes.OfficerManager import OfficerManager
+from Classes.VRChatUserManager import VRChatUserManager
 from Classes.extra_functions import (
     send_long,
     handle_error,
@@ -1851,6 +1856,36 @@ class Other(commands.Cog):
         await ctx.send("Shutting down the bot now!")
         whostr = f"{ctx.channel.name} by {ctx.author.display_name}"
         await clean_shutdown(self.bot, ctx.channel.name, ctx.author.display_name)
+
+    @checks.is_admin_bot_channel()
+    @checks.is_white_shirt()
+    async def dump_csv(self, ctx: commands.Context):
+        # Create the fake CSV file
+        with BytesIO() as binary_csv:
+            stream_writer = codecs.getwriter("utf-8")
+            csv_file = stream_writer(binary_csv)
+            csv_writer = csv.writer(
+                csv_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
+
+            # Add each officer to the fake file
+            om: OfficerManager = self.bot.officer_manager
+            um: VRChatUserManager = self.bot.user_manager
+            o = om.all_officers[1]
+
+            to_patrol_time = dt.datetime.now()
+            from_patrol_time = to_patrol_time - dt.timedelta(days=28)
+
+            ctx.send("Gathering all the data...")
+
+            # fmt: off
+            csv_writer.writerow([  "Name",   "Rank", "Staff",          "SLRT Certified",  "LMT Certified",  "CO Certified", "Event Host",     "Programmer",          "Media",           "Chatmod",           "Instigator",    "Trainer",    "SLRT Trainer",    "LMT Trainer",    "CO Trainer",    "Dev",           "Recruiter",    "Lead",         "Korean",    "Chinese", "Community", "Patrol Time"])
+            csv_writer.writerows([[vrc_name, o.rank, o.is_white_shirt, o.is_slrt_trained, o.is_lmt_trained, o.is_co_trained, o.is_event_host, o.is_programming_team, o.is_media_member, o.is_chat_moderator, o.is_instigator, o.is_trainer, o.is_slrt_trainer, o.is_lmt_trainer, o.is_co_trainer, o.is_dev_member, o.is_recruiter, o.is_team_lead, o.is_korean, o.is_chinese, "LPD", o.get_time(from_patrol_time, to_patrol_time)]
+                    for o in om.all_officers.values()
+                    if (vrc_name := um.get_vrc_by_discord(o.id)) is not None])
+            # fmt: on
+
+            ctx.send(file=discord.File(binary_csv, filename="data_dump.csv"))
 
 
 class Debug(commands.Cog):
