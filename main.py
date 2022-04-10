@@ -374,19 +374,21 @@ async def on_member_join(member):
 # Add cogs
 # ====================
 
-bot.remove_command("help")
-bot.add_cog(Help(bot))
-bot.add_cog(Time(bot))
-bot.add_cog(Inactivity(bot))
-bot.add_cog(VRChatAccoutLink(bot))
-bot.add_cog(Applications(bot))
-bot.add_cog(Moderation(bot))
-bot.add_cog(Other(bot))
 
-if not args.server:
-    from Classes.commands import Debug
+async def setup_cog():
+    bot.remove_command("help")
+    await bot.add_cog(Help(bot))
+    await bot.add_cog(Time(bot))
+    await bot.add_cog(Inactivity(bot))
+    await bot.add_cog(VRChatAccoutLink(bot))
+    await bot.add_cog(Applications(bot))
+    await bot.add_cog(Moderation(bot))
+    await bot.add_cog(Other(bot))
 
-    bot.add_cog(Debug(bot))
+    if not args.server:
+        from Classes.commands import Debug
+
+        await bot.add_cog(Debug(bot))
 
 
 # ====================
@@ -396,6 +398,7 @@ if not args.server:
 
 async def runner():
     try:
+        await setup_cog()
         await bot.start(keys["Discord_token"])
     finally:
         if not bot.is_closed():
