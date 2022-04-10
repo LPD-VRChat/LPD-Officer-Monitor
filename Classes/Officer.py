@@ -11,7 +11,6 @@ from typing import Any, Dict, Optional
 
 # Community
 from discord import Member, Role
-from discord.enums import HypeSquadHouse
 from discord.errors import Forbidden
 from Classes.errors import MemberNotFoundError
 from Classes.extra_functions import ts_print as print
