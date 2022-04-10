@@ -76,10 +76,10 @@ class OfficerManager:
         print(f"Officers needing removal: {self._officers_needing_removal}")
 
         # Set up the automatically running code
-        self.loop.start()
         self.loop.change_interval(
             minutes=bot.settings["sleep_time_between_officer_checks"]
         )
+        self.loop.start()
         self.loa_loop.start()
 
     @classmethod
