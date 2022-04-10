@@ -45,6 +45,7 @@ loop = asyncio.get_event_loop()
 # Set intents for the bot - this allows the bot to see other users in the server
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 # ====================
 # Argparse
