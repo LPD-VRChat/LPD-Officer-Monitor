@@ -142,7 +142,12 @@ class Time(commands.Cog):
             embed = discord.Embed(description="Latest activity")
 
         # Set the author of the embed
-        embed.set_author(name=officer.display_name, icon_url=officer.member.avatar_url)
+        if officer.member.avatar:
+            embed.set_author(
+                name=officer.display_name, icon_url=officer.member.avatar.url
+            )
+        else:
+            embed.set_author(name=officer.display_name)
 
         # Return the embed if their are no results to add
         if not time_results:
@@ -1817,9 +1822,12 @@ class Other(commands.Cog):
             if len(channel_data) == 0:
                 attend_embed.description = "Communication channels are empty"
             # mention doesn't work for author field :(
-            attend_embed.set_author(
-                name=ctx.author.display_name, icon_url=ctx.author.avatar_url
-            )
+            if officer.member.avatar:
+                attend_embed.set_author(
+                    name=ctx.author.display_name, icon_url=ctx.author.avatar.url
+                )
+            else:
+                attend_embed.set_author(name=ctx.author.display_name)
             # discord client convert to local time on display
             attend_embed.timestamp = datetime.utcnow()
             if parsed.all:
