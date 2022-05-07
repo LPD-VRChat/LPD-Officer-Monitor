@@ -38,6 +38,7 @@ from Classes.extra_functions import (
     clean_shutdown,
     role_id_index,
     get_role_name_by_id,
+    remove_role_name_decoration,
 )
 from Classes.extra_functions import ts_print as print
 from Classes.custom_arg_parse import ArgumentParser
@@ -1532,13 +1533,6 @@ class Other(commands.Cog):
             lambda x: self.bot.user_manager.get_vrc_by_discord(x.id) or x.display_name
         )
 
-    @staticmethod
-    def remove_name_decoration(name: str) -> str:
-        """
-        Remove the discord special characters at the start and end of the string
-        """
-        return name.strip("| ⠀ ")
-
     def get_role_by_name(self, role_name: str) -> discord.Role:
         """
         Return a discord role if found, else raise `errors.GetRoleMembersError`
@@ -1547,7 +1541,7 @@ class Other(commands.Cog):
 
         # Get the role
         for role in self.bot.officer_manager.guild.roles:
-            undecorated_name = self.remove_name_decoration(role.name)
+            undecorated_name = remove_role_name_decoration(role.name)
             role_names.append(undecorated_name)
             if (
                 undecorated_name.lower() == role_name.lower()
@@ -1619,7 +1613,7 @@ class Other(commands.Cog):
 
         # Send everyone
         await ctx.send(
-            f"Here are {len(members)} people in the role `{self.remove_name_decoration(discord_role.name)}`:"
+            f"Here are {len(members)} people in the role `{remove_role_name_decoration(discord_role.name)}`:"
         )
         await send_long(ctx.channel, members_str, code_block=True)
 
@@ -1859,6 +1853,7 @@ class Other(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
+    @commands.command()
     async def dump_csv(self, ctx: commands.Context):
         # Create the fake CSV file
         with BytesIO() as binary_csv:
@@ -1871,21 +1866,34 @@ class Other(commands.Cog):
             # Add each officer to the fake file
             om: OfficerManager = self.bot.officer_manager
             um: VRChatUserManager = self.bot.user_manager
-            o = om.all_officers[1]
 
             to_patrol_time = dt.datetime.now()
             from_patrol_time = to_patrol_time - dt.timedelta(days=28)
 
-            ctx.send("Gathering all the data...")
+            await ctx.send("Gathering all the data...")
 
+            # Gather the patrol time of all officers
+            db_result = await om.get_most_active_officers(
+                from_patrol_time, to_patrol_time, include_no_activity=True
+            )
+            patrol_dict: Dict[int, int] = {
+                o_id: patrol_time for o_id, patrol_time in db_result
+            }
+
+            # Input the data into the CSV file.
+            # We're not storing patrol time for now because of security
+            # conserns, client users being able to extract it, but we may add
+            # it back in the future if we can solve the issue.
             # fmt: off
-            csv_writer.writerow([  "Name",   "Rank", "Staff",          "SLRT Certified",  "LMT Certified",  "CO Certified", "Event Host",     "Programmer",          "Media",           "Chatmod",           "Instigator",    "Trainer",    "SLRT Trainer",    "LMT Trainer",    "CO Trainer",    "Dev",           "Recruiter",    "Lead",         "Korean",    "Chinese", "Community", "Patrol Time"])
-            csv_writer.writerows([[vrc_name, o.rank, o.is_white_shirt, o.is_slrt_trained, o.is_lmt_trained, o.is_co_trained, o.is_event_host, o.is_programming_team, o.is_media_member, o.is_chat_moderator, o.is_instigator, o.is_trainer, o.is_slrt_trainer, o.is_lmt_trainer, o.is_co_trainer, o.is_dev_member, o.is_recruiter, o.is_team_lead, o.is_korean, o.is_chinese, "LPD", o.get_time(from_patrol_time, to_patrol_time)]
+            csv_writer.writerow([  "Name",                 "Rank",                   "Staff",       "SLRT Certified",  "LMT Certified",  "CO Certified",   "Event Host",       "Programmer",          "Media",           "Chatmod",        "Instigator",    "Trainer",    "SLRT Trainer",    "LMT Trainer",    "CO Trainer",       "Dev",        "Recruiter",      "Lead",       "Korean",    "Chinese", "Community", "Backroom Access"])#, "Patrol Time"])
+            csv_writer.writerows([[vrc_name, remove_role_name_decoration(o.rank.name), o.is_white_shirt, o.is_slrt_trained, o.is_lmt_trained, o.is_co_trained, o.is_event_host, o.is_programming_team, o.is_media_member, o.is_chat_moderator, o.is_instigator, o.is_trainer, o.is_slrt_trainer, o.is_lmt_trainer, o.is_co_trainer, o.is_dev_member, o.is_recruiter, o.is_team_lead, o.is_korean, o.is_chinese, "LPD",            True]#, patrol_dict[o.id]]
                     for o in om.all_officers.values()
                     if (vrc_name := um.get_vrc_by_discord(o.id)) is not None])
             # fmt: on
 
-            ctx.send(file=discord.File(binary_csv, filename="data_dump.csv"))
+            # Send the CSV file
+            binary_csv.seek(0)
+            await ctx.send(file=discord.File(binary_csv, filename="data_dump.csv"))
 
 
 class Debug(commands.Cog):

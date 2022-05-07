@@ -330,3 +330,10 @@ def ts_print(*objects, sep=" ", end="\n", file=stdout, flush=False):
         file=file,
         flush=flush,
     )
+
+
+def remove_role_name_decoration(name: str) -> str:
+    """
+    Remove the role name decoration at the start and end of a roles name
+    """
+    return name.strip("| ⠀ ")
