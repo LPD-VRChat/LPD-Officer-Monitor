@@ -53,10 +53,14 @@
     "recruiter_role": 633018289777410068,
     "programming_team_role": 820416948613152808,
     "dev_team_role": 746362203225063454,
+    "media_team_role": 959048246460825630,
+    "instigator_role": 959048314723106846,
     "civilian_role": 723276594935758998,
     "event_host_role": 768205907770867732,
     "inactive_role": 590684921534873620,
     "team_lead_role": 828430724583129119,
+    "korean_role": 959053071676244010,
+    "chinese_role": 959053125912780830,
     "teams": [
         {
             "id": 746362203225063454,

@@ -343,8 +343,32 @@ class Officer:
         return self._has_role(self.bot.settings["lmt_trainer_role"])
 
     @property
+    def is_co_trained(self):
+        return self._has_role(self.bot.settings["watch_officer_role"])
+
+    @property
+    def is_co_trainer(self):
+        return self._has_role(self.bot.settings["prison_trainer_role"])
+
+    @property
     def is_dev_member(self):
         return self._has_role(self.bot.settings["dev_team_role"])
+
+    @property
+    def is_media_member(self):
+        return self._has_role(self.bot.settings["media_team_role"])
+
+    @property
+    def is_instigator(self):
+        return self._has_role(self.bot.settings["instigator_role"])
+
+    @property
+    def is_korean(self):
+        return self._has_role(self.bot.settings["korean_role"])
+
+    @property
+    def is_chinese(self):
+        return self._has_role(self.bot.settings["chinese_role"])
 
     @property
     def is_detainable(self):
