@@ -1,20 +1,19 @@
 import settings
 
-from datetime import datetime, date
-from typing import Optional, List, Dict
-import urllib.parse
+from datetime import datetime
+from typing import Optional
 
 import databases
 import sqlalchemy
 import ormar
 import pydantic
 import pytest
-from enum import Enum
+import urllib.parse
 
 import discord
 from discord.ext import commands
 
-DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{urllib.parse.quote_plus(settings.DB_PASS)}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 database = databases.Database(DATABASE_URL)
 database.url = databases.DatabaseURL(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
@@ -27,7 +26,6 @@ class BaseMeta(ormar.ModelMeta):
 
 class User(ormar.Model):
     class Meta(BaseMeta):
-        # tablename = "users"
         abstract = True
 
     id: int = ormar.BigInteger(primary_key=True)
@@ -35,6 +33,98 @@ class User(ormar.Model):
     def member(self, bot) -> Optional[discord.Member]:
         """Return the discord.Member object with ID = self.id"""
         return bot.guild.get_member(self.id)
+
+
+class Officer(User):
+    class Meta(BaseMeta):
+        tablename = "officers"
+
+    started_monitoring: datetime = ormar.DateTime(timezone=True)
+    deleted_at: Optional[datetime] = ormar.DateTime(timezone=True, nullable=True)
+    vrchat_name: str = ormar.String(max_length=255)
+    vrchat_id: str = ormar.String(max_length=255)
+
+
+class Event(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "events"
+
+    id: int = ormar.Integer(primary_key=True)
+    start: datetime = ormar.DateTime(timezone=True)
+    end: datetime = ormar.DateTime(timezone=True)
+    hosts: pydantic.Json = ormar.JSON()
+
+
+class SavedVoiceChannel(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "savedvoicechannels"
+
+    id: int = ormar.BigInteger(primary_key=True)
+    name: str = ormar.String(max_length=255)
+    guild_id: int = ormar.BigInteger(min_value=0)
+
+    def discord_channel(self, bot: commands.Bot) -> discord.VoiceChannel:
+        return bot.get_channel(self.id)
+
+
+class Patrol(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "patrols"
+
+    id: int = ormar.Integer(primary_key=True)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer)
+    start: datetime = ormar.DateTime(timezone=True)
+    end: datetime = ormar.DateTime(timezone=True)
+    event: Optional[Event] = ormar.ForeignKey(Event)
+    main_channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
+
+
+class PatrolVoice(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "patrolvoices"
+
+    id: int = ormar.Integer(primary_key=True)
+    patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)
+    channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
+    start: datetime = ormar.DateTime(timezone=True)
+    end: datetime = ormar.DateTime(timezone=True)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def create_db():
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.drop_all(engine)
+    metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
+
+
+"""
+class Officer(User):
+    class Meta(BaseMeta):
+        tablename = "officers"
+
+    started_monitoring: datetime = ormar.DateTime(timezone=True)
+    deleted_at: Optional[datetime] = ormar.DateTime(timezone=True, nullable=True)
+    vrchat_name: str = ormar.String(max_length=255)
+    vrchat_id: str = ormar.String(max_length=255)
+    badges: Optional[List[Badge]] = ormar.ManyToMany(
+        Badge,
+        related_name="current_badges",
+        through=OfficerBadgeOwned,
+        through_relation_name="officer_id_owned",
+        through_reverse_relation_name="badge_id_owned",
+        skip_reverse=True,
+    )  ##TODO : check if relation actually works both ways
+    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(
+        Badge,
+        related_name="pending_badges",
+        through=OfficerBadgePrending,
+        through_relation_name="officer_id_pending",
+        through_reverse_relation_name="badge_id_pending",
+        skip_reverse=True,
+    )
+    trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
 
 
 class BadgeCategory(ormar.Model):
@@ -98,32 +188,6 @@ class OfficerBadgePrending(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
 
 
-class Officer(User):
-    class Meta(BaseMeta):
-        tablename = "officers"
-
-    started_monitoring: datetime = ormar.DateTime(timezone=True)
-    vrchat_name: str = ormar.String(max_length=255)
-    vrchat_id: str = ormar.String(max_length=255)
-    badges: Optional[List[Badge]] = ormar.ManyToMany(
-        Badge,
-        related_name="current_badges",
-        through=OfficerBadgeOwned,
-        through_relation_name="officer_id_owned",
-        through_reverse_relation_name="badge_id_owned",
-        skip_reverse=True,
-    )  ##TODO : check if relation actually works both ways
-    pending_badges: Optional[List[Badge]] = ormar.ManyToMany(
-        Badge,
-        related_name="pending_badges",
-        through=OfficerBadgePrending,
-        through_relation_name="officer_id_pending",
-        through_reverse_relation_name="badge_id_pending",
-        skip_reverse=True,
-    )
-    trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
-
-
 class LOAEntry(ormar.Model):
     class Meta(BaseMeta):
         tablename = "loaentries"
@@ -164,51 +228,6 @@ class DetainedUser(User):
     role_ids: pydantic.Json = ormar.JSON()
 
 
-class Event(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "events"
-
-    id: int = ormar.Integer(primary_key=True)
-    start: datetime = ormar.DateTime(timezone=True)
-    end: datetime = ormar.DateTime(timezone=True)
-    hosts: pydantic.Json = ormar.JSON()
-
-
-class SavedVoiceChannel(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "savedvoicechannels"
-
-    id: int = ormar.BigInteger(primary_key=True)
-    name: str = ormar.String(max_length=255)
-    guild_id: int = ormar.BigInteger(min_value=0)
-
-    def discord_channel(self, bot: commands.Bot) -> discord.VoiceChannel:
-        return bot.get_channel(self.id)
-
-
-class Patrol(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "patrols"
-
-    id: int = ormar.Integer(primary_key=True)
-    officer: Optional[Officer] = ormar.ForeignKey(Officer)
-    start: datetime = ormar.DateTime(timezone=True)
-    end: datetime = ormar.DateTime(timezone=True)
-    event: Optional[Event] = ormar.ForeignKey(Event)
-    main_channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
-
-
-class PatrolVoice(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "patrolvoices"
-
-    id: int = ormar.Integer(primary_key=True)
-    patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)
-    channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
-    start: datetime = ormar.DateTime(timezone=True)
-    end: datetime = ormar.DateTime(timezone=True)
-
-
 class VRCInstanceAccessTypeEnum(Enum):
     val1 = "Public"
     val2 = "Private"
@@ -241,12 +260,4 @@ class Call(ormar.Model):
     event: Optional[Event] = ormar.ForeignKey(Event)
     squad: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
     type: str = ormar.String(max_length=10, choices=list(CallTypes))
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_db():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+"""

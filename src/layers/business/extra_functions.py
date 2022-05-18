@@ -6,8 +6,13 @@ from io import StringIO, BytesIO
 from datetime import datetime
 from sys import stdout
 import settings
+import datetime as dt
 
 apply()
+
+
+def now():
+    return dt.datetime.utcnow()
 
 
 async def send_long(channel, string, code_block=False, mention=True):
@@ -81,10 +86,13 @@ def has_role_id(member: discord.Member, role_id: int) -> bool:
     return role_id in [r.id for r in member.roles]
 
 
-def is_lpd_member(member: discord.Member):
+def is_lpd_member(member: Optional[discord.Member]):
     """
     Returns if a member is an LPD member based on their discord roles.
     """
+    if member is None:
+        return False
+
     lpd_role_set = {v.id for k, v in settings.ROLE_LADDER.items()}
     member_rank_roles = set(r.id for r in member.roles).intersection(lpd_role_set)
     return len(member_rank_roles) != 0

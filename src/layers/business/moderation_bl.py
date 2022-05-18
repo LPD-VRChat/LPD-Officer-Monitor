@@ -13,7 +13,7 @@ from discord.ext import commands
 
 # Custom
 import settings
-from src.layers.business.base_bl import DiscordListenerBL, bl_listen
+from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper
@@ -33,7 +33,10 @@ class GiftCacheObject:
     links: Set[str] = field(default_factory=set)
 
 
-class ModerationBL(DiscordListenerBL):
+class ModerationBL(DiscordListenerMixin):
+    def __init__(self, bot: commands.bot) -> None:
+        self.bot = bot
+
     async def _detention_user(
         self,
         discord_id: int,

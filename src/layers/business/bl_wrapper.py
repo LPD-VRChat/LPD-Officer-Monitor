@@ -5,9 +5,9 @@ from typing import Any, Callable, Coroutine, List
 
 from discord.ext import commands
 
-from layers.business.moderation_bl import ModerationBL
+from src.layers.business.moderation_bl import ModerationBL
 
-from .time_bl import TimeBL
+from .modules.mm_bl import MemberManagementBL
 from .vrc_name_bl import VRChatBL
 from .programming_bl import ProgrammingBL
 from .web_manager_bl import WebManagerBL
@@ -19,7 +19,7 @@ class BusinessLayerWrapper:
     Wrapper class for all the business layer classes.
     """
 
-    time: TimeBL
+    mm_bl: MemberManagementBL
     vrc: VRChatBL
     p: ProgrammingBL
     web: WebManagerBL

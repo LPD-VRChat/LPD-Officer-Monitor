@@ -10,7 +10,8 @@ from discord.ext import commands
 
 # Custom
 import settings
-from src.layers.business.base_bl import DiscordListenerBL
+from src.layers.business.base_bl import DiscordListenerMixin
+from src.layers.storage.models import database
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper
@@ -19,7 +20,10 @@ if TYPE_CHECKING:
 log = logging.getLogger("lpd-officer-monitor")
 
 
-class ProgrammingBL(DiscordListenerBL):
+class ProgrammingBL(DiscordListenerMixin):
+    def __init__(self, bot: commands.bot) -> None:
+        self.bot = bot
+
     async def clean_shutdown(
         self,
         location: str = "the console",
@@ -35,6 +39,10 @@ class ProgrammingBL(DiscordListenerBL):
         if location == "the console":
             print()
         log.warning(msg_string)
+
+        # Stop the database
+        if database.is_connected:
+            await database.disconnect()
 
         # Stop the event loop
         loop = asyncio.get_event_loop()

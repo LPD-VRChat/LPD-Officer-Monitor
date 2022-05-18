@@ -1,6 +1,15 @@
 # Standard
 from __future__ import annotations
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    TYPE_CHECKING,
+    TypeVar,
+)
 import asyncio
 
 # Community
@@ -11,15 +20,57 @@ if TYPE_CHECKING:
     from . import BusinessLayerWrapper
 
 
-class DiscordListenerBL:
-    def __init__(self, bot: commands.Bot) -> None:
-        self.bot = bot
+ESM_DATA_T = TypeVar("ESM_DATA_T")
+
+
+class EventSenderMixin(Generic[ESM_DATA_T]):
+    """
+    Easily allow this class to be listended to and send events without any
+    boilerplate.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.__subscribers: list[Callable] = []
+
+    def subscribe(self, subscriber: Callable[[ESM_DATA_T], Any]):
+        """
+        Ask for a function to be called each time this class fires an event.
+        The subscriber can be either a regular function or an async function
+        and class will handle that logic for you and call either properly.
+        """
+        self.__subscribers.append(subscriber)
+
+    def _notify_all(self, data: ESM_DATA_T) -> None:
+        """
+        Notify all listiners of this class and if the listiners are async
+        functions run them asynchronously in the background.
+        """
+        loop = asyncio.get_event_loop()
+
+        # Call all the subscribers
+        for subscriber in self.__subscribers:
+            return_val = subscriber(data)
+
+            # Start it if the return value was a not-yet run coroutine
+            if asyncio.iscoroutine(return_val):
+                loop.create_task(return_val)
+
+
+class DiscordListenerMixin:
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Make sure this class has the required bot on it
+        assert getattr(self, "bot", None) is not None
+        assert isinstance(self.bot, commands.Bot)  # type: ignore
 
         # Loop through all methods and add them as an event to the bot if they have a discord_event property
         for attr in dir(self):
             func = getattr(self, attr)
             if callable(func) and hasattr(func, "discord_event"):
-                self.bot.add_listener(func, func.discord_event)
+                self.bot.add_listener(func, func.discord_event)  # type: ignore
 
 
 def bl_listen(name: Optional[str] = None):
@@ -38,10 +89,7 @@ def bl_listen(name: Optional[str] = None):
             return await func(self, *args, **kwargs)
 
         # Keep the same name/doc string on the function
-        if func.__name__.startswith("_"):
-            wrapper.__name__ = func.__name__
-        else:
-            wrapper.__name__ = f"_{func.__name__}"
+        wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
 
         # Store the discord event on the function so that it can

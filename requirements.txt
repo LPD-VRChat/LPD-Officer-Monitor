@@ -9,7 +9,7 @@ mysqlclient>=1.7.4
 alembic>=1.7.4
 
 Hypercorn==0.11.2
-Quart==0.15.1
+Quart==0.17
 Quart_Discord==2.1.4
 
 moviepy==1.0.3

@@ -13,7 +13,7 @@ from discord.ext import commands
 
 # Custom
 import src.layers.business.checks as checks
-from layers.business.bl_wrapper import BusinessLayerWrapper
+from src.layers.business.bl_wrapper import BusinessLayerWrapper
 
 
 log = logging.getLogger("lpd-officer-monitor")

@@ -16,6 +16,7 @@ from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.ui.discord_commands import setup as setup_discord_commands
 from src.layers.ui.server.web_manager import WebManager
 from src.extra_logging import DiscordLoggingHandler
+from src.layers.storage.models import database
 
 
 nest_asyncio.apply()
@@ -71,6 +72,7 @@ def main():
 
     intents = discord.Intents.default()
     intents.members = True
+    intents.presences = True
 
     bot = commands.Bot(command_prefix=settings.BOT_PREFIX, intents=intents)
     bot.remove_command("help")
@@ -88,13 +90,18 @@ def main():
     ### Start the different layers ###
     ##################################
 
+    # Database
+    # Make sure the database is started when we start everything else
+    if not database.is_connected:
+        loop.run_until_complete(database.connect())
+
     # Business layers
-    time_bl = bl.TimeBL(bot)
+    mm_bl = bl.mm_bl.MemberManagementBL(bot)
     vrc_bl = bl.VRChatBL()
     p_bl = bl.ProgrammingBL(bot)
     web_bl = bl.WebManagerBL(bot)
     mod_bl = bl.ModerationBL(bot)
-    bl_wrapper = BusinessLayerWrapper(time_bl, vrc_bl, p_bl, web_bl, mod_bl)
+    bl_wrapper = BusinessLayerWrapper(mm_bl, vrc_bl, p_bl, web_bl, mod_bl)
 
     # UI Layers
     setup_discord_commands(bot, bl_wrapper)
@@ -175,6 +182,7 @@ def main():
 
     future = asyncio.ensure_future(runner(), loop=loop)
     try:
-        loop.run_forever()
+        # Make sure we don't silently drop errors
+        loop.run_until_complete(future)
     except KeyboardInterrupt:
         loop.run_until_complete(bl_wrapper.p.clean_shutdown())
