@@ -87,6 +87,7 @@ class DiscordLoggingHandler(logging.Handler):
             time = dt.datetime.fromisoformat(iso_time)
 
             # Add a task to send the error to Discord so that we don't stop the event loop
+            # TODO: Account for rate limiting when logging a lot at once
             self._loop.create_task(
                 self._send_to_webhook(
                     error_level=record.levelno,
