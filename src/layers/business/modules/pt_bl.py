@@ -186,7 +186,7 @@ class PatrolTimeBL(DiscordListenerMixin):
                 patrol = models.Patrol(
                     officer=member.id,
                     start=voice_logs[0].start,
-                    end=voice_logs[0].end,
+                    end=voice_logs[-1].end,
                     event=None,
                     main_channel=main_channel,
                 )
