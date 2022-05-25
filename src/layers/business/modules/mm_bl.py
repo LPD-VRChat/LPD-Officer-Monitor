@@ -17,7 +17,7 @@ from discord.ext import commands
 
 # Custom
 import settings
-from src.layers.business.extra_functions import is_lpd_member, now
+from src.layers.business.extra_functions import is_lpd_member, now, get_guild
 from src.layers.storage.models import Officer
 from src.layers.business.base_bl import (
     DiscordListenerMixin,
@@ -153,7 +153,7 @@ class MemberManagementBL(
     # Verify members at startup
     @bl_listen("on_ready")
     async def find_missing_officers(self) -> None:
-        guild: discord.Guild = self.bot.get_guild(settings.SERVER_ID)
+        guild = get_guild(self.bot)
         loop = asyncio.get_event_loop()
         tasks = []
 

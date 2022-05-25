@@ -97,11 +97,12 @@ def main():
 
     # Business layers
     mm_bl = bl.mm_bl.MemberManagementBL(bot)
+    pt_bl = bl.pt_bl.PatrolTimeBL(bot)
     vrc_bl = bl.VRChatBL()
     p_bl = bl.ProgrammingBL(bot)
     web_bl = bl.WebManagerBL(bot)
     mod_bl = bl.ModerationBL(bot)
-    bl_wrapper = BusinessLayerWrapper(mm_bl, vrc_bl, p_bl, web_bl, mod_bl)
+    bl_wrapper = BusinessLayerWrapper(mm_bl, pt_bl, vrc_bl, p_bl, web_bl, mod_bl)
 
     # UI Layers
     setup_discord_commands(bot, bl_wrapper)

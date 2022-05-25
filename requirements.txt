@@ -1,20 +1,27 @@
-py-cord[voice]>=1.7.3
+# Discord
+discord.py>=1.7
+discord.py-stubs>=1.7
 
-nest_asyncio==1.5.1
-fuzzywuzzy==0.18.0
+mypy>=0.950  # Support for match statements
+nest_asyncio~=1.5.1
+fuzzywuzzy~=0.18.0
 
-ormar==0.10.15
+# ORM
+ormar>=0.11.0
 aiomysql>=0.0.21
 mysqlclient>=1.7.4
 alembic>=1.7.4
 
+# Webserver
 Hypercorn==0.11.2
 Quart==0.17
 Quart_Discord==2.1.4
 
+# Gif creation (no longer in use)
 moviepy==1.0.3
 numpy==1.21.1
 array2gif==1.0.4
 
+# Testing
 pytest>=6.2.5
 pytest-env>=0.6.2

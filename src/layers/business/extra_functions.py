@@ -8,11 +8,21 @@ from sys import stdout
 import settings
 import datetime as dt
 
+# Community
+import discord
+from discord.ext import commands
+
 apply()
 
 
 def now():
     return dt.datetime.utcnow()
+
+
+def get_guild(bot: commands.Bot) -> discord.Guild:
+    guild = bot.get_guild(settings.SERVER_ID)
+    assert guild is not None, "Guild from settings could not be found in cache."
+    return guild
 
 
 async def send_long(channel, string, code_block=False, mention=True):

@@ -8,6 +8,7 @@ from discord.ext import commands
 from src.layers.business.moderation_bl import ModerationBL
 
 from .modules.mm_bl import MemberManagementBL
+from .modules.pt_bl import PatrolTimeBL
 from .vrc_name_bl import VRChatBL
 from .programming_bl import ProgrammingBL
 from .web_manager_bl import WebManagerBL
@@ -20,6 +21,7 @@ class BusinessLayerWrapper:
     """
 
     mm_bl: MemberManagementBL
+    pt_bl: PatrolTimeBL
     vrc: VRChatBL
     p: ProgrammingBL
     web: WebManagerBL
