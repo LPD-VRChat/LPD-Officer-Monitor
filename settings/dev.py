@@ -86,9 +86,12 @@ DETENTION_ROLE = 767436972804538418
 DETENTION_WAITING_AREA_ROLE = 767437105948655666
 INACTIVE_ROLE = 590684921534873620
 
-# Category IDs ###################################################
+# On Duty Monitoring #############################################
 ON_DUTY_CATEGORIES = [599764719212953610]
-IGNORED_CATEGORIES = [599764719212953610]
+ON_DUTY_IGNORED_CHANNELS = [829126270008426506]
+
+# Category IDs ###################################################
+IGNORED_CATEGORIES = [713371297182384128]
 
 # Database settings ##############################################
 DB_NAME = "LPD_Officer_Monitor"
