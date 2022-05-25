@@ -208,6 +208,9 @@ class PatrolTimeBL(DiscordListenerMixin):
                 # Save all the patrol voice models
                 await asyncio.gather(*[pv.save() for pv in patrol_voices])
 
+                # Remove the patrol from the cache as it is now in the database
+                del self._patrolling_officers[member.id]
+
             # Nothing special happened
             case _, _:
                 pass
