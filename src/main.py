@@ -131,11 +131,13 @@ def main():
             log.info(f"{'Server name':<12}: {bot.guild.name}")
             log.info(f"{'Server ID':<12}: {bot.guild.id}")
         else:
-            await bl_wrapper.p.clean_shutdown(location="internal", by="server lookup")
+            await bl_wrapper.p.clean_shutdown(
+                location="internal", shutdown_by="server lookup"
+            )
 
         if bot.has_been_started:
             await bl_wrapper.p.clean_shutdown(
-                location="internal", by="automatic recovery", exit=False
+                location="internal", shutdown_by="automatic recovery", exit=False
             )
 
         # This should be the last line in this function
