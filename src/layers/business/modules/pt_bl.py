@@ -130,6 +130,36 @@ class PatrolTimeBL(DiscordListenerMixin):
         results = await asyncio.gather(*futures)
         return dict(zip(channel_ids, results))
 
+    async def get_patrol_time(
+        self, officer_id: int, from_dt: dt.datetime, to_dt: dt.datetime
+    ) -> dt.timedelta:
+        patrols = await self.get_patrols(officer_id, from_dt, to_dt)
+        patrol_lengths = (p.duration() for p in patrols)
+        return sum(patrol_lengths, start=dt.timedelta())
+
+    async def get_patrols(
+        self, officer_id: int, from_dt: dt.datetime, to_dt: dt.datetime
+    ) -> list[models.Patrol]:
+        return await models.Patrol.objects.filter(
+            officer=officer_id, start__gt=from_dt, end__lt=to_dt
+        ).all()
+
+    async def get_patrol_voices(
+        self, officer_id: int, from_dt: dt.datetime, to_dt: dt.datetime
+    ) -> dict[models.Patrol, list[models.PatrolVoice]]:
+        # patrols = await self.get_patrols(officer_id, from_dt, to_dt)
+        # patrols_ids = {p.id: p for p in patrols}
+
+        patrols = (
+            await models.Patrol.objects.filter(
+                officer=officer_id, start__gt=from_dt, end__lt=to_dt
+            )
+            .select_related("patrolvoices")
+            .all()
+        )
+
+        return {p: p.patrolvoices for p in patrols}
+
     @bl_listen()
     async def on_voice_state_update(
         self,

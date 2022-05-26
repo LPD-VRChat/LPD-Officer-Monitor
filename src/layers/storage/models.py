@@ -1,6 +1,6 @@
 import settings
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict
 import urllib.parse
 
@@ -199,6 +199,14 @@ class Patrol(ormar.Model):
     event: Optional[Event] = ormar.ForeignKey(Event, nullable=True)
     main_channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
 
+    def duration(self) -> timedelta:
+        return self.end - self.start
+
+    def __hash__(self) -> int:
+        # Make sure we don't have the same hash as the ids only, could wreck havoc
+        # in an non typed dictionary.
+        return hash((10633291031406973, self.id))
+
 
 class PatrolVoice(ormar.Model):
     class Meta(BaseMeta):
@@ -209,6 +217,9 @@ class PatrolVoice(ormar.Model):
     channel: Optional[SavedVoiceChannel] = ormar.ForeignKey(SavedVoiceChannel)
     start: datetime = ormar.DateTime(timezone=True)
     end: datetime = ormar.DateTime(timezone=True)
+
+    def duration(self) -> timedelta:
+        return self.end - self.start
 
 
 class VRCInstanceAccessTypeEnum(Enum):
