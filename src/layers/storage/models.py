@@ -113,7 +113,6 @@ class Officer(User):
         through=OfficerBadgeOwned,
         through_relation_name="officer_id_owned",
         through_reverse_relation_name="badge_id_owned",
-        skip_reverse=True,
     )  ##TODO : check if relation actually works both ways
     pending_badges: Optional[List[Badge]] = ormar.ManyToMany(
         Badge,
@@ -121,7 +120,6 @@ class Officer(User):
         through=OfficerBadgePrending,
         through_relation_name="officer_id_pending",
         through_reverse_relation_name="badge_id_pending",
-        skip_reverse=True,
     )
     trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
 
