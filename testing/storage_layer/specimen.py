@@ -7,6 +7,7 @@ import src.layers.storage.models as models
 import datetime
 import logging
 import pymysql
+import ormar
 
 async def create_or_get_exemple_user(name:str,id:int):
     officer = await models.Officer.objects.create(
@@ -69,6 +70,11 @@ async def create_exemple_data():
 
     await badge.load_all()
     await officer1.load_all()
+
+    try:
+        await officer1.pending_badges.add(badge)
+    except ormar.MultipleMatches:
+        print("duplicate detected")
 
     print(await badge.current_badges.all()) ##also gets officer, may need .fetch() if there is missing attributes
 

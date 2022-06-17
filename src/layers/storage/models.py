@@ -254,6 +254,21 @@ class Call(ormar.Model):
     type: str = ormar.String(max_length=10, choices=list(CallTypes))
 
 
+@ormar.pre_relation_add([Officer])
+async def officer_before_relation_add(
+    sender, instance, child, relation_name, passed_kwargs, **kwargs
+):
+    #sender == Officer
+    if type(child) == Badge:
+        if child in instance.pending_badges:
+            raise ormar.MultipleMatches
+        if child in instance.badges:
+            raise ormar.MultipleMatches
+    elif type(child) == Training:
+        if child in instance.trainings:
+            raise ormar.MultipleMatches
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_db():
     engine = sqlalchemy.create_engine(DATABASE_URL)
