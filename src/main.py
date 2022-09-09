@@ -3,6 +3,8 @@ import asyncio
 import logging
 import os
 import sys
+#need python 3.10 for match instruction
+assert sys.version_info.major == 3 and sys.version_info.minor>=10 , f"need python 3.10.x or up. got {sys.version.split(' ')[0] }"
 
 # Community Library Imports
 import discord
