@@ -21,5 +21,5 @@ class Moderation(commands.Cog):
         self.color = discord.Color.blue()
 
 
-def setup(bot):
-    bot.add_cog(Moderation(bot))
+async def setup(bot):
+    await bot.add_cog(Moderation(bot))

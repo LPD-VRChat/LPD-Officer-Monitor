@@ -1,6 +1,7 @@
 # Discord
-discord.py>=1.7
-discord.py-stubs>=1.7
+discord.py[speed]~=2.0.0
+#discord.py-stubs>=1.7
+git+https://github.com/LPD-VRChat/discord.py-stubs
 
 mypy>=0.950  # Support for match statements
 nest_asyncio~=1.5.1

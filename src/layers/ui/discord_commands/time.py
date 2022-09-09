@@ -71,5 +71,5 @@ class Time(commands.Cog):
         )
 
 
-def setup(bot):
-    bot.add_cog(Time(bot))
+async def setup(bot):
+    await bot.add_cog(Time(bot))

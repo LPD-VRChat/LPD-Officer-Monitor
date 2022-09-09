@@ -37,9 +37,7 @@ class DiscordLoggingHandler(logging.Handler):
 
     async def _send_embed(self, embed: discord.Embed):
         async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url(
-                self._webhook, adapter=discord.AsyncWebhookAdapter(session)
-            )
+            webhook = discord.Webhook.from_url(self._webhook, session=session)
             await webhook.send(embed=embed)
 
     async def _send_to_webhook(

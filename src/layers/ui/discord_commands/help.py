@@ -198,5 +198,5 @@ class Help(commands.Cog):
             log.exception(str(error))
 
 
-def setup(bot):
-    bot.add_cog(Help(bot))
+async def setup(bot):
+    await bot.add_cog(Help(bot))

@@ -95,5 +95,5 @@ class Programming(commands.Cog):
             del self.bot.bl_wrapper
 
 
-def setup(bot):
-    bot.add_cog(Programming(bot))
+async def setup(bot):
+    await bot.add_cog(Programming(bot))

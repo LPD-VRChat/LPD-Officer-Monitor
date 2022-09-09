@@ -8,6 +8,7 @@ assert sys.version_info.major == 3 and sys.version_info.minor>=10 , f"need pytho
 
 # Community Library Imports
 import discord
+assert discord.__version__.startswith("2.0."), f"Discord.py wrong version, got {discord.__version__}, expected 2.0.x"
 import nest_asyncio
 from discord.ext import commands
 
@@ -75,6 +76,9 @@ def main():
     intents = discord.Intents.default()
     intents.members = True
     intents.presences = True
+    intents.voice_states = True
+    intents.messages = True
+    intents.message_content = True
 
     bot = commands.Bot(command_prefix=settings.BOT_PREFIX, intents=intents)
     bot.remove_command("help")
@@ -107,7 +111,7 @@ def main():
     bl_wrapper = BusinessLayerWrapper(mm_bl, pt_bl, vrc_bl, p_bl, web_bl, mod_bl)
 
     # UI Layers
-    setup_discord_commands(bot, bl_wrapper)
+    loop.run_until_complete(setup_discord_commands(bot, bl_wrapper))
     loop.create_task(start_webmanager(bot, log))
 
     ############################
