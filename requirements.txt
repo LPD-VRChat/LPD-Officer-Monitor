@@ -19,7 +19,7 @@ Quart_Discord==2.1.4
 
 # Gif creation (no longer in use)
 moviepy==1.0.3
-numpy==1.21.1
+numpy>=1.21.1
 array2gif==1.0.4
 
 # Testing
