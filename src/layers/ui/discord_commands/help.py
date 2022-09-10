@@ -78,10 +78,8 @@ class Help(commands.Cog):
             embeds = [embeds]
 
         while len(embeds) > 0:
-            await ctx.send(embed=embeds[0])
-            embeds = embeds[1:]
-            # await ctx.send(None, embeds=embeds[0:10])
-            # embeds = embeds[10:]
+            await ctx.send(None, embeds=embeds[0:10])
+            embeds = embeds[10:]
 
     @staticmethod
     async def can_use(command, ctx):
