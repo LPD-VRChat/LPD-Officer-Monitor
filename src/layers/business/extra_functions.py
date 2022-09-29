@@ -93,6 +93,8 @@ async def send_str_as_file(
 
 def has_role_id(member: discord.Member, role_id: int) -> bool:
     """Returns true if the member has the given role"""
+    if isinstance(member,discord.User):
+        raise discord.errors.InvalidData("cannot get roles on `User`")
     return role_id in [r.id for r in member.roles]
 
 
