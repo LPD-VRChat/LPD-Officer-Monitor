@@ -3,112 +3,185 @@ import settings
 
 # Community
 from discord.ext import commands
+import discord
 
 # Custom
 import discord.errors as errors
 from src.layers.business.extra_functions import has_role_id
 
 
-def template_check():
+def template_check(slash_cmd=False):
+    officer = True
     def predicate(ctx):
-        officer = True
         if officer:
             return True
         else:
             raise errors.Forbidden()
 
-    return commands.check(predicate)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return officer
 
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
-def is_programming_team():
+def is_programming_team(slash_cmd=False):
     def predicate(ctx):
         return has_role_id(ctx.author, settings.PROGRAMMING_TEAM_ROLE)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.PROGRAMMING_TEAM_ROLE)
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_admin_bot_channel():
+def is_admin_bot_channel(slash_cmd=False):
     def predicate(ctx):
         return (
             ctx.channel.id == settings.ADMIN_BOT_CHANNEL
-        )  # This is for now, but later we'll need to write this correctly
+        )
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return (
+            interaction.channel_id == settings.ADMIN_BOT_CHANNEL
+        )
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_team_bot_channel():
+def is_team_bot_channel(slash_cmd=False):
     def predicate(ctx):
         return ctx.channel.id in [
             settings.TEAM_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
-        ]  # This is for now, but later we'll need to write this correctly
+        ]
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return interaction.channel_id in [
+            settings.TEAM_BOT_CHANNEL,
+            settings.ADMIN_BOT_CHANNEL,
+        ]
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_general_bot_channel():
+def is_general_bot_channel(slash_cmd=False):
     def predicate(ctx):
         return ctx.channel.id in [
             settings.GENERAL_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
             settings.TEAM_BOT_CHANNEL,
-        ]  # This is for now, but later we'll need to write this correctly
+        ]
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return interaction.channel_id in [
+            settings.GENERAL_BOT_CHANNEL,
+            settings.ADMIN_BOT_CHANNEL,
+            settings.TEAM_BOT_CHANNEL,
+        ]
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_chat_moderator():
+def is_chat_moderator(slash_cmd=False):
     def predicate(ctx):
         return has_role_id(ctx.author, settings.CHAT_MODERATOR_ROLE) or (
             has_role_id(ctx.author, settings.MODERATOR_ROLE)
         )
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.CHAT_MODERATOR_ROLE) or (
+            has_role_id(interaction.user, settings.MODERATOR_ROLE)
+        )
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_moderator():
+def is_moderator(slash_cmd=False):
     def predicate(ctx):
         return has_role_id(ctx.author, settings.MODERATOR_ROLE)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.MODERATOR_ROLE)
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_team_lead():
+def is_team_lead(slash_cmd=False):
     def predicate(ctx):
         return has_role_id(ctx.author, settings.TEAM_LEAD_ROLE)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.TEAM_LEAD_ROLE)
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_dev_team():
+def is_dev_team(slash_cmd=False):
     def predicate(ctx):
         return has_role_id(ctx.author, settings.DEV_TEAM_ROLE)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.DEV_TEAM_ROLE)
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_white_shirt():
+def is_white_shirt(slash_cmd=False):
     def predicate(ctx):
         for rank in settings.ROLE_LADDER.__dict__.values():
             if has_role_id(ctx.author, rank.id) and rank.is_white_shirt:
                 return True
         return False
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        for rank in settings.ROLE_LADDER.__dict__.values():
+            if has_role_id(interaction.user, rank.id) and rank.is_white_shirt:
+                return True
+        return False
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_admin():
+def is_admin(slash_cmd=False):
     def predicate(ctx):
         for rank in settings.ROLE_LADDER.__dict__.values():
             rank = rank.value
             if has_role_id(ctx.author, rank.id) and rank.is_admin:
                 return True
         return False
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        for rank in settings.ROLE_LADDER.__dict__.values():
+            if has_role_id(interaction.user, rank.id) and rank.is_admin:
+                return True
+        return False
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
 
 
-def is_any_trainer():
+def is_any_trainer(slash_cmd=False):
     def predicate(ctx):
         if [
             role
@@ -117,14 +190,30 @@ def is_any_trainer():
         ] != []:
             return True
         return False
-
-    return commands.check(predicate)
-
-
-def is_event_host():
-    def predicate(ctx):
-        if has_role_id(ctx.author, settings.EVENT_HOST_ROLE):
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        if isinstance(interaction.user,discord.User):
+            raise errors.InvalidData("cannot get roles on `User`")
+        if [
+            role
+            for role in interaction.user.roles
+            if role.id in settings.TRAINER_TEAMS.values()
+        ] != []:
             return True
         return False
 
-    return commands.check(predicate)
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
+def is_event_host(slash_cmd=False):
+    def predicate(ctx):
+        return has_role_id(ctx.author, settings.EVENT_HOST_ROLE)
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.EVENT_HOST_ROLE)
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
