@@ -124,3 +124,12 @@ Logs/
 
 #python virtual environement
 .venv/
+
+#docker temporary
+keepalive
+
+#docker secrets
+discord_secret
+discord_token
+mysql_root_password
+mysql_user_password
