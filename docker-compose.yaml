@@ -2,25 +2,52 @@ version: "3.8"
 services:
 
   lpd-officer-monitor:
+    container_name: lpdbot
     build: ./
     stdin_open: true
     tty: true
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      DISCORD_TOKEN_FILE: /run/secrets/discord_token
+      DISCORD_SECRET_FILE: /run/secrets/discord_secret
+
     volumes:
       - ".:/app"
+    secrets:
+      - mysql_user_password
+      - discord_token
+      - discord_secret
     depends_on:
       - db
 
   db:
-    image: mariadb:latest
+    image: mariadb:10.6 #LTS
+    container_name: db
     environment:
-      MYSQL_ROOT_PASSWORD: "AVerySecurePasswordIndeed"
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      MYSQL_DATABASE: LPD_Officer_Monitor_v3
+      MYSQL_USER: lpdbot
       TZ: "Atlantic/Reykjavik"
     ports:
       - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql/data
       - db-logs:/var/lib/mysql/logs
+    secrets:
+      - mysql_root_password
+      - mysql_user_password
 
 volumes:
   db-data: null
   db-logs: null
+
+secrets:
+  mysql_root_password:
+    file: mysql_root_password
+  mysql_user_password:
+    file: mysql_user_password
+  discord_token:
+    file: discord_token
+  discord_secret:
+    file: discord_secret
