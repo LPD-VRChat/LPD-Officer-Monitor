@@ -1,5 +1,17 @@
 import os as _os
 
+def _readSecretFile(name:str)->str:
+    filepath = name
+    if not name.startswith("/"):
+        filepath = f"Keys/{name}"
+    with open(filepath, "r") as f:
+        return f.read()
+
+def _readDockerSecret(envKey:str)->str:
+    envVar = _os.environ.get(envKey)
+    assert envVar, f"{envKey} is not defined"
+    return _readSecretFile(envVar)
+
 # Import only from base if the program is being unit tests
 if _os.environ.get("LPD_OFFICER_MONITOR_UNIT_TESTING"):
     from .base import *
@@ -18,3 +30,11 @@ else:
         from .local import *
     except ImportError:
         pass
+
+    if _os.environ.get("LPD_OFFICER_MONITOR_DOCKER"):
+        DB_HOST = "db"
+        DB_NAME = "LPD_Officer_Monitor_v3"
+        DB_USER = "lpdbot"
+        DB_PASS = _readDockerSecret("MYSQL_PASSWORD_FILE")
+        DISCORD_TOKEN = _readDockerSecret("DISCORD_TOKEN_FILE")
+        DISCORD_SECRET = _readDockerSecret("DISCORD_SECRET_FILE")
