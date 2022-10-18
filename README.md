@@ -26,3 +26,39 @@ Generate a migration from the difference between the database model revision and
 ```
 alembic revision --autogenerate -m "Added voiceChannel"
 ```
+
+## Docker
+
+### Notes
+The bot isn't going to do database operation (creation, migration) automatically, you need to do it by hand, Refer to `Maintenance` section.
+
+The image is using Alpine for now to be as light as possible, any distribution could be used.
+
+Python venv isn't used in Docker
+
+### Setup
+
+generate random password for db
+```
+cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 > mysql_root_password
+cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 > mysql_user_password
+```
+you will need 2 additional file named `discord_token` and `discord_secret`
+
+Build the images used by the container, sometimes `Dockerfile` changes are not picked up and this need to be executed before `up`
+```
+docker compose build
+```
+
+Launch
+```
+docker compose up -d
+```
+
+### Maintenance / Database operation
+If the entrypoint fails, you need to create an empty file named `keepalive` in this folder. Once maintenance is done you can delete and container should stop.
+
+Create/upgrade the tables. Base need to exists (should be created by the db container)
+```
+alembic upgrade head
+````
