@@ -12,17 +12,23 @@ def _readDockerSecret(envKey:str)->str:
     assert envVar, f"{envKey} is not defined"
     return _readSecretFile(envVar)
 
+CONFIG_LOADED = "None"
+
 # Import only from base if the program is being unit tests
 if _os.environ.get("LPD_OFFICER_MONITOR_UNIT_TESTING"):
     from .base import *
+    CONFIG_LOADED = "base_test"
 else:
     try:
         # Override with settings for production or development
         if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
             from .dev import *
+            CONFIG_LOADED = "dev"
         else:
             from .production import *
+            CONFIG_LOADED = "prod"
     except ImportError:
+        CONFIG_LOADED = "err"
         pass
 
     # Override anything except testing settings with the local settings
