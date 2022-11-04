@@ -9,14 +9,44 @@ import logging
 
 # Community
 import discord
-from discord.ext import commands
+from discord.ext import commands, menus
 
 # Custom
 import src.layers.business.checks as checks
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
+from src.layers.business.extra_functions import send_long
 
 
 log = logging.getLogger("lpd-officer-monitor")
+
+class Confirm(menus.Menu):
+  def __init__(
+    self, msg, timeout=30.0, delete_message_after=True, clear_reactions_after=False
+  ):
+    super().__init__(
+      timeout=timeout,
+      delete_message_after=delete_message_after,
+      clear_reactions_after=clear_reactions_after,
+    )
+    self.msg = msg
+    self.result = None
+
+  async def send_initial_message(self, ctx, channel):
+    return await channel.send(self.msg)
+
+  @menus.button("\N{WHITE HEAVY CHECK MARK}")
+  async def do_confirm(self, payload):
+    self.result = True
+    self.stop()
+
+  @menus.button("\N{CROSS MARK}")
+  async def do_deny(self, payload):
+    self.result = False
+    self.stop()
+
+  async def prompt(self, ctx):
+    await self.start(ctx, wait=True)
+    return self.result
 
 
 class Programming(commands.Cog):
@@ -94,6 +124,57 @@ class Programming(commands.Cog):
             # Remove the BL from the bot to prevent it from being used in the wrong places
             del self.bot.bl_wrapper
 
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def tree(self, ctx:commands.Context):
+        """
+        One modification is enough to justify reload
+        https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f
+        """
+
+        onlineList = await ctx.bot.tree.fetch_commands(guild=discord.Object(id=settings.SERVER_ID))
+        online = { ele.name : ele for ele in onlineList}
+        currentList = ctx.bot.tree.get_commands(guild=discord.Object(id=settings.SERVER_ID))
+        current = { ele.name : ele for ele in currentList}
+        addition = []
+        deletion = []
+        mod = []
+        for konline in online:
+            if konline not in current:
+                deletion.append(konline)
+            else:
+                onlineCommand:discord.app_commands.AppCommand = online[konline]
+                currentCommand = current[konline]
+                if len(onlineCommand.options) != len(currentCommand.parameters):
+                    mod.append(f"/{konline} parameter number changed")
+                    continue
+                if onlineCommand.description != currentCommand.description:
+                    mod.append(f"/{konline} description changed")
+                    continue
+                for i in range(len(onlineCommand.options)):
+                    ocmd = onlineCommand.options[i]
+                    ccmd = currentCommand.parameters[i]
+                    if ocmd.description!=ccmd.description or ocmd.name!=ccmd.name or ocmd.type!=ccmd.type:
+                        mod.append(f"/{konline} one parameter desc/name/type changed")
+                        break
+        for kcur in current:
+            if kcur not in online:
+                addition.append(kcur)
+
+        await send_long(ctx.channel, f"add : {addition}\ndeletion:{deletion}\nmod:{mod}", mention=False)
+        text = "Apply tree modification?"
+        if not (len(addition) or len(deletion) or len(mod)):
+            text = ":warning: no modification found :warning:\nYou do no need to sync the tree\n"+text
+
+        msgbox = Confirm(text)
+        result = await msgbox.prompt(ctx)
+        if not result:
+            await ctx.send("Canceled")
+            return
+
+        await ctx.bot.tree.sync(guild= discord.Object(id=settings.SERVER_ID))
+        await ctx.send("done")
 
 async def setup(bot):
     await bot.add_cog(Programming(bot))
