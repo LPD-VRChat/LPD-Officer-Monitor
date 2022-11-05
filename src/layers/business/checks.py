@@ -1,6 +1,9 @@
 from re import L
 import settings
 
+from typing import (Callable, TypeVar)
+T = TypeVar('T')
+
 # Community
 from discord.ext import commands
 import discord
@@ -217,3 +220,35 @@ def is_event_host(slash_cmd=False):
         return discord.app_commands.check(predicate_interaction)
     else:
         return commands.check(predicate)
+
+
+def app_cmd_check_any(*checks: Callable[[T], T]) -> Callable[[T], T]:
+    """logical or for app_command
+
+    super hacky code, may break when updating discord library
+    """
+
+    #there is no easy way to det the predicate for app_cmd checks
+    #so we hack around and create a fake command where all the checks gets added to
+    def fake_command():
+        pass
+    fake_func = fake_command
+    for wrapped in checks:
+        fake_func =wrapped(fake_func)
+
+    async def predicate(interaction: discord.Interaction) -> bool:
+        for check in fake_func.__discord_app_commands_checks__:
+            try:
+                value = await discord.utils.maybe_coroutine(check, interaction)
+                if value:
+                    return True #optimization: early out at first allowed
+            except discord.app_commands.AppCommandError:
+                continue
+            except:
+                continue
+                import traceback
+                print(''.join(traceback.format_exc()))
+        else:
+            return False
+
+    return discord.app_commands.check(predicate)
