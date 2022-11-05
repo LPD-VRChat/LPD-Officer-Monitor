@@ -63,6 +63,23 @@ async def start_webmanager(bot, log):
     )
     await web_manager.start()
 
+async def tree_on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    if settings.CONFIG_LOADED == "dev":
+        if isinstance(error, discord.app_commands.CheckFailure):
+            for check in interaction.command.checks:
+                try:
+                    r = await discord.utils.maybe_coroutine(check,interaction)
+                except BaseException as err:
+                    await interaction.response.send_message(f"🛠️dev {err}",ephemeral=True)
+                    return
+                if not r:
+                    await interaction.response.send_message(f"🛠️dev check failed: {check.__qualname__}",ephemeral=True)
+                    return
+        await interaction.response.send_message(f"🛠️dev{error}",ephemeral=True)
+        return
+
+    await interaction.response.send_message(f":red_circle: Internal error :red_circle:",ephemeral=True)
+    logging.error(f"cmd`{interaction.command.name}` {error}")
 
 def main():
 
@@ -85,6 +102,8 @@ def main():
 
     bot.has_been_started = False
     bot.everything_ready = False
+
+    bot.tree.on_error = tree_on_error
 
     #####################
     ### Setup logging ###
@@ -162,6 +181,26 @@ def main():
             "raised an exception", "encountered a problem"
         )
 
+        if( settings.CONFIG_LOADED == "dev" and
+        isinstance(exception, discord.ext.commands.errors.CheckFailure ) ):
+            if isinstance(exception, discord.ext.commands.CheckAnyFailure):
+                ctx.send(f"🛠️dev check any failed", ephemeral=True)
+                return
+            for chk in ctx.command.checks:
+                try:
+                    r = await discord.utils.maybe_coroutine(chk,ctx)
+                except (commands.CheckFailure, commands.CheckAnyFailure) as e:
+                    r = False
+                except:
+                    import traceback
+                    print(''.join(traceback.format_exc()))
+                    r = False
+                if not r:
+                    await ctx.send(f"🛠️dev check failed: {getattr(chk,'__qualname__')}", ephemeral=True)
+                    return
+            await ctx.send(f"🛠️dev check failed: unknown", ephemeral=True)
+            logging.error(f"u={ctx.author.id} `{ctx.invoked_with}` unknown CheckFailure {exception_string}")
+            return
         try:
             await ctx.send(exception_string)
         except discord.Forbidden:
