@@ -1,7 +1,5 @@
 # Discord
 discord.py[speed]~=2.0.0
-#discord.py-stubs>=1.7
-git+https://github.com/LPD-VRChat/discord.py-stubs
 git+https://github.com/Rapptz/discord-ext-menus
 
 mypy>=0.950  # Support for match statements
