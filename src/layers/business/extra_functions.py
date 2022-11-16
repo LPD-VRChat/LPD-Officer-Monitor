@@ -91,9 +91,44 @@ async def send_str_as_file(
         )
 
 
+async def interaction_send_long(
+    interaction: discord.Interaction,
+    data: str,
+    code_block: bool = False,
+    ephemeral: bool = False,
+) -> None:
+    if len(data) > 2000:
+        await interaction_send_str_as_file(
+            interaction,
+            data,
+            "output.txt",
+            msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+            ephemeral=ephemeral,
+        )
+    else:
+        await interaction.response.send_message(
+            ("```" if code_block else "") + data + ("```" if code_block else "")
+        )
+
+
+async def interaction_send_str_as_file(
+    interaction: discord.Interaction,
+    data: str,
+    filename: str,
+    msg_content: str,
+    ephemeral: bool = False,
+) -> None:
+    with BytesIO(data.encode("utf8")) as vfile:
+        await interaction.response.send_message(
+            msg_content,
+            file=discord.File(vfile, filename=filename),
+            ephemeral=ephemeral,
+        )
+
+
 def has_role_id(member: discord.Member, role_id: int) -> bool:
     """Returns true if the member has the given role"""
-    if isinstance(member,discord.User):
+    if isinstance(member, discord.User):
         raise discord.errors.InvalidData("cannot get roles on `User`")
     return role_id in [r.id for r in member.roles]
 
@@ -112,3 +147,7 @@ def is_lpd_member(member: Optional[discord.Member]):
 
 def lpd_rank(member: discord.Member):
     pass
+
+
+def parse_iso_date(date_string: str) -> dt.date:
+    return dt.date.fromisoformat(date_string)
