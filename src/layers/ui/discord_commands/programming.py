@@ -6,6 +6,9 @@ import traceback
 import asyncio
 import argparse
 import logging
+from typing import Optional
+import importlib
+import sys
 
 # Community
 import discord
@@ -85,29 +88,40 @@ class Programming(commands.Cog):
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
-    async def reload(self, ctx, module_name: str):
+    async def reload(self, ctx, module_name: Optional[str] = None):
         """Reloads a module"""
         try:
             # Set the BL Wrapper to the bot so that it can be used during cog startup
             self.bot.bl_wrapper = self.bl_wrapper
 
-            if module_name.lower() == "all":
+            if module_name is None or module_name.lower() == "all":
+                # copy dict because one failed load will change the dictionary
+                loadedModules = sys.modules.copy()
+                try:
+                    for name, module in loadedModules.items():
+                        if name.startswith("settings"):
+                            importlib.reload(module)
+                except Exception as e:
+                    await ctx.send(f"Failed to reload settings")
+                    log.exception(f"Failed to reload settings")
+                    return
+
+                # TODO: add layers.business reload, need to check if it could work
                 extensions = [name for name in self.bot.extensions.keys()]
                 for m in extensions:
                     try:
-                        self.bot.reload_extension(m)
-                        await ctx.send(f"Successfully reloaded {m.split('.')[-1]}")
+                        await self.bot.reload_extension(m)
                     except Exception as e:
                         await ctx.send(f"Failed to reload `{module_name}`")
                         log.exception(f"Failed to reload {m.split('.')[-1]}")
-                    finally:
-                        log.warning(
-                            f"{ctx.author.display_name} reloaded {m.split('.')[-1]} from #{ctx.channel.name}"
-                        )
+                log.warning(
+                    f"{ctx.author.display_name} reloaded ALL from #{ctx.channel.name}"
+                )
+                await ctx.send(f"Successfully reloaded ALL")
             else:
                 module = f"layers.ui.DiscordCommands.{module_name}"
                 try:
-                    self.bot.reload_extension(module)
+                    await self.bot.reload_extension(module)
                     await ctx.send(f"Successfully reloaded {module_name}")
                 except discord.ext.commands.errors.ExtensionNotLoaded:
                     await ctx.send(
