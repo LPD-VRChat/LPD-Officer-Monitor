@@ -136,9 +136,9 @@ KEYFILE = "certs/key.pem"
 WEB_SECRET_KEY = b"TheSecretKeyForWebSecret"
 
 # Discord OAuth credentials ######################################
-DISCORD_TOKEN = "yigbuq3cfr98by7wvefgrt78b9ywv34t8ib7uiybgw3f4ubigycuvifuv4uigy"
+DISCORD_TOKEN = ""
 CLIENT_ID = 0
-CLIENT_SECRET = "wg43tgw4gw4gwgyhsae54ty35y35"
+CLIENT_SECRET = ""
 CALLBACK_URL = "https://callback.url"
 
 # Scam Detection Settings ########################################
