@@ -7,10 +7,13 @@ from datetime import datetime
 from sys import stdout
 import settings
 import datetime as dt
+from typing import Any, Sequence
 
 # Community
 import discord
 from discord.ext import commands
+
+MISSING: Any = discord.utils.MISSING
 
 apply()
 
@@ -91,6 +94,37 @@ async def send_str_as_file(
         )
 
 
+async def interaction_reply(
+    interaction: discord.Interaction,
+    content: Optional[str] = None,
+    embed: discord.Embed = MISSING,
+    embeds: Sequence[discord.Embed] = MISSING,
+    files: Sequence[discord.File] = MISSING,
+    ephemeral: bool = False,
+):
+    """Guaranty reply to an interaction what ever it was defer or not, already answered by message or not"""
+    match (interaction.response.type):
+        case (None):
+            await interaction.response.send_message(
+                content=content,
+                embed=embed,
+                embeds=embeds,
+                files=files,
+                ephemeral=ephemeral,
+            )
+        case _:
+            # it's fine if `content=None`, you need to at least one item
+            # followup reply to the first message that answered the command
+            # it's the best way as reply have a lot some limitation
+            await interaction.followup.send(
+                content=content,
+                embed=embed,
+                embeds=embeds,
+                files=files,
+                ephemeral=ephemeral,
+            )
+
+
 async def interaction_send_long(
     interaction: discord.Interaction,
     data: str,
@@ -106,8 +140,9 @@ async def interaction_send_long(
             ephemeral=ephemeral,
         )
     else:
-        await interaction.response.send_message(
-            ("```" if code_block else "") + data + ("```" if code_block else "")
+        await interaction_reply(
+            interaction,
+            ("```" if code_block else "") + data + ("```" if code_block else ""),
         )
 
 
@@ -119,9 +154,10 @@ async def interaction_send_str_as_file(
     ephemeral: bool = False,
 ) -> None:
     with BytesIO(data.encode("utf8")) as vfile:
-        await interaction.response.send_message(
+        await interaction_reply(
+            interaction,
             msg_content,
-            file=discord.File(vfile, filename=filename),
+            files=[discord.File(vfile, filename=filename)],
             ephemeral=ephemeral,
         )
 
