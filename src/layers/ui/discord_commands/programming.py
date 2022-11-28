@@ -119,7 +119,7 @@ class Programming(commands.Cog):
                 )
                 await ctx.send(f"Successfully reloaded ALL")
             else:
-                module = f"layers.ui.DiscordCommands.{module_name}"
+                module = f"layers.ui.discord_commands.{module_name}"
                 try:
                     await self.bot.reload_extension(module)
                     await ctx.send(f"Successfully reloaded {module_name}")
