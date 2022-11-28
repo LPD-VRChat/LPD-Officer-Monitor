@@ -203,11 +203,13 @@ class Other(commands.Cog):
     @checks.app_cmd_check_any(
         checks.is_dev_team(True), checks.is_team_lead(True), checks.is_white_shirt(True)
     )
-    @app_commands.command(name="rtv", description="Returns a list of members having the role")
+    @app_commands.command(
+        name="rtv", description="Returns a list of members having the role"
+    )
     @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
     @app_commands.default_permissions(administrator=True)
-    @app_commands.describe(role='list the members of this role')
-    async def rtv_slash(self, di:discord.Interaction, role:discord.Role):
+    @app_commands.describe(role="list the members of this role")
+    async def rtv_slash(self, di: discord.Interaction, role: discord.Role):
         try:
             results = self.get_role_members(role)
         except errors.GetRoleMembersError:
@@ -215,7 +217,9 @@ class Other(commands.Cog):
             return
         member_names = sorted(results, key=lambda m: m.display_name.lower())
         member_str = "\n".join(member.name for member in member_names)
-        await di.response.send_message(f"Here are the {len(member_names)} people with `{role.name}`'s role")
+        await di.response.send_message(
+            f"Here are the {len(member_names)} people with `{role.name}`'s role"
+        )
         await send_long(di.channel, member_str, code_block=True)
 
     @checks.is_admin_bot_channel()
