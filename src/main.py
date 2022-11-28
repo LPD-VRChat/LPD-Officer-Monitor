@@ -20,6 +20,7 @@ from src.layers.ui.discord_commands import setup as setup_discord_commands
 from src.layers.ui.server.web_manager import WebManager
 from src.extra_logging import DiscordLoggingHandler
 from src.layers.storage.models import database
+from src.layers.business.extra_functions import interaction_reply
 
 
 nest_asyncio.apply()
@@ -63,23 +64,43 @@ async def start_webmanager(bot, log):
     )
     await web_manager.start()
 
-async def tree_on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+
+async def tree_on_error(
+    interaction: discord.Interaction, error: discord.app_commands.AppCommandError
+):
     if settings.CONFIG_LOADED == "dev":
         if isinstance(error, discord.app_commands.CheckFailure):
+            ##check interaction for responce type
             for check in interaction.command.checks:
                 try:
-                    r = await discord.utils.maybe_coroutine(check,interaction)
+                    r = await discord.utils.maybe_coroutine(check, interaction)
                 except BaseException as err:
-                    await interaction.response.send_message(f"🛠️dev {err}",ephemeral=True)
+                    await interaction_reply(
+                        interaction, f"🛠️dev :red_circle:checking {err}", ephemeral=True
+                    )
                     return
                 if not r:
-                    await interaction.response.send_message(f"🛠️dev check failed: {check.__qualname__}",ephemeral=True)
+                    await interaction_reply(
+                        interaction,
+                        f"🛠️dev :red_circle:check failed: {check.__qualname__}",
+                        ephemeral=True,
+                    )
                     return
-        await interaction.response.send_message(f"🛠️dev{error}",ephemeral=True)
+        await interaction_reply(
+            interaction, f"🛠️dev :red_circle:{error}", ephemeral=True
+        )
+        if isinstance(error, discord.app_commands.CommandInvokeError):
+            logging.error(str(error.original))
+            traceback.print_exception(
+                type(error.original), error.original, error.original.__traceback__
+            )
         return
 
-    await interaction.response.send_message(f":red_circle: Internal error :red_circle:",ephemeral=True)
+    await interaction_reply(
+        interaction, f":red_circle: Internal error :red_circle:", ephemeral=True
+    )
     logging.error(f"cmd`{interaction.command.name}` {error}")
+
 
 def main():
 
