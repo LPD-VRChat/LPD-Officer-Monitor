@@ -3,12 +3,19 @@ import asyncio
 import logging
 import os
 import sys
-#need python 3.10 for match instruction
-assert sys.version_info.major == 3 and sys.version_info.minor>=10 , f"need python 3.10.x or up. got {sys.version.split(' ')[0] }"
+import traceback
+
+# need python 3.10 for match instruction
+assert (
+    sys.version_info.major == 3 and sys.version_info.minor >= 10
+), f"need python 3.10.x or up. got {sys.version.split(' ')[0] }"
 
 # Community Library Imports
 import discord
-assert discord.__version__.startswith("2.0."), f"Discord.py wrong version, got {discord.__version__}, expected 2.0.x"
+
+assert discord.__version__.startswith(
+    "2.0."
+), f"Discord.py wrong version, got {discord.__version__}, expected 2.0.x"
 import nest_asyncio
 from discord.ext import commands
 
@@ -202,25 +209,32 @@ def main():
             "raised an exception", "encountered a problem"
         )
 
-        if( settings.CONFIG_LOADED == "dev" and
-        isinstance(exception, discord.ext.commands.errors.CheckFailure ) ):
+        if settings.CONFIG_LOADED == "dev" and isinstance(
+            exception, discord.ext.commands.errors.CheckFailure
+        ):
             if isinstance(exception, discord.ext.commands.CheckAnyFailure):
                 ctx.send(f"🛠️dev check any failed", ephemeral=True)
                 return
             for chk in ctx.command.checks:
                 try:
-                    r = await discord.utils.maybe_coroutine(chk,ctx)
+                    r = await discord.utils.maybe_coroutine(chk, ctx)
                 except (commands.CheckFailure, commands.CheckAnyFailure) as e:
                     r = False
                 except:
                     import traceback
-                    print(''.join(traceback.format_exc()))
+
+                    print("".join(traceback.format_exc()))
                     r = False
                 if not r:
-                    await ctx.send(f"🛠️dev check failed: {getattr(chk,'__qualname__')}", ephemeral=True)
+                    await ctx.send(
+                        f"🛠️dev check failed: {getattr(chk,'__qualname__')}",
+                        ephemeral=True,
+                    )
                     return
             await ctx.send(f"🛠️dev check failed: unknown", ephemeral=True)
-            logging.error(f"u={ctx.author.id} `{ctx.invoked_with}` unknown CheckFailure {exception_string}")
+            logging.error(
+                f"u={ctx.author.id} `{ctx.invoked_with}` unknown CheckFailure {exception_string}"
+            )
             return
         try:
             await ctx.send(exception_string)
