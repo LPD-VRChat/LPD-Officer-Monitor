@@ -169,9 +169,14 @@ class MemberManagementBL(
         # Find extra officers
         for officer in list(self._lpd_members.values()):
             member = guild.get_member(officer.id)
+            # TODO: fix `member` being None when user left server while bot is off
             if not is_lpd_member(member):
                 # The member doesn't have LPD roles but was still in the database
                 log.warning(f"{officer.id} was in the database but not in the LPD.")
                 tasks.append(loop.create_task(self.member_left_LPD(member)))
 
         await asyncio.gather(*tasks)
+
+    async def get_officer_vrcname_from_id(self, id: int) -> str:
+        of = await Officer.objects.get(id=id)
+        return of.vrchat_name
