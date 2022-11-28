@@ -13,6 +13,7 @@ from discord import app_commands as app_cmd
 # Custom
 import src.layers.business.checks as checks
 import src.layers.business.errors as errors
+import src.layers.business
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
@@ -20,6 +21,7 @@ from src.layers.business.extra_functions import (
     now,
     interaction_send_long,
     parse_iso_date,
+    interaction_reply,
 )
 
 
@@ -152,6 +154,74 @@ class Time(commands.Cog):
         await interaction_send_long(
             iterac,
             result,
+        )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(name="time_top", description="gives top patrolling times")
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(days="look up number of days in the past (default=28)")
+    @app_cmd.describe(from_date="ISO 8601 format YYYY-MM-DD (days will be ignored)")
+    @app_cmd.describe(to_date="ISO 8601 format YYYY-MM-DD (days will be ignored)")
+    async def time_top_slash(
+        self,
+        iterac: discord.Interaction,
+        days: int = 28,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+    ):
+
+        from_dt = now() - dt.timedelta(days=days)
+        to_dt = now()
+        match (from_date is None, to_date is None):
+            case (True, True):
+                pass
+            case (False, False):
+                try:
+                    from_dt = parse_iso_date(from_date)
+                except (ValueError):
+                    await iterac.response.send_message(
+                        "invalid date `from_date` argument", ephemeral=True
+                    )
+                    return
+                try:
+                    to_dt = parse_iso_date(to_date)
+                except (ValueError):
+                    await iterac.response.send_message(
+                        "invalid date `to_date` argument", ephemeral=True
+                    )
+                    return
+            case (True, False):
+                await iterac.response.send_message(
+                    "you forgot `to_date` argument", ephemeral=True
+                )
+                return
+            case (False, True):
+                await iterac.response.send_message(
+                    "you forgot `from_date` argument", ephemeral=True
+                )
+                return
+
+        # testav = await iterac.original_response()
+        await iterac.response.defer(ephemeral=False, thinking=True)
+
+        try:
+            leaderboard = await self.bl_wrapper.pt_bl.get_top_patrol_time(
+                from_dt=from_dt, to_dt=to_dt
+            )
+        except Exception as e:
+            print(e)
+            return
+
+        leaderboard_lines = []
+        for k, v in leaderboard.items():
+            officer_name = await self.bl_wrapper.mm_bl.get_officer_vrcname_from_id(k)
+            leaderboard_lines.append(f"{officer_name} = {v}")
+
+        await interaction_send_long(
+            iterac,
+            "\n".join(leaderboard_lines),
         )
 
 

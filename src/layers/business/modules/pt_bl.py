@@ -9,6 +9,7 @@ import asyncio
 from dataclasses import dataclass
 import logging
 import datetime as dt
+from typing import Dict
 
 # Community
 import discord
@@ -143,6 +144,21 @@ class PatrolTimeBL(DiscordListenerMixin):
         return await models.Patrol.objects.filter(
             officer=officer_id, start__gt=from_dt, end__lt=to_dt
         ).all()
+
+    async def get_top_patrol_time(
+        self, from_dt: dt.datetime, to_dt: dt.datetime
+    ) -> Dict[int, dt.timedelta]:
+        patrols = await models.Patrol.objects.filter(
+            start__gt=from_dt, end__lt=to_dt
+        ).all()
+        temp: Dict[int, dt.timedelta] = {}
+        for p in patrols:
+            if p.officer.id in temp:
+                temp[p.officer.id] += p.duration()
+            else:
+                temp[p.officer.id] = p.duration()
+        sortedData = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1])}
+        return sortedData
 
     async def get_patrol_voices(
         self, officer_id: int, from_dt: dt.datetime, to_dt: dt.datetime
