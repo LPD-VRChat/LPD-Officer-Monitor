@@ -18,6 +18,7 @@ from discord.ext import commands, menus
 import src.layers.business.checks as checks
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import send_long
+from src.layers import business as bl
 
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -105,8 +106,26 @@ class Programming(commands.Cog):
                     await ctx.send(f"Failed to reload settings")
                     log.exception(f"Failed to reload settings")
                     return
+                try:
+                    for name, module in loadedModules.items():
+                        if name.startswith("src.layers.business"):
+                            print(name)
+                            importlib.reload(module)
+                except Exception as e:
+                    await ctx.send(f"Failed to reload business layer")
+                    log.exception(f"Failed to reload business layer")
+                    return
 
-                # TODO: add layers.business reload, need to check if it could work
+                mm_bl = bl.mm_bl.MemberManagementBL(self.bot)
+                pt_bl = bl.pt_bl.PatrolTimeBL(self.bot)
+                vrc_bl = bl.VRChatBL()
+                p_bl = bl.ProgrammingBL(self.bot)
+                web_bl = self.bot.bl_wrapper.web  # bl.WebManagerBL(self.bot)
+                mod_bl = bl.ModerationBL(self.bot)
+                self.bot.bl_wrapper = BusinessLayerWrapper(
+                    mm_bl, pt_bl, vrc_bl, p_bl, web_bl, mod_bl
+                )
+
                 extensions = [name for name in self.bot.extensions.keys()]
                 for m in extensions:
                     try:
