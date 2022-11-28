@@ -91,7 +91,7 @@ class Time(commands.Cog):
     @app_cmd.describe(full_list="list all the patrols, else list total patrol time")
     async def time_slash(
         self,
-        iterac: discord.Interaction,
+        interac: discord.Interaction,
         officer: discord.Member,
         days: int = 28,
         from_date: Optional[str] = None,
@@ -108,29 +108,28 @@ class Time(commands.Cog):
                 try:
                     from_dt = parse_iso_date(from_date)
                 except (ValueError):
-                    await iterac.response.send_message(
-                        "invalid date `from_date` argument", ephemeral=True
+                    await interaction_reply(
+                        interac, "invalid date `from_date` argument", ephemeral=True
                     )
                     return
                 try:
                     to_dt = parse_iso_date(to_date)
                 except (ValueError):
-                    await iterac.response.send_message(
-                        "invalid date `to_date` argument", ephemeral=True
+                    await interaction_reply(
+                        interac, "invalid date `to_date` argument", ephemeral=True
                     )
                     return
             case (True, False):
-                await iterac.response.send_message(
-                    "you forgot `to_date` argument", ephemeral=True
+                await interaction_reply(
+                    interac, "you forgot `to_date` argument", ephemeral=True
                 )
                 return
             case (False, True):
-                await iterac.response.send_message(
-                    "you forgot `from_date` argument", ephemeral=True
+                await interaction_reply(
+                    interac, "you forgot `from_date` argument", ephemeral=True
                 )
                 return
-        # defer as some issue where responce will be stuck as thinking because it's sent after definitive responce
-        # await iterac.response.defer(ephemeral=False, thinking=True)
+        await interac.response.defer(ephemeral=False, thinking=True)
 
         if full_list:
             patrols = await self.bl_wrapper.pt_bl.get_patrols(
@@ -152,7 +151,7 @@ class Time(commands.Cog):
             )
 
         await interaction_send_long(
-            iterac,
+            interac,
             result,
         )
 
@@ -166,7 +165,7 @@ class Time(commands.Cog):
     @app_cmd.describe(to_date="ISO 8601 format YYYY-MM-DD (days will be ignored)")
     async def time_top_slash(
         self,
-        iterac: discord.Interaction,
+        interac: discord.Interaction,
         days: int = 28,
         from_date: Optional[str] = None,
         to_date: Optional[str] = None,
@@ -181,30 +180,29 @@ class Time(commands.Cog):
                 try:
                     from_dt = parse_iso_date(from_date)
                 except (ValueError):
-                    await iterac.response.send_message(
-                        "invalid date `from_date` argument", ephemeral=True
+                    await interaction_reply(
+                        interac, "invalid date `from_date` argument", ephemeral=True
                     )
                     return
                 try:
                     to_dt = parse_iso_date(to_date)
                 except (ValueError):
-                    await iterac.response.send_message(
-                        "invalid date `to_date` argument", ephemeral=True
+                    await interaction_reply(
+                        interac, "invalid date `to_date` argument", ephemeral=True
                     )
                     return
             case (True, False):
-                await iterac.response.send_message(
-                    "you forgot `to_date` argument", ephemeral=True
+                await interaction_reply(
+                    interac, "you forgot `to_date` argument", ephemeral=True
                 )
                 return
             case (False, True):
-                await iterac.response.send_message(
-                    "you forgot `from_date` argument", ephemeral=True
+                await interaction_reply(
+                    interac, "you forgot `from_date` argument", ephemeral=True
                 )
                 return
 
-        # testav = await iterac.original_response()
-        await iterac.response.defer(ephemeral=False, thinking=True)
+        await interac.response.defer(ephemeral=False, thinking=True)
 
         try:
             leaderboard = await self.bl_wrapper.pt_bl.get_top_patrol_time(
@@ -220,7 +218,7 @@ class Time(commands.Cog):
             leaderboard_lines.append(f"{officer_name} = {v}")
 
         await interaction_send_long(
-            iterac,
+            interac,
             "\n".join(leaderboard_lines),
         )
 
