@@ -3,7 +3,8 @@ import settings
 
 # Standard
 import argparse
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
+import logging
 
 # Community
 import discord
@@ -17,6 +18,8 @@ import src.layers.business.errors as errors
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import send_long
+
+log = logging.getLogger("lpd-officer-monitor")
 
 
 class Other(commands.Cog):
@@ -224,16 +227,15 @@ class Other(commands.Cog):
 
     @checks.is_admin_bot_channel()
     @checks.is_white_shirt()
-    @commands.command()
+    @commands.hybrid_command(
+        name="count_officers", description="count officers in each ranks"
+    )
+    @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
     async def count_officers(self, ctx):
         """
         This command returns an embed with a count of all officers by rank,
         as well as a total count.
         """
-
-        all_lpd_members = self.get_role_members(
-            ctx.bot.guild.get_role(settings.LPD_ROLE)
-        )
 
         # For every rank in settings.ROLE_LADDER, get the number of members with the role having that rank.id
         # Then add that to a dictionary with the role name as the key, and the number of members as the value.
@@ -242,7 +244,7 @@ class Other(commands.Cog):
         # This will be used to create the embed later.
         # The keys are the role names, and the values are the member count.
 
-        all_officer_count = len(all_lpd_members)
+        all_officer_count = len(ctx.bot.guild.get_role(settings.LPD_ROLE).members)
 
         # Create an embed to send to the channel
         embed = discord.Embed(
@@ -251,8 +253,9 @@ class Other(commands.Cog):
         )
 
         for rank in settings.ROLE_LADDER.__dict__.values():
-            role = ctx.bot.guild.get_role(rank.id)
+            role: Optional[discord.Role] = ctx.bot.guild.get_role(rank.id)
             if role is None:
+                log.error(f"{rank.name=} [{rank.id}] not found!")
                 continue
 
             rank_name = self.remove_name_decoration(role.name)
@@ -262,12 +265,10 @@ class Other(commands.Cog):
             embed.add_field(
                 name=rank_name,
                 value="**"
-                + str(len(self.get_role_members(role)))
+                + str(len(role.members))
                 + "**"
                 + " ("
-                + str(
-                    round(100 * len(self.get_role_members(role)) / all_officer_count, 2)
-                )
+                + str(round(100 * len(role.members) / all_officer_count, 2))
                 + "%)",
                 inline=True,
             )
