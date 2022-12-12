@@ -109,7 +109,6 @@ class Programming(commands.Cog):
                 try:
                     for name, module in loadedModules.items():
                         if name.startswith("src.layers.business"):
-                            print(name)
                             importlib.reload(module)
                 except Exception as e:
                     await ctx.send(f"Failed to reload business layer")
