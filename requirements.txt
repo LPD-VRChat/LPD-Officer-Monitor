@@ -1,6 +1,5 @@
 # Discord
 discord.py[speed]~=2.0.0
-git+https://github.com/Rapptz/discord-ext-menus
 
 mypy>=0.950  # Support for match statements
 nest_asyncio~=1.5.1

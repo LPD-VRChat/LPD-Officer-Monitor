@@ -187,3 +187,23 @@ def lpd_rank(member: discord.Member):
 
 def parse_iso_date(date_string: str) -> dt.date:
     return dt.date.fromisoformat(date_string)
+
+
+class Confirm(discord.ui.View):
+    def __init__(self, timeout: float = 30):
+        super().__init__(timeout=timeout)
+        self.value: Optional[bool] = None
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
+    async def confirm(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        await interaction.response.edit_message(content="Confirmed", view=None)
+        self.value = True
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="Cancelling", view=None)
+        self.value = False
+        self.stop()
