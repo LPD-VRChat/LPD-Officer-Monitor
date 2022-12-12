@@ -237,7 +237,10 @@ def main():
             )
             return
         try:
-            await ctx.send(exception_string)
+            if settings.CONFIG_LOADED == "dev":
+                await ctx.send("🛠️dev :red_circle: Error " + exception_string)
+            else:
+                await ctx.send(":red_circle: Internal error :red_circle:")
         except discord.Forbidden:
             bot.get_channel(settings.ERROR_LOG_CHANNEL).send(
                 f"**{ctx.author}**, I'm not allowed to send messages in {ctx.channel}**"
