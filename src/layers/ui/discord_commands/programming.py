@@ -17,7 +17,7 @@ from discord.ext import commands
 # Custom
 import src.layers.business.checks as checks
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
-from src.layers.business.extra_functions import send_long, Confirm
+from src.layers.business.extra_functions import send_long, msgbox_confirm
 from src.layers import business as bl
 
 
@@ -185,17 +185,12 @@ class Programming(commands.Cog):
                 + text
             )
 
-        msgbox = Confirm()
-        msg = await ctx.send(text, view=msgbox)
-        await msgbox.wait()
-        if msgbox.value is None:
-            await msg.edit(content="Timeout, canceled", view=None)
-            return
-        if not msgbox.value:
+        msgbox_confirm
+        if not await msgbox_confirm(ctx, text):
             return
 
         await ctx.bot.tree.sync(guild=discord.Object(id=settings.SERVER_ID))
-        await msg.edit(content="Done!", view=None)
+        await ctx.send(content="Command tree synced sucessfully!", view=None)
 
 
 async def setup(bot):
