@@ -193,20 +193,52 @@ def parse_iso_date(date_string: str) -> dt.date:
 
 
 class Confirm(discord.ui.View):
-    def __init__(self, timeout: float = 30):
+    def __init__(self, user_id: int, timeout: float = 30):
         super().__init__(timeout=timeout)
+        self.user_id = user_id
         self.value: Optional[bool] = None
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
+        if self.user_id != interaction.user.id:
+            return
         await interaction.response.edit_message(content="Confirmed", view=None)
         self.value = True
         self.stop()
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.user_id != interaction.user.id:
+            return
         await interaction.response.edit_message(content="Cancelling", view=None)
         self.value = False
         self.stop()
+
+
+async def msgbox_confirm(
+    ctx: Union[discord.Interaction, commands.Context],
+    message: str = "Do you want to continue?",
+    timeout=30,
+    ephemeral=False,
+    embed: discord.Embed = MISSING,
+    embeds: Sequence[discord.Embed] = MISSING,
+):
+
+    if isinstance(ctx, discord.Interaction):
+        user_id = ctx.user.id
+    else:
+        user_id = ctx.author.id
+    view = Confirm(user_id, timeout=timeout)
+    if isinstance(ctx, discord.Interaction):
+        await interaction_reply(ctx, message, embed=embed, embeds=embeds, view=view)
+    else:
+        msg = await ctx.send(message, embed=embed, embeds=embeds, view=view)
+    await view.wait()
+    if view.value is None:
+        if isinstance(ctx, discord.Interaction):
+            await ctx.response.edit_message(content="Timeout", view=None)
+        else:
+            await msg.edit(content="Timeout", view=None)
+    return view.value
