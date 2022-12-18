@@ -1,5 +1,5 @@
 # Standard
-from typing import Optional
+from typing import Optional, Union
 import discord
 from nest_asyncio import apply
 from io import StringIO, BytesIO
@@ -100,6 +100,7 @@ async def interaction_reply(
     embed: discord.Embed = MISSING,
     embeds: Sequence[discord.Embed] = MISSING,
     files: Sequence[discord.File] = MISSING,
+    view: discord.ui.View = MISSING,
     ephemeral: bool = False,
 ):
     """Guaranty reply to an interaction what ever it was defer or not, already answered by message or not"""
@@ -110,6 +111,7 @@ async def interaction_reply(
                 embed=embed,
                 embeds=embeds,
                 files=files,
+                view=view,
                 ephemeral=ephemeral,
             )
         case _:
@@ -121,6 +123,7 @@ async def interaction_reply(
                 embed=embed,
                 embeds=embeds,
                 files=files,
+                view=view,
                 ephemeral=ephemeral,
             )
 
