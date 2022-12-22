@@ -64,7 +64,7 @@ class Programming(commands.Cog):
         """Reloads a module"""
         try:
             # Set the BL Wrapper to the bot so that it can be used during cog startup
-            self.bot.bl_wrapper = self.bl_wrapper
+            self.bot.bl_wrapper: BusinessLayerWrapper = self.bl_wrapper
 
             if module_name is None or module_name.lower() == "all":
                 # copy dict because one failed load will change the dictionary
@@ -86,6 +86,18 @@ class Programming(commands.Cog):
                     log.exception(f"Failed to reload business layer")
                     return
 
+                self.bot.bl_wrapper.mm_bl.remove_listener()
+                self.bot.bl_wrapper.pt_bl.remove_listener()
+                # self.bot.bl_wrapper.vrc.remove_listener()
+                self.bot.bl_wrapper.p.remove_listener()
+                self.bot.bl_wrapper.pt_bl.remove_listener()
+                self.bot.bl_wrapper.mod.remove_listener()
+                # if there is still a reference used somewhere it will crash
+                self.bot.bl_wrapper.mm_bl.bot = None
+                self.bot.bl_wrapper.pt_bl.bot = None
+                self.bot.bl_wrapper.p.bot = None
+                self.bot.bl_wrapper.pt_bl.bot = None
+                self.bot.bl_wrapper.mod.bot = None
                 mm_bl = bl.mm_bl.MemberManagementBL(self.bot)
                 pt_bl = bl.pt_bl.PatrolTimeBL(self.bot)
                 vrc_bl = bl.VRChatBL()
@@ -103,6 +115,9 @@ class Programming(commands.Cog):
                     except Exception as e:
                         await ctx.send(f"Failed to reload `{module_name}`")
                         log.exception(f"Failed to reload {m.split('.')[-1]}")
+                self.bot.has_been_started = False
+                self.bot.dispatch("connect")
+                self.bot.dispatch("ready")
                 log.warning(
                     f"{ctx.author.display_name} reloaded ALL from #{ctx.channel.name}"
                 )
