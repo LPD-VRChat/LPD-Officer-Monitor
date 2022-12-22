@@ -260,3 +260,42 @@ class PatrolTimeBL(DiscordListenerMixin):
             # Nothing special happened
             case _, _:
                 pass
+
+    async def get_potential_officer_promotion(
+        self, from_date: dt.datetime, minimum: int
+    ) -> list[models.Officer]:
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            logging.error(f"guild {settings.SERVER_ID} is not accessible")
+            return []
+
+        role = guild.get_role(settings.ROLE_LADDER.recruit.id)
+        if role is None:
+            logging.error(
+                f"recruit role {settings.ROLE_LADDER.recruit.id} is not accessible"
+            )
+            return []
+
+        officer_ids = [m.id for m in role.members]
+        # from_dt = now() - dt.timedelta(days=15)
+        to_dt = now()
+
+        patrols = await models.Patrol.objects.filter(
+            officer__in=officer_ids, start__gt=from_date, end__lt=to_dt
+        ).all()
+
+        # patrolling_times:dict[int,dt.timedelta] = {key: dt.timedelta() for key in officer_ids}
+        patrolling_times = {key: dt.timedelta() for key in officer_ids}
+        for p in patrols:
+            patrolling_times[p.officer.id] += p.duration()
+
+        requirement = dt.timedelta(hours=minimum)
+        officer_to_promote_ids: list[int] = []
+        for officer_id in patrolling_times:
+            if patrolling_times[officer_id] > requirement:
+                officer_to_promote_ids.append(officer_id)
+
+        officers = await models.Officer.objects.filter(
+            id__in=officer_to_promote_ids
+        ).all()
+        return officers
