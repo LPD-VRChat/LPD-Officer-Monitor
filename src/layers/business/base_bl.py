@@ -72,6 +72,14 @@ class DiscordListenerMixin:
             if callable(func) and hasattr(func, "discord_event"):
                 self.bot.add_listener(func, func.discord_event)  # type: ignore
 
+    def remove_listener(self):
+        # not using __del__ as some copies are left behind
+        # Loop through all methods and add them as an event to the bot if they have a discord_event property
+        for attr in dir(self):
+            func = getattr(self, attr)
+            if callable(func) and hasattr(func, "discord_event"):
+                self.bot.remove_listener(func, func.discord_event)  # type: ignore
+
 
 def bl_listen(name: Optional[str] = None):
     """
@@ -91,7 +99,9 @@ def bl_listen(name: Optional[str] = None):
         # Keep the same name/doc string on the function
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
-
+        # for debug purpuse
+        wrapper.__orginal_module__ = func.__module__  # type: ignore
+        wrapper.__orginal_qualname__ = func.__qualname__  # type: ignore
         # Store the discord event on the function so that it can
         # be picked upon class initialization
         wrapper.discord_event = name or func.__name__  # type: ignore

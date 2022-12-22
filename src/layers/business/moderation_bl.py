@@ -36,6 +36,7 @@ class GiftCacheObject:
 class ModerationBL(DiscordListenerMixin):
     def __init__(self, bot: commands.bot) -> None:
         self.bot = bot
+        super().__init__()
 
     async def _detention_user(
         self,
