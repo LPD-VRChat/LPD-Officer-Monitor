@@ -75,6 +75,8 @@ class ModerationBL(DiscordListenerMixin):
 
     @bl_listen("on_message")
     async def remove_scam_links(self, message: discord.Message):
+        if self.bot.application_id == message.author.id:
+            return  # own message
         urls = re.findall(self._URL_REGEX, message.content)
         for url in urls:
             p_url = urlparse(url)
