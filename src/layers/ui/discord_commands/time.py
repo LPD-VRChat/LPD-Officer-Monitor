@@ -225,14 +225,14 @@ class Time(commands.Cog):
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
     @app_cmd.command(
-        name="officer_promotions",
+        name="list_promotable_recruits",
         description="List recruits that could be promoted to Officer",
     )
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     @app_cmd.describe(days="look up number of days in the past (default=28)")
     @app_cmd.describe(minimum="Minimum hours of patrol time")
-    async def officer_promotions(
+    async def list_promotable_recruits(
         self,
         interac: discord.Interaction,
         minimum: int,
