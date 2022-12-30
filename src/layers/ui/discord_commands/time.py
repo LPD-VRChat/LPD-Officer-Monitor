@@ -4,6 +4,7 @@ import settings
 # Standard
 import datetime as dt
 from typing import Optional
+import logging
 
 # Community
 import discord
@@ -23,6 +24,8 @@ from src.layers.business.extra_functions import (
     parse_iso_date,
     interaction_reply,
 )
+
+log = logging.getLogger("lpd-officer-monitor")
 
 
 class Time(commands.Cog):
@@ -257,6 +260,138 @@ class Time(commands.Cog):
             interac,
             f"Potential promotion to Officer {len(result)}/{len(role.members)}:\n"
             + mentions,
+        )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="promote_to_officer",
+        description="Promote to Officer all mentions in a message",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(
+        message_id_or_link="the message ID or Link where all mentions need to be promoted to Officers"
+    )
+    async def promote_to_officer(
+        self,
+        interac: discord.Interaction,
+        message_id_or_link: str,
+    ):
+        # messade_id needs to be str anyways it too big to fit integer discord limits
+        guild: discord.Guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+
+        # if only message id we expect message to be in admin bot channel
+        if "/" not in message_id_or_link:
+            try:
+                message_id = int(message_id_or_link)
+            except ValueError:
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Invalid int",
+                )
+                return
+
+            admin_ch = guild.get_channel(settings.ADMIN_BOT_CHANNEL)
+            assert isinstance(
+                admin_ch, discord.TextChannel
+            ), "settings.ADMIN_BOT_CHANNEL is not a TextChannel"
+            try:
+                prom_msg = await admin_ch.fetch_message(message_id)
+            except Exception as e:
+                logging.error("Fetch msg error:" + str(e))
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Error while retriving message.\nMake sure it's in <#{settings.ADMIN_BOT_CHANNEL}>",
+                )
+                return
+        else:
+            url_chunks = message_id_or_link.split("/")
+            if (
+                not message_id_or_link.startswith("https://discord.com/channels/")
+                or len(url_chunks) != 7
+            ):
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Invalid Discord message link",
+                )
+                return
+            try:
+                guild_id = int(url_chunks[-3])
+                channel_id = int(url_chunks[-2])
+                message_id = int(url_chunks[-1])
+            except ValueError:
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Invalid ids in Discord message link",
+                )
+                return
+            if guild_id != settings.SERVER_ID:
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Discord message link points to outside Guild/Server",
+                )
+                return
+            ch = guild.get_channel(channel_id)
+            assert isinstance(
+                ch, discord.TextChannel
+            ), "settings.ADMIN_BOT_CHANNEL is not a TextChannel"
+            try:
+                prom_msg = await ch.fetch_message(message_id)
+            except Exception as e:
+                logging.error("Fetch msg error:" + str(e))
+                await interaction_reply(
+                    interac,
+                    f":red_circle: Error while retriving message.\nThe bot probably doesn't have access to that channel",
+                )
+                return
+
+        if len(prom_msg.mentions) == 0:
+            await interaction_reply(
+                interac,
+                f":red_circle: No mention in the message",
+            )
+            return
+
+        role_rm = guild.get_role(settings.ROLE_LADDER.recruit.id)
+        if role_rm is None:
+            raise Exception(
+                f"recruit role {settings.ROLE_LADDER.recruit.id} is not accessible"
+            )
+        role_add = guild.get_role(settings.ROLE_LADDER.officer.id)
+        if role_add is None:
+            raise Exception(
+                f"officer role {settings.ROLE_LADDER.officer.id} is not accessible"
+            )
+
+        sucess = 0
+        error = 0
+        for m in prom_msg.mentions:
+            if not isinstance(m, discord.Member):
+                log.error(f"User {m.name}[{m.id}] not in the guild/server")
+                error += 1
+                continue
+            if role_rm not in m.roles:
+                log.warn(f"skiped non recruit {m.name}")
+                error += 1
+            else:
+                await m.add_roles(
+                    role_add,
+                    reason="bot promotion to officer",
+                    atomic=True,
+                )
+                await m.remove_roles(
+                    role_rm,
+                    reason="bot promotion to officer",
+                    atomic=True,
+                )
+                sucess += 1
+
+        await interaction_reply(
+            interac,
+            f"Successfully promoted {sucess}/{len(prom_msg.mentions)}. Ignored or errors = {error}\n",
         )
 
 
