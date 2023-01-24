@@ -159,7 +159,8 @@ class MemberManagementBL(
 
     @bl_listen()
     async def on_member_remove(self, member: discord.Member) -> None:
-        await self.member_left_LPD(member.id, member)
+        if is_lpd_member(member):
+            await self.member_left_LPD(member.id, member)
 
     # Verify members at startup
     @bl_listen("on_ready")
