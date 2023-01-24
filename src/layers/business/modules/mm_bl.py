@@ -9,7 +9,7 @@ import asyncio
 from dataclasses import dataclass
 import datetime as dt
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 # Community
 import discord
@@ -41,7 +41,8 @@ class MemberManagementEvent:
 
     @dataclass
     class MemberLeft:
-        member: discord.Member
+        member_id: int
+        member: Optional[discord.Member]
 
 
 MEMBER_MANAGEMENT_EVENT_TYPE = (
@@ -104,9 +105,14 @@ class MemberManagementBL(
             f"{member.display_name} ({member.name}#{member.discriminator}) has been added to the database."
         )
 
-    async def member_left_LPD(self, member: discord.Member) -> None:
+    async def member_left_LPD(
+        self, member_id: int, member: Optional[discord.Member]
+    ) -> None:
+        # added id because of find_missing_officers
+        # no member when already left
+
         # Store when they were removed
-        officer = await Officer.objects.get(id=member.id)
+        officer = await Officer.objects.get(id=member_id)
         officer.deleted_at = now()
         await officer.update()
 
@@ -114,10 +120,15 @@ class MemberManagementBL(
         del self._lpd_members[officer.id]
 
         # Let others know
-        log.info(
-            f"{member.display_name} ({member.name}#{member.discriminator}) has been removed from the LPD."
-        )
-        self._notify_all(MemberManagementEvent.MemberLeft(member))
+        if member:
+            log.info(
+                f"{member.display_name} ({member.name}#{member.discriminator}) has been removed from the LPD."
+            )
+        else:
+            log.info(
+                f"vrc:{officer.vrchat_name}({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
+            )
+        self._notify_all(MemberManagementEvent.MemberLeft(member_id, member))
 
     @bl_listen()
     async def on_member_update(
@@ -144,11 +155,11 @@ class MemberManagementBL(
                 await self.member_joined_LPD(after)
             case (True, False):
                 # Member has left the LPD
-                await self.member_left_LPD(after)
+                await self.member_left_LPD(after.id, after)
 
     @bl_listen()
     async def on_member_remove(self, member: discord.Member) -> None:
-        await self.member_left_LPD(member)
+        await self.member_left_LPD(member.id, member)
 
     # Verify members at startup
     @bl_listen("on_ready")
@@ -169,11 +180,10 @@ class MemberManagementBL(
         # Find extra officers
         for officer in list(self._lpd_members.values()):
             member = guild.get_member(officer.id)
-            # TODO: fix `member` being None when user left server while bot is off
             if not is_lpd_member(member):
                 # The member doesn't have LPD roles but was still in the database
-                log.warning(f"{officer.id} was in the database but not in the LPD.")
-                tasks.append(loop.create_task(self.member_left_LPD(member)))
+                # log.warning(f"{officer.id} was in the database but not in the LPD.")
+                tasks.append(loop.create_task(self.member_left_LPD(officer.id, member)))
 
         await asyncio.gather(*tasks)
 
