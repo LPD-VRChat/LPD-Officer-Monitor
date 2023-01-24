@@ -124,6 +124,9 @@ class MemberManagementBL(
             log.info(
                 f"{member.display_name} ({member.name}#{member.discriminator}) has been removed from the LPD."
             )
+            log.info(
+                "roles= `" + ",".join([str(role.id) for role in member.roles]) + "`"
+            )
         else:
             log.info(
                 f"vrc:{officer.vrchat_name}({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
