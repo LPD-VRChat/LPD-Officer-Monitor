@@ -394,6 +394,35 @@ class Time(commands.Cog):
             f"Successfully promoted {sucess}/{len(prom_msg.mentions)}. Ignored or errors = {error}\n",
         )
 
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="remove_inactive_cadets",
+        description="Remove inactive cadet for the amount of days",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(
+        inactive_days_required="amount of days a cadet need to be inactive to be yeeted (default=21)"
+    )
+    async def remove_inactive_cadets(
+        self,
+        interac: discord.Interaction,
+        inactive_days_required: int = 21,
+    ):
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+
+        role = guild.get_role(settings.ROLE_LADDER.cadet.id)
+        if role is None:
+            raise Exception(
+                f"cadet role {settings.ROLE_LADDER.cadet.id} is not accessible"
+            )
+
+        # TODO : implement once activity system is implemented
+        interaction_reply(interac, "TODO implementation")
+
 
 async def setup(bot):
     await bot.add_cog(Time(bot))
