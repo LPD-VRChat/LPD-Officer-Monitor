@@ -45,7 +45,7 @@ class OfficerManager:
         ]
 
         # Add all the officers to the list
-        self._all_officers = dict()
+        self._all_officers: Dict[int, Officer] = dict()
         self._officers_needing_removal = []
         print("Adding all the officers to the Officer Manager")
         for officer_id in all_officer_ids:
@@ -109,7 +109,7 @@ class OfficerManager:
     async def loop(self):
         # Wait for the bot to be ready before running this function
         while not self.bot.everything_ready:
-            await asyncio.sleep(10);
+            await asyncio.sleep(10)
 
         print("Running officer check loop in officer_manager")
 
@@ -340,11 +340,11 @@ class OfficerManager:
         return member_id in self._all_officers.keys()
 
     @property
-    def all_server_members_in_LPD(self):
+    def all_server_members_in_LPD(self) -> List[discord.Member]:
         return [m for m in self.guild.members if self.is_officer(m)]
 
     @property
-    def all_server_members_not_in_LPD(self):
+    def all_server_members_not_in_LPD(self) -> List[discord.Member]:
         return [m for m in self.guild.members if not self.is_officer(m)]
 
     @property
