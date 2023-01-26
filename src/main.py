@@ -22,7 +22,7 @@ from discord.ext import commands
 # Custom Library Imports
 import settings
 from src.layers import business as bl
-from src.layers.business.bl_wrapper import BusinessLayerWrapper
+import src.layers.business.bl_wrapper as bl_wrapper
 from src.layers.ui.discord_commands import setup as setup_discord_commands
 from src.layers.ui.server.web_manager import WebManager
 from src.extra_logging import DiscordLoggingHandler
@@ -148,17 +148,8 @@ def main():
     if not database.is_connected:
         loop.run_until_complete(database.connect())
 
-    # Business layers
-    mm_bl = bl.mm_bl.MemberManagementBL(bot)
-    pt_bl = bl.pt_bl.PatrolTimeBL(bot)
-    vrc_bl = bl.VRChatBL()
-    p_bl = bl.ProgrammingBL(bot)
-    web_bl = bl.WebManagerBL(bot)
-    mod_bl = bl.ModerationBL(bot)
-    bl_wrapper = BusinessLayerWrapper(mm_bl, pt_bl, vrc_bl, p_bl, web_bl, mod_bl)
-
     # UI Layers
-    loop.run_until_complete(setup_discord_commands(bot, bl_wrapper))
+    loop.run_until_complete(setup_discord_commands(bot, bl_wrapper.create(bot)))
     loop.create_task(start_webmanager(bot, log))
 
     ############################

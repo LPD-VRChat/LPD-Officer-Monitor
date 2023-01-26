@@ -16,7 +16,7 @@ from discord.ext import commands
 
 # Custom
 import src.layers.business.checks as checks
-from src.layers.business.bl_wrapper import BusinessLayerWrapper
+import src.layers.business.bl_wrapper as bl_wrapper
 from src.layers.business.extra_functions import send_long, msgbox_confirm
 from src.layers import business as bl
 
@@ -64,7 +64,7 @@ class Programming(commands.Cog):
         """Reloads a module"""
         try:
             # Set the BL Wrapper to the bot so that it can be used during cog startup
-            self.bot.bl_wrapper: BusinessLayerWrapper = self.bl_wrapper
+            self.bot.bl_wrapper: bl_wrapper.BusinessLayerWrapper = self.bl_wrapper
 
             if module_name is None or module_name.lower() == "all":
                 # copy dict because one failed load will change the dictionary
@@ -86,27 +86,8 @@ class Programming(commands.Cog):
                     log.exception(f"Failed to reload business layer")
                     return
 
-                self.bot.bl_wrapper.mm_bl.remove_listener()
-                self.bot.bl_wrapper.pt_bl.remove_listener()
-                # self.bot.bl_wrapper.vrc.remove_listener()
-                self.bot.bl_wrapper.p.remove_listener()
-                self.bot.bl_wrapper.pt_bl.remove_listener()
-                self.bot.bl_wrapper.mod.remove_listener()
-                # if there is still a reference used somewhere it will crash
-                self.bot.bl_wrapper.mm_bl.bot = None
-                self.bot.bl_wrapper.pt_bl.bot = None
-                self.bot.bl_wrapper.p.bot = None
-                self.bot.bl_wrapper.pt_bl.bot = None
-                self.bot.bl_wrapper.mod.bot = None
-                mm_bl = bl.mm_bl.MemberManagementBL(self.bot)
-                pt_bl = bl.pt_bl.PatrolTimeBL(self.bot)
-                vrc_bl = bl.VRChatBL()
-                p_bl = bl.ProgrammingBL(self.bot)
-                web_bl = self.bot.bl_wrapper.web  # bl.WebManagerBL(self.bot)
-                mod_bl = bl.ModerationBL(self.bot)
-                self.bot.bl_wrapper = BusinessLayerWrapper(
-                    mm_bl, pt_bl, vrc_bl, p_bl, web_bl, mod_bl
-                )
+                bl_wrapper.destroy(self.bot.bl_wrapper)
+                self.bot.bl_wrapper = bl_wrapper.create(self.bot)
 
                 extensions = [name for name in self.bot.extensions.keys()]
                 for m in extensions:
