@@ -23,6 +23,7 @@ from src.layers.business.extra_functions import (
     interaction_send_long,
     parse_iso_date,
     interaction_reply,
+    interaction_send_str_as_file,
 )
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -422,6 +423,29 @@ class Time(commands.Cog):
 
         # TODO : implement once activity system is implemented
         interaction_reply(interac, "TODO implementation")
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="list_loa",
+        description="List ongoing Leave Of Absence",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def list_loa(self, interac: discord.Interaction):
+        entries = await self.bl_wrapper.loa_bl.list_loa()
+        output = "discord_id,vrchat_name,start,end\n"
+
+        def csv_quote_escape(input: str):
+            return input.replace('"', '""')
+
+        for entry in entries:
+            await entry.officer.load()  # to get vrchat_name, else only id is defined
+            # id is set as string in csv because it's too long. libreoffice transform to 1.2e25 notation
+            output += f'"{entry.officer.id}","{csv_quote_escape(entry.officer.vrchat_name)}",{entry.start.isoformat()},{entry.end.isoformat()}\n'
+        await interaction_send_str_as_file(
+            interac, output, f"loa_entries.csv", "LOA entries"
+        )
 
 
 async def setup(bot):

@@ -6,8 +6,8 @@ Record when officer where last active in the comunity
 # Standard
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict
+from datetime import datetime, timedelta, date
+from typing import Dict, Iterable
 from enum import Enum
 
 # Community
@@ -216,3 +216,7 @@ class MemberActivityBL(DiscordListenerMixin):
             message_id=request_id,
             channel_id=channel_id,
         )
+
+    async def list_loa(self) -> Iterable[models.LOAEntry]:
+        now = date.today()
+        return await models.LOAEntry.objects.filter(models.LOAEntry.start >= now).all()
