@@ -1,8 +1,8 @@
-"""First migration
+"""base
 
-Revision ID: aeb733299087
+Revision ID: 86b4e89d95ec
 Revises: 
-Create Date: 2022-06-06 17:43:46.100623
+Create Date: 2023-01-31 00:25:52.376806
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'aeb733299087'
+revision = '86b4e89d95ec'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -60,7 +60,7 @@ def upgrade():
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('category', sa.Integer(), nullable=True),
     sa.Column('position', sa.Integer(), nullable=False),
-    sa.Column('url', sa.Text(), nullable=False),
+    sa.Column('url', sa.String(length=1024), nullable=False),
     sa.ForeignKeyConstraint(['category'], ['badgecategory.id'], name='fk_badges_badgecategory_id_category'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -80,9 +80,13 @@ def upgrade():
     sa.Column('end', sa.Date(), nullable=False),
     sa.Column('message_id', sa.BigInteger(), nullable=False),
     sa.Column('channel_id', sa.BigInteger(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('reason', sa.String(length=4096), nullable=False),
     sa.ForeignKeyConstraint(['officer'], ['officers.id'], name='fk_loaentries_officers_id_officer'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_loaentries_message_id'), 'loaentries', ['message_id'], unique=False)
     op.create_table('patrols',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('officer', sa.BigInteger(), nullable=True),
@@ -99,11 +103,12 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('member_id', sa.BigInteger(), nullable=False),
     sa.Column('timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('reason', sa.Text(), nullable=False),
+    sa.Column('reason', sa.String(length=4096), nullable=False),
     sa.Column('submitter', sa.BigInteger(), nullable=True),
     sa.ForeignKeyConstraint(['submitter'], ['officers.id'], name='fk_strikeentries_officers_id_submitter'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_strikeentries_member_id'), 'strikeentries', ['member_id'], unique=False)
     op.create_table('timerenewals',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('officer', sa.BigInteger(), nullable=True),
@@ -165,9 +170,9 @@ def upgrade():
     op.create_table('vrclocations',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('instance_id', sa.Integer(), nullable=False),
-    sa.Column('vrc_world_name', sa.Text(), nullable=False),
-    sa.Column('vrc_world_id', sa.Text(), nullable=False),
-    sa.Column('invite_token', sa.Text(), nullable=False),
+    sa.Column('vrc_world_name', sa.String(length=512), nullable=False),
+    sa.Column('vrc_world_id', sa.String(length=256), nullable=False),
+    sa.Column('invite_token', sa.String(length=256), nullable=False),
     sa.Column('instance_access_type', sa.String(length=100), nullable=False),
     sa.Column('start', sa.DateTime(timezone=True), nullable=False),
     sa.Column('end', sa.DateTime(timezone=True), nullable=False),
@@ -188,8 +193,10 @@ def downgrade():
     op.drop_table('calls_officers')
     op.drop_table('trainings')
     op.drop_table('timerenewals')
+    op.drop_index(op.f('ix_strikeentries_member_id'), table_name='strikeentries')
     op.drop_table('strikeentries')
     op.drop_table('patrols')
+    op.drop_index(op.f('ix_loaentries_message_id'), table_name='loaentries')
     op.drop_table('loaentries')
     op.drop_table('calls')
     op.drop_table('badges')
