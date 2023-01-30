@@ -57,6 +57,25 @@ class MemberActivityBL(DiscordListenerMixin):
 
         await self.process_loa(message)
 
+    @bl_listen()
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        if payload.channel_id != settings.LEAVE_OF_ABSENCE_CHANNEL:
+            return
+        try:
+            entry = await models.LOAEntry.objects.get(message_id=payload.message_id)
+        except ormar.NoMatch:
+            return
+
+        entry.deleted_at = datetime.utcnow()
+        await entry.update()
+        channel: discord.TextChannel = self.bot.get_channel(payload.channel_id)
+        partial_message = channel.get_partial_message(payload.message_id)
+        await channel.send(
+            content=f"<@{entry.officer.id}> Editing an LOA is not permited. You need to create a new one",
+            delete_after=30,
+        )
+        await partial_message.delete()
+
     async def process_loa(self, message: discord.Message):
         # from V2
         try:
@@ -170,11 +189,18 @@ class MemberActivityBL(DiscordListenerMixin):
             return
 
         await self.save_loa(
-            message.author.id, date_start, date_end, message.id, message.channel.id
+            message.author.id,
+            date_start,
+            date_end,
+            message.id,
+            message.channel.id,
+            reason,
         )
         await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
 
-    async def save_loa(self, officer_id, date_start, date_end, request_id, channel_id):
+    async def save_loa(
+        self, officer_id, date_start, date_end, request_id, channel_id, reason_message
+    ):
         """
         Pass all 5 required fields to save_loa()
         If record with matching officer_id is found,
@@ -191,7 +217,8 @@ class MemberActivityBL(DiscordListenerMixin):
                     )
                 except discord.NotFound:
                     pass
-            await prevLoa.delete()
+            prevLoa.deleted_at = datetime.utcnow()
+            await prevLoa.update()
         except ormar.NoMatch:
             pass
         except ormar.MultipleMatches:
@@ -207,7 +234,8 @@ class MemberActivityBL(DiscordListenerMixin):
                         )
                     except discord.NotFound:
                         pass
-                await l.delete()
+                l.deleted_at = datetime.utcnow()
+                await l.update()
 
         await models.LOAEntry.objects.create(
             officer=officer_id,
@@ -215,8 +243,12 @@ class MemberActivityBL(DiscordListenerMixin):
             end=date_end,
             message_id=request_id,
             channel_id=channel_id,
+            created_at=datetime.utcnow(),
+            reason=reason_message,
         )
 
     async def list_loa(self) -> Iterable[models.LOAEntry]:
         now = date.today()
-        return await models.LOAEntry.objects.filter(models.LOAEntry.start >= now).all()
+        return await models.LOAEntry.objects.filter(
+            models.LOAEntry.start >= now, models.LOAEntry.deleted_at.isnull(True)
+        ).all()
