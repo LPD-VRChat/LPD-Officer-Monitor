@@ -132,7 +132,7 @@ class LOAEntry(ormar.Model):
     officer: Optional[Officer] = ormar.ForeignKey(Officer)
     start: date = ormar.Date(timezone=True)
     end: date = ormar.Date(timezone=True)
-    message_id: int = ormar.BigInteger(min_value=0)
+    message_id: int = ormar.BigInteger(min_value=0, index=True)
     channel_id: int = ormar.BigInteger(min_value=0)
     created_at: datetime = ormar.DateTime(timezone=True)
     deleted_at: Optional[datetime] = ormar.DateTime(timezone=True, nullable=True)
@@ -154,7 +154,7 @@ class StrikeEntry(ormar.Model):
         tablename = "strikeentries"
 
     id: int = ormar.Integer(primary_key=True)
-    member_id: int = ormar.BigInteger(min_value=0)
+    member_id: int = ormar.BigInteger(min_value=0, index=True)
     timestamp: datetime = ormar.DateTime(timezone=True)
     reason: str = ormar.String(max_length=4096)
     submitter: Optional[Officer] = ormar.ForeignKey(Officer)
