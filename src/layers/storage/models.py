@@ -53,7 +53,7 @@ class Badge(ormar.Model):
     name: str = ormar.String(max_length=255)
     category: Optional[BadgeCategory] = ormar.ForeignKey(BadgeCategory)
     position: int = ormar.Integer(min_value=0)
-    url: str = ormar.Text()
+    url: str = ormar.String(max_length=1024)
 
 
 class Teams(Enum):
@@ -156,7 +156,7 @@ class StrikeEntry(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     member_id: int = ormar.BigInteger(min_value=0)
     timestamp: datetime = ormar.DateTime(timezone=True)
-    reason: str = ormar.Text()
+    reason: str = ormar.String(max_length=4096)
     submitter: Optional[Officer] = ormar.ForeignKey(Officer)
 
 
@@ -235,9 +235,9 @@ class VRCLocation(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     instance_id: int = ormar.Integer(min_value=0)
-    vrc_world_name: str = ormar.Text()
-    vrc_world_id: str = ormar.Text()
-    invite_token: str = ormar.Text()
+    vrc_world_name: str = ormar.String(max_length=512)
+    vrc_world_id: str = ormar.String(max_length=256)
+    invite_token: str = ormar.String(max_length=256)
     instance_access_type: str = ormar.String(
         max_length=100, choices=list(VRCInstanceAccessTypeEnum)
     )
