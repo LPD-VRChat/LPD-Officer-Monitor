@@ -134,6 +134,9 @@ class LOAEntry(ormar.Model):
     end: date = ormar.Date(timezone=True)
     message_id: int = ormar.BigInteger(min_value=0)
     channel_id: int = ormar.BigInteger(min_value=0)
+    created_at: datetime = ormar.DateTime(timezone=True)
+    deleted_at: Optional[datetime] = ormar.DateTime(timezone=True, nullable=True)
+    reason: str = ormar.String(max_length=4096)
 
 
 class TimeRenewal(ormar.Model):
