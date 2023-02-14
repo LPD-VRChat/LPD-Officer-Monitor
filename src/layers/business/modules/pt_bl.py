@@ -263,7 +263,7 @@ class PatrolTimeBL(DiscordListenerMixin):
                 pass
 
     async def get_potential_officer_promotion(
-        self, from_date: dt.datetime, minimum: int
+        self, from_date: dt.datetime, minimum_hours: int
     ) -> list[models.Officer]:
         guild = self.bot.get_guild(settings.SERVER_ID)
         if not guild:
@@ -290,7 +290,7 @@ class PatrolTimeBL(DiscordListenerMixin):
         for p in patrols:
             patrolling_times[p.officer.id] += p.duration()
 
-        requirement = dt.timedelta(hours=minimum)
+        requirement = dt.timedelta(hours=minimum_hours)
         officer_to_promote_ids: list[int] = []
         for officer_id in patrolling_times:
             if patrolling_times[officer_id] > requirement:
