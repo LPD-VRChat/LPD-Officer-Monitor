@@ -9,7 +9,7 @@ import asyncio
 from dataclasses import dataclass
 import logging
 import datetime as dt
-from typing import Dict
+from typing import Dict, Iterable
 
 # Community
 import discord
@@ -17,6 +17,7 @@ from discord.ext import commands
 
 # Custom
 import settings
+from settings.classes import RoleLadderElement
 from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
 from src.layers.business.extra_functions import now, get_guild
 from src.layers.storage import models
@@ -297,5 +298,51 @@ class PatrolTimeBL(DiscordListenerMixin):
 
         officers = await models.Officer.objects.filter(
             id__in=officer_to_promote_ids
+        ).all()
+        return officers
+
+    async def get_officer_bellow_patrol_time(
+        self, from_date: dt.datetime, minimum_hours: int
+    ) -> list[models.Officer]:
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            logging.error(f"guild {settings.SERVER_ID} is not accessible")
+            return []
+
+        def add_members_from_role(role: RoleLadderElement, list: list[discord.Member]):
+            discord_role = guild.get_role(role.id)
+            if discord_role is None:
+                logging.error(f"{role.name} role {role.id} is not accessible")
+                return
+            list.extend([m.id for m in discord_role.members])
+
+        officer_ids: list[int] = []
+        add_members_from_role(settings.ROLE_LADDER.officer, officer_ids)
+        add_members_from_role(settings.ROLE_LADDER.senior_officer, officer_ids)
+        add_members_from_role(settings.ROLE_LADDER.corporal, officer_ids)
+        add_members_from_role(settings.ROLE_LADDER.sergeant, officer_ids)
+        to_dt = now()
+
+        patrols = await models.Patrol.objects.filter(
+            officer__in=officer_ids, start__gt=from_date, end__lt=to_dt
+        ).all()
+
+        # patrolling_times:dict[int,dt.timedelta] = {key: dt.timedelta() for key in officer_ids}
+        patrolling_times = {key: dt.timedelta() for key in officer_ids}
+        for p in patrols:
+            patrolling_times[p.officer.id] += p.duration()
+            await asyncio.sleep(0)
+        requirement = dt.timedelta(hours=minimum_hours)
+
+        officerid_to_yeet_ids: list[int] = []
+        for oid in officer_ids:
+            if oid not in patrolling_times:
+                officerid_to_yeet_ids.append(oid)
+            else:
+                if patrolling_times[oid] < requirement:
+                    officerid_to_yeet_ids.append(oid)
+
+        officers = await models.Officer.objects.filter(
+            id__in=officerid_to_yeet_ids
         ).all()
         return officers
