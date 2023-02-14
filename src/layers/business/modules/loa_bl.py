@@ -252,3 +252,23 @@ class MemberActivityBL(DiscordListenerMixin):
         return await models.LOAEntry.objects.filter(
             models.LOAEntry.start >= now, models.LOAEntry.deleted_at.isnull(True)
         ).all()
+
+    async def list_renewed(self, date_from: date) -> Iterable[models.TimeRenewal]:
+        return await models.TimeRenewal.objects.filter(
+            models.TimeRenewal.timestamp >= date_from
+        ).all()
+
+    async def process_inactives(
+        self, bellow_time: list[models.Officer], loa, renew
+    ) -> list[models.Officer]:
+
+        # lookup in dict is O^1
+        loa_dict = {l.officer.id: l for l in loa}
+        renew_dict = {r.officer.id: r for r in renew}
+
+        inactive = [
+            officer
+            for officer in bellow_time
+            if officer.id not in loa_dict and officer.id not in renew_dict
+        ]
+        return inactive
