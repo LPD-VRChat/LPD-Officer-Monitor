@@ -114,11 +114,12 @@ async def interaction_reply(
                 view=view,
                 ephemeral=ephemeral,
             )
+            return await interaction.original_response()
         case _:
             # it's fine if `content=None`, you need to at least one item
             # followup reply to the first message that answered the command
             # it's the best way as reply have a lot some limitation
-            await interaction.followup.send(
+            return await interaction.followup.send(
                 content=content,
                 embed=embed,
                 embeds=embeds,
@@ -198,20 +199,19 @@ class Confirm(discord.ui.View):
         self.user_id = user_id
         self.value: Optional[bool] = None
 
+    async def interaction_check(self, interaction: discord.Interaction):
+        return self.user_id == interaction.user.id
+
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        if self.user_id != interaction.user.id:
-            return
         await interaction.response.edit_message(content="Confirmed", view=None)
         self.value = True
         self.stop()
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.user_id != interaction.user.id:
-            return
         await interaction.response.edit_message(content="Cancelling", view=None)
         self.value = False
         self.stop()
@@ -232,13 +232,12 @@ async def msgbox_confirm(
         user_id = ctx.author.id
     view = Confirm(user_id, timeout=timeout)
     if isinstance(ctx, discord.Interaction):
-        await interaction_reply(ctx, message, embed=embed, embeds=embeds, view=view)
+        msg = await interaction_reply(
+            ctx, message, embed=embed, embeds=embeds, view=view
+        )
     else:
         msg = await ctx.send(message, embed=embed, embeds=embeds, view=view)
     await view.wait()
     if view.value is None:
-        if isinstance(ctx, discord.Interaction):
-            await ctx.response.edit_message(content="Timeout", view=None)
-        else:
-            await msg.edit(content="Timeout", view=None)
+        await msg.edit(content="Timeout", view=None)
     return view.value
