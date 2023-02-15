@@ -18,6 +18,7 @@ import src.layers.business
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
+    msgbox_confirm,
     send_long,
     now,
     interaction_send_long,
@@ -446,6 +447,54 @@ class Time(commands.Cog):
         await interaction_send_str_as_file(
             interac, output, f"loa_entries.csv", "LOA entries"
         )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="mark_inactive",
+        description="Mark officers as inactive",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def mark_inactive(self, interac: discord.Interaction):
+        await interac.response.defer(ephemeral=False, thinking=True)
+        date_from = dt.datetime.now() - dt.timedelta(days=settings.MAX_INACTIVE_DAYS)
+        officers_bellow_time = (
+            await self.bl_wrapper.pt_bl.get_officer_bellow_patrol_time(
+                date_from, settings.MIN_ACTIVITY_MINUTES / 60
+            )
+        )
+        loas = await self.bl_wrapper.loa_bl.list_loa()
+        renews = await self.bl_wrapper.loa_bl.list_renewed(date_from)
+        inactives = await self.bl_wrapper.loa_bl.process_inactives(
+            officers_bellow_time, loas, renews
+        )
+
+        message = "Inactive officers:\n"
+        message += "\n".join([f"<@{o.id}>" for o in inactives])
+
+        await interaction_reply(interac, content=message)
+
+        if not await msgbox_confirm(
+            interac,
+            message="Do you want to mark all those officers as inactive",
+        ):
+            return
+
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+        role_inactive = guild.get_role(settings.INACTIVE_ROLE)
+        if role_inactive is None:
+            raise Exception(f"inactive role {settings.INACTIVE_ROLE} is not accessible")
+
+        for id in inactives:
+            member = guild.get_member(id)
+            if not member:
+                log.error(f"officer {id} invalid member!!!")
+                continue
+            await member.add_roles(role_inactive, reason="bot mark_inactive")
+        await interaction_reply(interac, content="Done")
 
 
 async def setup(bot):
