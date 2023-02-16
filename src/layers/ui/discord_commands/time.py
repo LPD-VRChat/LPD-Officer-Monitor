@@ -18,6 +18,7 @@ import src.layers.business
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
+    is_lpd_member,
     msgbox_confirm,
     send_long,
     now,
@@ -495,6 +496,54 @@ class Time(commands.Cog):
                 continue
             await member.add_roles(role_inactive, reason="bot mark_inactive")
         await interaction_reply(interac, content="Done")
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="renew",
+        description="renew an officers",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def renew(self, interac: discord.Interaction, officer: discord.Member):
+        if not is_lpd_member(officer):
+            await interaction_reply(
+                interac, "This discord member is not an LPD officer"
+            )
+            return
+
+        await self.bl_wrapper.loa_bl.create_renew(officer.id, interac.user.id)
+        await interaction_reply(interac, "Renewal Done")
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="list_renewals",
+        description="List all renewawls of an officers",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def list_renewals(
+        self, interac: discord.Interaction, officer: discord.Member
+    ):
+        if not is_lpd_member(officer):
+            await interaction_reply(
+                interac,
+                "This discord member is not an LPD officer",
+            )
+            return
+
+        ren = await self.bl_wrapper.loa_bl.list_renew(officer.id)
+
+        if len(ren) == 0:
+            await interaction_reply(
+                interac,
+                f"Renewal ",
+            )
+        await interaction_reply(
+            interac,
+            f"Renewal :\n" + "\n".join([r.timestamp.isoformat() for r in ren]),
+        )
 
 
 async def setup(bot):

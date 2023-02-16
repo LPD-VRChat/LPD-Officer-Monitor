@@ -272,3 +272,13 @@ class MemberActivityBL(DiscordListenerMixin):
             if officer.id not in loa_dict and officer.id not in renew_dict
         ]
         return inactive
+
+    async def create_renew(self, officer_id: int, origin_id: int):
+        await models.TimeRenewal.objects.create(
+            officer=officer_id,
+            timestamp=datetime.now(),
+            renewer=origin_id,
+        )
+
+    async def list_renew(self, officer_id) -> list[models.TimeRenewal]:
+        return await models.TimeRenewal.objects.all(officer=officer_id)
