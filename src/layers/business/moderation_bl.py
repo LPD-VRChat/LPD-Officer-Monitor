@@ -6,6 +6,7 @@ import logging
 import datetime as dt
 import re
 from urllib.parse import urlparse
+from datetime import datetime
 
 # Community
 import discord
@@ -14,6 +15,7 @@ from discord.ext import commands
 # Custom
 import settings
 from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
+from src.layers.storage import models
 
 if TYPE_CHECKING:
     from .bl_wrapper import BusinessLayerWrapper
@@ -126,3 +128,14 @@ class ModerationBL(DiscordListenerMixin):
                         await old_message.delete()
 
                 break
+
+    async def give_strike(self, offender_id: int, reason: str, submitter_id: int):
+        await models.StrikeEntry.objects.create(
+            member_id=offender_id,
+            timestamp=datetime.now(),
+            reason=reason,
+            submitter=submitter_id,
+        )
+
+    async def list_strike(self, user_id: int):
+        return await models.StrikeEntry.objects.all(member_id=user_id)
