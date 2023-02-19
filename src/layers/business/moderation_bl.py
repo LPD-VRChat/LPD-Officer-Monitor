@@ -6,7 +6,6 @@ import logging
 import datetime as dt
 import re
 from urllib.parse import urlparse
-from datetime import datetime
 
 # Community
 import discord
@@ -129,12 +128,28 @@ class ModerationBL(DiscordListenerMixin):
 
                 break
 
-    async def give_strike(self, offender_id: int, reason: str, submitter_id: int):
+    async def give_strike(
+        self,
+        offender_id: int,
+        reason: str,
+        submitter_id: int,
+    ) -> tuple[int, int]:
+        """return tuple of int. first is strikes in 2 weeks, second is total strikes"""
         await models.StrikeEntry.objects.create(
             member_id=offender_id,
-            timestamp=datetime.now(),
+            timestamp=dt.datetime.now(),
             reason=reason,
             submitter=submitter_id,
+        )
+        return (
+            await models.StrikeEntry.objects.filter(
+                models.StrikeEntry.member_id == offender_id,
+                models.StrikeEntry.timestamp
+                >= (dt.datetime.now() - dt.timedelta(days=14)),
+            ).count(),
+            await models.StrikeEntry.objects.filter(
+                models.StrikeEntry.member_id == offender_id,
+            ).count(),
         )
 
     async def list_strike(self, user_id: int):

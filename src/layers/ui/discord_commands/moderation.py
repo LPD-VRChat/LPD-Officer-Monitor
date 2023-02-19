@@ -25,8 +25,8 @@ class Moderation(commands.Cog):
         self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.color = discord.Color.blue()
 
-    @checks.is_admin_bot_channel(True)
-    @checks.is_white_shirt(True)
+    @checks.is_team_bot_channel(True)
+    @checks.is_chat_moderator(True)
     @app_cmd.command(
         name="give_strike",
         description="List all renewawls of an officers",
@@ -46,8 +46,20 @@ class Moderation(commands.Cog):
             message=f"**Are you sure this strike is correct?**\nOffender: {offender.mention}  [{offender.id}]\nReason: {reason}",
         ):
             return
-        await self.bl_wrapper.mod.give_strike(offender.id, reason, interac.user.id)
-        await interaction_reply(interac, "Strike recorded")
+        strikes = await self.bl_wrapper.mod.give_strike(
+            offender.id,
+            reason,
+            interac.user.id,
+        )
+        await interaction_reply(
+            interac,
+            f"Strike recorded.\nNumber of strikes in last 2 week: {strikes[0]}\nToal number of strikes: {strikes[1]}",
+        )
+        if strikes[0]:
+            await interaction_reply(
+                interac,
+                f"<@&{settings.MODERATOR_ROLE}> <@{offender.id}> have received at least 3 strikes in the last two weeks.",
+            )
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
