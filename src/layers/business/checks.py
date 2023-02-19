@@ -10,7 +10,7 @@ import discord
 
 # Custom
 import discord.errors as errors
-from src.layers.business.extra_functions import has_role_id
+from src.layers.business.extra_functions import has_role_id, is_lpd_member
 
 
 def template_check(slash_cmd=False):
@@ -215,6 +215,19 @@ def is_event_host(slash_cmd=False):
         return has_role_id(ctx.author, settings.EVENT_HOST_ROLE)
     def predicate_interaction(interaction: discord.Interaction) -> bool:
         return has_role_id(interaction.user, settings.EVENT_HOST_ROLE)
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
+def is_officer(slash_cmd=False):
+    def predicate(ctx):
+        return is_lpd_member(ctx.author)
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return is_lpd_member(interaction.user)
 
     if slash_cmd:
         return discord.app_commands.check(predicate_interaction)
