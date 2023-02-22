@@ -43,7 +43,7 @@ class ModerationBL(DiscordListenerMixin):
         self,
         discord_id: int,
         reason: str,
-        full_reason: Optional[str],
+        full_reason: Optional[str] = None,
     ):
         full_reason = full_reason or reason
         member_to_detain: discord.Member = self.bot.guild.get_member(discord_id)
@@ -51,20 +51,25 @@ class ModerationBL(DiscordListenerMixin):
         # Add the needed roles
         detention_role = self.bot.guild.get_role(settings.DETENTION_WAITING_AREA_ROLE)
         permission_removal_role = self.bot.guild.get_role(settings.DETENTION_ROLE)
-        await member_to_detain.add_roles(detention_role, permission_removal_role)
-
-        # Let the user know
-        await member_to_detain.send(
-            f"You have been detained in the Discord Server {self.bot.guild} because you {reason}. Please wait for a staff member to take a look at your case."
+        await member_to_detain.add_roles(
+            detention_role, permission_removal_role, reason=reason
         )
 
         # Let staff know a user is waiting for them
         mod_log = self.bot.guild.get_channel(settings.MOD_LOG_CHANNEL)
-        mod_role: discord.Role = self.bot.guild.get_role(settings.MODERATOR_ROLE)
-        # TODO: Add "{mod_role.mention} " back to the start of the string
         await mod_log.send(
-            f"{member_to_detain.mention} has been placed in detention because they {full_reason}"
+            f"{member_to_detain.mention} has been placed in detention because they {full_reason}\n<@&{settings.MODERATOR_ROLE}>"
         )
+
+        # Let the user know
+        try:
+            await member_to_detain.send(
+                f"You have been detained in the Discord Server {self.bot.guild} because you {reason}. Please wait for a staff member to take a look at your case."
+            )
+        except discord.errors.Forbidden as e:
+            await mod_log.send(
+                f"Failed to send a PM to {member_to_detain.mention}\n<@&{settings.MODERATOR_ROLE}>"
+            )
 
     @bl_listen("on_ready")
     async def setup_cache(self):
