@@ -194,8 +194,7 @@ class ModerationBL(DiscordListenerMixin):
         try:
             d = await models.DetainedUser.objects.get(id=discord_id)
             restore_roles = d.role_ids
-            d.delete()
-            await d.update()
+            await d.delete()
         except ormar.NoMatch:
             log.error(f"Unable to find detained user in db [{discord_id}]")
             sucessfull = False
