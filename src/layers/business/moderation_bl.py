@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 # Community
 import discord
 from discord.ext import commands
+import ormar
 
 # Custom
 import settings
@@ -159,3 +160,89 @@ class ModerationBL(DiscordListenerMixin):
 
     async def list_strike(self, user_id: int):
         return await models.StrikeEntry.objects.all(member_id=user_id)
+
+    async def detain_user(
+        self,
+        discord_id: int,
+        reason: str,
+    ):
+        member_to_detain: discord.Member = self.bot.guild.get_member(discord_id)
+
+        current_roles = [
+            [r.id, r.name] for r in member_to_detain.roles if r.name != "@everyone"
+        ]
+        await models.DetainedUser.objects.create(
+            id=discord_id,
+            role_ids=current_roles,
+        )
+
+        discord_roles = [
+            # self.bot.guild.get_role(r.id)
+            discord.Object(r.id)
+            for r in member_to_detain.roles
+            if r.name != "@everyone"
+        ]
+        await member_to_detain.remove_roles(*discord_roles, reason="detention")
+        await self._detention_user(discord_id, reason)
+
+    async def release_detained_user(
+        self,
+        discord_id: int,
+    ) -> bool:
+        sucessfull = True
+        restore_roles = None
+        try:
+            d = await models.DetainedUser.objects.get(id=discord_id)
+            restore_roles = d.role_ids
+            d.delete()
+            await d.update()
+        except ormar.NoMatch:
+            log.error(f"Unable to find detained user in db [{discord_id}]")
+            sucessfull = False
+
+        member_to_free: discord.Member = self.bot.guild.get_member(discord_id)
+        try:
+            await member_to_free.remove_roles(
+                discord.Object(settings.DETENTION_WAITING_AREA_ROLE),
+                discord.Object(settings.DETENTION_ROLE),
+                reason="bot release detained",
+            )
+        except Exception as e:
+            log.exception(f"Failed to remove detention roles for user [{discord_id}]")
+            sucessfull = False
+
+        if restore_roles:
+            try:
+                await member_to_free.add_roles(
+                    *[discord.Object(r[0]) for r in restore_roles],
+                    reason="release detained user",
+                )
+            except (discord.Forbidden, discord.HTTPException) as e:
+                log.exception(f"Failed to restore roles for user [{discord_id}]")
+                log.info(
+                    f"Roles for user <@{discord_id}> [{discord_id}] {restore_roles}"
+                )
+                sucessfull = False
+
+        return sucessfull
+
+    @bl_listen("on_member_join")
+    async def check_join(self, member: discord.Member):
+        if member.bot or member.guild.id != settings.SERVER_ID:
+            return
+        d = await models.DetainedUser.objects.filter(id=member.id).count()
+        if d:
+            await self._detention_user(member.id, "rejoined guild will detained")
+            mod_log = self.bot.guild.get_channel(settings.MOD_LOG_CHANNEL)
+            await mod_log.send(f"{member.mention} has been **re**placed in detention")
+
+    @bl_listen("on_raw_member_remove")
+    async def check_leave(self, payload: discord.RawMemberRemoveEvent):
+        if payload.guild_id != settings.SERVER_ID:
+            return
+        d = await models.DetainedUser.objects.filter(id=payload.user.id).count()
+        if d:
+            mod_log = self.bot.guild.get_channel(settings.MOD_LOG_CHANNEL)
+            await mod_log.send(
+                f"<@{payload.user.id}> has left the guild while in detention"
+            )
