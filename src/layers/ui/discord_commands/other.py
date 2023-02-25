@@ -17,7 +17,7 @@ import src.layers.business.checks as checks
 import src.layers.business.errors as errors
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
-from src.layers.business.extra_functions import send_long
+from src.layers.business.extra_functions import interaction_send_long, send_long
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -274,6 +274,38 @@ class Other(commands.Cog):
             )
 
         await ctx.send(embed=embed)
+
+    @checks.is_team_bot_channel(slash_cmd=True)
+    @checks.app_cmd_check_any(
+        checks.is_any_trainer(True),
+        checks.is_event_host(True),
+        checks.is_white_shirt(True),
+    )
+    @app_commands.command(
+        name="who", description="Returns a list of officers currently patroling"
+    )
+    @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_commands.default_permissions(administrator=True)
+    # @app_commands.describe(patrolling="list patrolling officers")
+    # @app_commands.describe(training="list training officers")
+    async def who(
+        self,
+        di: discord.Interaction,
+        # patrolling: bool = None,
+        # training: bool = None,
+    ):
+        r = self.bl_wrapper.pt_bl.get_patrolling_officers()
+        # TODO : add way to differentiate training channels
+        message = "Template:\n```\nEvent Host:\nDispatch:\nGroup Leads:\n\n"
+        for channel_id, officers in r.items():
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                message += f"\n** {channel.name}> **:\n"
+            else:
+                message += f"\n** {self.bot.guild. channel_id}> **:\n"
+            message += "".join([f"<@{o}>\n" for o in officers])
+        message += "```"
+        await interaction_send_long(di, message)
 
 
 async def setup(bot):

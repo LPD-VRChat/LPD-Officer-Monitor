@@ -346,3 +346,15 @@ class PatrolTimeBL(DiscordListenerMixin):
             id__in=officerid_to_yeet_ids
         ).all()
         return officers
+
+    def get_patrolling_officers(
+        self,
+    ) -> dict[int, list[int]]:
+        """key is channel_id, array of officer_id"""
+        result: dict[int, list[int]] = {}
+        for officer_id, data in self._patrolling_officers.items():
+            if data.voice_logs[-1].channel_id in result:
+                result[data.voice_logs[-1].channel_id].append(officer_id)
+            else:
+                result[data.voice_logs[-1].channel_id] = [officer_id]
+        return result
