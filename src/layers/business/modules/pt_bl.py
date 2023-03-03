@@ -26,16 +26,9 @@ log = logging.getLogger("lpd-officer-monitor")
 
 
 @dataclass
-class VoiceLog:
-    channel_id: int
-    start: dt.datetime
-    end: dt.datetime | None
-
-
-@dataclass
 class PatrolLog:
-    officer_id: int
-    voice_logs: list[VoiceLog]
+    patrol: models.Patrol
+    voice_logs: list[models.PatrolVoice]
 
 
 class PatrolTimeBL(DiscordListenerMixin):
@@ -73,11 +66,12 @@ class PatrolTimeBL(DiscordListenerMixin):
         return is_monitored and not is_ignored
 
     async def _get_main_channel(
-        self, voice_logs: list[VoiceLog]
+        self, voice_logs: list[models.PatrolVoice]
     ) -> models.SavedVoiceChannel:
         # Go through the saved voice channels and
+        # TODO: add logic to return the most probable squad
         for voice_log in voice_logs:
-            channel = self.bot.get_channel(voice_log.channel_id)
+            channel = self.bot.get_channel(voice_log.channel.id)
             if (
                 isinstance(channel, discord.VoiceChannel)
             ) and not channel.name.startswith(tuple(settings.BAD_MAIN_CHANNEL_STARTS)):
@@ -85,52 +79,6 @@ class PatrolTimeBL(DiscordListenerMixin):
 
         # Give the first channel if no good one was found
         return await self._get_saved_voice_channel(voice_logs[0].channel_id)
-
-    async def _get_saved_voice_channel(
-        self, channel_id: int
-    ) -> models.SavedVoiceChannel:
-        """
-        Get a SavedVoiceChannel from the database if it exists or create a new
-        one automatically if it didn't exist before.
-
-        The new channel will get the name of the channel in Discord if it
-        wasn't in the database already or will keep its name if it was already
-        in the database.
-        """
-        guild = get_guild(self.bot)
-
-        # Get the channel name and send a warning if the channel wasn't found
-        discord_channel = guild.get_channel(channel_id)
-        if discord_channel is None:
-            channel_name = "Unknown"
-            log.warn(
-                f"Channel name for channel {channel_id} could not be found in the server."
-            )
-        else:
-            channel_name = discord_channel.name
-
-        # Get or create the object in the database
-        model, _ = await models.SavedVoiceChannel.objects.get_or_create(
-            id=channel_id,
-            guild_id=settings.SERVER_ID,
-            _defaults={"name": channel_name},
-        )
-
-        return model
-
-    async def _get_saved_voice_channels(
-        self, channel_ids: list[int]
-    ) -> dict[int, models.SavedVoiceChannel]:
-        """
-        This function gets multiple saved voice channels at once.
-
-        This is just a helper function that calls _get_saved_voice_channel
-        multiple times and gathers the results up for you, avoiding a for loop
-        with an await.
-        """
-        futures = [self._get_saved_voice_channel(cid) for cid in channel_ids]
-        results = await asyncio.gather(*futures)
-        return dict(zip(channel_ids, results))
 
     async def get_patrol_time(
         self, officer_id: int, from_dt: dt.datetime, to_dt: dt.datetime
@@ -187,12 +135,13 @@ class PatrolTimeBL(DiscordListenerMixin):
         # Make sure we're in the LPD server
         on_patrol = self._is_on_patrol(member)
         to_monitored_channel = self._is_monitored(after.channel)
+        curr_time = now()
 
         match (on_patrol, to_monitored_channel):
 
             # Officer is moving between monitored channels
             case True, True:
-                log.info(
+                log.debug(
                     f"{member.display_name} ({member.id}) is switching on duty channels."
                 )
 
@@ -201,59 +150,58 @@ class PatrolTimeBL(DiscordListenerMixin):
 
                 # Add a time to the latest patrol log and open a new one for the channel
                 # that the officer switched into
-                curr_time = now()
+                self._patrolling_officers[member.id].patrol.end = curr_time
                 self._patrolling_officers[member.id].voice_logs[-1].end = curr_time
-                self._patrolling_officers[member.id].voice_logs.append(
-                    VoiceLog(after.channel.id, now(), None)
-                )
+                async with models.database.transaction():
+                    await self._patrolling_officers[member.id].patrol.update()
+                    await self._patrolling_officers[member.id].voice_logs[-1].update()
+                if before and (before.channel.id != after.channel.id):
+                    self._patrolling_officers[member.id].voice_logs.append(
+                        await models.PatrolVoice.objects.create(
+                            channel=after.channel.id,
+                            patrol=self._patrolling_officers[member.id].patrol,
+                            start=curr_time,
+                            end=curr_time,
+                        )
+                    )
 
             # Officer is going on duty
             case False, True:
-                log.info(f"{member.display_name} ({member.id}) is going on duty.")
+                log.debug(f"{member.display_name} ({member.id}) is going on duty.")
 
                 # Because is_monitored returned True the channel must be a voice channel
                 assert isinstance(after.channel, discord.VoiceChannel)
 
+                patrol = await models.Patrol.objects.create(
+                    officer=member.id,
+                    start=curr_time,
+                    end=curr_time,
+                    event=None,
+                    main_channel=after.channel.id,
+                )
+
                 # Add the first patrol and voice log to the cache
                 self._patrolling_officers[member.id] = PatrolLog(
-                    member.id,
-                    [VoiceLog(after.channel.id, now(), None)],
+                    patrol,
+                    [
+                        await models.PatrolVoice.objects.create(
+                            channel=after.channel.id,
+                            patrol=patrol,
+                            start=curr_time,
+                            end=curr_time,
+                        )
+                    ],
                 )
 
             # Officer is going off duty
             case True, False:
-                log.info(f"{member.display_name} ({member.id}) is going off duty.")
-                voice_logs = self._patrolling_officers[member.id].voice_logs
+                log.debug(f"{member.display_name} ({member.id}) is going off duty.")
 
-                # Close the last voice log, now all the voice logs should have an end time
-                voice_logs[-1].end = now()
-
-                # Make the Patrol object
-                main_channel = await self._get_main_channel(voice_logs)
-                patrol = models.Patrol(
-                    officer=member.id,
-                    start=voice_logs[0].start,
-                    end=voice_logs[-1].end,
-                    event=None,
-                    main_channel=main_channel,
-                )
-                await patrol.save()
-
-                # Convert the voice log objects into PatrolVoice models
-                channels = await self._get_saved_voice_channels(
-                    [vl.channel_id for vl in voice_logs]
-                )
-                patrol_voices = [
-                    models.PatrolVoice(
-                        patrol=patrol,
-                        channel=channels[vl.channel_id],
-                        start=vl.start,
-                        end=vl.end,
-                    )
-                    for vl in voice_logs
-                ]
-                # Save all the patrol voice models
-                await asyncio.gather(*[pv.save() for pv in patrol_voices])
+                self._patrolling_officers[member.id].patrol.end = curr_time
+                self._patrolling_officers[member.id].voice_logs[-1].end = curr_time
+                async with models.database.transaction():
+                    await self._patrolling_officers[member.id].patrol.update()
+                    await self._patrolling_officers[member.id].voice_logs[-1].update()
 
                 # Remove the patrol from the cache as it is now in the database
                 del self._patrolling_officers[member.id]
@@ -261,6 +209,49 @@ class PatrolTimeBL(DiscordListenerMixin):
             # Nothing special happened
             case _, _:
                 pass
+
+    @bl_listen()
+    async def on_ready(self):
+        curr_time = now()
+        channel: discord.VoiceChannel
+        for channel in self.bot.guild.channels:
+            model, _ = await models.SavedVoiceChannel.objects.get_or_create(
+                id=channel.id,
+                _defaults={
+                    "guild_id": settings.SERVER_ID,
+                    "name": channel.name,
+                },
+            )
+            if self._is_monitored(channel):
+                for member in channel.members:
+                    patrol = await models.Patrol.objects.create(
+                        officer=member.id,
+                        start=curr_time,
+                        end=curr_time,
+                        event=None,
+                        main_channel=channel.id,
+                    )
+                    self._patrolling_officers[member.id] = PatrolLog(
+                        patrol,
+                        [
+                            await models.PatrolVoice.objects.create(
+                                channel=channel.id,
+                                patrol=patrol,
+                                start=curr_time,
+                                end=curr_time,
+                            )
+                        ],
+                    )
+
+    async def on_unload(self):
+        curr_time = now()
+        for officer_id in self._patrolling_officers:
+            self._patrolling_officers[officer_id].patrol.end = curr_time
+            self._patrolling_officers[officer_id].voice_logs[-1].end = curr_time
+            async with models.database.transaction():
+                await self._patrolling_officers[officer_id].patrol.update()
+                await self._patrolling_officers[officer_id].voice_logs[-1].update()
+        self._patrolling_officers.clear()
 
     async def get_potential_officer_promotion(
         self, from_date: dt.datetime, minimum_hours: int
