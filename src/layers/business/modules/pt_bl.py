@@ -243,6 +243,7 @@ class PatrolTimeBL(DiscordListenerMixin):
                         ],
                     )
 
+    @bl_listen()
     async def on_unload(self):
         curr_time = now()
         for officer_id in self._patrolling_officers:
