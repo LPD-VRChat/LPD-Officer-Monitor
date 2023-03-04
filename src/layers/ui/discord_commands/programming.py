@@ -77,6 +77,15 @@ class Programming(commands.Cog):
                     await ctx.send(f"Failed to reload settings")
                     log.exception(f"Failed to reload settings")
                     return
+
+                # self.bot.dispatch("shutdown")
+                # this creates a task that get's wiped because of exit or loop stop
+                for event in self.bot.extra_events.get("on_unload", []):
+                    # WARNING: `extra_events` accessing none documented public variable !!!
+                    try:
+                        await discord.utils.maybe_coroutine(event)
+                    except:
+                        log.exception("Failed to call `on_unload`")
                 try:
                     for name, module in loadedModules.items():
                         if name.startswith("src.layers.business"):

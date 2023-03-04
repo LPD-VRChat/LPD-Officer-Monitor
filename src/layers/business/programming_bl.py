@@ -6,6 +6,7 @@ from os import _exit
 import logging
 
 # Community
+import discord
 from discord.ext import commands
 
 # Custom
@@ -39,6 +40,15 @@ class ProgrammingBL(DiscordListenerMixin):
         if location == "the console":
             print()
         log.warning(msg_string)
+
+        # self.bot.dispatch("shutdown")
+        # this creates a task that get's wiped because of exit or loop stop
+        for event in self.bot.extra_events.get("on_unload", []):
+            # WARNING: `extra_events` accessing none documented public variable !!!
+            try:
+                await discord.utils.maybe_coroutine(event)
+            except:
+                log.exception("Failed to call `on_unload`")
 
         # Stop the database
         if database.is_connected:
