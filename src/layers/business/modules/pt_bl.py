@@ -345,8 +345,8 @@ class PatrolTimeBL(DiscordListenerMixin):
         """key is channel_id, array of officer_id"""
         result: dict[int, list[int]] = {}
         for officer_id, data in self._patrolling_officers.items():
-            if data.voice_logs[-1].channel_id in result:
-                result[data.voice_logs[-1].channel_id].append(officer_id)
+            if data.voice_logs[-1].channel.id in result:
+                result[data.voice_logs[-1].channel.id].append(officer_id)
             else:
-                result[data.voice_logs[-1].channel_id] = [officer_id]
+                result[data.voice_logs[-1].channel.id] = [officer_id]
         return result

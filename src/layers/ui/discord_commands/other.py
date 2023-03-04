@@ -300,7 +300,7 @@ class Other(commands.Cog):
         for channel_id, officers in r.items():
             channel = self.bot.get_channel(channel_id)
             if channel:
-                message += f"\n** {channel.name}> **:\n"
+                message += f"\n** {channel.name} **:\n"
             else:
                 message += f"\n** {self.bot.guild. channel_id}> **:\n"
             message += "".join([f"<@{o}>\n" for o in officers])
