@@ -350,3 +350,69 @@ class PatrolTimeBL(DiscordListenerMixin):
             else:
                 result[data.voice_logs[-1].channel.id] = [officer_id]
         return result
+
+    async def get_inactive_cadets(
+        self,
+        date_from: dt.datetime,
+        minimum_hours: int,
+    ) -> list[models.Officer]:
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            logging.error(f"guild {settings.SERVER_ID} is not accessible")
+            return []
+        discord_role = guild.get_role(settings.ROLE_LADDER.cadet.id)
+        if discord_role is None:
+            logging.error(
+                f"{settings.ROLE_LADDER.cadet.name} role {settings.ROLE_LADDER.cadet.id} is not accessible"
+            )
+            return []
+        l = [m.id for m in discord_role.members]
+        officers_old_enough = await models.Officer.objects.filter(
+            id__in=l,
+            started_monitoring__lt=date_from,
+        ).all()
+        if len(officers_old_enough) == 0:
+            return []
+
+        patrols = await models.Patrol.objects.filter(
+            officer__in=[o.id for o in officers_old_enough],
+            start__gt=date_from,
+        ).all()
+
+        patrolling_times = {key: dt.timedelta() for key in l}
+        for p in patrols:
+            patrolling_times[p.officer.id] += p.duration()
+            await asyncio.sleep(0)
+        requirement = dt.timedelta(hours=minimum_hours)
+
+        officer_to_yeet_ids: list[int] = []
+        for oid in l:
+            if oid not in patrolling_times:
+                officer_to_yeet_ids.append(oid)
+            else:
+                if patrolling_times[oid] < requirement:
+                    officer_to_yeet_ids.append(oid)
+
+        officers = await models.Officer.objects.filter(id__in=officer_to_yeet_ids).all()
+        return officers
+
+    async def remove_cadet(self, officers: list[models.Officer]) -> bool:
+        lpd_role = discord.Object(settings.LPD_ROLE)
+        cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        success = True
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+        for o in officers:
+            member = guild.get_member(o.id)
+            if not member:
+                log.error(f"Member[{o.id}] not found!")
+                o.delete = dt.datetime.now()
+                o.update()
+                continue
+            try:
+                await member.remove_roles(lpd_role, cadet_role, reason="remove_cadet")
+            except:
+                log.exception("failed to remove cadets roles")
+                success = False
+        return success

@@ -423,8 +423,28 @@ class Time(commands.Cog):
                 f"cadet role {settings.ROLE_LADDER.cadet.id} is not accessible"
             )
 
-        # TODO : implement once activity system is implemented
-        interaction_reply(interac, "TODO implementation")
+        date_from = dt.datetime.now() - dt.timedelta(days=inactive_days_required)
+        inactives = await self.bl_wrapper.pt_bl.get_inactive_cadets(date_from, 1)
+        message = f"Inactive cadets {len(inactives)}:\n"
+        message += "\n".join([f"<@{o.id}>" for o in inactives])
+
+        await interaction_reply(interac, content=message)
+        if len(inactives) == 0:
+            return
+
+        if not await msgbox_confirm(
+            interac,
+            message="Do you want to remove all those inactive cadets",
+        ):
+            return
+
+        r = await self.bl_wrapper.pt_bl.remove_cadet(inactives)
+        await interaction_reply(
+            interac,
+            content="All cadets have been sacrified successfully"
+            if r
+            else ":red_circle: Some errors happened, please check the logs!!!",
+        )
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
