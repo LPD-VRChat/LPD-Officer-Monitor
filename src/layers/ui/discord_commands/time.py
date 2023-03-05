@@ -406,12 +406,12 @@ class Time(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     @app_cmd.describe(
-        inactive_days_required="amount of days a cadet need to be inactive to be yeeted (default=21)"
+        inactive_days_required="amount of days a cadet need to be inactive to be yeeted (default=28)"
     )
     async def remove_inactive_cadets(
         self,
         interac: discord.Interaction,
-        inactive_days_required: int = 21,
+        inactive_days_required: int = 28,
     ):
         guild = self.bot.get_guild(settings.SERVER_ID)
         if not guild:
