@@ -20,7 +20,7 @@ COPY requirements.txt requirements.txt
 
 #doing everything in one command to reduce layer
 RUN apk update && \
-    apk add --no-cache git gcc g++ musl-dev mariadb-connector-c-dev ffmpeg && \
+    apk add --no-cache git gcc g++ musl-dev mariadb-connector-c-dev mariadb-connector-c && \
     pip install -r requirements.txt && \
     pip cache purge && \
     apk del -r git gcc g++ musl-dev mariadb-connector-c-dev && \
