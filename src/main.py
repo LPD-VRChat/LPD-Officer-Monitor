@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import traceback
+import signal
 
 # need python 3.10 for match instruction
 assert (
@@ -256,6 +257,15 @@ def main():
         finally:
             if not bot.is_closed():
                 await bot.close()
+
+    def raise_graceful_exit(sig, *args):
+        log.info(f"EXIT signal {sig}")
+        raise KeyboardInterrupt()
+
+    signal.signal(signal.SIGINT, raise_graceful_exit)
+    signal.signal(signal.SIGTERM, raise_graceful_exit)
+    if hasattr(signal, "SIGHUP"):  # only in linux
+        signal.signal(signal.SIGHUP, raise_graceful_exit)
 
     future = asyncio.ensure_future(runner(), loop=loop)
     try:
