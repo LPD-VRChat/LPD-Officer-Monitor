@@ -74,7 +74,7 @@ class MemberManagementBL(
         # Create or update the officer in the database
         if officer is not None:
             last_allowed_return_time = now() - dt.timedelta(days=7)
-            if officer.deleted_at and officer.deleted_at > last_allowed_return_time:
+            if officer.deleted_at and officer.deleted_at < last_allowed_return_time:
                 # Reset the needed data on the officer
                 officer.started_monitoring = now()
                 officer.vrchat_name = ""
