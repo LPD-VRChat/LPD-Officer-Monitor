@@ -16,11 +16,6 @@ Hypercorn==0.11.2
 Quart==0.17
 Quart_Discord==2.1.4
 
-# Gif creation (no longer in use)
-moviepy==1.0.3
-numpy>=1.21.1
-array2gif==1.0.4
-
 # Testing
 pytest>=6.2.5
 pytest-env>=0.6.2
