@@ -158,7 +158,7 @@ class Moderation(commands.Cog):
 
         if not await msgbox_confirm(
             interac,
-            message=f"**Are you sure you want this user to be detained?**\nOffender: <@{user_id}  [{user_id}]\nReason: {reason}",
+            message=f"**Are you sure you want this user to be detained?**\nOffender: <@{user_id}> [{user_id}]\nReason: {reason}",
         ):
             return
         await self.bl_wrapper.mod.detain_user(user_id, reason)
@@ -206,7 +206,7 @@ class Moderation(commands.Cog):
 
         if not await msgbox_confirm(
             interac,
-            message=f"**Are you sure you want this user to be Released?**\nOffender: <@{user_id}  [{user_id}]",
+            message=f"**Are you sure you want this user to be Released?**\nOffender: <@{user_id}> [{user_id}]",
         ):
             return
 
