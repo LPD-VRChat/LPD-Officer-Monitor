@@ -21,6 +21,8 @@ from src.layers.business.extra_functions import (
 
 
 class Moderation(commands.Cog):
+    doc_mention_vs_id = "use `offender` if user is still present in the guild. use `member_id` if user is gone form the guild"
+
     def __init__(self, bot):
         self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.color = discord.Color.blue()
@@ -77,15 +79,15 @@ class Moderation(commands.Cog):
         offender: discord.Member = None,
         member_id: str = None,
     ):
-        """use `offender` if user is still present in the guild. use `member_id` if user is gone form the guild"""
-
         match (offender is None, member_id is None):
             case (True, True):
-                await interaction_reply(interac, f"Define only one user, {__doc__}")
+                await interaction_reply(
+                    interac, f"Define only one user, {self.doc_mention_vs_id}"
+                )
                 return
             case (False, False):
                 await interaction_reply(
-                    interac, f"You need to define a user!!!, {__doc__}"
+                    interac, f"You need to define a user!!!, {self.doc_mention_vs_id}"
                 )
                 return
             case (False, True):
@@ -94,7 +96,9 @@ class Moderation(commands.Cog):
                 try:
                     user_id = int(member_id)
                 except (ValueError):
-                    await interaction_reply(interac, f"Not a valid id, {__doc__}")
+                    await interaction_reply(
+                        interac, f"Not a valid id, {self.doc_mention_vs_id}"
+                    )
                     return
 
         strikes = await self.bl_wrapper.mod.list_strike(user_id)
@@ -130,15 +134,15 @@ class Moderation(commands.Cog):
         offender: discord.Member = None,
         member_id: str = None,
     ):
-        """use `offender` if user is still present in the guild. use `member_id` if user is gone form the guild"""
-
         match (offender is None, member_id is None):
             case (True, True):
-                await interaction_reply(interac, f"Define only one user, {__doc__}")
+                await interaction_reply(
+                    interac, f"Define only one user, {self.doc_mention_vs_id}"
+                )
                 return
             case (False, False):
                 await interaction_reply(
-                    interac, f"You need to define a user!!!, {__doc__}"
+                    interac, f"You need to define a user!!!, {self.doc_mention_vs_id}"
                 )
                 return
             case (False, True):
@@ -147,7 +151,9 @@ class Moderation(commands.Cog):
                 try:
                     user_id = int(member_id)
                 except (ValueError):
-                    await interaction_reply(interac, f"Not a valid id, {__doc__}")
+                    await interaction_reply(
+                        interac, f"Not a valid id, {self.doc_mention_vs_id}"
+                    )
                     return
 
         if not await msgbox_confirm(
@@ -178,11 +184,13 @@ class Moderation(commands.Cog):
 
         match (offender is None, member_id is None):
             case (True, True):
-                await interaction_reply(interac, f"Define only one user, {__doc__}")
+                await interaction_reply(
+                    interac, f"Define only one user, {self.doc_mention_vs_id}"
+                )
                 return
             case (False, False):
                 await interaction_reply(
-                    interac, f"You need to define a user!!!, {__doc__}"
+                    interac, f"You need to define a user!!!, {self.doc_mention_vs_id}"
                 )
                 return
             case (False, True):
@@ -191,7 +199,9 @@ class Moderation(commands.Cog):
                 try:
                     user_id = int(member_id)
                 except (ValueError):
-                    await interaction_reply(interac, f"Not a valid id, {__doc__}")
+                    await interaction_reply(
+                        interac, f"Not a valid id, {self.doc_mention_vs_id}"
+                    )
                     return
 
         if not await msgbox_confirm(
