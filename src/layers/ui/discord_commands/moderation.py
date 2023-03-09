@@ -55,7 +55,7 @@ class Moderation(commands.Cog):
             interac,
             f"Strike recorded.\nNumber of strikes in last 2 week: {strikes[0]}\nToal number of strikes: {strikes[1]}",
         )
-        if strikes[0]:
+        if strikes[0] >= 3:
             await interaction_reply(
                 interac,
                 f"<@&{settings.MODERATOR_ROLE}> <@{offender.id}> have received at least 3 strikes in the last two weeks.",
