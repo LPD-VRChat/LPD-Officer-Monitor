@@ -509,10 +509,10 @@ class Time(commands.Cog):
         if role_inactive is None:
             raise Exception(f"inactive role {settings.INACTIVE_ROLE} is not accessible")
 
-        for id in inactives:
-            member = guild.get_member(id)
+        for officer in inactives:
+            member = guild.get_member(officer.id)
             if not member:
-                log.error(f"officer {id} invalid member!!!")
+                log.error(f"officer {officer.id} invalid member!!!")
                 continue
             await member.add_roles(role_inactive, reason="bot mark_inactive")
         await interaction_reply(interac, content="Done")
