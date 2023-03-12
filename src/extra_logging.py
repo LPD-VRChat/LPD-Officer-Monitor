@@ -20,7 +20,7 @@ class DiscordLoggingHandler(logging.Handler):
         self,
         webhook: str,
         loop: asyncio.AbstractEventLoop = None,
-        min_log_level: int = logging.WARNING,
+        min_log_level: int = logging.INFO,
     ):
         super().__init__()
         self._webhook = webhook
@@ -33,12 +33,16 @@ class DiscordLoggingHandler(logging.Handler):
             color=discord.Color.green(),
             timestamp=dt.datetime.now(tz=dt.timezone.utc),
         )
-        self._loop.run_until_complete(self._send_embed(ready_embed))
+        self._loop.run_until_complete(self._send(embed=ready_embed))
 
-    async def _send_embed(self, embed: discord.Embed):
+    async def _send(
+        self,
+        content: str = discord.utils.MISSING,
+        embed: discord.Embed = discord.utils.MISSING,
+    ):
         async with aiohttp.ClientSession() as session:
             webhook = discord.Webhook.from_url(self._webhook, session=session)
-            await webhook.send(embed=embed)
+            await webhook.send(content=content, embed=embed)
 
     async def _send_to_webhook(
         self,
@@ -51,30 +55,47 @@ class DiscordLoggingHandler(logging.Handler):
         func_name: Optional[str] = None,
         time: Optional[dt.datetime] = None,
     ) -> None:
-        # Get a color for the embed
-        if error_level < logging.WARNING:
-            color = discord.Color.green()
-        elif error_level == logging.WARNING:
-            color = discord.Color.gold()
-        elif error_level > logging.WARNING:
-            color = discord.Color.red()
+        if error_level < logging.ERROR:
 
-        # Create the embed
-        embed = discord.Embed(
-            title=error_type, description=message + "\n\n" + (trace or ""), color=color
-        )
+            match (error_level):
+                case (logging.DEBUG):
+                    level_str = ":bug:"
+                case (logging.INFO):
+                    level_str = ":information_source:"
+                case (logging.WARNING):
+                    level_str = ":warning:"
+                case (logging.ERROR):
+                    level_str = ":red_circle:"
+                case (logging.CRITICAL):
+                    level_str = ":octagonal_sign:"
+                case _:
+                    level_str = ":interrobang:"
+            await self._send(content=f"{level_str}{filename}| {message}")
+        else:
+            # Get a color for the embed
+            if error_level == logging.WARNING:
+                color = discord.Color.gold()
+            elif error_level > logging.WARNING:
+                color = discord.Color.red()
 
-        # Add extra fields
-        if filename is not None:
-            embed.add_field(name="Filename", value=filename)
-        if line_num is not None:
-            embed.add_field(name="Line Number", value=line_num)
-        if func_name is not None:
-            embed.add_field(name="Function", value=func_name)
-        if time is not None:
-            embed.timestamp = time
+            # Create the embed
+            embed = discord.Embed(
+                title=error_type,
+                description=message + "\n\n" + (trace or ""),
+                color=color,
+            )
 
-        await self._send_embed(embed)
+            # Add extra fields
+            if filename is not None:
+                embed.add_field(name="Filename", value=filename)
+            if line_num is not None:
+                embed.add_field(name="Line Number", value=line_num)
+            if func_name is not None:
+                embed.add_field(name="Function", value=func_name)
+            if time is not None:
+                embed.timestamp = time
+
+            await self._send(embed=embed)
 
     def emit(self, record: logging.LogRecord) -> None:
         # Only log the message if it's above the minimum level
@@ -82,7 +103,10 @@ class DiscordLoggingHandler(logging.Handler):
 
             # Convert date to datetime
             iso_time = ",".join(record.asctime.split(",")[0:-1])
-            time = dt.datetime.fromisoformat(iso_time)
+            try:
+                time = dt.datetime.fromisoformat(iso_time)
+            except ValueError:
+                time = dt.datetime.now()
 
             # Add a task to send the error to Discord so that we don't stop the event loop
             # TODO: Account for rate limiting when logging a lot at once
