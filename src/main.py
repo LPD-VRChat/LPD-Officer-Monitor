@@ -42,7 +42,10 @@ def setup_logger():
     if not os.path.isdir(log_folder):
         os.makedirs(log_folder)
 
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname).1s | %(module).12s | %(message)s",
+        datefmt="%Y/%m/%d %H:%M:%S",
+    )
     sh = logging.StreamHandler()
     fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
     dh = DiscordLoggingHandler(webhook=settings.LOGGING_WEBHOOK)
@@ -57,7 +60,7 @@ def setup_logger():
 
 
 async def start_webmanager(bot, log):
-    log.info(f"Starting WebManager...")
+    log.debug(f"Starting WebManager...")
     web_manager = await WebManager.configure(
         bot,
         host=settings.WEB_MANAGER_HOST,
@@ -76,6 +79,7 @@ async def start_webmanager(bot, log):
 async def tree_on_error(
     interaction: discord.Interaction, error: discord.app_commands.AppCommandError
 ):
+    log = logging.getLogger("lpd-officer-monitor")
     if settings.CONFIG_LOADED == "dev":
         if isinstance(error, discord.app_commands.CheckFailure):
             ##check interaction for responce type
@@ -98,7 +102,7 @@ async def tree_on_error(
             interaction, f"🛠️dev :red_circle:{error}", ephemeral=True
         )
         if isinstance(error, discord.app_commands.CommandInvokeError):
-            logging.error(str(error.original))
+            log.error(str(error.original))
             traceback.print_exception(
                 type(error.original), error.original, error.original.__traceback__
             )
@@ -107,7 +111,7 @@ async def tree_on_error(
     await interaction_reply(
         interaction, f":red_circle: Internal error :red_circle:", ephemeral=True
     )
-    logging.error(f"cmd`{interaction.command.name}` {error}")
+    log.error(f"cmd`{interaction.command.name}` {error}")
 
 
 def main():
@@ -169,13 +173,14 @@ def main():
 
     @bot.event
     async def on_ready():
-        log.info(f"{'Logged in as':<12}: {bot.user.name}")
+        log.debug(f"{'Logged in as':<12}: {bot.user.name}")
 
         bot.guild = bot.get_guild(settings.SERVER_ID)
         if bot.guild:
-            log.info(f"{'Server name':<12}: {bot.guild.name}")
-            log.info(f"{'Server ID':<12}: {bot.guild.id}")
+            log.debug(f"{'Server name':<12}: {bot.guild.name}")
+            log.debug(f"{'Server ID':<12}: {bot.guild.id}")
         else:
+            # TODO add invite link
             await bot.cogs["Programming"].bl_wrapper.p.clean_shutdown(
                 location="internal", shutdown_by="server lookup"
             )
