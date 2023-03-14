@@ -180,7 +180,16 @@ def main():
             log.debug(f"{'Server name':<12}: {bot.guild.name}")
             log.debug(f"{'Server ID':<12}: {bot.guild.id}")
         else:
-            # TODO add invite link
+            if settings.CLIENT_ID == 0:
+                log.error("CLIENT_ID not defined, cannot generate invite link")
+            else:
+                invite_url = discord.utils.oauth_url(
+                    settings.CLIENT_ID,
+                    permissions=discord.Permissions(
+                        permissions=settings.DISCORD_PERMISSION
+                    ),
+                )
+                log.warning(f"bot invite url {invite_url}")
             await bot.cogs["Programming"].bl_wrapper.p.clean_shutdown(
                 location="internal", shutdown_by="server lookup"
             )

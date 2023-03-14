@@ -140,6 +140,8 @@ DISCORD_TOKEN = ""
 CLIENT_ID = 0
 CLIENT_SECRET = ""
 CALLBACK_URL = "https://callback.url"
+DISCORD_PERMISSION = 277059202112
+# https://discordapi.com/permissions.html#277059202112
 
 # Scam Detection Settings ########################################
 GIFT_LINK_EXPIRATION_SECONDS = 30
