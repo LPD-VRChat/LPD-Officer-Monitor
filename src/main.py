@@ -43,7 +43,7 @@ def setup_logger():
         os.makedirs(log_folder)
 
     formatter = logging.Formatter(
-        "%(asctime)s | %(levelname).1s | %(module).12s | %(message)s",
+        "%(asctime)s %(levelname).1s %(module).12s | %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
     )
     sh = logging.StreamHandler()
