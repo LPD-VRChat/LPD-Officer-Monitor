@@ -173,12 +173,13 @@ def main():
 
     @bot.event
     async def on_ready():
-        log.debug(f"{'Logged in as':<12}: {bot.user.name}")
+        log.debug(f"{'Logged in as':<18}: {bot.user.name}")
+        log.debug(f"{'Loaded settings':<18}: {settings.CONFIG_LOADED}")
 
         bot.guild = bot.get_guild(settings.SERVER_ID)
         if bot.guild:
-            log.debug(f"{'Server name':<12}: {bot.guild.name}")
-            log.debug(f"{'Server ID':<12}: {bot.guild.id}")
+            log.debug(f"{'Server name':<18}: {bot.guild.name}")
+            log.debug(f"{'Server ID':<18}: {bot.guild.id}")
         else:
             if settings.CLIENT_ID == 0:
                 log.error("CLIENT_ID not defined, cannot generate invite link")
