@@ -10,7 +10,7 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
       DISCORD_SECRET_FILE: /run/secrets/discord_secret
-
+      #LPD_OFFICER_MONITOR_ENVIRONMENT: "dev"
     volumes:
       - ".:/app"
     secrets:
@@ -19,6 +19,7 @@ services:
       - discord_secret
     depends_on:
       - db
+    restart: on-failure:4
 
   db:
     image: mariadb:10.6 #LTS
