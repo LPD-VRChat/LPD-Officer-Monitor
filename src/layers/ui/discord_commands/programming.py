@@ -9,6 +9,7 @@ import logging
 from typing import Optional
 import importlib
 import sys
+import os
 
 # Community
 import discord
@@ -37,7 +38,9 @@ class Programming(commands.Cog):
         """This command shuts the bot down cleanly"""
         await ctx.send("Shutting the bot down...")
         await self.bl_wrapper.p.clean_shutdown(
-            "#" + ctx.channel.name, ctx.author.display_name, exit=True
+            "#" + ctx.channel.name,
+            ctx.author.display_name,
+            exit_code=0,
         )
 
     @checks.is_team_bot_channel()
@@ -45,9 +48,14 @@ class Programming(commands.Cog):
     @commands.command()
     async def restart(self, ctx):
         """Restarts the bot if something is broken"""
+        if not os.environ.get("LPD_OFFICER_MONITOR_DOCKER"):
+            await ctx.send("Unable to restart outside a container")
+            return
         await ctx.send("Restarting the bot...")
         await self.bl_wrapper.p.clean_shutdown(
-            "#" + ctx.channel.name, ctx.author.display_name, exit=False
+            "#" + ctx.channel.name,
+            ctx.author.display_name,
+            exit_code=75,  # EX_TEMPFAIL
         )
 
     @checks.is_team_bot_channel()

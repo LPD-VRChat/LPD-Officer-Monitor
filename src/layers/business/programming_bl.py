@@ -1,6 +1,6 @@
 # Standard
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import asyncio
 from os import _exit
 import logging
@@ -29,7 +29,7 @@ class ProgrammingBL(DiscordListenerMixin):
         self,
         location: str = "the console",
         shutdown_by: str = "KeyboardInterrupt",
-        exit: bool = True,
+        exit_code: Optional[int] = None,
     ):
         """
         Cleanly shutdown the bot.
@@ -58,5 +58,5 @@ class ProgrammingBL(DiscordListenerMixin):
         loop = asyncio.get_event_loop()
         loop.call_soon_threadsafe(loop.stop)
 
-        if exit:
-            _exit(0)
+        if exit_code:
+            _exit(exit_code)

@@ -191,12 +191,14 @@ def main():
                 )
                 log.warning(f"bot invite url {invite_url}")
             await bot.cogs["Programming"].bl_wrapper.p.clean_shutdown(
-                location="internal", shutdown_by="server lookup"
+                location="internal",
+                shutdown_by="server lookup",
+                exit_code=69,  # EX_UNAVAILABLE
             )
 
         if bot.has_been_started:
             await bot.cogs["Programming"].bl_wrapper.p.clean_shutdown(
-                location="internal", shutdown_by="automatic recovery", exit=False
+                location="internal", shutdown_by="automatic recovery"
             )
 
         # This should be the last line in this function
