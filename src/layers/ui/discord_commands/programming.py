@@ -205,6 +205,44 @@ class Programming(commands.Cog):
         await ctx.bot.tree.sync(guild=discord.Object(id=settings.SERVER_ID))
         await ctx.send(content="Command tree synced sucessfully!", view=None)
 
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def slash_req(self, ctx: commands.Context):
+        embeds = []
+        for cog_name in ctx.bot.cogs:
+            cog_embed = discord.Embed(
+                title=cog_name,
+                description=ctx.bot.cogs[cog_name].description,
+                color=getattr(ctx.bot.cogs[cog_name], "color", discord.Color.purple()),
+            )
+            for cmd in ctx.bot.cogs[cog_name].walk_app_commands():
+                if isinstance(cmd, discord.app_commands.Group):
+                    logging.error("Groups is not handled")  # TODO
+                    continue
+                checks_txt = ""
+                for check in cmd.checks:
+                    checks_txt += f"`{check.__qualname__.split('.<locals>')[0]}`\n"
+                if len(checks_txt):
+                    cog_embed.add_field(name="/" + cmd.name, value=checks_txt)
+            for tcmd in ctx.bot.cogs[cog_name].walk_commands():
+                if isinstance(tcmd, commands.Group):
+                    logging.error("Groups are not handled")  # TODO
+                    continue
+                if not isinstance(tcmd, commands.HybridCommand):
+                    continue
+                checks_txt = ""
+                for check in tcmd.checks:
+                    checks_txt += f"`{check.__qualname__.split('.<locals>')[0]}`\n"
+                    if len(checks_txt):
+                        cog_embed.add_field(name="/" + tcmd.name, value=checks_txt)
+            if len(cog_embed.fields):
+                embeds.append(cog_embed)
+
+        while len(embeds) > 0:
+            await ctx.send(None, embeds=embeds[0:10])
+            embeds = embeds[10:]
+
 
 async def setup(bot):
     await bot.add_cog(Programming(bot))
