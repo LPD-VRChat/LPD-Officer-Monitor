@@ -142,8 +142,8 @@ class Programming(commands.Cog):
 
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
-    @commands.command()
-    async def tree(self, ctx: commands.Context):
+    @commands.command(aliases=["tree"])
+    async def slash_sync(self, ctx: commands.Context):
         """
         One modification is enough to justify tree sync
         https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f
