@@ -1,31 +1,37 @@
 import os as _os
 
-def _readSecretFile(name:str)->str:
+
+def _readSecretFile(name: str) -> str:
     filepath = name
     if not name.startswith("/"):
         filepath = f"Keys/{name}"
     with open(filepath, "r") as f:
         return f.read()
 
-def _readDockerSecret(envKey:str)->str:
+
+def _readDockerSecret(envKey: str) -> str:
     envVar = _os.environ.get(envKey)
     assert envVar, f"{envKey} is not defined"
     return _readSecretFile(envVar)
+
 
 CONFIG_LOADED = "None"
 
 # Import only from base if the program is being unit tests
 if _os.environ.get("LPD_OFFICER_MONITOR_UNIT_TESTING"):
     from .base import *
+
     CONFIG_LOADED = "base_test"
 else:
     try:
         # Override with settings for production or development
         if _os.environ.get("LPD_OFFICER_MONITOR_ENVIRONMENT") == "dev":
             from .dev import *
+
             CONFIG_LOADED = "dev"
         else:
             from .production import *
+
             CONFIG_LOADED = "prod"
     except ImportError:
         CONFIG_LOADED = "err"
