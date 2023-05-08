@@ -234,8 +234,8 @@ class Programming(commands.Cog):
                 checks_txt = ""
                 for check in tcmd.checks:
                     checks_txt += f"`{check.__qualname__.split('.<locals>')[0]}`\n"
-                    if len(checks_txt):
-                        cog_embed.add_field(name="/" + tcmd.name, value=checks_txt)
+                if len(checks_txt):
+                    cog_embed.add_field(name="/" + tcmd.name, value=checks_txt)
             if len(cog_embed.fields):
                 embeds.append(cog_embed)
 
