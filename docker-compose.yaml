@@ -10,7 +10,7 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
       DISCORD_SECRET_FILE: /run/secrets/discord_secret
-      #LPD_OFFICER_MONITOR_ENVIRONMENT: "dev"
+      LPD_OFFICER_MONITOR_ENVIRONMENT: "${LPD_OFFICER_MONITOR_ENVIRONMENT}"
     volumes:
       - ".:/app"
     secrets:

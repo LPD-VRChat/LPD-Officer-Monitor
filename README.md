@@ -22,6 +22,12 @@ Reinstall requirements
 ```
 pip install -r requirements.txt
 ```
+
+docker commands
+```
+docker compose --env-file .env.dev ####
+```
+
 ## Database update
 
 create/upgrade the tables. Base need to exists
