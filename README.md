@@ -3,9 +3,15 @@ This repository stores a discord bot made for the VRChat role-play group Loli Po
 
 This branch contains the development version of V3. It is structured very differently, and as such, maintenance will be vastly different.
 
+## Requirements
+
+- Git
+- python 3.10+ (only outside docker)
+- docker (optional)
+- MySql/MariaDB server
 
 
-## using alembic
+## Setup for DEV
 
 create virtual environement
 ```
@@ -16,6 +22,7 @@ Reinstall requirements
 ```
 pip install -r requirements.txt
 ```
+## Database update
 
 create/upgrade the tables. Base need to exists
 ```
@@ -35,6 +42,18 @@ The bot isn't going to do database operation (creation, migration) automatically
 The image is using Alpine for now to be as light as possible, any distribution could be used.
 
 Python venv isn't used in Docker
+
+### Download
+
+First checkout
+```sh
+git clone --branch v3-main https://github.com/LPD-VRChat/LPD-Officer-Monitor.git
+```
+
+update only:
+```sh
+git pull
+```
 
 ### Setup
 
