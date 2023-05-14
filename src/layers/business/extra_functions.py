@@ -180,6 +180,9 @@ def is_lpd_member(member: Optional[discord.Member]):
     if member is None:
         return False
 
+    if has_role_id(member, settings.LPD_ROLE):
+        return True  # early out on correct setup
+    # in the rare event someone have a rank but not LPD role
     lpd_role_set = {v.id for k, v in settings.ROLE_LADDER.items()}
     member_rank_roles = set(r.id for r in member.roles).intersection(lpd_role_set)
     return len(member_rank_roles) != 0
