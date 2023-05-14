@@ -70,11 +70,12 @@ class MemberActivityBL(DiscordListenerMixin):
         await entry.update()
         channel: discord.TextChannel = self.bot.get_channel(payload.channel_id)
         partial_message = channel.get_partial_message(payload.message_id)
-        await channel.send(
-            content=f"<@{entry.officer.id}> Editing an LOA is not permited. You need to create a new one",
-            delete_after=30,
-        )
-        await partial_message.delete()
+        if not settings.DRY_RUN:
+            await channel.send(
+                content=f"<@{entry.officer.id}> Editing an LOA is not permited. You need to create a new one",
+                delete_after=30,
+            )
+            await partial_message.delete()
 
     async def process_loa(self, message: discord.Message):
         # from V2
@@ -122,12 +123,13 @@ class MemberActivityBL(DiscordListenerMixin):
 
         except (TypeError, ValueError, KeyError, IndexError):
             # If all of that failed, let the user know with an autodeleting message
-            await message.channel.send(
-                message.author.mention
-                + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
-                delete_after=10,
-            )
-            await message.delete()
+            if not settings.DRY_RUN:
+                await message.channel.send(
+                    message.author.mention
+                    + " Please use correct formatting: 21/July/2020 - 21/August/2020: Reason.",
+                    delete_after=10,
+                )
+                await message.delete()
             return
 
         date_start = [int(i) for i in date_start]
@@ -140,11 +142,12 @@ class MemberActivityBL(DiscordListenerMixin):
             or date_end[1] > 12
         ):
             # If the month isn't 1-12, let the user know they dumb
-            await message.channel.send(
-                message.author.mention + " There are only 12 months in a year.",
-                delete_after=10,
-            )
-            await message.delete()
+            if not settings.DRY_RUN:
+                await message.channel.send(
+                    message.author.mention + " There are only 12 months in a year.",
+                    delete_after=10,
+                )
+                await message.delete()
             return
 
         # Convert our separate data into a usable datetime
@@ -159,33 +162,36 @@ class MemberActivityBL(DiscordListenerMixin):
             date_start = datetime.strptime(date_start_complex, "%d/%m/%Y")
             date_end = datetime.strptime(date_end_complex, "%d/%m/%Y")
         except (ValueError, TypeError):
-            await message.channel.send(
-                message.author.mention
-                + " There was a problem with your day. Please use a valid day number.",
-                delete_after=10,
-            )
-            await message.delete()
+            if not settings.DRY_RUN:
+                await message.channel.send(
+                    message.author.mention
+                    + " There was a problem with your day. Please use a valid day number.",
+                    delete_after=10,
+                )
+                await message.delete()
             return
 
         if date_end > date_start + timedelta(
             weeks=+12
         ) or date_end < date_start + timedelta(weeks=+3):
             # If more than 12 week LOA, inform user
-            await message.channel.send(
-                message.author.mention
-                + " Leaves of Absence are limited to 3-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
-                delete_after=10,
-            )
-            await message.delete()
+            if not settings.DRY_RUN:
+                await message.channel.send(
+                    message.author.mention
+                    + " Leaves of Absence are limited to 3-12 weeks. For longer times, please contact a White Shirt (Lieutenant or Above).",
+                    delete_after=10,
+                )
+                await message.delete()
             return
 
         # Make sure the LOA isn't over yet
         if date_end < datetime.utcnow():
-            await message.channel.send(
-                f"{message.author.mention} The leave of absence you supplied has already expired.",
-                delete_after=10,
-            )
-            await message.delete()
+            if not settings.DRY_RUN:
+                await message.channel.send(
+                    f"{message.author.mention} The leave of absence you supplied has already expired.",
+                    delete_after=10,
+                )
+                await message.delete()
             return
 
         await self.save_loa(
@@ -209,7 +215,7 @@ class MemberActivityBL(DiscordListenerMixin):
         try:
             prevLoa = await models.LOAEntry.objects.get(officer=officer_id)
             ch = self.bot.get_channel(prevLoa.channel_id)
-            if ch:
+            if ch and not settings.DRY_RUN:
                 try:
                     await ch.delete_messages(
                         messages=[discord.Object(id=prevLoa.message_id)],
@@ -226,7 +232,7 @@ class MemberActivityBL(DiscordListenerMixin):
             prevLoa = await models.LOAEntry.objects.all(officer=officer_id)
             for l in prevLoa:
                 ch = self.bot.get_channel(l.channel_id)
-                if ch:
+                if ch and not settings.DRY_RUN:
                     try:
                         await ch.delete_messages(
                             messages=[discord.Object(id=l.message_id)],

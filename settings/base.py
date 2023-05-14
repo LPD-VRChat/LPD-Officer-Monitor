@@ -120,6 +120,10 @@ DB_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 NAME_SEPARATOR = ";"
 LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "logs", "lpd_officer_monitor.log")
 
+# Disable some responces or features, supposed to be use only when another bot supposed to answer
+# use in loa_bl
+DRY_RUN = False
+
 # Logging ########################################################
 LOGGING_WEBHOOK = "INSERT_WEBHOOK_HERE"
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "0")
