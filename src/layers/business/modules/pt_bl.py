@@ -215,14 +215,14 @@ class PatrolTimeBL(DiscordListenerMixin):
         curr_time = now()
         channel: discord.VoiceChannel
         for channel in self.bot.guild.channels:
-            model, _ = await models.SavedVoiceChannel.objects.get_or_create(
-                id=channel.id,
-                _defaults={
-                    "guild_id": settings.SERVER_ID,
-                    "name": channel.name,
-                },
-            )
             if self._is_monitored(channel):
+                model, _ = await models.SavedVoiceChannel.objects.get_or_create(
+                    id=channel.id,
+                    _defaults={
+                        "guild_id": settings.SERVER_ID,
+                        "name": channel.name,
+                    },
+                )
                 for member in channel.members:
                     patrol = await models.Patrol.objects.create(
                         officer=member.id,
