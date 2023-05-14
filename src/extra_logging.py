@@ -70,7 +70,9 @@ class DiscordLoggingHandler(logging.Handler):
                     level_str = ":octagonal_sign:"
                 case _:
                     level_str = ":interrobang:"
-            await self._send(content=f"{level_str}{filename}| {message}")
+            await self._send(
+                content=f"{level_str}{filename.split('.py')[0]}| {message}"
+            )
         else:
             # Get a color for the embed
             if error_level == logging.WARNING:
