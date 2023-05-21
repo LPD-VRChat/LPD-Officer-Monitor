@@ -71,7 +71,7 @@ class DiscordLoggingHandler(logging.Handler):
                 case _:
                     level_str = ":interrobang:"
             await self._send(
-                content=f"{level_str}{filename.split('.py')[0]}| {message}"
+                content=f"{level_str}`{filename.split('.py')[0]}` {message}"
             )
         else:
             # Get a color for the embed
