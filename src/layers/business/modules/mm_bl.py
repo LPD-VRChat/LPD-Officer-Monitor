@@ -101,9 +101,7 @@ class MemberManagementBL(
         self._lpd_members[officer.id] = officer
 
         # Log the event
-        log.info(
-            f"{member.display_name} ({member.name}#{member.discriminator}) has been added to the database."
-        )
+        log.info(f"{member.display_name} ({member.id}) has been added to the database.")
 
     async def member_left_LPD(
         self, member_id: int, member: Optional[discord.Member]
@@ -122,14 +120,12 @@ class MemberManagementBL(
         # Let others know
         if member:
             log.info(
-                f"{member.display_name} ({member.name}#{member.discriminator}) has been removed from the LPD."
-            )
-            log.info(
+                f"{member.display_name} ({member.id}) has been removed from the LPD.\n"
                 "roles= `" + ",".join([str(role.id) for role in member.roles]) + "`"
             )
         else:
             log.info(
-                f"vrc:{officer.vrchat_name}({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
+                f"vrc:`{officer.vrchat_name}`({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
             )
         self._notify_all(MemberManagementEvent.MemberLeft(member_id, member))
 
@@ -177,7 +173,7 @@ class MemberManagementBL(
             if is_lpd_member(member) and member.id not in self._lpd_members:
                 # The member has LPD roles but wasn't in the database.
                 log.warning(
-                    f"{member.id} ({member.display_name}) was in the LPD but not in the database."
+                    f"{member.display_name} ({member.id}) was in the LPD but not in the database."
                 )
                 tasks.append(loop.create_task(self.member_joined_LPD(member)))
 
