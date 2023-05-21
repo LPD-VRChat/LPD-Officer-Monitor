@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import logging
 import datetime as dt
 from typing import Dict, Iterable
+from functools import wraps
 
 # Community
 import discord
@@ -29,6 +30,16 @@ log = logging.getLogger("lpd-officer-monitor")
 class PatrolLog:
     patrol: models.Patrol
     voice_logs: list[models.PatrolVoice]
+
+
+def voice_logs_cache_lock(f):
+    @wraps(f)
+    async def wrapper(*args, **kwds):
+        assert isinstance(args[0], PatrolTimeBL)
+        async with args[0]._cache_lock:
+            return await f(*args, **kwds)
+
+    return wrapper
 
 
 class PatrolTimeBL(DiscordListenerMixin):
@@ -123,6 +134,7 @@ class PatrolTimeBL(DiscordListenerMixin):
         return {p: p.patrolvoices for p in patrols}
 
     @bl_listen()
+    @voice_logs_cache_lock
     async def on_voice_state_update(
         self,
         member: discord.Member,
@@ -134,83 +146,82 @@ class PatrolTimeBL(DiscordListenerMixin):
         to_monitored_channel = self._is_monitored(after.channel)
         curr_time = now()
 
-        async with self._cache_lock:
-            match (on_patrol, to_monitored_channel):
+        match (on_patrol, to_monitored_channel):
 
-                # Officer is moving between monitored channels
-                case True, True:
-                    log.debug(
-                        f"{member.display_name} ({member.id}) is switching on duty channels."
-                    )
+            # Officer is moving between monitored channels
+            case True, True:
+                log.debug(
+                    f"{member.display_name} ({member.id}) is switching on duty channels."
+                )
 
-                    # Because is_monitored returned True the channel must be a voice channel
-                    assert isinstance(after.channel, discord.VoiceChannel)
+                # Because is_monitored returned True the channel must be a voice channel
+                assert isinstance(after.channel, discord.VoiceChannel)
 
-                    # Add a time to the latest patrol log and open a new one for the channel
-                    # that the officer switched into
-                    current_officer = self._patrolling_officers[member.id]
-                    current_officer.patrol.end = curr_time
-                    assert len(current_officer.voice_logs)
-                    current_officer.voice_logs[-1].end = curr_time
-                    async with models.database.transaction():
-                        await current_officer.patrol.update()
-                        await current_officer.voice_logs[-1].update()
+                # Add a time to the latest patrol log and open a new one for the channel
+                # that the officer switched into
+                current_officer = self._patrolling_officers[member.id]
+                current_officer.patrol.end = curr_time
+                assert len(current_officer.voice_logs)
+                current_officer.voice_logs[-1].end = curr_time
+                async with models.database.transaction():
+                    await current_officer.patrol.update()
+                    await current_officer.voice_logs[-1].update()
 
-                    # if the channel actually changed we create a new record, else it's only an update
-                    if current_officer.voice_logs[-1].channel.id != after.channel.id:
-                        current_officer.voice_logs.append(
-                            await models.PatrolVoice.objects.create(
-                                channel=after.channel.id,
-                                patrol=current_officer.patrol,
-                                start=curr_time,
-                                end=curr_time,
-                            )
+                # if the channel actually changed we create a new record, else it's only an update
+                if current_officer.voice_logs[-1].channel.id != after.channel.id:
+                    current_officer.voice_logs.append(
+                        await models.PatrolVoice.objects.create(
+                            channel=after.channel.id,
+                            patrol=current_officer.patrol,
+                            start=curr_time,
+                            end=curr_time,
                         )
-
-                # Officer is going on duty
-                case False, True:
-                    log.debug(f"{member.display_name} ({member.id}) is going on duty.")
-
-                    # Because is_monitored returned True the channel must be a voice channel
-                    assert isinstance(after.channel, discord.VoiceChannel)
-
-                    patrol = await models.Patrol.objects.create(
-                        officer=member.id,
-                        start=curr_time,
-                        end=curr_time,
-                        event=None,
-                        main_channel=after.channel.id,
                     )
 
-                    # Add the first patrol and voice log to the cache
-                    self._patrolling_officers[member.id] = PatrolLog(
-                        patrol,
-                        [
-                            await models.PatrolVoice.objects.create(
-                                channel=after.channel.id,
-                                patrol=patrol,
-                                start=curr_time,
-                                end=curr_time,
-                            )
-                        ],
-                    )
+            # Officer is going on duty
+            case False, True:
+                log.debug(f"{member.display_name} ({member.id}) is going on duty.")
 
-                # Officer is going off duty
-                case True, False:
-                    log.debug(f"{member.display_name} ({member.id}) is going off duty.")
-                    current_officer = self._patrolling_officers[member.id]
-                    current_officer.patrol.end = curr_time
-                    current_officer.voice_logs[-1].end = curr_time
-                    async with models.database.transaction():
-                        await current_officer.patrol.update()
-                        await current_officer.voice_logs[-1].update()
+                # Because is_monitored returned True the channel must be a voice channel
+                assert isinstance(after.channel, discord.VoiceChannel)
 
-                    # Remove the patrol from the cache as it is now in the database
-                    del self._patrolling_officers[member.id]
+                patrol = await models.Patrol.objects.create(
+                    officer=member.id,
+                    start=curr_time,
+                    end=curr_time,
+                    event=None,
+                    main_channel=after.channel.id,
+                )
 
-                # Nothing special happened
-                case _, _:
-                    pass
+                # Add the first patrol and voice log to the cache
+                self._patrolling_officers[member.id] = PatrolLog(
+                    patrol,
+                    [
+                        await models.PatrolVoice.objects.create(
+                            channel=after.channel.id,
+                            patrol=patrol,
+                            start=curr_time,
+                            end=curr_time,
+                        )
+                    ],
+                )
+
+            # Officer is going off duty
+            case True, False:
+                log.debug(f"{member.display_name} ({member.id}) is going off duty.")
+                current_officer = self._patrolling_officers[member.id]
+                current_officer.patrol.end = curr_time
+                current_officer.voice_logs[-1].end = curr_time
+                async with models.database.transaction():
+                    await current_officer.patrol.update()
+                    await current_officer.voice_logs[-1].update()
+
+                # Remove the patrol from the cache as it is now in the database
+                del self._patrolling_officers[member.id]
+
+            # Nothing special happened
+            case _, _:
+                pass
 
     @bl_listen()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
@@ -269,11 +280,11 @@ class PatrolTimeBL(DiscordListenerMixin):
                 await self._end_patrol_in_channel(after.id)
 
     @bl_listen()
+    @voice_logs_cache_lock
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         if self._is_monitored(channel):
-            async with self._cache_lock:
-                log.info(f"Monitored channel deleted {channel.name}#{channel.id}")
-                await self._end_patrol_in_channel(channel.id)
+            log.info(f"Monitored channel deleted {channel.name}(#{channel.id})")
+            await self._end_patrol_in_channel(channel.id)
 
     @bl_listen()
     async def on_ready(self):
