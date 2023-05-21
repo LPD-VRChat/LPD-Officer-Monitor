@@ -150,11 +150,14 @@ class PatrolTimeBL(DiscordListenerMixin):
                     # that the officer switched into
                     current_officer = self._patrolling_officers[member.id]
                     current_officer.patrol.end = curr_time
+                    assert len(current_officer.voice_logs)
                     current_officer.voice_logs[-1].end = curr_time
                     async with models.database.transaction():
                         await current_officer.patrol.update()
                         await current_officer.voice_logs[-1].update()
-                    if before and (before.channel.id != after.channel.id):
+
+                    # if the channel actually changed we create a new record, else it's only an update
+                    if current_officer.voice_logs[-1].channel.id != after.channel.id:
                         current_officer.voice_logs.append(
                             await models.PatrolVoice.objects.create(
                                 channel=after.channel.id,
