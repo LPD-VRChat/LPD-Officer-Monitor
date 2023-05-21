@@ -87,6 +87,8 @@ class MemberManagementBL(
                     MemberManagementEvent.MemberJoinedAfterMaxWait(officer, member)
                 )
             else:
+                officer.deleted_at = None
+                await officer.update()
                 # The officer can keep their data as they joined back within the grace period
                 self._notify_all(MemberManagementEvent.MemberJoined(officer, member))
         else:
