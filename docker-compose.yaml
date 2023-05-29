@@ -19,7 +19,7 @@ services:
       - discord_secret
     depends_on:
       - db
-    restart: on-failure:4
+    restart: on-failure:1
 
   db:
     image: mariadb:10.6 #LTS
