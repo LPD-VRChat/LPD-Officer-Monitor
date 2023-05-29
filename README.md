@@ -73,7 +73,15 @@ you will need 2 additional file named `discord_token` and `discord_secret`
 Build the images used by the container, sometimes `Dockerfile` changes are not picked up and this need to be executed before `up`
 ```
 docker compose build
+mkdir logs
+chmod +x docker-entrypoint.sh
 ```
+
+execute commands inside the python environement to setup de DB
+```
+docker compose run --rm --entrypoint sh lpd-officer-monitor
+```
+Refer to next section `Database operation`
 
 Launch
 ```
