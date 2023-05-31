@@ -1,6 +1,5 @@
 version: "3.8"
 services:
-  restart: unless-stopped
   lpd-officer-monitor:
     container_name: lpdbot
     build: ./
@@ -24,6 +23,7 @@ services:
   db:
     image: mariadb:10.6 #LTS
     container_name: db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
