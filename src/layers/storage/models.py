@@ -8,8 +8,10 @@ import databases
 import sqlalchemy
 import ormar
 import pydantic
-import pytest
 from enum import Enum
+
+if settings.CONFIG_LOADED == "base_test":
+    import pytest
 
 import discord
 from discord.ext import commands
@@ -261,7 +263,7 @@ class Call(ormar.Model):
 async def officer_before_relation_add(
     sender, instance, child, relation_name, passed_kwargs, **kwargs
 ):
-    #sender == Officer
+    # sender == Officer
     if type(child) == Badge:
         if child in instance.pending_badges:
             raise ormar.MultipleMatches
@@ -272,10 +274,12 @@ async def officer_before_relation_add(
             raise ormar.MultipleMatches
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_db():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+if settings.CONFIG_LOADED == "base_test":
+
+    @pytest.fixture(autouse=True, scope="module")
+    def create_db():
+        engine = sqlalchemy.create_engine(DATABASE_URL)
+        metadata.drop_all(engine)
+        metadata.create_all(engine)
+        yield
+        metadata.drop_all(engine)
