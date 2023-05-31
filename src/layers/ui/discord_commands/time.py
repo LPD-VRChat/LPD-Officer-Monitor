@@ -428,7 +428,7 @@ class Time(commands.Cog):
         message = f"Inactive cadets {len(inactives)}:\n"
         message += "\n".join([f"<@{o.id}>" for o in inactives])
 
-        await interaction_reply(interac, content=message)
+        await interaction_send_long(interac, message)
         if len(inactives) == 0:
             return
 
@@ -494,7 +494,7 @@ class Time(commands.Cog):
         message = "Inactive officers:\n"
         message += "\n".join([f"<@{o.id}>" for o in inactives])
 
-        await interaction_reply(interac, content=message)
+        await interaction_send_long(interac, message)
 
         if not await msgbox_confirm(
             interac,
