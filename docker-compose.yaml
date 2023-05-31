@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-
+  restart: unless-stopped
   lpd-officer-monitor:
     container_name: lpdbot
     build: ./
