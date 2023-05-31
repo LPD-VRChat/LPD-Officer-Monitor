@@ -25,7 +25,8 @@ import settings
 from src.layers import business as bl
 import src.layers.business.bl_wrapper as bl_wrapper
 from src.layers.ui.discord_commands import setup as setup_discord_commands
-from src.layers.ui.server.web_manager import WebManager
+
+# from src.layers.ui.server.web_manager import WebManager
 from src.extra_logging import DiscordLoggingHandler
 from src.layers.storage.models import database
 from src.layers.business.extra_functions import interaction_reply
@@ -62,6 +63,7 @@ def setup_logger():
 
 
 async def start_webmanager(bot, log):
+    return
     log.debug(f"Starting WebManager...")
     web_manager = await WebManager.configure(
         bot,

@@ -7,7 +7,8 @@ from discord.ext import commands
 
 # Custom
 from .base_bl import DiscordListenerMixin, bl_listen
-from src.layers.ui.server.web_manager import WebManager
+
+# from src.layers.ui.server.web_manager import WebManager
 import settings
 
 nest_asyncio.apply()
