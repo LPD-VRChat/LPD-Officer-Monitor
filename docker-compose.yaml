@@ -18,7 +18,8 @@ services:
       - discord_secret
     depends_on:
       - db
-    restart: on-failure:1
+    #restart: on-failure:1
+    restart: unless-stopped #the only way to get autostart
 
   db:
     image: mariadb:10.6 #LTS
