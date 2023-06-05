@@ -23,6 +23,8 @@ MAX_INACTIVE_MSG_DAYS = 14
 MIN_ACTIVITY_MINUTES = 60
 SLEEP_TIME_BETWEEN_OFFICER_CHECKS = 3600
 
+NAME_SEPARATOR = ","
+
 # Channel IDs ####################################################
 ##### Command channel IDs
 ADMIN_BOT_CHANNEL = 645383848284258305
