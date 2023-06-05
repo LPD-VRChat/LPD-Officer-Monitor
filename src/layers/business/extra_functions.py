@@ -13,6 +13,8 @@ from typing import Any, Sequence
 import discord
 from discord.ext import commands
 
+from settings.classes import RoleLadderElement
+
 MISSING: Any = discord.utils.MISSING
 
 apply()
@@ -188,8 +190,14 @@ def is_lpd_member(member: Optional[discord.Member]):
     return len(member_rank_roles) != 0
 
 
-def lpd_rank(member: discord.Member):
-    pass
+def get_lpd_member_rank(member: discord.Member) -> Optional[RoleLadderElement]:
+    """
+    Returns the first lowest rank a member have
+    """
+    for k, rank in settings.ROLE_LADDER.items():
+        if has_role_id(member, rank.id):
+            return rank
+    return None
 
 
 def parse_iso_date(date_string: str) -> dt.date:

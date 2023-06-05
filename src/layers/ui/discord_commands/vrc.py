@@ -1,4 +1,5 @@
 # Settings import
+from typing import Optional
 import settings
 
 # Standard
@@ -9,6 +10,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands as app_cmd
 import ormar
+from settings.classes import RoleLadderElement
 
 # Custom
 import src.layers.business.checks as checks
@@ -18,6 +20,7 @@ from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
     interaction_reply,
     interaction_send_str_as_file,
+    has_role_id,
 )
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -120,18 +123,92 @@ class VRC(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     async def list_dev(self, interac: discord.Interaction):
+        await interac.response.defer(ephemeral=False, thinking=True)
         officers = (
             await models.Officer.objects.filter(models.Officer.deleted_at.isnull(True))
             .exclude(models.Officer.vrchat_name == "")
             .all()
         )
 
-        output_text = (
-            f"{settings.NAME_SEPARATOR.join( [o.vrchat_name for o in officers] )}"
+        # because we get all ranks and inverted the order to replicate
+        # the old behavior we need to do a local version of the function
+        all_ranks = reversed(settings.ROLE_LADDER.items())
+
+        def get_lpd_member_rank_local(
+            member: discord.Member,
+        ) -> Optional[RoleLadderElement]:
+            for k, rank in all_ranks:
+                if has_role_id(member, rank.id):
+                    return rank
+            return None
+
+        output_text = ""
+        output_text += settings.NAME_SEPARATOR.join(
+            [
+                "Name",
+                "Rank",
+                "Staff",
+                "SLRT Certified",
+                "LMT Certified",
+                "CO Certified",
+                "Event Host",
+                "Programmer",
+                "Media",
+                "Chatmod",
+                "Instigator",
+                "Trainer",
+                "SLRT Trainer",
+                "LMT Trainer",
+                "CO Trainer",
+                "Dev",
+                "Recruiter",
+                "Lead",
+                "Korean",
+                "Chinese",
+                "Community",
+                "Backroom Access",
+            ]
         )
+        output_text += "\n"
+
+        for o in officers:
+            member = o.member(self.bot)
+            if not member:
+                logging.error(f"officer {o.id} isn't on discord")
+                continue
+            rank = get_lpd_member_rank_local(member)
+            if not rank:
+                logging.error(f"officer {o.id} does not have a rank")
+                continue
+
+            odata = [
+                o.vrchat_name,
+                rank.name,
+                rank.is_white_shirt,
+                has_role_id(member, settings.SLRT_TRAINED_ROLE),
+                has_role_id(member, settings.LMT_TRAINED_ROLE),
+                has_role_id(member, settings.WATCH_OFFICER_ROLE),
+                has_role_id(member, settings.EVENT_HOST_ROLE),
+                has_role_id(member, settings.PROGRAMMING_TEAM_ROLE),
+                has_role_id(member, settings.MEDIA_PRODUCTION_ROLE),
+                has_role_id(member, settings.CHAT_MODERATOR_ROLE),
+                has_role_id(member, settings.INSTIGATOR_ROLE),
+                has_role_id(member, settings.TRAINER_ROLE),
+                has_role_id(member, settings.SLRT_TRAINER_ROLE),
+                has_role_id(member, settings.LMT_TRAINER_ROLE),
+                has_role_id(member, settings.PRISON_TRAINER_ROLE),
+                has_role_id(member, settings.DEV_TEAM_ROLE),
+                has_role_id(member, settings.RECRUITER_ROLE),
+                has_role_id(member, settings.TEAM_LEAD_ROLE),
+                has_role_id(member, settings.KOREAN_ROLE),
+                has_role_id(member, settings.CHINESE_ROLE),
+                "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
+                True,  # "Backroom Access",
+            ]
+            output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
 
         await interaction_send_str_as_file(
-            interac, output_text, "allowlist.txt", "Allowlist:"
+            interac, output_text, "allowlist.csv", "Allowlist:"
         )
 
     @checks.is_admin_bot_channel(True)
