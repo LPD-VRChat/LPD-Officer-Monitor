@@ -174,11 +174,11 @@ class VRC(commands.Cog):
         for o in officers:
             member = o.member(self.bot)
             if not member:
-                logging.error(f"officer {o.id} isn't on discord")
+                log.error(f"officer {o.id} isn't on discord")
                 continue
             rank = get_lpd_member_rank_local(member)
             if not rank:
-                logging.error(f"officer {o.id} does not have a rank")
+                log.error(f"officer {o.id} does not have a rank")
                 continue
 
             odata = [
