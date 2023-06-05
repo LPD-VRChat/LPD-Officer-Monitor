@@ -132,12 +132,12 @@ class VRC(commands.Cog):
 
         # because we get all ranks and inverted the order to replicate
         # the old behavior we need to do a local version of the function
-        all_ranks = reversed(settings.ROLE_LADDER.items())
+        all_ranks = list(reversed(settings.ROLE_LADDER.__dict__.values()))
 
         def get_lpd_member_rank_local(
             member: discord.Member,
         ) -> Optional[RoleLadderElement]:
-            for k, rank in all_ranks:
+            for rank in all_ranks:
                 if has_role_id(member, rank.id):
                     return rank
             return None
