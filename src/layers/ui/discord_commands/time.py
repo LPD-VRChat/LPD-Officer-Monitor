@@ -26,6 +26,7 @@ from src.layers.business.extra_functions import (
     parse_iso_date,
     interaction_reply,
     interaction_send_str_as_file,
+    timedelta_to_nice_string,
 )
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -107,6 +108,7 @@ class Time(commands.Cog):
 
         from_dt = now() - dt.timedelta(days=days)
         to_dt = now()
+        use_days = True
         match (from_date is None, to_date is None):
             case (True, True):
                 pass
@@ -125,6 +127,7 @@ class Time(commands.Cog):
                         interac, "invalid date `to_date` argument", ephemeral=True
                     )
                     return
+                use_days = False
             case (True, False):
                 await interaction_reply(
                     interac, "you forgot `to_date` argument", ephemeral=True
@@ -150,11 +153,14 @@ class Time(commands.Cog):
             result = "\n".join(results)
 
         else:
-            result = str(
-                await self.bl_wrapper.pt_bl.get_patrol_time(
-                    officer.id, from_dt=from_dt, to_dt=to_dt
-                )
+            timeDelta = await self.bl_wrapper.pt_bl.get_patrol_time(
+                officer.id, from_dt=from_dt, to_dt=to_dt
             )
+            if use_days:
+                result = f"Patrolling time for {officer.name}[{officer.id}] in last {days} days: "
+            else:
+                result = f"Patrolling time for {officer.name}[{officer.id}] between {from_dt} and {to_dt} : "
+            result += timedelta_to_nice_string(timeDelta)
 
         await interaction_send_long(
             interac,
@@ -221,7 +227,7 @@ class Time(commands.Cog):
         leaderboard_lines = []
         for k, v in leaderboard.items():
             officer_name = await self.bl_wrapper.mm_bl.get_officer_vrcname_from_id(k)
-            leaderboard_lines.append(f"{officer_name} = {v}")
+            leaderboard_lines.append(f"{officer_name} = {timedelta_to_nice_string(v)}")
 
         await interaction_send_long(
             interac,
