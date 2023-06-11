@@ -252,3 +252,21 @@ async def msgbox_confirm(
     if view.value is None:
         await msg.edit(content="Timeout", view=None)
     return view.value
+
+
+def timedelta_to_nice_string(dt: dt.timedelta) -> str:
+    r: str = ""
+    if dt.days != 0:
+        r += f"{dt.days} day{'s' if abs(dt.days)>1 else ''} "
+    sec = dt.seconds
+    if sec > 3600:
+        h = sec // 3600  # floordiv op
+        r += f"{h} hour{'s' if h>1 else ''} "
+        sec -= h * 3600  # remaining
+    if sec > 60:
+        m = sec // 60  # floordiv op
+        r += f"{m:02} minute{'s' if m>1 else ''} "
+        sec -= m * 60  # remaining
+    if sec > 0:
+        r += f"{sec:02} second{'s' if sec>1 else ''} "
+    return r
