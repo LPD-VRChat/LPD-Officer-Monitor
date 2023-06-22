@@ -455,19 +455,16 @@ class PatrolTimeBL(DiscordListenerMixin):
             start__gt=date_from,
         ).all()
 
-        patrolling_times = {key: dt.timedelta() for key in l}
+        patrolling_times = {o.id: dt.timedelta() for o in officers_old_enough}
         for p in patrols:
             patrolling_times[p.officer.id] += p.duration()
             await asyncio.sleep(0)
         requirement = dt.timedelta(hours=minimum_hours)
 
         officer_to_yeet_ids: list[int] = []
-        for oid in l:
-            if oid not in patrolling_times:
+        for oid in patrolling_times:
+            if patrolling_times[oid] < requirement:
                 officer_to_yeet_ids.append(oid)
-            else:
-                if patrolling_times[oid] < requirement:
-                    officer_to_yeet_ids.append(oid)
 
         officers = await models.Officer.objects.filter(id__in=officer_to_yeet_ids).all()
         return officers
