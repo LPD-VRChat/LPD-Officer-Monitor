@@ -386,16 +386,30 @@ class Time(commands.Cog):
                 log.warn(f"skiped non recruit {m.name}")
                 error += 1
             else:
-                await m.add_roles(
-                    role_add,
-                    reason="bot promotion to officer",
-                    atomic=True,
-                )
-                await m.remove_roles(
-                    role_rm,
-                    reason="bot promotion to officer",
-                    atomic=True,
-                )
+                try:
+                    await m.add_roles(
+                        role_add,
+                        reason="bot promotion to officer",
+                        atomic=True,
+                    )
+                    await m.remove_roles(
+                        role_rm,
+                        reason="bot promotion to officer",
+                        atomic=True,
+                    )
+                except Exception as e:
+                    if isinstance(e, discord.errors.Forbidden):
+                        await interaction_reply(
+                            interac,
+                            ":red_circle: Bot permission issue!",
+                        )
+                        log.exception(
+                            f"Bot role is probably bellow officer and cannot change roles\n{e}"
+                        )
+                        return
+                    log.exception(f"Failed to promote officer {m.name}[{m.id}]\n{e}")
+                    error += 1
+                    continue
                 sucess += 1
 
         await interaction_reply(
