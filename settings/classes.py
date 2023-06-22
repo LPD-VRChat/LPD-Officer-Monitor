@@ -16,7 +16,7 @@ class RoleLadderElement:
 
     def as_discord_role(self, bot):
         """Returns the discord.Role object for this role ladder element"""
-        return bot.get_role(self.id)
+        return bot.guild.get_role(self.id)
 
 
 @dataclass
