@@ -572,6 +572,25 @@ class Time(commands.Cog):
             f"Renewal :\n" + "\n".join([r.timestamp.isoformat() for r in ren]),
         )
 
+    @checks.is_admin_bot_channel(True)
+    @checks.app_cmd_check_any(
+        checks.is_recruiter(True),
+        checks.is_white_shirt(True),
+    )
+    @app_cmd.command(
+        name="give_cadet_role",
+        description="give_cadet_role",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def give_cadet_role(
+        self, interac: discord.Interaction, member: discord.Member
+    ):
+        lpd_role = discord.Object(settings.LPD_ROLE)
+        cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
+        await member.add_roles(lpd_role, cadet_role, reason="bot promote cadet")
+        await interaction_reply(interac, "Done")
+
 
 async def setup(bot):
     await bot.add_cog(Time(bot))
