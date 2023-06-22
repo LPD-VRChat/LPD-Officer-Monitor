@@ -101,6 +101,10 @@ DB_SOCK = "/run/mysqld/mysqld.sock"
 DB_TYPE = "mysql"
 DB_PORT = 3306
 
+LOG_PERMISSION_DENIED_ENABLE = True
+LOG_PERMISSION_DENIED_LEVEL = 30  # WARNING
+
+
 # Logging ########################################################
 LOGGING_WEBHOOK = "https://discord.com/api/webhooks/913832874883575838/qYRBo1a2WHblyk1wXUpURyUNoL9bp4gLZBiItte31sKDLQFSoXFh8eoeqinQjmuwLNCw"
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "1")
