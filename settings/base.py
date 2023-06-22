@@ -125,6 +125,8 @@ BOT_PREFIX = "="
 DB_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 NAME_SEPARATOR = ";"
 LOG_FILE_PATH = _os.path.join(PROJECT_DIR, "logs", "lpd_officer_monitor.log")
+LOG_PERMISSION_DENIED_ENABLE = True
+LOG_PERMISSION_DENIED_LEVEL = 10  # debug
 
 # Disable some responces or features, supposed to be use only when another bot supposed to answer
 # use in loa_bl

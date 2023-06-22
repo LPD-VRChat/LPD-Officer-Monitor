@@ -84,38 +84,60 @@ async def tree_on_error(
     interaction: discord.Interaction, error: discord.app_commands.AppCommandError
 ):
     log = logging.getLogger("lpd-officer-monitor")
-    if settings.CONFIG_LOADED == "dev":
-        if isinstance(error, discord.app_commands.CheckFailure):
-            ##check interaction for responce type
-            for check in interaction.command.checks:
-                try:
-                    r = await discord.utils.maybe_coroutine(check, interaction)
-                except BaseException as err:
-                    await interaction_reply(
-                        interaction, f"🛠️dev :red_circle:checking {err}", ephemeral=True
-                    )
-                    return
-                if not r:
+    if isinstance(error, discord.app_commands.CheckFailure):
+        ##check interaction for responce type
+        for check in interaction.command.checks:
+            try:
+                r: bool = await discord.utils.maybe_coroutine(check, interaction)
+            except BaseException as err:
+                log.exception(
+                    f"tree_error chk `{interaction.command.name}` u={interaction.user.id} c={interaction.channel_id}\n{err}"
+                )
+                if settings.CONFIG_LOADED == "dev":
                     await interaction_reply(
                         interaction,
-                        f"🛠️dev :red_circle:check failed: {check.__qualname__}",
+                        f"🛠️dev :red_circle:check failed!!! {err}",
                         ephemeral=True,
                     )
-                    return
-        await interaction_reply(
-            interaction, f"🛠️dev :red_circle:{error}", ephemeral=True
+                else:
+                    await interaction_reply(
+                        interaction,
+                        f":red_circle: Unauthrorized Command or wrong channel",
+                        ephemeral=True,
+                    )
+                return
+            if not r:
+                if settings.CONFIG_LOADED == "dev":
+                    await interaction_reply(
+                        interaction,
+                        f"🛠️dev :red_circle:check denied: {check.__qualname__}",
+                        ephemeral=True,
+                    )
+                else:
+                    await interaction_reply(
+                        interaction,
+                        f":red_circle: Unauthrorized Command or wrong channel",
+                        ephemeral=True,
+                    )
+                if settings.LOG_PERMISSION_DENIED_ENABLE:
+                    log.log(
+                        settings.LOG_PERMISSION_DENIED_LEVEL,
+                        f"perm chk deny u={interaction.user.id} c={interaction.channel_id} {check.__qualname__}",
+                    )
+                return
+    if isinstance(error, discord.app_commands.CommandInvokeError):
+        log.error(str(error.original))
+        traceback.print_exception(
+            type(error.original), error.original, error.original.__traceback__
         )
-        if isinstance(error, discord.app_commands.CommandInvokeError):
-            log.error(str(error.original))
-            traceback.print_exception(
-                type(error.original), error.original, error.original.__traceback__
-            )
-        return
+    else:
+        log.error(
+            f"cmd tree unk err `{interaction.command.name}` u={interaction.user.id} c={interaction.channel_id}\n{error}"
+        )
 
     await interaction_reply(
         interaction, f":red_circle: Internal error :red_circle:", ephemeral=True
     )
-    log.error(f"cmd`{interaction.command.name}` {error}")
 
 
 def main():
@@ -217,16 +239,24 @@ def main():
             await bot.process_commands(message)
 
     @bot.event
-    async def on_command_error(ctx, exception):
+    async def on_command_error(ctx: discord.ext.commands.Context, exception):
         exception_string = str(exception).replace(
             "raised an exception", "encountered a problem"
         )
 
-        if settings.CONFIG_LOADED == "dev" and isinstance(
-            exception, discord.ext.commands.errors.CheckFailure
-        ):
+        if isinstance(exception, discord.ext.commands.errors.CheckFailure):
             if isinstance(exception, discord.ext.commands.CheckAnyFailure):
-                ctx.send(f"🛠️dev check any failed", ephemeral=True)
+                if settings.CONFIG_LOADED == "dev":
+                    ctx.send(f"🛠️dev check any denied", ephemeral=True)
+                else:
+                    await ctx.send(
+                        ":red_circle: Unauthrorized Command or wrong channel"
+                    )
+                if settings.LOG_PERMISSION_DENIED_ENABLE:
+                    log.log(
+                        settings.LOG_PERMISSION_DENIED_LEVEL,
+                        f"perm chkany deny u={ctx.author.id} c={ctx.channel.id} {ctx.command.name}",
+                    )
                 return
             for chk in ctx.command.checks:
                 try:
@@ -239,13 +269,26 @@ def main():
                     print("".join(traceback.format_exc()))
                     r = False
                 if not r:
-                    await ctx.send(
-                        f"🛠️dev check failed: {getattr(chk,'__qualname__')}",
-                        ephemeral=True,
-                    )
+                    if settings.CONFIG_LOADED == "dev":
+                        await ctx.send(
+                            f"🛠️dev check deny: {getattr(chk,'__qualname__')}",
+                            ephemeral=True,
+                        )
+                    else:
+                        await ctx.send(
+                            ":red_circle: Unauthrorized Command or wrong channel"
+                        )
+                    if settings.LOG_PERMISSION_DENIED_ENABLE:
+                        log.log(
+                            settings.LOG_PERMISSION_DENIED_LEVEL,
+                            f"perm chkany deny u={ctx.author.id} c={ctx.channel.id} {ctx.command.name}",
+                        )
                     return
-            await ctx.send(f"🛠️dev check failed: unknown", ephemeral=True)
-            logging.error(
+            if settings.CONFIG_LOADED == "dev":
+                await ctx.send(f"🛠️dev check failed: unknown", ephemeral=True)
+            else:
+                await ctx.send(":red_circle: Unauthrorized Command or wrong channel")
+            log.error(
                 f"u={ctx.author.id} `{ctx.invoked_with}` unknown CheckFailure {exception_string}"
             )
             return
@@ -263,6 +306,10 @@ def main():
         # Skip logging the exception if the user just messed up the input to a command
         if exception_string.find("encountered a problem") != -1:
             log.log(logging.ERROR, exception_string, exc_info=exception)
+        else:
+            log.error(
+                f"cmdErr u={ctx.author.id} c={ctx.channel.id} {ctx.command.name} {exception_string}"
+            )
 
     @bot.event
     async def on_error(event, *args, **kwargs):
