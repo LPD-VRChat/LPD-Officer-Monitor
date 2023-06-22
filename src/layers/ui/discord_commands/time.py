@@ -429,6 +429,7 @@ class Time(commands.Cog):
                 f"cadet role {settings.ROLE_LADDER.cadet.id} is not accessible"
             )
 
+        await interac.response.defer(ephemeral=False, thinking=True)
         date_from = dt.datetime.now() - dt.timedelta(days=inactive_days_required)
         inactives = await self.bl_wrapper.pt_bl.get_inactive_cadets(date_from, 1)
         message = f"Inactive cadets {len(inactives)}:\n"
