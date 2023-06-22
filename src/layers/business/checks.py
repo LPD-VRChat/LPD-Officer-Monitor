@@ -47,10 +47,16 @@ def is_programming_team(slash_cmd=False):
 
 def is_admin_bot_channel(slash_cmd=False):
     def predicate(ctx):
-        return ctx.channel.id == settings.ADMIN_BOT_CHANNEL
+        return ctx.channel.id in [
+            settings.ADMIN_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
+        ]
 
     def predicate_interaction(interaction: discord.Interaction) -> bool:
-        return interaction.channel_id == settings.ADMIN_BOT_CHANNEL
+        return interaction.channel_id in [
+            settings.ADMIN_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
+        ]
 
     if slash_cmd:
         return discord.app_commands.check(predicate_interaction)
@@ -63,12 +69,14 @@ def is_team_bot_channel(slash_cmd=False):
         return ctx.channel.id in [
             settings.TEAM_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
         ]
 
     def predicate_interaction(interaction: discord.Interaction) -> bool:
         return interaction.channel_id in [
             settings.TEAM_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
         ]
 
     if slash_cmd:
@@ -83,6 +91,7 @@ def is_general_bot_channel(slash_cmd=False):
             settings.GENERAL_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
             settings.TEAM_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
         ]
 
     def predicate_interaction(interaction: discord.Interaction) -> bool:
@@ -90,6 +99,7 @@ def is_general_bot_channel(slash_cmd=False):
             settings.GENERAL_BOT_CHANNEL,
             settings.ADMIN_BOT_CHANNEL,
             settings.TEAM_BOT_CHANNEL,
+            settings.APPLICATION_CHANNEL,
         ]
 
     if slash_cmd:
