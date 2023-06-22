@@ -233,6 +233,19 @@ def is_event_host(slash_cmd=False):
         return commands.check(predicate)
 
 
+def is_recruiter(slash_cmd=False):
+    def predicate(ctx):
+        return has_role_id(ctx.author, settings.RECRUITER_ROLE)
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.RECRUITER_ROLE)
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
 def is_officer(slash_cmd=False):
     def predicate(ctx):
         return is_lpd_member(ctx.author)
