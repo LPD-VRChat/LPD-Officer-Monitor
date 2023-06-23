@@ -47,16 +47,23 @@ def is_programming_team(slash_cmd=False):
 
 def is_admin_bot_channel(slash_cmd=False):
     def predicate(ctx):
-        return ctx.channel.id in [
-            settings.ADMIN_BOT_CHANNEL,
-            settings.APPLICATION_CHANNEL,
-        ]
+        return ctx.channel.id == settings.ADMIN_BOT_CHANNEL
 
     def predicate_interaction(interaction: discord.Interaction) -> bool:
-        return interaction.channel_id in [
-            settings.ADMIN_BOT_CHANNEL,
-            settings.APPLICATION_CHANNEL,
-        ]
+        return interaction.channel_id == settings.ADMIN_BOT_CHANNEL
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
+def is_recruiter_bot_channel(slash_cmd=False):
+    def predicate(ctx):
+        return ctx.channel.id == settings.RECRUITER_BOT_CHANNEL
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return interaction.channel_id == settings.RECRUITER_BOT_CHANNEL
 
     if slash_cmd:
         return discord.app_commands.check(predicate_interaction)

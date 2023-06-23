@@ -586,7 +586,7 @@ class Time(commands.Cog):
             f"Renewal :\n" + "\n".join([r.timestamp.isoformat() for r in ren]),
         )
 
-    @checks.is_admin_bot_channel(True)
+    @checks.is_recruiter_bot_channel(True)
     @checks.app_cmd_check_any(
         checks.is_recruiter(True),
         checks.is_white_shirt(True),
