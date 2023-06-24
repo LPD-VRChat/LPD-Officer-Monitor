@@ -603,7 +603,7 @@ class Time(commands.Cog):
         lpd_role = discord.Object(settings.LPD_ROLE)
         cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
         await member.add_roles(lpd_role, cadet_role, reason="bot promote cadet")
-        await interaction_reply(interac, "Done")
+        await interaction_reply(interac, f"<@{member.id}> `{member.id}` is now a cadet")
 
 
 async def setup(bot):
