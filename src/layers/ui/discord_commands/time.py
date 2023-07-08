@@ -5,6 +5,7 @@ import settings
 import datetime as dt
 from typing import Optional
 import logging
+import enum
 
 # Community
 import discord
@@ -18,6 +19,8 @@ import src.layers.business
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
+    get_lpd_member_rank,
+    has_role_id,
     is_lpd_member,
     msgbox_confirm,
     send_long,
@@ -30,6 +33,14 @@ from src.layers.business.extra_functions import (
 )
 
 log = logging.getLogger("lpd-officer-monitor")
+
+
+class Training(enum.Enum):
+    recruit = 0
+    senior_officer = 1
+    LMT = 2
+    SLRT = 3
+    Watch_officer = 4
 
 
 class Time(commands.Cog):
@@ -604,6 +615,101 @@ class Time(commands.Cog):
         cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
         await member.add_roles(lpd_role, cadet_role, reason="bot promote cadet")
         await interaction_reply(interac, f"<@{member.id}> `{member.id}` is now a cadet")
+
+    @checks.is_team_bot_channel(True)
+    @checks.app_cmd_check_any(
+        checks.is_any_trainer(True),
+        checks.is_white_shirt(True),
+    )
+    @app_cmd.command(
+        name="give_trained_role",
+        description="give_trained_role",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def give_trained_role(
+        self,
+        interac: discord.Interaction,
+        member: discord.Member,
+        training: Training,
+    ):
+        rank = get_lpd_member_rank(interac.user)
+        if not rank:
+            log.error(f"officer {interac.user.id} does not have a rank")
+            raise PermissionError("could not get rank")
+            return
+        if not rank.is_white_shirt:  # chk right trainer
+            match training:
+                case Training.recruit | Training.senior_officer:
+                    if not has_role_id(interac.user, settings.TRAINER_ROLE):
+                        await interaction_reply(
+                            interac, ":red_circle: you dont have permission."
+                        )
+                        return
+                case Training.LMT:
+                    if not has_role_id(interac.user, settings.LMT_TRAINER_ROLE):
+                        await interaction_reply(
+                            interac, ":red_circle: you dont have permission."
+                        )
+                        return
+                case Training.SLRT:
+                    if not has_role_id(interac.user, settings.SLRT_TRAINER_ROLE):
+                        await interaction_reply(
+                            interac, ":red_circle: you dont have permission."
+                        )
+                        return
+                case Training.Watch_officer:
+                    if not has_role_id(interac.user, settings.PRISON_TRAINER_ROLE):
+                        await interaction_reply(
+                            interac, ":red_circle: you dont have permission."
+                        )
+                        return
+                case _:
+                    await interaction_reply(interac, ":red_circle: invalid training.")
+                    log.error(f"invalid training {training.value}")
+                    return
+
+        match training:
+            case Training.recruit:
+                await member.add_roles(
+                    discord.Object(settings.ROLE_LADDER.recruit.id),
+                    reason="bot trained recruit",
+                )
+                await member.remove_roles(
+                    discord.Object(settings.ROLE_LADDER.cadet.id),
+                    reason="bot trained recruit",
+                )
+            case Training.senior_officer:
+                await member.add_roles(
+                    discord.Object(settings.ROLE_LADDER.senior_officer.id),
+                    reason="bot trained senior_officer",
+                )
+                await member.remove_roles(
+                    discord.Object(settings.ROLE_LADDER.senior_officer.id),
+                    reason="bot trained senior_officer",
+                )
+            case Training.LMT:
+                await member.add_roles(
+                    discord.Object(settings.LMT_TRAINED_ROLE),
+                    reason="bot trained LMT",
+                )
+            case Training.SLRT:
+                await member.add_roles(
+                    discord.Object(settings.SLRT_TRAINED_ROLE),
+                    reason="bot trained SLRT",
+                )
+            case Training.Watch_officer:
+                await member.add_roles(
+                    discord.Object(settings.WATCH_OFFICER_ROLE),
+                    reason="bot trained Watch_officer",
+                )
+            case _:
+                await interaction_reply(interac, ":red_circle: invalid training.")
+                log.error(f"invalid training {training.value}")
+                return
+        await interaction_reply(
+            interac, f"<@{member.id}> is trained for `{training.name}`"
+        )
 
 
 async def setup(bot):
