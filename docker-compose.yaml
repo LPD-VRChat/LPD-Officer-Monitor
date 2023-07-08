@@ -30,7 +30,7 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
       MYSQL_DATABASE: LPD_Officer_Monitor_v3
       MYSQL_USER: lpdbot
-      TZ: "Atlantic/Reykjavik"
+      TZ: "Etc/UTC"
     ports:
       - "3306:3306"
     volumes:
