@@ -34,15 +34,13 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - db-data:/var/lib/mysql/data
-      - db-logs:/var/lib/mysql/logs
+      - db-data:/var/lib/mysql
     secrets:
       - mysql_root_password
       - mysql_user_password
 
 volumes:
   db-data: null
-  db-logs: null
 
 secrets:
   mysql_root_password:
