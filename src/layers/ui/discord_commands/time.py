@@ -643,25 +643,29 @@ class Time(commands.Cog):
                 case Training.recruit | Training.senior_officer:
                     if not has_role_id(interac.user, settings.TRAINER_ROLE):
                         await interaction_reply(
-                            interac, ":red_circle: you dont have permission."
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not a trainer",
                         )
                         return
                 case Training.LMT:
                     if not has_role_id(interac.user, settings.LMT_TRAINER_ROLE):
                         await interaction_reply(
-                            interac, ":red_circle: you dont have permission."
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not an LMT trainer",
                         )
                         return
                 case Training.SLRT:
                     if not has_role_id(interac.user, settings.SLRT_TRAINER_ROLE):
                         await interaction_reply(
-                            interac, ":red_circle: you dont have permission."
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not an SLRT trainer",
                         )
                         return
                 case Training.Watch_officer:
                     if not has_role_id(interac.user, settings.PRISON_TRAINER_ROLE):
                         await interaction_reply(
-                            interac, ":red_circle: you dont have permission."
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not a Prison trainer",
                         )
                         return
                 case _:
@@ -685,7 +689,7 @@ class Time(commands.Cog):
                     reason="bot trained senior_officer",
                 )
                 await member.remove_roles(
-                    discord.Object(settings.ROLE_LADDER.senior_officer.id),
+                    discord.Object(settings.ROLE_LADDER.officer.id),
                     reason="bot trained senior_officer",
                 )
             case Training.LMT:
