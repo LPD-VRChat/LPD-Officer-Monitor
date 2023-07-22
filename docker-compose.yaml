@@ -12,6 +12,7 @@ services:
       LPD_OFFICER_MONITOR_ENVIRONMENT: "${LPD_OFFICER_MONITOR_ENVIRONMENT}"
     volumes:
       - ".:/app"
+      - "./logs:/logs"
     secrets:
       - mysql_user_password
       - discord_token

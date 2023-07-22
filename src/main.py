@@ -53,11 +53,9 @@ def setup_logger():
     dh.setFormatter(formatter)
     log.addHandler(sh)
     log.addHandler(dh)
-    if not os.environ.get("LPD_OFFICER_MONITOR_DOCKER"):
-        # TODO fix file logging in Docker
-        fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
-        fh.setFormatter(formatter)
-        log.addHandler(fh)
+    fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
 
     return log
 
