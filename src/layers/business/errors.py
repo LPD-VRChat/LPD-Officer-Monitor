@@ -60,4 +60,3 @@ class MissingArgumentError(Exception):
             message
             or f"You are missing an argument{' '+ argument_name if argument_name else ''}."
         )
-

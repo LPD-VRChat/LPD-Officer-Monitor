@@ -4,10 +4,10 @@ import os
 import subprocess
 
 # only meant to be used inside docker
-#non 0 exit code on failure
+# non 0 exit code on failure
 
 try:
-    outputB = subprocess.check_output(['alembic', 'current', "-v"])
+    outputB = subprocess.check_output(["alembic", "current", "-v"])
 except subprocess.CalledProcessError as err:
     print("ERROR alembic process", err)
     sys.exit(1)
@@ -19,7 +19,9 @@ for line in output.splitlines():
         if "(head)" in line:
             break
         else:
-            print("ERROR: Migration is probably needed\nAlembic output bellow:\n", output)
+            print(
+                "ERROR: Migration is probably needed\nAlembic output bellow:\n", output
+            )
             sys.exit(1)
 else:
     print("ERROR: Failed to parse alembic output\nAlembic output bellow:\n", output)
