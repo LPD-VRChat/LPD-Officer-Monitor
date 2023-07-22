@@ -95,7 +95,7 @@ class Moderation(commands.Cog):
             case (True, False):
                 try:
                     user_id = int(member_id)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, f"Not a valid id, {self.doc_mention_vs_id}"
                     )
@@ -150,7 +150,7 @@ class Moderation(commands.Cog):
             case (True, False):
                 try:
                     user_id = int(member_id)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, f"Not a valid id, {self.doc_mention_vs_id}"
                     )
@@ -198,7 +198,7 @@ class Moderation(commands.Cog):
             case (True, False):
                 try:
                     user_id = int(member_id)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, f"Not a valid id, {self.doc_mention_vs_id}"
                     )

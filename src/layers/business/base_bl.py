@@ -88,7 +88,6 @@ def bl_listen(name: Optional[str] = None):
     """
 
     def decorator(func: Callable):
-
         # Make sure the func is a coroutine
         if not asyncio.iscoroutinefunction(func):
             raise TypeError(f"{func} is not a coroutine")

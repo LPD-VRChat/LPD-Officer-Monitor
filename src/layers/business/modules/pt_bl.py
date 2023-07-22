@@ -147,7 +147,6 @@ class PatrolTimeBL(DiscordListenerMixin):
         curr_time = now()
 
         match (on_patrol, to_monitored_channel):
-
             # Officer is moving between monitored channels
             case True, True:
                 log.debug(

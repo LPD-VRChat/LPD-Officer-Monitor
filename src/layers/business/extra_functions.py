@@ -49,7 +49,6 @@ async def send_long(channel, string, code_block=False, mention=True):
 
     output_list = []
     for line in input_string_list:
-
         # If the line is longer that 2000, send it as a file and exit.
         if len(line) > 2000:
             await send_str_as_file(
@@ -106,7 +105,7 @@ async def interaction_reply(
     ephemeral: bool = False,
 ):
     """Guaranty reply to an interaction what ever it was defer or not, already answered by message or not"""
-    match (interaction.response.type):
+    match interaction.response.type:
         case (None):
             await interaction.response.send_message(
                 content=content,
@@ -236,7 +235,6 @@ async def msgbox_confirm(
     embed: discord.Embed = MISSING,
     embeds: Sequence[discord.Embed] = MISSING,
 ):
-
     if isinstance(ctx, discord.Interaction):
         user_id = ctx.user.id
     else:
