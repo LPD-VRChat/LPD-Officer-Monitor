@@ -116,7 +116,6 @@ class Time(commands.Cog):
         to_date: Optional[str] = None,
         full_list: bool = False,
     ):
-
         from_dt = now() - dt.timedelta(days=days)
         to_dt = now()
         use_days = True
@@ -126,14 +125,14 @@ class Time(commands.Cog):
             case (False, False):
                 try:
                     from_dt = parse_iso_date(from_date)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, "invalid date `from_date` argument", ephemeral=True
                     )
                     return
                 try:
                     to_dt = parse_iso_date(to_date)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, "invalid date `to_date` argument", ephemeral=True
                     )
@@ -193,7 +192,6 @@ class Time(commands.Cog):
         from_date: Optional[str] = None,
         to_date: Optional[str] = None,
     ):
-
         from_dt = now() - dt.timedelta(days=days)
         to_dt = now()
         match (from_date is None, to_date is None):
@@ -202,14 +200,14 @@ class Time(commands.Cog):
             case (False, False):
                 try:
                     from_dt = parse_iso_date(from_date)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, "invalid date `from_date` argument", ephemeral=True
                     )
                     return
                 try:
                     to_dt = parse_iso_date(to_date)
-                except (ValueError):
+                except ValueError:
                     await interaction_reply(
                         interac, "invalid date `to_date` argument", ephemeral=True
                     )

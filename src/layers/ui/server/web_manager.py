@@ -38,7 +38,6 @@ log = logging.getLogger("lpd-officer-monitor")
 
 class WebManager:
     def __init__(self, bot, app, config):
-
         self.bot = bot
         self.app = app
         self.config = config
@@ -60,7 +59,6 @@ class WebManager:
         keyfile=None,
         _run_insecure=False,
     ):
-
         app.secret_key = settings.WEB_SECRET_KEY
 
         app.config["DISCORD_CLIENT_ID"] = id

@@ -267,7 +267,6 @@ class MemberActivityBL(DiscordListenerMixin):
     async def process_inactives(
         self, bellow_time: list[models.Officer], loa, renew
     ) -> list[models.Officer]:
-
         # lookup in dict is O^1
         loa_dict = {l.officer.id: l for l in loa}
         renew_dict = {r.officer.id: r for r in renew}

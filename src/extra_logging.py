@@ -56,7 +56,6 @@ class DiscordLoggingHandler(logging.Handler):
         time: Optional[dt.datetime] = None,
     ) -> None:
         if error_level < logging.ERROR:
-
             match (error_level):
                 case (logging.DEBUG):
                     level_str = ":bug:"
@@ -102,7 +101,6 @@ class DiscordLoggingHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         # Only log the message if it's above the minimum level
         if record.levelno >= self._min_log_level:
-
             # Convert date to datetime
             iso_time = ",".join(record.asctime.split(",")[0:-1])
             try:

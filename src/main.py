@@ -141,7 +141,6 @@ async def tree_on_error(
 
 
 def main():
-
     ##############################
     ### Setup Global Variables ###
     ##############################
@@ -233,7 +232,6 @@ def main():
 
     @bot.event
     async def on_message(message: discord.Message) -> None:
-
         # Only process commands that are in a command channel
         if message.channel.id in settings.ALLOWED_COMMAND_CHANNELS:
             await bot.process_commands(message)

@@ -115,7 +115,6 @@ class ModerationBL(DiscordListenerMixin):
 
                 # User has sent too many and will be put in detention and their messages deleted
                 if cache_obj.count >= settings.GIFT_LINK_MAX_CHANNEL_COUNT:
-
                     # Reset the users cache
                     del self._sent_gift_links[user_id]
 
