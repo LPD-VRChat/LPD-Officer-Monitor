@@ -76,6 +76,7 @@ def is_recruiter_bot_channel(slash_cmd=False):
     else:
         return commands.check(predicate)
 
+
 def is_mugshot_diagnosis_channel(slash_cmd=False):
     def predicate(ctx):
         return ctx.channel.id in [
@@ -93,6 +94,7 @@ def is_mugshot_diagnosis_channel(slash_cmd=False):
         return discord.app_commands.check(predicate_interaction)
     else:
         return commands.check(predicate)
+
 
 def is_team_bot_channel(slash_cmd=False):
     def predicate(ctx):
