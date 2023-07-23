@@ -111,7 +111,7 @@ class VRC(commands.Cog):
 
         await interaction_reply(
             interac,
-            f"Your VRChat username as been unlinked\nPlease use `/vrc_link` command to set your username.",
+            f"Your VRChat username has been unlinked\nPlease use `/vrc_link` command to set your username.",
         )
 
     @checks.is_team_bot_channel(True)
