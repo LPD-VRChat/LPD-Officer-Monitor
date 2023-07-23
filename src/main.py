@@ -138,6 +138,13 @@ async def tree_on_error(
     )
 
 
+async def tree_interaction_check(interaction: discord.Interaction):
+    # VM production is slow sometimes
+    # always reply with "loading"
+    await interaction.response.defer(ephemeral=False, thinking=True)
+    return True  # accept all interaction
+
+
 def main():
     ##############################
     ### Setup Global Variables ###
@@ -160,6 +167,7 @@ def main():
     bot.everything_ready = False
 
     bot.tree.on_error = tree_on_error
+    bot.tree.interaction_check = tree_interaction_check
 
     #####################
     ### Setup logging ###
