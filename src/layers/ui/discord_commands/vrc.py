@@ -32,6 +32,37 @@ class VRC(commands.Cog):
         self.bot = bot
         self.color = discord.Color.lighter_grey()
 
+    @checks.is_mugshot_diagnosis_channel(True)
+    @checks.is_officer(True)
+    @app_cmd.command(
+        name="template",
+        description="Produce a template for your Mugshot or Diagnosis",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(name="Template for Mugshots & Diagnosis")
+    async def info(self, interac: discord.Interaction):
+        if interac.channel_id == settings.MUGSHOT_BOT_CHANNEL:
+            message = "Mugshot message Template\n"
+            message += "Name: \n"
+            message += "Crimes: \n"
+            message += "Officers: \n"
+            message += "Don't forget to add your pictures"
+        elif interac.channel_id == settings.DIAGNOSIS_BOT_CHANNEL:
+            message = "Diagnosis message Template\n"
+            message += "Patient: \n"
+            message += "Diagnosis: \n"
+            message += "Treatment: \n"
+            message += "LMTs: \n"
+            message += "Don't forget to add your pictures"
+        else:
+            message = "Command used in an unautorized channel"
+        await interaction_reply(
+            interac,
+            f"{message}",
+            ephemeral=True,
+        )
+
     @checks.is_general_bot_channel(True)
     @checks.is_officer(True)
     @app_cmd.command(
