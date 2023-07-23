@@ -57,6 +57,7 @@ class VRC(commands.Cog):
             message += "Don't forget to add your pictures"
         else:
             message = "Command used in an unautorized channel"
+
         await interaction_reply(
             interac,
             f"{message}",
