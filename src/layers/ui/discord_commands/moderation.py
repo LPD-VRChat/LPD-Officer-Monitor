@@ -117,8 +117,14 @@ class Moderation(commands.Cog):
             interac, f"Stikes against user <@{user_id}> [{user_id}] :\n{message}"
         )
 
-    @checks.is_team_bot_channel(True)
-    @checks.is_chat_moderator(True)
+    @checks.app_cmd_check_any(
+            checks.is_admin_bot_channel(True), 
+            checks.is_team_bot_channel(True)
+    )
+    @checks.app_cmd_check_any(
+        checks.is_white_shirt(True), 
+        checks.is_chat_moderator(True)
+    )
     @app_cmd.command(
         name="detain_user",
         description="Detain a user",
