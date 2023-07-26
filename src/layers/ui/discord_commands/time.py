@@ -148,7 +148,6 @@ class Time(commands.Cog):
                     interac, "you forgot `from_date` argument", ephemeral=True
                 )
                 return
-        await interac.response.defer(ephemeral=False, thinking=True)
 
         if full_list:
             patrols = await self.bl_wrapper.pt_bl.get_patrols(
@@ -222,8 +221,6 @@ class Time(commands.Cog):
                     interac, "you forgot `from_date` argument", ephemeral=True
                 )
                 return
-
-        await interac.response.defer(ephemeral=False, thinking=True)
 
         try:
             leaderboard = await self.bl_wrapper.pt_bl.get_top_patrol_time(
@@ -452,7 +449,6 @@ class Time(commands.Cog):
                 f"cadet role {settings.ROLE_LADDER.cadet.id} is not accessible"
             )
 
-        await interac.response.defer(ephemeral=False, thinking=True)
         date_from = dt.datetime.now() - dt.timedelta(days=inactive_days_required)
         inactives = await self.bl_wrapper.pt_bl.get_inactive_cadets(date_from, 1)
         message = f"Inactive cadets {len(inactives)}:\n"
@@ -508,7 +504,6 @@ class Time(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     async def mark_inactive(self, interac: discord.Interaction):
-        await interac.response.defer(ephemeral=False, thinking=True)
         date_from = dt.datetime.now() - dt.timedelta(days=settings.MAX_INACTIVE_DAYS)
         officers_bellow_time = (
             await self.bl_wrapper.pt_bl.get_officer_bellow_patrol_time(
