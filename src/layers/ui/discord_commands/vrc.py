@@ -169,7 +169,6 @@ class VRC(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     async def list_dev(self, interac: discord.Interaction):
-        await interac.response.defer(ephemeral=False, thinking=True)
         officers = (
             await models.Officer.objects.filter(models.Officer.deleted_at.isnull(True))
             .exclude(models.Officer.vrchat_name == "")
