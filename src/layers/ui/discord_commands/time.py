@@ -31,6 +31,7 @@ from src.layers.business.extra_functions import (
     interaction_send_str_as_file,
     timedelta_to_nice_string,
 )
+from src.layers.business.modules.pt_bl import PatrolType
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -706,6 +707,54 @@ class Time(commands.Cog):
                 return
         await interaction_reply(
             interac, f"<@{member.id}> is trained for `{training.name}`"
+        )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="patrol_time_add",
+        description="Add artificial patrol time",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(officer="The officer that will receive the added time")
+    @app_cmd.describe(hours="float, the duration of the patrol")
+    @app_cmd.describe(patrol_type="what kind of patrol/activity")
+    @app_cmd.describe(
+        date_and_time="`YYYY/MM/DD HH:mm` The date and time at which the activity ended"
+    )
+    async def patrol_time_add(
+        self,
+        interac: discord.Interaction,
+        officer: discord.Member,
+        hours: float,
+        patrol_type: PatrolType,
+        date_and_time: Optional[str] = None,
+    ):
+        if not is_lpd_member(officer):
+            await interaction_reply(
+                interac, "This discord member is not an LPD officer"
+            )
+            return
+
+        if date_and_time is None:
+            dt_end = dt.datetime.now()
+        else:
+            try:
+                dt_end = dt.datetime.strptime(date_and_time, "%Y/%m/%d %H:%M")
+            except Exception as e:
+                print(e)
+                log.exception("Date uwu")
+                await interaction_reply(interac, "Failed to parse `date_and_time`")
+                return
+
+        dt_start = dt_end - dt.timedelta(hours=hours)
+        ch = await self.bl_wrapper.pt_bl.get_fake_channel_from_patroltype(patrol_type)
+
+        await self.bl_wrapper.pt_bl.add_patrol_time(officer.id, dt_start, dt_end, ch)
+        await interaction_reply(
+            interac,
+            f"Added {hours}hours of {patrol_type.name} patrol to <@{officer.id}>",
         )
 
 

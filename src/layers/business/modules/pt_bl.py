@@ -11,6 +11,7 @@ import logging
 import datetime as dt
 from typing import Dict, Iterable
 from functools import wraps
+import enum
 
 # Community
 import discord
@@ -40,6 +41,15 @@ def voice_logs_cache_lock(f):
             return await f(*args, **kwds)
 
     return wrapper
+
+
+class PatrolType(enum.Enum):
+    Normal = 1
+    LMT = 2
+    SLRT = 3
+    Watch_officer = 5
+    Dispatch = 6
+    Training = 7
 
 
 class PatrolTimeBL(DiscordListenerMixin):
@@ -489,3 +499,27 @@ class PatrolTimeBL(DiscordListenerMixin):
                 log.exception("failed to remove cadets roles")
                 success = False
         return success
+
+    async def get_fake_channel_from_patroltype(
+        self,
+        ptype: PatrolType,
+    ) -> models.SavedVoiceChannel:
+        ch, _ = await models.SavedVoiceChannel.objects.get_or_create(
+            id=ptype.value,
+            _defaults={
+                "guild_id": settings.SERVER_ID,
+                "name": f"added time {ptype.name}",
+            },
+        )
+        return ch
+
+    async def add_patrol_time(
+        self,
+        officer: models.Officer,
+        start: dt.datetime,
+        end: dt.datetime,
+        main_channel: models.SavedVoiceChannel,
+    ):
+        await models.Patrol.objects.create(
+            officer=officer, start=start, end=end, main_channel=main_channel
+        )
