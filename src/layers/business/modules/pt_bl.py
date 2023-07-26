@@ -289,34 +289,35 @@ class PatrolTimeBL(DiscordListenerMixin):
     async def on_ready(self):
         curr_time = now()
         channel: discord.VoiceChannel
-        for channel in self.bot.guild.channels:
-            if self._is_monitored(channel):
-                model, _ = await models.SavedVoiceChannel.objects.get_or_create(
-                    id=channel.id,
-                    _defaults={
-                        "guild_id": settings.SERVER_ID,
-                        "name": channel.name,
-                    },
-                )
-                for member in channel.members:
-                    patrol = await models.Patrol.objects.create(
-                        officer=member.id,
-                        start=curr_time,
-                        end=curr_time,
-                        event=None,
-                        main_channel=channel.id,
+        for guild in self.bot.guilds:
+            for channel in guild.channels:
+                if self._is_monitored(channel):
+                    model, _ = await models.SavedVoiceChannel.objects.get_or_create(
+                        id=channel.id,
+                        _defaults={
+                            "guild_id": guild.id,
+                            "name": channel.name,
+                        },
                     )
-                    self._patrolling_officers[member.id] = PatrolLog(
-                        patrol,
-                        [
-                            await models.PatrolVoice.objects.create(
-                                channel=channel.id,
-                                patrol=patrol,
-                                start=curr_time,
-                                end=curr_time,
-                            )
-                        ],
-                    )
+                    for member in channel.members:
+                        patrol = await models.Patrol.objects.create(
+                            officer=member.id,
+                            start=curr_time,
+                            end=curr_time,
+                            event=None,
+                            main_channel=channel.id,
+                        )
+                        self._patrolling_officers[member.id] = PatrolLog(
+                            patrol,
+                            [
+                                await models.PatrolVoice.objects.create(
+                                    channel=channel.id,
+                                    patrol=patrol,
+                                    start=curr_time,
+                                    end=curr_time,
+                                )
+                            ],
+                        )
 
     @bl_listen()
     async def on_unload(self):
