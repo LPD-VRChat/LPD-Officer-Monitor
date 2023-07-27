@@ -757,6 +757,41 @@ class Time(commands.Cog):
             f"Added {hours}hours of {patrol_type.name} patrol to <@{officer.id}>",
         )
 
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="patrol_time_remove",
+        description="Remove patrol time",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(officer="The officer that will get time removed")
+    @app_cmd.describe(hours="float, the duration of the patrol to substract")
+    async def patrol_time_remove(
+        self,
+        interac: discord.Interaction,
+        officer: discord.Member,
+        hours: float,
+    ):
+        if not is_lpd_member(officer):
+            await interaction_reply(
+                interac, "This discord member is not an LPD officer"
+            )
+            return
+
+        if await self.bl_wrapper.pt_bl.remove_patrol_time(
+            officer.id, dt.timedelta(hours=hours)
+        ):
+            await interaction_reply(
+                interac,
+                f"Removed {hours}hours of patrol from <@{officer.id}>",
+            )
+        else:
+            await interaction_reply(
+                interac,
+                f":warning:Check bot log\nRemoved {hours}hours of patrol from <@{officer.id}>",
+            )
+
 
 async def setup(bot):
     await bot.add_cog(Time(bot))

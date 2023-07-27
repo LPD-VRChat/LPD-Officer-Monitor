@@ -16,6 +16,7 @@ import enum
 # Community
 import discord
 from discord.ext import commands
+import ormar
 
 # Custom
 import settings
@@ -523,3 +524,46 @@ class PatrolTimeBL(DiscordListenerMixin):
         await models.Patrol.objects.create(
             officer=officer, start=start, end=end, main_channel=main_channel
         )
+
+    async def remove_patrol_time(
+        self, target: models.Officer, amount: dt.timedelta
+    ) -> bool:
+        last_id = -1
+        while amount > dt.timedelta(seconds=0):
+            try:
+                if last_id == -1:
+                    p = (
+                        await models.Patrol.objects.order_by("-id")
+                        .limit(1)
+                        .all(officer=target)
+                    )[0]
+                else:
+                    p = (
+                        await models.Patrol.objects.order_by("-id")
+                        .limit(1)
+                        .filter(
+                            officer=target,
+                            id__lt=last_id,
+                        )
+                        .all()
+                    )[0]
+            except ormar.NoMatch:
+                return False
+            except IndexError:
+                log.warn(
+                    f"removal of time stopped because it ran out of patrol, timeleft={amount}"
+                )
+                return False
+            last_id = p.id
+            if p.duration() > amount:
+                log.debug(f"rm pat{p.id} +{amount}")
+                p.start += amount
+                await p.update()
+                amount = dt.timedelta(seconds=0)
+                break
+            else:
+                log.debug(f"rm pat{p.id} ++{p.duration()}")
+                amount -= p.duration()
+                p.start = p.end
+                await p.update()
+        return amount == dt.timedelta(seconds=0)
