@@ -12,4 +12,4 @@ def run():
 
 if __name__ == "__main__":
     run()
-    os.execv(sys.executable, ["python", "-m", "src.runner"])
+    # os.execv(sys.executable, ["python", "-m", "src.runner"])
