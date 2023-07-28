@@ -72,6 +72,7 @@ class VRC(commands.Cog):
         else:
             message = "Command used in an unautorized channel"
 
+        await interac.delete_original_response()
         await interaction_reply(
             interac,
             f"{message}",
