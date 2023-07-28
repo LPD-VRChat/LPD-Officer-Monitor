@@ -50,3 +50,4 @@ else:
         DB_PASS = _readDockerSecret("MYSQL_PASSWORD_FILE")
         DISCORD_TOKEN = _readDockerSecret("DISCORD_TOKEN_FILE")
         DISCORD_SECRET = _readDockerSecret("DISCORD_SECRET_FILE")
+        LOG_FILE_PATH = "/logs/lpd_officer_monitor.log"

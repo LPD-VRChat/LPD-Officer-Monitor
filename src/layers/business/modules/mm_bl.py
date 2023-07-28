@@ -27,6 +27,7 @@ from src.layers.business.base_bl import (
 
 log = logging.getLogger("lpd-officer-monitor")
 
+
 # TODO: Try to make this more concise with a single class decorator
 class MemberManagementEvent:
     @dataclass

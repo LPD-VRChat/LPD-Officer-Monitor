@@ -104,10 +104,8 @@ class Help(commands.Cog):
         """Get information about all the commands."""
 
         try:
-
             # This is if the user does just to help, and does not try to get information about a specific command
             if not command:
-
                 # Create the embed
                 all_help_embeds = [
                     discord.Embed(
@@ -119,7 +117,6 @@ class Help(commands.Cog):
 
                 # Loop through all the commands and add them to the embed if they are available in the current context
                 for cog_name in self.bot.cogs:
-
                     cog = self.bot.cogs[cog_name]
 
                     # Make sure to skip the help cog, itself
@@ -163,10 +160,8 @@ class Help(commands.Cog):
 
                 # Give information about a specific command
                 for command_in_bot in self.bot.commands:
-
                     # If the command is found
                     if command_in_bot.name == command[0]:
-
                         # Make sure the command can be used in the current context
                         if await self.can_use(command_in_bot, ctx):
                             await ctx.send(

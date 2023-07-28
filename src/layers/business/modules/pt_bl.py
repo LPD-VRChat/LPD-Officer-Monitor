@@ -11,10 +11,12 @@ import logging
 import datetime as dt
 from typing import Dict, Iterable
 from functools import wraps
+import enum
 
 # Community
 import discord
 from discord.ext import commands
+import ormar
 
 # Custom
 import settings
@@ -40,6 +42,15 @@ def voice_logs_cache_lock(f):
             return await f(*args, **kwds)
 
     return wrapper
+
+
+class PatrolType(enum.Enum):
+    Normal = 1
+    LMT = 2
+    SLRT = 3
+    Watch_officer = 5
+    Dispatch = 6
+    Training = 7
 
 
 class PatrolTimeBL(DiscordListenerMixin):
@@ -147,7 +158,6 @@ class PatrolTimeBL(DiscordListenerMixin):
         curr_time = now()
 
         match (on_patrol, to_monitored_channel):
-
             # Officer is moving between monitored channels
             case True, True:
                 log.debug(
@@ -290,34 +300,35 @@ class PatrolTimeBL(DiscordListenerMixin):
     async def on_ready(self):
         curr_time = now()
         channel: discord.VoiceChannel
-        for channel in self.bot.guild.channels:
-            if self._is_monitored(channel):
-                model, _ = await models.SavedVoiceChannel.objects.get_or_create(
-                    id=channel.id,
-                    _defaults={
-                        "guild_id": settings.SERVER_ID,
-                        "name": channel.name,
-                    },
-                )
-                for member in channel.members:
-                    patrol = await models.Patrol.objects.create(
-                        officer=member.id,
-                        start=curr_time,
-                        end=curr_time,
-                        event=None,
-                        main_channel=channel.id,
+        for guild in self.bot.guilds:
+            for channel in guild.channels:
+                if self._is_monitored(channel):
+                    model, _ = await models.SavedVoiceChannel.objects.get_or_create(
+                        id=channel.id,
+                        _defaults={
+                            "guild_id": guild.id,
+                            "name": channel.name,
+                        },
                     )
-                    self._patrolling_officers[member.id] = PatrolLog(
-                        patrol,
-                        [
-                            await models.PatrolVoice.objects.create(
-                                channel=channel.id,
-                                patrol=patrol,
-                                start=curr_time,
-                                end=curr_time,
-                            )
-                        ],
-                    )
+                    for member in channel.members:
+                        patrol = await models.Patrol.objects.create(
+                            officer=member.id,
+                            start=curr_time,
+                            end=curr_time,
+                            event=None,
+                            main_channel=channel.id,
+                        )
+                        self._patrolling_officers[member.id] = PatrolLog(
+                            patrol,
+                            [
+                                await models.PatrolVoice.objects.create(
+                                    channel=channel.id,
+                                    patrol=patrol,
+                                    start=curr_time,
+                                    end=curr_time,
+                                )
+                            ],
+                        )
 
     @bl_listen()
     async def on_unload(self):
@@ -489,3 +500,70 @@ class PatrolTimeBL(DiscordListenerMixin):
                 log.exception("failed to remove cadets roles")
                 success = False
         return success
+
+    async def get_fake_channel_from_patroltype(
+        self,
+        ptype: PatrolType,
+    ) -> models.SavedVoiceChannel:
+        ch, _ = await models.SavedVoiceChannel.objects.get_or_create(
+            id=ptype.value,
+            _defaults={
+                "guild_id": settings.SERVER_ID,
+                "name": f"added time {ptype.name}",
+            },
+        )
+        return ch
+
+    async def add_patrol_time(
+        self,
+        officer: models.Officer,
+        start: dt.datetime,
+        end: dt.datetime,
+        main_channel: models.SavedVoiceChannel,
+    ):
+        await models.Patrol.objects.create(
+            officer=officer, start=start, end=end, main_channel=main_channel
+        )
+
+    async def remove_patrol_time(
+        self, target: models.Officer, amount: dt.timedelta
+    ) -> bool:
+        last_id = -1
+        while amount > dt.timedelta(seconds=0):
+            try:
+                if last_id == -1:
+                    p = (
+                        await models.Patrol.objects.order_by("-id")
+                        .limit(1)
+                        .all(officer=target)
+                    )[0]
+                else:
+                    p = (
+                        await models.Patrol.objects.order_by("-id")
+                        .limit(1)
+                        .filter(
+                            officer=target,
+                            id__lt=last_id,
+                        )
+                        .all()
+                    )[0]
+            except ormar.NoMatch:
+                return False
+            except IndexError:
+                log.warn(
+                    f"removal of time stopped because it ran out of patrol, timeleft={amount}"
+                )
+                return False
+            last_id = p.id
+            if p.duration() > amount:
+                log.debug(f"rm pat{p.id} +{amount}")
+                p.start += amount
+                await p.update()
+                amount = dt.timedelta(seconds=0)
+                break
+            else:
+                log.debug(f"rm pat{p.id} ++{p.duration()}")
+                amount -= p.duration()
+                p.start = p.end
+                await p.update()
+        return amount == dt.timedelta(seconds=0)

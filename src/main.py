@@ -53,11 +53,9 @@ def setup_logger():
     dh.setFormatter(formatter)
     log.addHandler(sh)
     log.addHandler(dh)
-    if not os.environ.get("LPD_OFFICER_MONITOR_DOCKER"):
-        # TODO fix file logging in Docker
-        fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
-        fh.setFormatter(formatter)
-        log.addHandler(fh)
+    fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
 
     return log
 
@@ -140,8 +138,14 @@ async def tree_on_error(
     )
 
 
-def main():
+async def tree_interaction_check(interaction: discord.Interaction):
+    # VM production is slow sometimes
+    # always reply with "loading"
+    await interaction.response.defer(ephemeral=False, thinking=True)
+    return True  # accept all interaction
 
+
+def main():
     ##############################
     ### Setup Global Variables ###
     ##############################
@@ -163,6 +167,7 @@ def main():
     bot.everything_ready = False
 
     bot.tree.on_error = tree_on_error
+    bot.tree.interaction_check = tree_interaction_check
 
     #####################
     ### Setup logging ###
@@ -233,7 +238,6 @@ def main():
 
     @bot.event
     async def on_message(message: discord.Message) -> None:
-
         # Only process commands that are in a command channel
         if message.channel.id in settings.ALLOWED_COMMAND_CHANNELS:
             await bot.process_commands(message)

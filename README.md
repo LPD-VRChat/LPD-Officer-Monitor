@@ -74,7 +74,7 @@ Build the images used by the container, sometimes `Dockerfile` changes are not p
 ```
 docker compose build
 mkdir logs
-chmod +x docker-entrypoint.sh
+sudo chmod a+w logs
 ```
 
 execute commands inside the python environement to setup de DB
