@@ -40,21 +40,35 @@ class VRC(commands.Cog):
     )
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
-    @app_cmd.describe(name="Template for Mugshots & Diagnosis")
-    async def info(self, interac: discord.Interaction):
+    async def template_mugshot_diagnosis(self, interac: discord.Interaction):
+        r = self.bl_wrapper.pt_bl.get_patrolling_officers()
+        for channel_id in r:
+            if interac.user.id in r[channel_id]:
+                patrolling_officers = " ".join([f"<@{o}>" for o in r[channel_id]])
+                break
+        else:
+            patrolling_officers = ""
         if interac.channel_id == settings.MUGSHOT_CHANNEL:
-            message = "Mugshot message Template\n"
-            message += "Name: \n"
-            message += "Crimes: \n"
-            message += "Officers: \n"
-            message += "Don't forget to add your pictures"
+            message = (
+                "Mugshot message Template\n"
+                "```\n"
+                "Name: \n"
+                "Crimes: \n"
+                f"Officers: {patrolling_officers}\n"
+                "```\n"
+                "Don't forget to add your pictures"
+            )
         elif interac.channel_id == settings.DIAGNOSIS_CHANNEL:
-            message = "Diagnosis message Template\n"
-            message += "Patient: \n"
-            message += "Diagnosis: \n"
-            message += "Treatment: \n"
-            message += "LMTs: \n"
-            message += "Don't forget to add your pictures"
+            message = (
+                "Diagnosis message Template\n"
+                "```\n"
+                "Patient: \n"
+                "Diagnosis: \n"
+                "Treatment: \n"
+                f"LMTs: {patrolling_officers}\n"
+                "```\n"
+                "Don't forget to add your pictures"
+            )
         else:
             message = "Command used in an unautorized channel"
 
