@@ -42,13 +42,13 @@ class VRC(commands.Cog):
     @app_cmd.default_permissions(administrator=True)
     @app_cmd.describe(name="Template for Mugshots & Diagnosis")
     async def info(self, interac: discord.Interaction):
-        if interac.channel_id == settings.MUGSHOT_BOT_CHANNEL:
+        if interac.channel_id == settings.MUGSHOT_CHANNEL:
             message = "Mugshot message Template\n"
             message += "Name: \n"
             message += "Crimes: \n"
             message += "Officers: \n"
             message += "Don't forget to add your pictures"
-        elif interac.channel_id == settings.DIAGNOSIS_BOT_CHANNEL:
+        elif interac.channel_id == settings.DIAGNOSIS_CHANNEL:
             message = "Diagnosis message Template\n"
             message += "Patient: \n"
             message += "Diagnosis: \n"
