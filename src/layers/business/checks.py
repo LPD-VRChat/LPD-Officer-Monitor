@@ -77,6 +77,25 @@ def is_recruiter_bot_channel(slash_cmd=False):
         return commands.check(predicate)
 
 
+def is_mugshot_diagnosis_channel(slash_cmd=False):
+    def predicate(ctx):
+        return ctx.channel.id in [
+            settings.MUGSHOT_CHANNEL,
+            settings.DIAGNOSIS_CHANNEL,
+        ]
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return interaction.channel_id in [
+            settings.MUGSHOT_CHANNEL,
+            settings.DIAGNOSIS_CHANNEL,
+        ]
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
 def is_team_bot_channel(slash_cmd=False):
     def predicate(ctx):
         return ctx.channel.id in [
