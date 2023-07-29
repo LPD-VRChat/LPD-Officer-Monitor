@@ -17,7 +17,11 @@ import src.layers.business.checks as checks
 import src.layers.business.errors as errors
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
-from src.layers.business.extra_functions import interaction_send_long, send_long
+from src.layers.business.extra_functions import (
+    interaction_reply,
+    interaction_send_long,
+    send_long,
+)
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -216,12 +220,12 @@ class Other(commands.Cog):
         try:
             results = self.get_role_members(role)
         except errors.GetRoleMembersError:
-            await di.response.send_message(f"`{role.name}` role has no members")
+            await interaction_reply(di, f"`{role.name}` role has no members")
             return
         member_names = sorted(results, key=lambda m: m.display_name.lower())
         member_str = "\n".join(member.name for member in member_names)
-        await di.response.send_message(
-            f"Here are the {len(member_names)} people with `{role.name}`'s role"
+        await interaction_reply(
+            di, f"Here are the {len(member_names)} people with `{role.name}`'s role"
         )
         await send_long(di.channel, member_str, code_block=True)
 
