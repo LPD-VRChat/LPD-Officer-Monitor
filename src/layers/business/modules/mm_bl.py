@@ -138,6 +138,10 @@ class MemberManagementBL(
         before: discord.Member,
         after: discord.Member,
     ) -> None:
+        # listen to roles only in LPD server
+        # if needed for other server, listen to same event in another module
+        if not before.guild.id == settings.SERVER_ID:
+            return
         officer_before = before.id in self._lpd_members
         officer_after = is_lpd_member(after)
 
@@ -161,7 +165,7 @@ class MemberManagementBL(
 
     @bl_listen()
     async def on_member_remove(self, member: discord.Member) -> None:
-        if is_lpd_member(member):
+        if is_lpd_member(member) and member.guild.id == settings.SERVER_ID:
             await self.member_left_LPD(member.id, member)
 
     # Verify members at startup
