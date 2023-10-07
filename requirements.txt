@@ -1,5 +1,5 @@
 # Discord
-discord.py[speed]~=2.0.0
+discord.py[speed]~=2.0
 
 mypy>=0.950  # Support for match statements
 nest_asyncio~=1.5.1
