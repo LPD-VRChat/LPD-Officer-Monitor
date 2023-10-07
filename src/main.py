@@ -15,8 +15,8 @@ assert (
 import discord
 
 assert discord.__version__.startswith(
-    "2.0."
-), f"Discord.py wrong version, got {discord.__version__}, expected 2.0.x"
+    "2."
+), f"Discord.py wrong version, got {discord.__version__}, expected 2.x"
 import nest_asyncio
 from discord.ext import commands
 
