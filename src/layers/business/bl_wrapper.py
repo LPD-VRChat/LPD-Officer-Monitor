@@ -35,7 +35,7 @@ def create(bot) -> BusinessLayerWrapper:
         MemberManagementBL(bot),
         PatrolTimeBL(bot),
         MemberActivityBL(bot),
-        VRChatBL(),
+        VRChatBL(bot),
         ProgrammingBL(bot),
         WebManagerBL(bot),
         ModerationBL(bot),
