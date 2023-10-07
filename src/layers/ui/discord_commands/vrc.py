@@ -287,6 +287,24 @@ class VRC(commands.Cog):
 
         await interaction_reply(interac, out_string)
 
+    @checks.is_team_bot_channel(True)
+    @checks.app_cmd_check_any(
+        checks.is_dev_team(True),
+        checks.is_white_shirt(True),
+        checks.is_programming_team(True),
+    )
+    @app_cmd.command(
+        name="vrc_list_json",
+        description="List linked VRChat account for world allowlist in JSON",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def list_dev_json(self, interac: discord.Interaction):
+        output_text = await self.bl_wrapper.vrc.get_list_as_json()
+        await interaction_send_str_as_file(
+            interac, output_text, "allowlist.json", "Allowlist:"
+        )
+
 
 async def setup(bot):
     await bot.add_cog(VRC(bot))
