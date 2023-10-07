@@ -18,6 +18,36 @@ class RoleLadderElement:
         """Returns the discord.Role object for this role ladder element"""
         return bot.guild.get_role(self.id)
 
+    def _check_type(self, a):
+        if not isinstance(a, RoleLadderElement):
+            raise ValueError(
+                f"Cannot compare other type ({type(a)}) to RoleLadderElement"
+            )
+
+    def __lt__(self, other):  # less-than (<)
+        self._check_type(other)
+        return self.position < other.position
+
+    def __le__(self, other):  # less-than or equal to (<=)
+        self._check_type(other)
+        return self.position <= other.position
+
+    def __eq__(self, other):  # equal (==)
+        self._check_type(other)
+        return self.position == other.position and self.id == other.id
+
+    def __ne__(self, other):  # not equal (!=)
+        self._check_type(other)
+        return self.position != other.position and self.id != other.id
+
+    def __gt__(self, other):  # the greater-than (>)
+        self._check_type(other)
+        return self.position > other.position
+
+    def __ge__(self, other):  # greater-than or equal to (>=)
+        self._check_type(other)
+        return self.position >= other.position
+
 
 @dataclass
 class RoleLadder:
