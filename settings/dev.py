@@ -122,3 +122,6 @@ _tracemalloc.start()
 
 # Web Manager settings ###########################################
 WEB_MANAGER_HOST = "localhost"
+
+GIT_REPO_PATH = "D:\\dev\\vrc\\LPD-Officer-MonitorV3\\repo"
+GIT_REPO_FILENAME = "allowlist.json"

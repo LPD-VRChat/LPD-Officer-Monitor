@@ -165,3 +165,7 @@ DISCORD_PERMISSION = 277059202112
 # Scam Detection Settings ########################################
 GIFT_LINK_EXPIRATION_SECONDS = 30
 GIFT_LINK_MAX_CHANNEL_COUNT = 4
+
+GIT_REPO_PATH = "/tmp/createme"
+GIT_REPO_FILENAME = "allowlist.json"
+GIT_AUTO_EXPORT = False
