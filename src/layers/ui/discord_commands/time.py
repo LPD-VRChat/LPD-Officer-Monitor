@@ -667,6 +667,59 @@ class Time(commands.Cog):
                     log.error(f"invalid training {training.value}")
                     return
 
+        # check target requirements
+        member_rank = get_lpd_member_rank(member)
+        if not member_rank:
+            await interaction_reply(
+                interac,
+                f":red_circle: failed to promote <@{member.id}> for `{training.name}`, could not get the rank of target",
+            )
+            log.warning(
+                f"failed to promote <@{member.id}> for `{training.name}`, could not get the rank of target"
+            )
+            return
+        match training:
+            case Training.recruit:
+                if member_rank != settings.ROLE_LADDER.cadet:
+                    await interaction_reply(
+                        interac,
+                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target isn't a cadet",
+                    )
+                    return
+            case Training.senior_officer:
+                if member_rank != settings.ROLE_LADDER.officer:
+                    await interaction_reply(
+                        interac,
+                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target isn't an officer",
+                    )
+                    return
+            case Training.LMT:
+                if member_rank < settings.ROLE_LADDER.officer:
+                    await interaction_reply(
+                        interac,
+                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be officer or above",
+                    )
+                    return
+            case Training.SLRT:
+                if member_rank < settings.ROLE_LADDER.senior_officer:
+                    await interaction_reply(
+                        interac,
+                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be senior_officer or above",
+                    )
+                    return
+            case Training.Watch_officer:
+                if member_rank < settings.ROLE_LADDER.corporal:
+                    await interaction_reply(
+                        interac,
+                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be corporal or above",
+                    )
+                    return
+            case _:
+                await interaction_reply(interac, ":red_circle: invalid training.")
+                log.error(f"invalid training {training.value}")
+                return
+
+        # proceed with role change
         match training:
             case Training.recruit:
                 await member.add_roles(
