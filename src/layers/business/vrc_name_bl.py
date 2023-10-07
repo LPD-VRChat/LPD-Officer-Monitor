@@ -2,6 +2,8 @@
 import logging
 from typing import Optional
 import json
+import os
+import subprocess
 
 # external
 import discord
@@ -84,3 +86,68 @@ class VRChatBL(DiscordListenerMixin):
         # set separator to get rid of spaces
         # add lines for better human readability
         return json.dumps(jsondata, separators=(",", ":")).replace("},", "},\n")
+
+    def _run_command(self, cmd) -> bool:
+        try:
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd="repo",
+                timeout=10,
+            )
+
+            if result.returncode != 0:
+                log.error(
+                    f"Command `{cmd}` failed({result.returncode}) : {result.stderr}"
+                )
+                return False
+        except Exception as e:
+            log.error(f"Command `{cmd}` failed : {str(e)}")
+            return False
+        return True
+
+    async def export_json_list_git(self) -> bool:
+        if not os.path.isdir(settings.GIT_REPO_PATH):
+            log.error("repo folder does not exist")
+            return False
+        if not self._run_command("git reset --hard"):
+            return False
+        if not self._run_command("git pull"):
+            # return False
+            pass
+        jsonData = await self.get_list_as_json()
+        if len(jsonData) < 8:
+            log.error(f"json looks to be invalid {len(jsonData)=}")
+            return False
+        with open(
+            settings.GIT_REPO_PATH + os.sep + settings.GIT_REPO_FILENAME, "w"
+        ) as f:
+            f.write(jsonData)
+        try:
+            result = subprocess.run(
+                "git diff",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd="repo",
+                timeout=10,
+            )
+            if result.returncode != 0:
+                log.error(f"Command diff failed({result.returncode}) : {result.stderr}")
+                return False
+            if len(result.stdout) == 0:
+                log.info("json git export: no change")
+                return True
+        except Exception as e:
+            log.error(f"Command diff failed : {str(e)}")
+            return False
+        if not self._run_command("git add allowlist.json"):
+            return False
+        if not self._run_command('git commit -m "Updated allowlist.json"'):
+            return False
+        if not self._run_command("git push"):
+            return False

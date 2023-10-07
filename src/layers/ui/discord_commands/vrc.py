@@ -4,10 +4,11 @@ import settings
 
 # Standard
 import logging
+import datetime
 
 # Community
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands as app_cmd
 import ormar
 from settings.classes import RoleLadderElement
@@ -304,6 +305,40 @@ class VRC(commands.Cog):
         await interaction_send_str_as_file(
             interac, output_text, "allowlist.json", "Allowlist:"
         )
+
+    @checks.is_team_bot_channel(True)
+    @checks.app_cmd_check_any(
+        checks.is_dev_team(True),
+        checks.is_white_shirt(True),
+        checks.is_programming_team(True),
+    )
+    @app_cmd.command(
+        name="vrc_list_export",
+        description="Re-export list linked VRChat account for world allowlist in JSON",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def list_export_json(self, interac: discord.Interaction):
+        if await self.bl_wrapper.vrc.export_json_list_git():
+            await interaction_reply(interac, "Done")
+        else:
+            await interaction_reply(interac, ":red_circle: An error occured!")
+
+    @tasks.loop(time=datetime.time(0, 0))
+    async def git_auto_export(self):
+        # didn't seem to work in dev
+        # task are only possible in cog, dosn't work in bl
+        if settings.GIT_AUTO_EXPORT:
+            await self.bl_wrapper.vrc.export_json_list_git()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if not self.git_auto_export.is_running():
+            self.git_auto_export.start()
+        print(self.git_auto_export.next_iteration)
+
+    def cog_unload(self):
+        self.git_auto_export.cancel()
 
 
 async def setup(bot):
