@@ -17,12 +17,13 @@ import enum
 import discord
 from discord.ext import commands
 import ormar
+from pymysql.err import IntegrityError
 
 # Custom
 import settings
 from settings.classes import RoleLadderElement
 from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
-from src.layers.business.extra_functions import now, get_guild
+from src.layers.business.extra_functions import is_lpd_member, now, get_guild
 from src.layers.storage import models
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -195,13 +196,20 @@ class PatrolTimeBL(DiscordListenerMixin):
                 # Because is_monitored returned True the channel must be a voice channel
                 assert isinstance(after.channel, discord.VoiceChannel)
 
-                patrol = await models.Patrol.objects.create(
-                    officer=member.id,
-                    start=curr_time,
-                    end=curr_time,
-                    event=None,
-                    main_channel=after.channel.id,
-                )
+                try:
+                    patrol = await models.Patrol.objects.create(
+                        officer=member.id,
+                        start=curr_time,
+                        end=curr_time,
+                        event=None,
+                        main_channel=after.channel.id,
+                    )
+                except IntegrityError as e:
+                    if not is_lpd_member(member):
+                        log.warn(f"Non LPD member{member.id} in on-duty-channel")
+                    else:
+                        logging.error(f"member={member.id} {e}")
+                    return
 
                 # Add the first patrol and voice log to the cache
                 self._patrolling_officers[member.id] = PatrolLog(
