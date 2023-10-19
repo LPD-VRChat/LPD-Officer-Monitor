@@ -114,3 +114,11 @@ DB_HOST = "localhost"
 DB_SOCK = "/run/mysqld/mysqld.sock"
 DB_TYPE = "mysql"
 DB_PORT = 3306
+
+
+VRC_NAMES_STATIC: list[str] = [
+    "Sarma",
+    "Rickity",
+    "Hroi",
+    "Molls",
+]
