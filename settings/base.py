@@ -169,3 +169,6 @@ GIFT_LINK_MAX_CHANNEL_COUNT = 4
 GIT_REPO_PATH = "/tmp/createme"
 GIT_REPO_FILENAME = "allowlist.json"
 GIT_AUTO_EXPORT = False
+
+# Give access to station to old friends
+VRC_NAMES_STATIC: list[str] = []

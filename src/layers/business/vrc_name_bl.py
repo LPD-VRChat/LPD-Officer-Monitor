@@ -83,6 +83,33 @@ class VRChatBL(DiscordListenerMixin):
                 "Backroom Access": True,
             }
 
+        for staticName in settings.VRC_NAMES_STATIC:
+            if staticName not in jsondata:
+                jsondata[staticName] = {
+                    "Rank": settings.ROLE_LADDER.officer.name,
+                    "Staff": False,
+                    "SLRT Certified": False,
+                    "LMT Certified": False,
+                    "CO Certified": False,
+                    "Event Host": False,
+                    "Programmer": False,
+                    "Media": False,
+                    "Chatmod": False,
+                    "Instigator": False,
+                    "Trainer": False,
+                    "SLRT Trainer": False,
+                    "LMT Trainer": False,
+                    "CO Trainer": False,
+                    "Instigator Trainer": False,
+                    "Dev": False,
+                    "Recruiter": False,
+                    "Lead": False,
+                    "Korean": False,
+                    "Chinese": False,
+                    "Community": "LPD",
+                    "Backroom Access": True,
+                }
+
         # set separator to get rid of spaces
         # add lines for better human readability
         return json.dumps(jsondata, separators=(",", ":")).replace("},", "},\n")
