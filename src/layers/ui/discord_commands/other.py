@@ -3,7 +3,7 @@ import settings
 
 # Standard
 import argparse
-from typing import List, Optional, Set, Tuple
+from typing import List, Literal, Optional, Set, Tuple
 import logging
 
 # Community
@@ -290,23 +290,42 @@ class Other(commands.Cog):
     )
     @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
     @app_commands.default_permissions(administrator=True)
-    # @app_commands.describe(patrolling="list patrolling officers")
-    # @app_commands.describe(training="list training officers")
     async def who(
         self,
         di: discord.Interaction,
-        # patrolling: bool = None,
-        # training: bool = None,
+        list_type: Literal["All", "Patrol", "Training"],
     ):
         r = self.bl_wrapper.pt_bl.get_patrolling_officers()
-        # TODO : add way to differentiate training channels
-        message = "Template:\n```\nEvent Host:\nDispatch:\nGroup Leads:\n\n"
-        for channel_id, officers in r.items():
-            channel = self.bot.get_channel(channel_id)
-            if channel:
-                message += f"\n** {channel.name} **:\n"
+
+        def custom_sort_key(channel_name):
+            if channel_name.startswith("CO"):
+                return (3, channel_name)
+            elif channel_name.startswith("LMT"):
+                return (2, channel_name)
+            elif channel_name.startswith("SLRT"):
+                return (1, channel_name)
             else:
-                message += f"\n** {self.bot.guild. channel_id}> **:\n"
+                return (0, channel_name)
+
+        voice_channels = [self.bot.get_channel(channel_id) for channel_id in r.keys()]
+        if list_type != "All":
+            for vc in voice_channels.copy():
+                if (
+                    list_type == "Patrol"
+                    and "Training" in vc.name
+                    or list_type == "Training"
+                    and "Training" not in vc.name
+                ):
+                    voice_channels.remove(vc)
+
+        sorted_channels = sorted(
+            voice_channels, key=lambda item: custom_sort_key(item.name)
+        )
+
+        message = "Template:\n```\nEvent Host:\nDispatch:\nGroup Leads:\n\n"
+        for channel in sorted_channels:
+            officers = r[channel.id]
+            message += f"\n** {channel.name} **:\n"
             message += "".join([f"<@{o}>\n" for o in officers])
         message += "```"
         await interaction_send_long(di, message)
