@@ -122,7 +122,7 @@ class VRChatBL(DiscordListenerMixin):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd="repo",
+                cwd=settings.GIT_REPO_PATH,
                 timeout=10,
             )
 
@@ -160,7 +160,7 @@ class VRChatBL(DiscordListenerMixin):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd="repo",
+                cwd=settings.GIT_REPO_PATH,
                 timeout=10,
             )
             if result.returncode != 0:
