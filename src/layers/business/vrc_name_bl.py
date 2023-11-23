@@ -178,3 +178,4 @@ class VRChatBL(DiscordListenerMixin):
             return False
         if not self._run_command("git push"):
             return False
+        return True
