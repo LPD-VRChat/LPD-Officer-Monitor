@@ -5,6 +5,7 @@ import settings
 # Standard
 import logging
 import datetime
+import asyncio
 
 # Community
 import discord
@@ -32,6 +33,7 @@ class VRC(commands.Cog):
         self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
         self.bot = bot
         self.color = discord.Color.lighter_grey()
+        self.git_export_lock = asyncio.Lock()
 
     @checks.is_mugshot_diagnosis_channel(True)
     @checks.is_officer(True)
@@ -306,36 +308,46 @@ class VRC(commands.Cog):
             interac, output_text, "allowlist.json", "Allowlist:"
         )
 
-    @checks.is_team_bot_channel(True)
-    @checks.app_cmd_check_any(
-        checks.is_dev_team(True),
-        checks.is_white_shirt(True),
-        checks.is_programming_team(True),
-    )
-    @app_cmd.command(
+    @commands.hybrid_command(
         name="vrc_list_export",
         description="Re-export list linked VRChat account for world allowlist in JSON",
     )
+    @checks.is_team_bot_channel()
+    @checks.app_cmd_check_any(
+        checks.is_dev_team(),
+        checks.is_white_shirt(),
+        checks.is_programming_team(),
+    )
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
-    async def list_export_json(self, interac: discord.Interaction):
-        if await self.bl_wrapper.vrc.export_json_list_git():
-            await interaction_reply(interac, "Done")
-        else:
-            await interaction_reply(interac, ":red_circle: An error occured!")
+    async def list_export_json(self, ctx):
+        async with self.git_export_lock:
+            if await self.bl_wrapper.vrc.export_json_list_git():
+                await ctx.send("Done")
+            else:
+                await ctx.send(":red_circle: An error occured!")
 
-    @tasks.loop(time=datetime.time(0, 0))
+    @tasks.loop(
+        time=[
+            datetime.time(00, 00, tzinfo=datetime.UTC),
+            # datetime.time(12, 00, tzinfo=datetime.UTC),
+        ]
+    )
     async def git_auto_export(self):
         # didn't seem to work in dev
         # task are only possible in cog, dosn't work in bl
         if settings.GIT_AUTO_EXPORT:
-            await self.bl_wrapper.vrc.export_json_list_git()
+            async with self.git_export_lock:
+                await self.bl_wrapper.vrc.export_json_list_git()
+
+    @git_auto_export.error
+    async def git_auto_export_except(self, ex):
+        log.exception("An error occurred: %s", str(ex))
 
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.git_auto_export.is_running():
             self.git_auto_export.start()
-        print(self.git_auto_export.next_iteration)
 
     def cog_unload(self):
         self.git_auto_export.cancel()
