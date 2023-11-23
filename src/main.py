@@ -311,9 +311,18 @@ def main():
         if exception_string.find("encountered a problem") != -1:
             log.log(logging.ERROR, exception_string, exc_info=exception)
         else:
-            log.error(
-                f"cmdErr u={ctx.author.id} c={ctx.channel.id} {ctx.command.name} {exception_string}"
-            )
+            if (
+                isinstance(exception, discord.ext.commands.errors.CommandNotFound)
+                or not ctx.command
+                or not ctx.command.name
+            ):
+                log.error(
+                    f"cmdErr u={ctx.author.id} c={ctx.channel.id} i={ctx.invoked_with} {exception_string}"
+                )
+            else:
+                log.error(
+                    f"cmdErr u={ctx.author.id} c={ctx.channel.id} n={ctx.command.name} {exception_string}"
+                )
 
     @bot.event
     async def on_error(event, *args, **kwargs):
