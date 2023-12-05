@@ -12,6 +12,7 @@ import datetime as dt
 from typing import Dict, Iterable
 from functools import wraps
 import enum
+import random
 
 # Community
 import discord
@@ -23,8 +24,14 @@ from pymysql.err import IntegrityError
 import settings
 from settings.classes import RoleLadderElement
 from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
-from src.layers.business.extra_functions import is_lpd_member, now, get_guild
+from src.layers.business.extra_functions import (
+    is_lpd_member,
+    now,
+    get_guild,
+    get_lpd_member_rank,
+)
 from src.layers.storage import models
+from src.layers.storage import special_queries
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -575,3 +582,32 @@ class PatrolTimeBL(DiscordListenerMixin):
                 p.start = p.end
                 await p.update()
         return amount == dt.timedelta(seconds=0)
+
+    async def get_random_active_officer(
+        self,
+        minimum_activity: float,
+        start: dt.datetime,
+        end: dt.datetime,
+        amount_officers: int,
+    ) -> tuple[list[int], str]:
+        debug_log = ""
+        r = await special_queries.get_active_officers(minimum_activity, start, end)
+        debug_log += f"raw candidates = {len(r)}\n"
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+        members = [guild.get_member(row[0]) for row in r]
+        officers_id = [
+            m.id
+            for m in members
+            if is_lpd_member(m)
+            and get_lpd_member_rank(m) <= settings.ROLE_LADDER.corporal
+        ]
+        debug_log += f"filtered(staff,still active) = {len(officers_id)}\n"
+        if len(r[0]) < amount_officers:
+            return (
+                officers_id,
+                debug_log + ":warning:too little candidate to pick randomly",
+            )
+        else:
+            return random.sample(officers_id, amount_officers), debug_log + "Picked:"

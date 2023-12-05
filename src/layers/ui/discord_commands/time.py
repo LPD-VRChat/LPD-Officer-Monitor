@@ -6,6 +6,7 @@ import datetime as dt
 from typing import Optional
 import logging
 import enum
+import math
 
 # Community
 import discord
@@ -844,6 +845,73 @@ class Time(commands.Cog):
                 interac,
                 f":warning:Check bot log\nRemoved {hours}hours of patrol from <@{officer.id}>",
             )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="active_officer_random",
+        description="Pick a defined amount of officers in the period, sergeant and above are excluded",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(minimum_activity="float, minimum hours of patrol")
+    @app_cmd.describe(from_datetime="`YYYY/MM/DD HH:mm` [UTC]")
+    @app_cmd.describe(
+        to_datetime="`YYYY/MM/DD HH:mm` [UTC] [Optional] If undefined, current time is used"
+    )
+    async def active_officer_random(
+        self,
+        interac: discord.Interaction,
+        minimum_activity: float,
+        amount_officers: int,
+        from_datetime: str,
+        to_datetime: Optional[str] = None,
+    ):
+        if to_datetime is None:
+            dt_end = dt.datetime.now(dt.UTC)
+        else:
+            try:
+                dt_end = dt.datetime.strptime(to_datetime, "%Y/%m/%d %H:%M")
+            except Exception as e:
+                log.warning("oRng: " + str(e))
+                await interaction_reply(
+                    interac,
+                    ":red_circle: Failed to parse `to_datetime`, format is `2023/12/24 23:59`",
+                )
+                return
+
+        try:
+            dt_start = dt.datetime.strptime(from_datetime, "%Y/%m/%d %H:%M")
+        except Exception as e:
+            log.warning("oRng: " + str(e))
+            await interaction_reply(
+                interac,
+                ":red_circle: Failed to parse `from_datetime`, format is `2023/12/24 23:59`",
+            )
+            return
+
+        dt_start = dt_start.replace(tzinfo=dt.UTC)
+        dt_end = dt_end.replace(tzinfo=dt.UTC)
+
+        if dt_start > dt_end:
+            await interaction_reply(
+                interac,
+                ":red_circle: Period is invalid, `from` is after `to`",
+            )
+            return
+
+        id_list, msg = await self.bl_wrapper.pt_bl.get_random_active_officer(
+            minimum_activity, dt_start, dt_end, amount_officers
+        )
+        mentions = " ".join([f"<@{str(i)}>" for i in id_list])
+        await interaction_reply(
+            interac,
+            f"From <t:{math.floor(dt_start.timestamp())}:f>"
+            + f" to<t:{math.floor(dt_end.timestamp())}:f>\n"
+            + msg
+            + "\n"
+            + mentions,
+        )
 
 
 async def setup(bot):
