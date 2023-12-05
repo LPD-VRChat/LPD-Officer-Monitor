@@ -313,7 +313,8 @@ class VRC(commands.Cog):
         description="Re-export list linked VRChat account for world allowlist in JSON",
     )
     @checks.is_team_bot_channel()
-    @checks.app_cmd_check_any(
+    # @checks.app_cmd_check_any(
+    @commands.check_any(
         checks.is_dev_team(),
         checks.is_white_shirt(),
         checks.is_programming_team(),
