@@ -304,6 +304,8 @@ class Other(commands.Cog):
                 return (2, channel_name)
             elif channel_name.startswith("SLRT"):
                 return (1, channel_name)
+            elif "dispatch" in channel_name.lower():
+                return (-1, channel_name)
             else:
                 return (0, channel_name)
 
