@@ -215,6 +215,7 @@ class VRC(commands.Cog):
                 "Lead",
                 "Korean",
                 "Chinese",
+                "Supporter",
                 "Community",
                 "Backroom Access",
             ]
@@ -253,6 +254,7 @@ class VRC(commands.Cog):
                 has_role_id(member, settings.TEAM_LEAD_ROLE),
                 has_role_id(member, settings.KOREAN_ROLE),
                 has_role_id(member, settings.CHINESE_ROLE),
+                has_role_id(member, settings.SUPPORTER_ROLE),
                 "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
                 True,  # "Backroom Access",
             ]

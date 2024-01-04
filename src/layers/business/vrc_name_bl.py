@@ -79,6 +79,7 @@ class VRChatBL(DiscordListenerMixin):
                 "Lead": has_role_id(member, settings.TEAM_LEAD_ROLE),
                 "Korean": has_role_id(member, settings.KOREAN_ROLE),
                 "Chinese": has_role_id(member, settings.CHINESE_ROLE),
+                "Supporter": has_role_id(member, settings.SUPPORTER_ROLE),
                 "Community": "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
                 "Backroom Access": True,
             }
@@ -106,6 +107,7 @@ class VRChatBL(DiscordListenerMixin):
                     "Lead": False,
                     "Korean": False,
                     "Chinese": False,
+                    "Supporter": False,
                     "Community": "LPD",
                     "Backroom Access": True,
                 }
