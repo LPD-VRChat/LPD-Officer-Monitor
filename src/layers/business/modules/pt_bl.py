@@ -411,6 +411,7 @@ class PatrolTimeBL(DiscordListenerMixin):
             list.extend([m.id for m in discord_role.members])
 
         officer_ids: list[int] = []
+        add_members_from_role(settings.ROLE_LADDER.recruit, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.officer, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.senior_officer, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.corporal, officer_ids)
@@ -437,7 +438,8 @@ class PatrolTimeBL(DiscordListenerMixin):
                     officerid_to_yeet_ids.append(oid)
 
         officers = await models.Officer.objects.filter(
-            id__in=officerid_to_yeet_ids
+            started_monitoring__lte = from_date,
+            id__in=officerid_to_yeet_ids,
         ).all()
         return officers
 
