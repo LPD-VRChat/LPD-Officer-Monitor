@@ -228,7 +228,7 @@ class MemberActivityBL(DiscordListenerMixin):
         except ormar.NoMatch:
             pass
         except ormar.MultipleMatches:
-            log.error(f"multiple loa ongoing for officer {officer_id}")
+            log.debug(f"multiple loa ongoing for officer {officer_id}")
             prevLoa = await models.LOAEntry.objects.all(officer=officer_id)
             for l in prevLoa:
                 ch = self.bot.get_channel(l.channel_id)
