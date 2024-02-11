@@ -904,7 +904,7 @@ class Time(commands.Cog):
             minimum_activity, dt_start, dt_end, amount_officers
         )
         mentions = " ".join([f"<@{str(i)}>" for i in id_list])
-        await interaction_reply(
+        await interaction_send_long(
             interac,
             f"From <t:{math.floor(dt_start.timestamp())}:f>"
             + f" to<t:{math.floor(dt_end.timestamp())}:f>\n"
