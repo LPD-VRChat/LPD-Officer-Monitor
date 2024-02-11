@@ -173,10 +173,13 @@ class Time(commands.Cog):
                 result = f"Patrolling time for {officer.name}[{officer.id}] between {from_dt} and {to_dt} : "
             result += timedelta_to_nice_string(timeDelta)
 
-        await interaction_send_long(
-            interac,
-            result,
-        )
+        if len(result)==0:
+            await interaction_reply(interac, "No result found")
+        else:
+            await interaction_send_long(
+                interac,
+                result,
+            )
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
