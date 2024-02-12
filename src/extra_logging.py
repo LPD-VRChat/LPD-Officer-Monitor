@@ -57,15 +57,15 @@ class DiscordLoggingHandler(logging.Handler):
     ) -> None:
         if error_level < logging.ERROR:
             match (error_level):
-                case (logging.DEBUG):
+                case logging.DEBUG:
                     level_str = ":bug:"
-                case (logging.INFO):
+                case logging.INFO:
                     level_str = ":information_source:"
-                case (logging.WARNING):
+                case logging.WARNING:
                     level_str = ":warning:"
-                case (logging.ERROR):
+                case logging.ERROR:
                     level_str = ":red_circle:"
-                case (logging.CRITICAL):
+                case logging.CRITICAL:
                     level_str = ":octagonal_sign:"
                 case _:
                     level_str = ":interrobang:"

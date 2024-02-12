@@ -106,7 +106,7 @@ async def interaction_reply(
 ):
     """Guaranty reply to an interaction what ever it was defer or not, already answered by message or not"""
     match interaction.response.type:
-        case (None):
+        case None:
             await interaction.response.send_message(
                 content=content,
                 embed=embed,

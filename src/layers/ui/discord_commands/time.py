@@ -472,9 +472,11 @@ class Time(commands.Cog):
         r = await self.bl_wrapper.pt_bl.remove_cadet(inactives)
         await interaction_reply(
             interac,
-            content="All cadets have been sacrified successfully"
-            if r
-            else ":red_circle: Some errors happened, please check the logs!!!",
+            content=(
+                "All cadets have been sacrified successfully"
+                if r
+                else ":red_circle: Some errors happened, please check the logs!!!"
+            ),
         )
 
     @checks.is_admin_bot_channel(True)
