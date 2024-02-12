@@ -3,6 +3,7 @@ Activity Logging Business Layer
 
 Record when officer where last active in the comunity
 """
+
 # Standard
 import asyncio
 import logging
