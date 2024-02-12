@@ -438,7 +438,7 @@ class PatrolTimeBL(DiscordListenerMixin):
                     officerid_to_yeet_ids.append(oid)
 
         officers = await models.Officer.objects.filter(
-            started_monitoring__lte = from_date,
+            started_monitoring__lte=from_date,
             id__in=officerid_to_yeet_ids,
         ).all()
         return officers
