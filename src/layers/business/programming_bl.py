@@ -26,6 +26,7 @@ Make sure when you are typing the command that Discord is showing the command na
 If the name of the command isn't suggested to you, you do no have the rights to execute it.
 """
 
+
 class ProgrammingBL(DiscordListenerMixin):
     def __init__(self, bot: commands.bot) -> None:
         self.bot = bot
@@ -77,11 +78,19 @@ class ProgrammingBL(DiscordListenerMixin):
         if message.content.startswith("/"):
             try:
                 await message.reply(
-                    """:red_circle::red_circle:The command didn't work.:red_circle::red_circle:""" + HOW_TO_FIX
+                    """:red_circle::red_circle:The command didn't work.:red_circle::red_circle:"""
+                    + HOW_TO_FIX
                 )
             except discord.errors.Forbidden:
-                log.warn(f"Fail to write to channel <#{message.channel.id}> to warn about slash fail")
+                log.warn(
+                    f"Fail to write to channel <#{message.channel.id}> to warn about slash fail"
+                )
                 try:
-                    await message.author.send(f":red_circle::red_circle:The command in <#{message.channel.id}> didn't work.:red_circle::red_circle:"+ HOW_TO_FIX)
+                    await message.author.send(
+                        f":red_circle::red_circle:The command in <#{message.channel.id}> didn't work.:red_circle::red_circle:"
+                        + HOW_TO_FIX
+                    )
                 except discord.errors.Forbidden:
-                    log.warn(f"Fail to send a message to <@{message.author.id}> to warn about slash fail")
+                    log.warn(
+                        f"Fail to send a message to <@{message.author.id}> to warn about slash fail"
+                    )
