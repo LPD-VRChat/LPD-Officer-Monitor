@@ -16,21 +16,26 @@ This branch contains the development version of V3. It is structured very differ
 create virtual environement
 ```
 python3 -m venv .venv
+source ./venv/bin/activate
 ```
 
-Reinstall requirements
+Install requirements
 ```
 pip install -r requirements.txt
 ```
 
-docker commands
-```
-docker compose --env-file .env.dev ####
-```
-
 ## Database update
 
-create/upgrade the tables. Base need to exists
+Create your local database.
+```sql
+sudo mysql
+CREATE DATABASE LPD_Officer_Monitor DEFAULT CHARACTER SET UTF8MB4;
+CREATE USER lpd@localhost IDENTIFIED BY 'UyE9tCp3LS8BUSJfcjhuWr8rq68uU5HgThBNPFKSxt68GXF4mDB';
+GRANT ALL PRIVILEGES ON LPD_Officer_Monitor.* TO lpd@localhost;
+FLUSH PRIVILEGES;
+```
+
+Create/upgrade the tables.
 ```
 alembic upgrade head
 ````
