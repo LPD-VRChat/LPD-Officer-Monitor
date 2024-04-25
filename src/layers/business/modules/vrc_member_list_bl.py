@@ -17,6 +17,28 @@ class VRCMemberListBL:
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
+    async def upload_to_world(self) -> None:
+        string = await self.get_csv_str()
+        gist_id = settings.STATION_ALLOWLIST_GIST_ID
+        token = settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN
+        if gist_id is None or token is None or not token.startswith("ghp_"):
+            log.warn(
+                "Failed to upload member list to world. Station allowlist settings not "
+                "fully filled out and valid."
+            )
+            return
+
+        async with aiohttp.ClientSession() as session:
+            url = f"https://api.github.com/gists/{gist_id}"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+            json = {"files": {"station_allowlist.csv": {"content": string}}}
+            async with session.patch(url, headers=headers, json=json) as response:
+                response_json = await response.json()
+                print(response_json)
+
     async def get_csv_str(self) -> str:
         officers = (
             await models.Officer.objects.filter(models.Officer.deleted_at.isnull(True))
