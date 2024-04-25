@@ -7,6 +7,7 @@ from discord.ext import commands
 
 from src.layers.business.moderation_bl import ModerationBL
 
+from .modules.vrc_member_list_bl import VRCMemberListBL
 from .modules.mm_bl import MemberManagementBL
 from .modules.pt_bl import PatrolTimeBL
 from .modules.loa_bl import MemberActivityBL
@@ -28,6 +29,7 @@ class BusinessLayerWrapper:
     p: ProgrammingBL
     web: WebManagerBL
     mod: ModerationBL
+    member_list: VRCMemberListBL
 
 
 def create(bot) -> BusinessLayerWrapper:
@@ -39,6 +41,7 @@ def create(bot) -> BusinessLayerWrapper:
         ProgrammingBL(bot),
         WebManagerBL(bot),
         ModerationBL(bot),
+        VRCMemberListBL(bot),
     )
 
 
