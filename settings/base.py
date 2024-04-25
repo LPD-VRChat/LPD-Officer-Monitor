@@ -1,3 +1,4 @@
+from typing import Optional
 from .classes import RoleLadderElement, RoleLadder
 import os as _os
 from enum import Enum
@@ -169,9 +170,16 @@ DISCORD_PERMISSION = 277059202112
 GIFT_LINK_EXPIRATION_SECONDS = 30
 GIFT_LINK_MAX_CHANNEL_COUNT = 4
 
+
 GIT_REPO_PATH = "/tmp/createme"
 GIT_REPO_FILENAME = "allowlist.json"
 GIT_AUTO_EXPORT = False
 
 # Give access to station to old friends
 VRC_NAMES_STATIC: list[str] = []
+
+
+# Auto Station Allowlist #########################################
+STATION_ALLOWLIST_GIST_ID: Optional[str] = None
+STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN: Optional[str] = None
+
