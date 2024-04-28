@@ -80,7 +80,6 @@ class VRCMemberListBL:
             .exclude(models.Officer.vrchat_name == "")
             .all()
         )
-        print("Officers:", officers, "#" * 30)
 
         # because we get all ranks and inverted the order to replicate
         # the old behavior we need to do a local version of the function
