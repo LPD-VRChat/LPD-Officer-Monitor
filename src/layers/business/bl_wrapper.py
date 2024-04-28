@@ -33,15 +33,16 @@ class BusinessLayerWrapper:
 
 
 def create(bot) -> BusinessLayerWrapper:
+    pt_bl = PatrolTimeBL(bot)
     return BusinessLayerWrapper(
         MemberManagementBL(bot),
-        PatrolTimeBL(bot),
+        pt_bl,
         MemberActivityBL(bot),
         VRChatBL(bot),
         ProgrammingBL(bot),
         WebManagerBL(bot),
         ModerationBL(bot),
-        VRCMemberListBL(bot),
+        VRCMemberListBL(bot, pt_bl),
     )
 
 
