@@ -47,7 +47,6 @@ class VRCMemberListBL:
                 response_json = await response.json()
                 content_length = response.content.total_bytes
 
-                __import__("pprint").pprint(response_json)
                 history = response_json.get("history", None)
                 log.info(
                     f"Data returned from gist edit endpoint: {content_length / 1000}KB"
