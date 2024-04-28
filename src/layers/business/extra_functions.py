@@ -2,7 +2,7 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 import functools
-from typing import Optional, Union
+from typing import Optional, TypeVar, Union
 import discord
 from nest_asyncio import apply
 from io import StringIO, BytesIO
@@ -299,3 +299,11 @@ def debounce(*, seconds: float):
         return new_debounced_func
 
     return decorator
+
+
+T = TypeVar("T")
+
+
+def not_none(val: Union[T, None]) -> T:
+    assert val is not None
+    return val

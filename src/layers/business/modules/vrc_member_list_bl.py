@@ -8,7 +8,7 @@ from discord.ext import commands
 
 import settings
 from settings.classes import RoleLadderElement
-from src.layers.business.extra_functions import debounce, has_role_id
+from src.layers.business.extra_functions import debounce, has_role_id, not_none
 from src.layers.business.modules.pt_bl import PatrolTimeBL
 from src.layers.storage import models
 
@@ -80,6 +80,13 @@ class VRCMemberListBL:
             .exclude(models.Officer.vrchat_name == "")
             .all()
         )
+        latest_payment = await models.Payment.objects.order_by("-timestamp").first()
+        payments_list = (
+            await models.OfficerPayment.objects.filter(payment__id=latest_payment.id)
+            .select_related("officer")
+            .all()
+        )
+        officer_payments = {not_none(op.officer).id: op.amount for op in payments_list}
 
         # because we get all ranks and inverted the order to replicate
         # the old behavior we need to do a local version of the function
@@ -119,6 +126,8 @@ class VRCMemberListBL:
                 "Chinese",
                 "Community",
                 "Backroom Access",
+                "Pay Date",
+                "Pay Amount",
             ]
         )
         output_text += "\n"
@@ -157,6 +166,8 @@ class VRCMemberListBL:
                 has_role_id(member, settings.CHINESE_ROLE),
                 "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
                 True,  # "Backroom Access",
+                latest_payment.timestamp.timestamp(),
+                officer_payments.get(o.id, 0),
             ]
             output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
         return output_text
