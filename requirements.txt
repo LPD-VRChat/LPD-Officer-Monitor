@@ -4,6 +4,7 @@ discord.py[speed]~=2.0
 mypy>=0.950  # Support for match statements
 nest_asyncio~=1.5.1
 fuzzywuzzy~=0.18.0
+APScheduler==4.0.0a4
 
 # ORM
 ormar[mysql] ~= 0.12.0
