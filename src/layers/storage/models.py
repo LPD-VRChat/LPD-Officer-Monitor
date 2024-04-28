@@ -259,6 +259,24 @@ class Call(ormar.Model):
     type: str = ormar.String(max_length=10, choices=list(CallTypes))
 
 
+class Payment(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "payments"
+
+    id: int = ormar.Integer(primary_key=True)
+    timestamp: datetime = ormar.DateTime()
+
+
+class OfficerPayment(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "officerpayments"
+
+    id: int = ormar.Integer(primary_key=True)
+    amount: int = ormar.Integer()
+    payment: Optional[Payment] = ormar.ForeignKey(Payment)
+    officer: Optional[Officer] = ormar.ForeignKey(Officer)
+
+
 @ormar.pre_relation_add([Officer])
 async def officer_before_relation_add(
     sender, instance, child, relation_name, passed_kwargs, **kwargs

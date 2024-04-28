@@ -1,11 +1,11 @@
 # Settings import
-from typing import Optional
 import settings
 
 # Standard
+import datetime as dt
 import logging
-import datetime
 import asyncio
+from typing import Optional
 
 # Community
 import discord
@@ -22,7 +22,7 @@ from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
     interaction_reply,
     interaction_send_str_as_file,
-    has_role_id,
+    msgbox_confirm,
 )
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -178,6 +178,31 @@ class VRC(commands.Cog):
         await interaction_send_str_as_file(
             interac, output_text, "allowlist.csv", "Allowlist:"
         )
+
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_cmd.command(
+        name="vrc_make_payments",
+        description="Pay all the officers for the last week manually",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    async def make_payments(self, interac: discord.Interaction):
+        last_paid: Optional[dt.datetime] = await models.Payment.objects.max("timestamp")
+        last_paid_str = (
+            f"They were last paid on <t:{int(last_paid.timestamp())}:F>"
+            if last_paid is not None
+            else "They have never been paid."
+        )
+        if not await msgbox_confirm(
+            interac,
+            message="Are you sure you want to pay the officers for the past week now?"
+            + " "
+            + last_paid_str,
+        ):
+            return
+
+        await self.bl_wrapper.member_list.make_payments()
+        await interaction_reply(interac, "Everyone has been paid successfully.")
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
