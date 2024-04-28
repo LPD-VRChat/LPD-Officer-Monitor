@@ -136,6 +136,7 @@ class VRC(commands.Cog):
 
         officer.vrchat_name = name
         await officer.update()
+        self.bl_wrapper.member_list.upload_to_world()
         await interaction_reply(
             interac, f"Your VRChat name is set to `{officer.vrchat_name}`"
         )
@@ -174,8 +175,6 @@ class VRC(commands.Cog):
     @app_cmd.default_permissions(administrator=True)
     async def list_dev(self, interac: discord.Interaction):
         output_text = await self.bl_wrapper.member_list.get_csv_str()
-        await self.bl_wrapper.member_list.upload_to_world()
-
         await interaction_send_str_as_file(
             interac, output_text, "allowlist.csv", "Allowlist:"
         )
