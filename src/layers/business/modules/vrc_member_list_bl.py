@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 from typing import Optional
 
@@ -8,14 +9,31 @@ from discord.ext import commands
 import settings
 from settings.classes import RoleLadderElement
 from src.layers.business.extra_functions import debounce, has_role_id
+from src.layers.business.modules.pt_bl import PatrolTimeBL
 from src.layers.storage import models
 
 log = logging.getLogger("lpd-officer-monitor")
 
 
 class VRCMemberListBL:
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, pt_bl: PatrolTimeBL) -> None:
         self.bot = bot
+        self.pt_bl = pt_bl
+
+    async def make_payments(self) -> None:
+        now = dt.datetime.now(tz=dt.UTC)
+        new_payment = await models.Payment.objects.create(timestamp=now)
+        time = await self.pt_bl.get_top_patrol_time(now - dt.timedelta(days=7), now)
+        officer_payments = []
+        for officer_id, duration in time.items():
+            # Officers are paid 100/hour every week up to a maximum of 500
+            amount = min(int((duration.total_seconds() / 3600) * 100), 500)
+            officer_payment = models.OfficerPayment(
+                officer=officer_id, payment=new_payment, amount=amount
+            )
+            officer_payments.append(officer_payment)
+        if len(officer_payments) > 0:
+            await models.OfficerPayment.objects.bulk_create(officer_payments)
 
     @debounce(seconds=60)
     async def upload_to_world(self) -> None:
