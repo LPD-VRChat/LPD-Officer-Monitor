@@ -12,6 +12,8 @@ assert (
 ), f"need python 3.10.x or up. got {sys.version.split(' ')[0] }"
 
 # Community Library Imports
+from apscheduler import AsyncScheduler
+from apscheduler.triggers.cron import CronTrigger
 import discord
 
 assert discord.__version__.startswith(
@@ -23,7 +25,7 @@ from discord.ext import commands
 # Custom Library Imports
 import settings
 from src.layers import business as bl
-import src.layers.business.bl_wrapper as bl_wrapper
+import src.layers.business.bl_wrapper as bl_wrapper_module
 from src.layers.ui.discord_commands import setup as setup_discord_commands
 
 # from src.layers.ui.server.web_manager import WebManager
@@ -185,7 +187,8 @@ def main():
         loop.run_until_complete(database.connect())
 
     # UI Layers
-    loop.run_until_complete(setup_discord_commands(bot, bl_wrapper.create(bot)))
+    bl_wrapper = bl_wrapper_module.create(bot)
+    loop.run_until_complete(setup_discord_commands(bot, bl_wrapper))
     loop.create_task(start_webmanager(bot, log))
 
     ############################
@@ -324,11 +327,16 @@ def main():
     #####################
 
     async def runner():
-        try:
-            await bot.start(settings.DISCORD_TOKEN)
-        finally:
-            if not bot.is_closed():
-                await bot.close()
+        async with AsyncScheduler() as scheduler:
+            await scheduler.add_schedule(
+                bl_wrapper.member_list.upload_to_world, CronTrigger(hour=4)
+            )
+            await scheduler.start_in_background()
+            try:
+                await bot.start(settings.DISCORD_TOKEN)
+            finally:
+                if not bot.is_closed():
+                    await bot.close()
 
     def raise_graceful_exit(sig, *args):
         log.info(f"EXIT signal {sig}")
