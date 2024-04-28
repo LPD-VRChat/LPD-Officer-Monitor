@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import settings
 from settings.classes import RoleLadderElement
-from src.layers.business.extra_functions import has_role_id
+from src.layers.business.extra_functions import debounce, has_role_id
 from src.layers.storage import models
 
 log = logging.getLogger("lpd-officer-monitor")
@@ -17,6 +17,7 @@ class VRCMemberListBL:
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
+    @debounce(seconds=60)
     async def upload_to_world(self) -> None:
         string = await self.get_csv_str()
         gist_id = settings.STATION_ALLOWLIST_GIST_ID
