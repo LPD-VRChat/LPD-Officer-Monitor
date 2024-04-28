@@ -4,6 +4,7 @@ Patrol Time Business Layer
 Manage the patrol time of officers and proide their patrol time to other parts
 of the bot.
 """
+
 # Standard
 import asyncio
 from dataclasses import dataclass
