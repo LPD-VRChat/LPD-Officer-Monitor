@@ -2,7 +2,7 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 import functools
-from typing import Optional, Union
+from typing import Optional, TypeVar, Union
 import discord
 from nest_asyncio import apply
 from io import StringIO, BytesIO
