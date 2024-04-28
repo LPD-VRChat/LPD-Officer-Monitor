@@ -286,8 +286,6 @@ def debounce(*, seconds: float):
                 nonlocal timer
                 timer = None
                 result = function(*args, **kwargs)
-                print("Result:", repr(result), type(result), repr(type(result)))
-                print("Is coroutine:", isinstance(result, Coroutine))
                 if isinstance(result, Coroutine):
                     asyncio.create_task(result)
 
