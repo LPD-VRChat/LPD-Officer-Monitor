@@ -1,4 +1,7 @@
 # Standard
+import asyncio
+from collections.abc import Callable, Coroutine
+import functools
 from typing import Optional, Union
 import discord
 from nest_asyncio import apply
@@ -268,3 +271,33 @@ def timedelta_to_nice_string(dt: dt.timedelta) -> str:
     if sec > 0:
         r += f"{sec:02} second{'s' if sec>1 else ''} "
     return r
+
+
+def debounce(*, seconds: float):
+    """A simple debounce function using python async."""
+
+    def decorator(function: Callable[..., Any | Coroutine[Any, None, None]]):
+        timer: asyncio.TimerHandle | None = None
+
+        def new_debounced_func(*args: Any, **kwargs: Any) -> None:
+            nonlocal timer
+
+            def callback() -> None:
+                nonlocal timer
+                timer = None
+                result = function(*args, **kwargs)
+                print("Result:", repr(result), type(result), repr(type(result)))
+                print("Is coroutine:", isinstance(result, Coroutine))
+                if isinstance(result, Coroutine):
+                    asyncio.create_task(result)
+
+            if timer is not None:
+                timer.cancel()
+
+            loop = asyncio.get_event_loop()
+            timer = loop.call_later(seconds, callback)
+
+        functools.update_wrapper(new_debounced_func, function)
+        return new_debounced_func
+
+    return decorator
