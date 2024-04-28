@@ -29,6 +29,7 @@ class VRCMemberListBL:
             )
             return
 
+        log.info("Uploading member list csv to gist.")
         async with aiohttp.ClientSession() as session:
             url = f"https://api.github.com/gists/{gist_id}"
             headers = {
@@ -37,8 +38,24 @@ class VRCMemberListBL:
             }
             json = {"files": {"station_allowlist.csv": {"content": string}}}
             async with session.patch(url, headers=headers, json=json) as response:
+                if response.status != 200:
+                    error_msg = response.text()
+                    log.error(
+                        f"Updating github gist API returned {response.status}:\n"
+                        f"{error_msg}"
+                    )
                 response_json = await response.json()
-                print(response_json)
+                content_length = response.content.total_bytes
+
+                __import__("pprint").pprint(response_json)
+                history = response_json.get("history", None)
+                log.info(
+                    f"Data returned from gist edit endpoint: {content_length / 1000}KB"
+                )
+                log.info(
+                    f"Number of items in history: "
+                    f"{0 if history is None else len(history)}"
+                )
 
     async def get_csv_str(self) -> str:
         officers = (
