@@ -19,6 +19,9 @@ class VRCMemberListBL:
 
     @debounce(seconds=60)
     async def upload_to_world(self) -> None:
+        """
+        Uploads the member CSV to the gist where the VRChat world can download it.
+        """
         string = await self.get_csv_str()
         gist_id = settings.STATION_ALLOWLIST_GIST_ID
         token = settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN
@@ -57,6 +60,10 @@ class VRCMemberListBL:
                 )
 
     async def get_csv_str(self) -> str:
+        """
+        Generates the officer CSV as a string to be output by the bot or uploaded to the
+        VRChat world.
+        """
         officers = (
             await models.Officer.objects.filter(models.Officer.deleted_at.isnull(True))
             .exclude(models.Officer.vrchat_name == "")
