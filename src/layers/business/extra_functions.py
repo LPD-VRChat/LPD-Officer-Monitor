@@ -274,7 +274,15 @@ def timedelta_to_nice_string(dt: dt.timedelta) -> str:
 
 
 def debounce(*, seconds: float):
-    """A simple debounce function using python async."""
+    """
+    A simple debounce decorator using python async.
+
+    Any function using this decorator will wait for `seconds` before it calls the
+    wrapped function, resetting this wait each time the function is called.
+
+    The wrapped function can be both sync or async. Do not await the result of the
+    wrapped function, no matter what should return, when wrapped, it returns None.
+    """
 
     def decorator(function: Callable[..., Any | Coroutine[Any, None, None]]):
         timer: asyncio.TimerHandle | None = None
@@ -305,5 +313,11 @@ T = TypeVar("T")
 
 
 def not_none(val: Union[T, None]) -> T:
+    """
+    Asserts that something isn't None and returns the not None value.
+
+    Kind of inspired from TypeScript's ! operator to assert something isn't null, since
+    python doesn't have anything similar this seems to be the closest we can get.
+    """
     assert val is not None
     return val
