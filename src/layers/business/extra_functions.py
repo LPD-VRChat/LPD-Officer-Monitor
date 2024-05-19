@@ -10,7 +10,7 @@ from datetime import datetime
 from sys import stdout
 import settings
 import datetime as dt
-from typing import Any, Sequence
+from typing import Any, Sequence, TypeVar
 
 # Community
 import discord
