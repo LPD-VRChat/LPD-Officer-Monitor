@@ -9,7 +9,7 @@ import logging
 # Community
 import discord
 from discord.ext import commands
-from fuzzywuzzy.process import extractBests
+from thefuzz.process import extractBests
 from discord import app_commands
 
 # Custom
