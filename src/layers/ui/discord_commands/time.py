@@ -45,6 +45,12 @@ class Training(enum.Enum):
     Watch_officer = 4
 
 
+class Regions(enum.Enum):
+    Chinese = 1
+    Japanese = 2
+    Korean = 3
+
+
 class Time(commands.Cog):
     def __init__(self, bot):
         self.bl_wrapper: BusinessLayerWrapper = bot.bl_wrapper
@@ -766,6 +772,49 @@ class Time(commands.Cog):
                 return
         await interaction_reply(
             interac, f"<@{member.id}> is trained for `{training.name}`"
+        )
+
+    @checks.is_recruiter_bot_channel(True)
+    @checks.app_cmd_check_any(
+        checks.is_recruiter(True),
+        checks.is_white_shirt(True),
+    )
+    @app_cmd.command(
+        name="give_region_role",
+        description="for recruiters to give regional roles and avoid none English reader navigating English messages",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    @app_cmd.describe(member="The Member the role should be given to")
+    @app_cmd.describe(region="Regional role")
+    async def give_region_role(
+        self,
+        interac: discord.Interaction,
+        member: discord.Member,
+        region: Regions,
+    ):
+        match region:
+            case Regions.Chinese:
+                await member.add_roles(
+                    discord.Object(settings.CHINESE_ROLE),
+                    reason="bot add region",
+                )
+            case Regions.Japanese:
+                await member.add_roles(
+                    discord.Object(settings.JAPANESE_ROLE),
+                    reason="bot add region",
+                )
+            case Regions.Korean:
+                await member.add_roles(
+                    discord.Object(settings.KOREAN_ROLE),
+                    reason="bot add region",
+                )
+            case _:
+                await interaction_reply(interac, ":red_circle: invalid region.")
+                log.error(f"invalid region {region.value}")
+                return
+        await interaction_reply(
+            interac, f"<@{member.id}> has the regional role `{region.name}`"
         )
 
     @checks.is_admin_bot_channel(True)
