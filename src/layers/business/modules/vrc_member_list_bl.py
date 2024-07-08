@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+import json
 
 import aiohttp
 import discord
@@ -106,6 +107,10 @@ class VRCMemberListBL:
                 "Lead",
                 "Korean",
                 "Chinese",
+                "Japanese",
+                "Supporter",
+                "Mentor",
+                "Approver",
                 "Community",
                 "Backroom Access",
             ]
@@ -144,6 +149,10 @@ class VRCMemberListBL:
                 has_role_id(member, settings.TEAM_LEAD_ROLE),
                 has_role_id(member, settings.KOREAN_ROLE),
                 has_role_id(member, settings.CHINESE_ROLE),
+                has_role_id(member, settings.JAPANESE_ROLE),
+                has_role_id(member, settings.SUPPORTER_ROLE),
+                has_role_id(member, settings.MENTOR_ROLE),
+                has_role_id(member, settings.APPROVER_ROLE),
                 "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
                 True,  # "Backroom Access",
             ]
@@ -205,7 +214,10 @@ class VRCMemberListBL:
                 "Lead": has_role_id(member, settings.TEAM_LEAD_ROLE),
                 "Korean": has_role_id(member, settings.KOREAN_ROLE),
                 "Chinese": has_role_id(member, settings.CHINESE_ROLE),
+                "Japenese": has_role_id(member, settings.JAPANESE_ROLE),
                 "Supporter": has_role_id(member, settings.SUPPORTER_ROLE),
+                "Mentor": has_role_id(member, settings.MENTOR_ROLE),
+                "Approver": has_role_id(member, settings.APPROVER_ROLE),
                 "Community": "LPD" if has_role_id(member, settings.LPD_ROLE) else "UKN",
                 "Backroom Access": True,
             }
