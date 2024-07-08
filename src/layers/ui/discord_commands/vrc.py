@@ -220,18 +220,10 @@ class VRC(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     async def list_dev_json(self, interac: discord.Interaction):
-        output_text = await self.bl_wrapper.member_list.get_csv_str()
+        output_text = await self.bl_wrapper.member_list.get_json_str()
         await interaction_send_str_as_file(
             interac, output_text, "allowlist.json", "Allowlist:"
         )
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        if not self.git_auto_export.is_running():
-            self.git_auto_export.start()
-
-    def cog_unload(self):
-        self.git_auto_export.cancel()
 
 
 async def setup(bot):
