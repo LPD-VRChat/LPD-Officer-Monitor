@@ -136,7 +136,7 @@ class VRC(commands.Cog):
 
         officer.vrchat_name = name
         await officer.update()
-        self.bl_wrapper.member_list.upload_to_world()
+        self.bl_wrapper.member_list.upload_to_world(reason="link")
         await interaction_reply(
             interac, f"Your VRChat name is set to `{officer.vrchat_name}`"
         )

@@ -37,7 +37,7 @@ class VRCMemberListBL:
             await models.OfficerPayment.objects.bulk_create(officer_payments)
 
     @debounce(seconds=60)
-    async def upload_to_world(self) -> None:
+    async def upload_to_world(self, reason: Optional[str] = "cron") -> None:
         """
         Uploads the member CSV to the gist where the VRChat world can download it.
         """
@@ -51,7 +51,7 @@ class VRCMemberListBL:
             )
             return
 
-        log.info("Uploading member list csv to gist.")
+        log.debug(f"Uploading member list csv to gist. {reason=}")
         async with aiohttp.ClientSession() as session:
             url = f"https://api.github.com/gists/{gist_id}"
             headers = {
@@ -70,10 +70,10 @@ class VRCMemberListBL:
                 content_length = response.content.total_bytes
 
                 history = response_json.get("history", None)
-                log.info(
+                log.debug(
                     f"Data returned from gist edit endpoint: {content_length / 1000}KB"
                 )
-                log.info(
+                log.debug(
                     f"Number of items in history: "
                     f"{0 if history is None else len(history)}"
                 )
