@@ -45,6 +45,19 @@ def is_programming_team(slash_cmd=False):
         return commands.check(predicate)
 
 
+def is_chief_bot_channel(slash_cmd=False):
+    def predicate(ctx):
+        return ctx.channel.id == settings.CHIEF_BOT_CHANNEL
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return interaction.channel_id == settings.CHIEF_BOT_CHANNEL
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
 def is_admin_bot_channel(slash_cmd=False):
     def predicate(ctx):
         return ctx.channel.id in [
@@ -236,6 +249,23 @@ def is_admin(slash_cmd=False):
             if has_role_id(interaction.user, rank.id) and rank.is_admin:
                 return True
         return False
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
+def is_deputy_chief_or_higher(slash_cmd=False):
+    def predicate(ctx):
+        return has_role_id(
+            ctx.author, settings.ROLE_LADDER.deputy_chief.id
+        ) or has_role_id(ctx.author, settings.ROLE_LADDER.chief.id)
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(
+            interaction.user, settings.ROLE_LADDER.deputy_chief.id
+        ) or has_role_id(interaction.user, settings.ROLE_LADDER.chief.id)
 
     if slash_cmd:
         return discord.app_commands.check(predicate_interaction)
