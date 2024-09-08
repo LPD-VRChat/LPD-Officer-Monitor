@@ -23,6 +23,7 @@ from src.layers.business.extra_functions import (
     get_lpd_member_rank,
     has_role_id,
     is_lpd_member,
+    mention_slash_cmd,
     msgbox_confirm,
     send_long,
     now,
@@ -557,6 +558,113 @@ class Time(commands.Cog):
         await interaction_reply(
             interac, content=f"Done, marked {len(inactives)} officers"
         )
+
+    @checks.is_chief_bot_channel(True)
+    # @checks.is_deputy_chief_or_higher(True)
+    @app_cmd.command(
+        name="remove_inactive",
+        description="YEEET officers with inactive role",
+    )
+    @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_cmd.default_permissions(administrator=True)
+    async def remove_inactive(self, interac: discord.Interaction):
+        guild: Optional[discord.Guild] = self.bot.get_guild(settings.SERVER_ID)
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+        role_inactive = guild.get_role(settings.INACTIVE_ROLE)
+        if role_inactive is None:
+            raise Exception(f"inactive role {settings.INACTIVE_ROLE} is not accessible")
+
+        if len(role_inactive.members) == 0:
+            await interaction_reply(
+                interac,
+                content=f"Nobody has the inactive role.\nPlease run {await mention_slash_cmd(self.bot, 'mark_inactive')}",
+            )
+            return
+
+        if not await msgbox_confirm(
+            interac,
+            message=f"Do you want to remove all {len(role_inactive.members)} officers with inactive role",
+        ):
+            return
+
+        roles_to_remove = [
+            discord.Object(settings.LPD_ROLE),
+            discord.Object(settings.SLRT_TRAINED_ROLE),
+            discord.Object(settings.LMT_TRAINED_ROLE),
+            discord.Object(settings.WATCH_OFFICER_ROLE),
+            discord.Object(settings.PROGRAMMING_TEAM_ROLE),
+            discord.Object(settings.DEV_TEAM_ROLE),
+            discord.Object(settings.TEAM_LEAD_ROLE),
+            discord.Object(settings.EVENT_HOST_ROLE),
+            discord.Object(settings.MEDIA_PRODUCTION_ROLE),
+            discord.Object(settings.RECRUITER_ROLE),
+            discord.Object(settings.JANITOR_ROLE),
+            discord.Object(settings.INSTIGATOR_ROLE),
+            discord.Object(settings.JANITOR_ROLE),
+            discord.Object(settings.MENTOR_ROLE),
+            discord.Object(settings.APPROVER_ROLE),
+            discord.Object(settings.MODERATOR_ROLE),
+            discord.Object(settings.CHAT_MODERATOR_ROLE),
+            discord.Object(settings.TRAINER_ROLE),
+            discord.Object(settings.SLRT_TRAINER_ROLE),
+            discord.Object(settings.LMT_TRAINER_ROLE),
+            discord.Object(settings.PRISON_TRAINER_ROLE),
+            discord.Object(settings.INSTIGATOR_TRAINER_ROLE),
+        ]
+        for name, rank in settings.ROLE_LADDER.items():
+            if rank < settings.ROLE_LADDER.sergeant:
+                roles_to_remove.append(discord.Object(rank.id))
+        # last on purpuse, if atomic and problem happens
+        roles_to_remove.append(discord.Object(settings.INACTIVE_ROLE))
+
+        blocklist = set(
+            [
+                # discord.Object(settings.TEAM_LEAD_ROLE),
+                discord.Object(settings.LPDPLUS_ROLE),
+            ]
+        )
+        for name, rank in settings.ROLE_LADDER.items():
+            if rank >= settings.ROLE_LADDER.sergeant:
+                blocklist.add(rank.id)
+
+        broken_ids = False
+        for r in roles_to_remove:
+            if not guild.get_role(r.id):
+                log.error(f"Role `{r.id}` is invalid")
+                broken_ids = True
+        if broken_ids:
+            await interaction_reply(
+                interac,
+                content=":red_circle: Some roles are missing on this guild, removal will fail.\nCheck bot logs",
+            )
+            return
+
+        log.info("Starting inactive removal")
+        msg = await interaction_reply(interac, content="Starting inactive removal")
+        total = len(role_inactive.members)
+        for i, m in enumerate(role_inactive.members):
+            for r in m.roles:
+                if r.id in blocklist:
+                    log.info(
+                        f"prevent inactive_rm for `{m.display_name}` because has `{r.name}`"
+                    )
+                    break
+            else:
+                # Atomic=true will do a request per role to remove
+                # Atomic=false will do one request per call but use cached roles
+                try:
+                    await m.remove_roles(
+                        *roles_to_remove,
+                        reason="inactive",
+                        atomic=True,
+                    )
+                except discord.HTTPException as e:
+                    log.error(f"Failed to remove roles from {m.mention} err=`{e}`")
+                    if e.text:
+                        log.debug(f"rm_inactive err=`{e}` {e.text}")
+            await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
+        await msg.edit(content="Done")
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
