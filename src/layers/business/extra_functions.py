@@ -11,6 +11,8 @@ from sys import stdout
 import settings
 import datetime as dt
 from typing import Any, Sequence, TypeVar
+import inspect
+import logging
 
 # Community
 import discord
@@ -21,6 +23,8 @@ from settings.classes import RoleLadderElement
 MISSING: Any = discord.utils.MISSING
 
 apply()
+
+log = logging.getLogger("lpd-officer-monitor")
 
 
 def now():
@@ -321,3 +325,20 @@ def not_none(val: Union[T, None]) -> T:
     """
     assert val is not None
     return val
+
+
+async def mention_slash_cmd(bot, commandName: str, hybridCmd: bool = False) -> str:
+    onlineList = await bot.tree.fetch_commands(
+        guild=discord.Object(id=settings.SERVER_ID)
+    )
+    for ol in onlineList:
+        if ol.name == commandName:
+            return ol.mention
+    else:
+        if hybridCmd:
+            return f"`{settings.BOT_PREFIX}{commandName}`"
+        caller_frame = inspect.currentframe().f_back
+        log.error(
+            f"mentionSlashCmd failed to find `{commandName}` caller:{caller_frame.f_code.co_name} {caller_frame.f_code.co_filename}:{caller_frame.f_lineno} "
+        )
+        return f"`/{commandName}`"
