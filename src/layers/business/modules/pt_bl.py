@@ -401,42 +401,48 @@ class PatrolTimeBL(DiscordListenerMixin):
     ) -> list[models.Officer]:
         guild = self.bot.get_guild(settings.SERVER_ID)
         if not guild:
-            logging.error(f"guild {settings.SERVER_ID} is not accessible")
+            log.error(f"guild {settings.SERVER_ID} is not accessible")
             return []
 
-        def add_members_from_role(role: RoleLadderElement, list: list[discord.Member]):
+        def add_members_from_role(role: RoleLadderElement, list: set[int]):
             discord_role = guild.get_role(role.id)
             if discord_role is None:
-                logging.error(f"{role.name} role {role.id} is not accessible")
+                log.error(f"`{role.name}` role {role.id} is not accessible")
                 return
-            list.extend([m.id for m in discord_role.members])
+            list = list.union([m.id for m in discord_role.members])
 
-        officer_ids: list[int] = []
+        def remove_members_from_role(role_id: int, list: set[int]):
+            discord_role = guild.get_role(role_id)
+            if discord_role is None:
+                log.error(f"rm role {role_id} is not accessible")
+                return
+            for m in discord_role.members:
+                if m.id in list:
+                    list.remove(m.id)
+                    log.debug(f"of_lt_patrol_t removed {m.id=} {role_id=}")
+
+        officer_ids: set[int] = set()
         add_members_from_role(settings.ROLE_LADDER.recruit, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.officer, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.senior_officer, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.corporal, officer_ids)
-        add_members_from_role(settings.ROLE_LADDER.sergeant, officer_ids)
-        to_dt = now()
 
-        patrols = await models.Patrol.objects.filter(
-            officer__in=officer_ids, start__gt=from_date, end__lt=to_dt
-        ).all()
+        remove_members_from_role(settings.LPDPLUS_ROLE, officer_ids)
+        # just in case they have a rank lower than SGT and should still be excluded
+        for name, rank in settings.ROLE_LADDER.items():
+            if rank >= settings.ROLE_LADDER.sergeant:
+                remove_members_from_role(rank.id, officer_ids)
 
-        # patrolling_times:dict[int,dt.timedelta] = {key: dt.timedelta() for key in officer_ids}
-        patrolling_times = {key: dt.timedelta() for key in officer_ids}
-        for p in patrols:
-            patrolling_times[p.officer.id] += p.duration()
-            await asyncio.sleep(0)
-        requirement = dt.timedelta(hours=minimum_hours)
+        active = await special_queries.get_active_officers(
+            minimum_hours,
+            from_date,
+            dt.datetime.now(dt.timezone.utc),
+        )
 
         officerid_to_yeet_ids: list[int] = []
         for oid in officer_ids:
-            if oid not in patrolling_times:
+            if oid not in active:
                 officerid_to_yeet_ids.append(oid)
-            else:
-                if patrolling_times[oid] < requirement:
-                    officerid_to_yeet_ids.append(oid)
 
         officers = await models.Officer.objects.filter(
             started_monitoring__lte=from_date,

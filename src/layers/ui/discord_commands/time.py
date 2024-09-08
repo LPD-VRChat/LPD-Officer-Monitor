@@ -508,8 +508,8 @@ class Time(commands.Cog):
             interac, output, f"loa_entries.csv", "LOA entries"
         )
 
-    @checks.is_admin_bot_channel(True)
-    @checks.is_white_shirt(True)
+    @checks.is_chief_bot_channel(True)
+    @checks.is_deputy_chief_or_higher(True)
     @app_cmd.command(
         name="mark_inactive",
         description="Mark officers as inactive",
@@ -540,7 +540,7 @@ class Time(commands.Cog):
         ):
             return
 
-        guild = self.bot.get_guild(settings.SERVER_ID)
+        guild: Optional[discord.Guild] = self.bot.get_guild(settings.SERVER_ID)
         if not guild:
             raise Exception(f"guild {settings.SERVER_ID} is not accessible")
         role_inactive = guild.get_role(settings.INACTIVE_ROLE)
@@ -553,7 +553,10 @@ class Time(commands.Cog):
                 log.error(f"officer {officer.id} invalid member!!!")
                 continue
             await member.add_roles(role_inactive, reason="bot mark_inactive")
-        await interaction_reply(interac, content="Done")
+            log.debug(f"marked inactive {member.display_name} {member.id}")
+        await interaction_reply(
+            interac, content=f"Done, marked {len(inactives)} officers"
+        )
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)
