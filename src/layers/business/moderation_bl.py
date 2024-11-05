@@ -39,6 +39,10 @@ class ModerationBL(DiscordListenerMixin):
     def __init__(self, bot: commands.bot) -> None:
         self.bot = bot
         super().__init__()
+        self._sent_gift_links: Dict[int, GiftCacheObject] = {}
+        self._URL_REGEX = re.compile(
+            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+        )
 
     async def _detention_user(
         self,
@@ -71,14 +75,6 @@ class ModerationBL(DiscordListenerMixin):
             await mod_log.send(
                 f"Failed to send a PM to {member_to_detain.mention}\n<@&{settings.MODERATOR_ROLE}>"
             )
-
-    @bl_listen("on_ready")
-    async def setup_cache(self):
-        # TODO: Change this so that it runs in class __init__, not on_ready
-        self._sent_gift_links: Dict[int, GiftCacheObject] = {}
-        self._URL_REGEX = re.compile(
-            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-        )
 
     @bl_listen("on_message")
     async def remove_scam_links(self, message: discord.Message):
