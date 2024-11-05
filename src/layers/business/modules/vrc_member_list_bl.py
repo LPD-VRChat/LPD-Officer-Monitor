@@ -28,7 +28,7 @@ class VRCMemberListBL:
         officer_payments = []
         for officer_id, duration in time.items():
             # Officers are paid 100/hour every week up to a maximum of 500
-            amount = min(int((duration.total_seconds() / 3600) * 100), 500)
+            amount = min(int((duration / 3600) * 100), 500)
             officer_payment = models.OfficerPayment(
                 officer=officer_id, payment=new_payment, amount=amount
             )

@@ -125,6 +125,7 @@ class PatrolTimeBL(DiscordListenerMixin):
     async def get_top_patrol_time(
         self, from_dt: dt.datetime, to_dt: dt.datetime
     ) -> Dict[int, dt.timedelta]:
+        return await special_queries.get_sum_patrol_time(from_dt, to_dt)
         patrols = await models.Patrol.objects.filter(
             start__gt=from_dt, end__lt=to_dt
         ).all()
