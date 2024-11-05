@@ -24,7 +24,13 @@ class VRCMemberListBL:
     async def make_payments(self) -> None:
         now = dt.datetime.now(tz=dt.UTC)
         new_payment = await models.Payment.objects.create(timestamp=now)
-        time = await self.pt_bl.get_top_patrol_time(now - dt.timedelta(days=7), now)
+        start_last_week = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - dt.timedelta(days=now.weekday() + 7)
+        end_last_week = (start_last_week + dt.timedelta(days=6)).replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+        time = await self.pt_bl.get_top_patrol_time(start_last_week, end_last_week)
         officer_payments = []
         for officer_id, duration in time.items():
             # Officers are paid 100/hour every week up to a maximum of 500

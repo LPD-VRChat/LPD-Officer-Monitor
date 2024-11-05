@@ -188,15 +188,39 @@ class VRC(commands.Cog):
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     async def make_payments(self, interac: discord.Interaction):
         last_paid: Optional[dt.datetime] = await models.Payment.objects.max("timestamp")
-        last_paid_str = (
-            f"They were last paid on <t:{int(last_paid.timestamp())}:F>"
-            if last_paid is not None
-            else "They have never been paid."
+        last_paid = last_paid.replace(tzinfo=dt.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
+        start_prev_week = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - dt.timedelta(days=now.weekday() + 7)
+        end_prev_week = (start_prev_week + dt.timedelta(days=6)).replace(
+            hour=23, minute=59, second=59, microsecond=999999
         )
+        last_paid_str = ""
+        if last_paid is None:
+            last_paid_str = "They have never been paid."
+        elif last_paid > end_prev_week and last_paid < now:
+            last_paid_str = (
+                f"# :warning: Officers already got paid for previous week!!! :warning:\n"
+                + f"They were last paid on <t:{int(last_paid.timestamp())}:F> for the week of <t:{int(start_prev_week.timestamp())}:F> to <t:{int(end_prev_week.timestamp())}:F>\n"
+                + "This means they will receive a new salary!!!"
+            )
+        else:
+            start_last_week = last_paid.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ) - dt.timedelta(days=last_paid.weekday() + 7)
+            end_last_week = (start_last_week + dt.timedelta(days=6)).replace(
+                hour=23, minute=59, second=59, microsecond=999999
+            )
+            last_paid_str = (
+                f"They were last paid on <t:{int(last_paid.timestamp())}:F> for the week of <t:{int(start_last_week.timestamp())}:F> to <t:{int(end_last_week.timestamp())}:F>\n"
+                + f"The patrol time window will be from <t:{int(start_prev_week.timestamp())}:F> to <t:{int(end_prev_week.timestamp())}:F>\n"
+            )
+
         if not await msgbox_confirm(
             interac,
-            message="Are you sure you want to pay the officers for the past week now?"
-            + " "
+            message="Are you sure you want to pay the officers for the past week manually?"
+            + "\n"
             + last_paid_str,
         ):
             return
