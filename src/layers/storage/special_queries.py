@@ -1,3 +1,4 @@
+from typing import Dict
 import settings
 
 from src.layers.storage import models
@@ -26,3 +27,20 @@ async def get_active_officers(
         },
     )
     return result
+
+
+async def get_sum_patrol_time(
+    from_dt: dt.datetime, to_dt: dt.datetime
+) -> Dict[int, dt.timedelta]:
+    """drop in replacement for `pt_bl.get_top_patrol_time`"""
+    result = await models.database.fetch_all(
+        query="""SELECT `officer`, SUM(TIMESTAMPDIFF(SECOND, start,end)) AS 'patrol_length'
+        FROM `patrols`
+        WHERE start < :enddt and end > :startdt
+        GROUP BY `officer`""",
+        values={
+            "enddt": to_dt,
+            "startdt": from_dt,
+        },
+    )
+    return {k: int(v) for k, v in sorted(result, key=lambda x: int(x[1]), reverse=True)}
