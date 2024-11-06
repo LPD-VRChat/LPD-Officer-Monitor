@@ -54,6 +54,8 @@ def destroy(blwrp: BusinessLayerWrapper):
     blwrp.p.remove_listener()
     blwrp.pt_bl.remove_listener()
     blwrp.mod.remove_listener()
+    blwrp.member_list.remove_listener()
+    blwrp.member_list.destroy()
     # we cannot nullify bot because some task are queued and will execute after the reload
     # blwrp.mm_bl.bot = None
     # blwrp.pt_bl.bot = None
@@ -68,3 +70,4 @@ def destroy(blwrp: BusinessLayerWrapper):
     blwrp.p = None  # type: ignore
     blwrp.pt_bl = None
     blwrp.mod = None
+    blwrp.member_list = None
