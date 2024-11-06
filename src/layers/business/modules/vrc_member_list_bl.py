@@ -5,8 +5,9 @@ import json
 
 import aiohttp
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
+from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
 import settings
 from settings.classes import RoleLadderElement
 from src.layers.business.extra_functions import debounce, has_role_id, not_none
@@ -16,10 +17,22 @@ from src.layers.storage import models
 log = logging.getLogger("lpd-officer-monitor")
 
 
-class VRCMemberListBL:
+class VRCMemberListBL(DiscordListenerMixin):
     def __init__(self, bot: commands.Bot, pt_bl: PatrolTimeBL) -> None:
         self.bot = bot
+        super().__init__()
         self.pt_bl = pt_bl
+
+    @bl_listen("on_ready")
+    async def on_ready(self):
+        self.upload_to_world_task.start()
+
+    def destroy(self):
+        self.upload_to_world_task.cancel()
+
+    @tasks.loop(hours=4.0)
+    async def upload_to_world_task(self):
+        self.upload_to_world()
 
     async def make_payments(self) -> None:
         now = dt.datetime.now(tz=dt.UTC)
