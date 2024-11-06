@@ -1,3 +1,4 @@
+import asyncio
 import datetime as dt
 import logging
 from typing import Optional
@@ -25,18 +26,78 @@ class VRCMemberListBL(DiscordListenerMixin):
 
     @bl_listen("on_ready")
     async def on_ready(self):
-        self.upload_to_world_task.start()
+        if (
+            settings.STATION_ALLOWLIST_GIST_ID is None
+            or settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN is None
+        ):
+            log.warning("`upload_to_world_task` won't work because of missing settings")
+        else:
+            self.upload_to_world_task.start()
+        self.make_payments_task.start()
+        self.check_payments_task.start()
 
     def destroy(self):
         self.upload_to_world_task.cancel()
+        self.make_payments_task.cancel()
+        self.check_payments_task.cancel()
 
     @tasks.loop(hours=4.0)
     async def upload_to_world_task(self):
-        self.upload_to_world()
+        try:
+            self.upload_to_world()
+        except Exception as e:
+            log.exception("upload_to_world_task failed and will be canceled")
+            self.upload_to_world_task.stop()
+
+    @tasks.loop(time=dt.time(hour=19, minute=0, tzinfo=dt.timezone.utc))
+    async def check_payments_task(self):
+        if dt.datetime.now(tz=dt.timezone.utc).weekday() <= 3:
+            return  # only run after Thursdays
+        last_paid: Optional[dt.datetime] = await models.Payment.objects.max("timestamp")
+        last_paid = last_paid.replace(tzinfo=dt.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
+        start_prev_week = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - dt.timedelta(days=now.weekday() + 7)
+        end_prev_week = (start_prev_week + dt.timedelta(days=6)).replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+        if last_paid < end_prev_week:
+            log.error(
+                f"@here it seems officers didn't get payed for last week!!! last_paid=<t:{int(last_paid.timestamp())}:F> "
+            )
+        else:
+            log.debug("`chk_pay` OK")
+
+    @tasks.loop(time=dt.time(hour=13, minute=0, tzinfo=dt.timezone.utc))
+    async def make_payments_task(self):
+        if dt.datetime.now(tz=dt.timezone.utc).weekday() != 3:
+            return  # only run on Thursdays
+        last_paid: Optional[dt.datetime] = await models.Payment.objects.max("timestamp")
+        last_paid = last_paid.replace(tzinfo=dt.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
+        start_prev_week = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - dt.timedelta(days=now.weekday() + 7)
+        end_prev_week = (start_prev_week + dt.timedelta(days=6)).replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+        if last_paid > end_prev_week and last_paid < now:
+            log.error(
+                f"`make_payments_task` canceled, payment was already done for last week it seems last_paid=<t:{int(last_paid.timestamp())}:F>"
+            )
+            return
+
+        try:
+            # TODO check if ressource usage is impacting service, will need to profile and add sleep until low attendance
+            await self.make_payments()
+            log.info("make_payments_task worked")
+        except Exception as e:
+            log.exception("make_payments_task failed and will be canceled")
+            self.make_payments_task.stop()
 
     async def make_payments(self) -> None:
         now = dt.datetime.now(tz=dt.UTC)
-        new_payment = await models.Payment.objects.create(timestamp=now)
         start_last_week = now.replace(
             hour=0, minute=0, second=0, microsecond=0
         ) - dt.timedelta(days=now.weekday() + 7)
@@ -44,16 +105,20 @@ class VRCMemberListBL(DiscordListenerMixin):
             hour=23, minute=59, second=59, microsecond=999999
         )
         time = await self.pt_bl.get_top_patrol_time(start_last_week, end_last_week)
-        officer_payments = []
-        for officer_id, duration in time.items():
-            # Officers are paid 100/hour every week up to a maximum of 500
-            amount = min(int((duration / 3600) * 100), 500)
-            officer_payment = models.OfficerPayment(
-                officer=officer_id, payment=new_payment, amount=amount
-            )
-            officer_payments.append(officer_payment)
-        if len(officer_payments) > 0:
-            await models.OfficerPayment.objects.bulk_create(officer_payments)
+        await asyncio.sleep(1)  # make sure we give ressource back to other tasks
+        async with models.database.transaction():
+            new_payment = await models.Payment.objects.create(timestamp=now)
+            officer_payments = []
+            for officer_id, duration in time.items():
+                # Officers are paid 100/hour every week up to a maximum of 500
+                amount = min(int((duration / 3600) * 100), 500)
+                officer_payment = models.OfficerPayment(
+                    officer=officer_id, payment=new_payment, amount=amount
+                )
+                officer_payments.append(officer_payment)
+            if len(officer_payments) > 0:
+                await models.OfficerPayment.objects.bulk_create(officer_payments)
+        log.info(f"Payed {len(officer_payments)} officers")
 
     @debounce(seconds=60)
     async def upload_to_world(self, reason: Optional[str] = "cron") -> None:
