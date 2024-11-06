@@ -12,8 +12,6 @@ assert (
 ), f"need python 3.10.x or up. got {sys.version.split(' ')[0] }"
 
 # Community Library Imports
-from apscheduler import AsyncScheduler
-from apscheduler.triggers.cron import CronTrigger
 import discord
 
 assert discord.__version__.startswith(
@@ -336,16 +334,11 @@ def main():
     #####################
 
     async def runner():
-        async with AsyncScheduler() as scheduler:
-            await scheduler.add_schedule(
-                bl_wrapper.member_list.upload_to_world, CronTrigger(hour=4)
-            )
-            await scheduler.start_in_background()
-            try:
-                await bot.start(settings.DISCORD_TOKEN)
-            finally:
-                if not bot.is_closed():
-                    await bot.close()
+        try:
+            await bot.start(settings.DISCORD_TOKEN)
+        finally:
+            if not bot.is_closed():
+                await bot.close()
 
     def raise_graceful_exit(sig, *args):
         log.info(f"EXIT signal {sig}")
