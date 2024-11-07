@@ -5,6 +5,8 @@ import settings
 import argparse
 from typing import List, Literal, Optional, Set, Tuple
 import logging
+import datetime as dt
+from zoneinfo import ZoneInfo
 
 # Community
 import discord
@@ -18,6 +20,8 @@ import src.layers.business.errors as errors
 
 from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
+    get_calendar_events,
+    get_monday_from_week,
     interaction_reply,
     interaction_send_long,
     send_long,
@@ -331,6 +335,127 @@ class Other(commands.Cog):
             message += "".join([f"<@{o}>\n" for o in officers])
         message += "```"
         await interaction_send_long(di, message)
+
+    @checks.is_team_bot_channel(slash_cmd=True)
+    @checks.app_cmd_check_any(
+        checks.is_any_trainer(True),
+        checks.is_event_host(True),
+        checks.is_white_shirt(True),
+    )
+    @app_commands.command(
+        name="get_schedule_template",
+        description="Get a template for the schedule of the week",
+    )
+    @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_commands.default_permissions(administrator=True)
+    async def get_schedule_template(
+        self,
+        di: discord.Interaction,
+        list_type: Literal["All", "On Duty Events", "Off Duty Events"],
+        week_number: Optional[int],
+        year: Optional[int],
+    ):
+        msg_lines = []
+        today = dt.datetime.now(tz=dt.timezone.utc)
+        today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        if year is None:
+            year = today.year
+        if week_number is None:
+            week_number = today.isocalendar()[1] + 1
+
+        start_dt = get_monday_from_week(year, week_number)
+        end_dt = start_dt + dt.timedelta(days=6)
+
+        filter = list_type
+        type_name = filter
+        if list_type == "All":
+            type_name = "Events"
+            filter = None
+
+        if list_type is not "Off Duty Events":
+            msg_lines.append(settings.SCHEDULE_TEMPLATE_HEADER_ON_DUTY)
+
+        if start_dt.month != end_dt.month:
+            msg_lines.append(
+                f"# **LPD {type_name.upper()}: {start_dt.strftime('%B %d').upper()} - {end_dt.strftime('%B %d').upper()}**"
+            )
+        else:
+            msg_lines.append(
+                f"# **LPD {type_name.upper()}: {start_dt.strftime('%B %d').upper()}-{end_dt.day}**"
+            )
+
+        na_time = start_dt.replace(tzinfo=ZoneInfo("America/Los_Angeles"))
+        eu_time = start_dt.replace(tzinfo=ZoneInfo("Europe/London"))
+        # as_time = start_dt.replace(tzinfo=ZoneInfo("Australia/Brisbane"))
+        if na_time.dst() != eu_time.dst():
+            msg_lines.append(
+                "## :warning: Daylight saving is in transition period\nSome countries enable daylight saving at different dates which could lead to incorrect time here or on Teamup.\n**The ground truth is when the event is announced.**\n"
+            )
+
+        events = await get_calendar_events(filter, year, week_number)
+        if len(events) == 0:
+            msg_lines.append(":red_circle: no events found")
+
+        def print_event(component, startOverride=None) -> str:
+            event_start = component.get("DTSTART").dt
+            event_end = component.get("DTEND").dt
+            if startOverride:
+                event_end = startOverride + (event_end - event_start)
+                event_start = startOverride
+
+            title = ""
+            # yeap calendar entries are broken, seems they mostly use description for normal on duty and summary for off
+            # if "DESCRIPTION" in component and (
+            #     "Off Duty" not in component.get("CATEGORIES").to_ical().decode()
+            # ):
+            #     title = "\n".join(component.get("DESCRIPTION").split("\n")[2:3])
+            #     if title.startswith("Who: "):
+            #         title = title[5:]
+            #     if title.startswith("Host: "):
+            #         title = title[6:]
+            # if len(title) == 0:
+            title = component.get("SUMMARY").split("\n")[0]
+            if "X-TEAMUP-WHO" in component:
+                title = title[: -(len(component.get("X-TEAMUP-WHO")) + 2)]
+
+            # s = f"**{title}** - {component.get('CATEGORIES').to_ical().decode().replace(filter,'')}\n"
+            s = f"**{title}**\n"
+            if isinstance(event_start, dt.datetime):
+                if "X-TEAMUP-WHO" in component:
+                    s += f"**Hosted By:** @{component.get('X-TEAMUP-WHO')}\n"
+                else:
+                    s += "**Hosted By:** TBA\n"
+                s += f"**Time:** <t:{int(event_start.timestamp())}:F>"
+            else:
+                s += f"**Time:** <t:{int(dt.datetime.combine(event_start, dt.time(0,0)).timestamp())}:D> to <t:{int(dt.datetime.combine(event_end, dt.time(12,0)).timestamp())}:D>"
+
+            # dump debug
+            # s += "\n"
+            # for k, v in component.items():
+            #     if k == "CATEGORIES":
+            #         s += f"[{k}] = {v.to_ical().decode()}\n"
+            #     else:
+            #         s += f"[{k}] = {v}\n"
+
+            return s
+
+        for k in sorted(events.keys()):
+            if isinstance(events[k], list):
+                msg_lines.append(print_event(events[k][0], events[k][1]))
+            else:
+                msg_lines.append(print_event(events[k]))
+
+        if list_type == "Off Duty Events":
+            msg_lines.append(settings.SCHEDULE_TEMPLATE_FOOTER_OFF_DUTY)
+        else:
+            msg_lines.append(
+                settings.SCHEDULE_TEMPLATE_FOOTER_ON_DUTY.replace(
+                    "%BOT_ID%",
+                    str(self.bot.application_id),
+                )
+            )
+
+        await interaction_send_long(di, "\n\n".join(msg_lines), code_block=True)
 
 
 async def setup(bot):
