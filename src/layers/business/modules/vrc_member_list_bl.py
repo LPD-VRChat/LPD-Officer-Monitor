@@ -23,6 +23,9 @@ class VRCMemberListBL(DiscordListenerMixin):
         self.bot = bot
         super().__init__()
         self.pt_bl = pt_bl
+        self.last_upload_to_world = dt.datetime.now(dt.timezone.utc) + dt.timedelta(
+            hours=2
+        )
 
     @bl_listen("on_ready")
     async def on_ready(self):
@@ -41,8 +44,12 @@ class VRCMemberListBL(DiscordListenerMixin):
         self.make_payments_task.cancel()
         self.check_payments_task.cancel()
 
-    @tasks.loop(hours=4.0)
+    @tasks.loop(hours=2.0)
     async def upload_to_world_task(self):
+        delta = dt.datetime.now(dt.timezone.utc) - self.last_upload_to_world
+        print(delta)
+        if delta < dt.timedelta(hours=6.0):
+            return
         try:
             self.upload_to_world()
         except Exception as e:
@@ -120,11 +127,12 @@ class VRCMemberListBL(DiscordListenerMixin):
                 await models.OfficerPayment.objects.bulk_create(officer_payments)
         log.info(f"Payed {len(officer_payments)} officers")
 
-    @debounce(seconds=60)
+    @debounce(seconds=60 * 5)
     async def upload_to_world(self, reason: Optional[str] = "cron") -> None:
         """
         Uploads the member CSV to the gist where the VRChat world can download it.
         """
+        self.last_upload_to_world = dt.datetime.now(dt.timezone.utc)
         string = await self.get_csv_str()
         gist_id = settings.STATION_ALLOWLIST_GIST_ID
         token = settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN
