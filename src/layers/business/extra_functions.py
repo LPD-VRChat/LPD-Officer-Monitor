@@ -65,7 +65,7 @@ async def send_long(channel, string, code_block=False, mention=True):
                 channel=channel,
                 file_data=string,
                 filename="long_output.txt",
-                msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+                msg_content="The output is too big to fit in a discord message so it is instead in a file.",
             )
             return
 
@@ -151,7 +151,7 @@ async def interaction_send_long(
             interaction,
             data,
             "output.txt",
-            msg_content="The output is too big to fit in a discord message so it is insted in a file.",
+            msg_content="The output is too big to fit in a discord message so it is instead in a file.",
             ephemeral=ephemeral,
         )
     else:
