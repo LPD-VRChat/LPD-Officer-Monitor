@@ -17,6 +17,9 @@ import logging
 # Community
 import discord
 from discord.ext import commands
+import requests
+from icalendar import Calendar
+from dateutil.rrule import rrulestr
 
 from settings.classes import RoleLadderElement
 
@@ -342,3 +345,79 @@ async def mention_slash_cmd(bot, commandName: str, hybridCmd: bool = False) -> s
             f"mentionSlashCmd failed to find `{commandName}` caller:{caller_frame.f_code.co_name} {caller_frame.f_code.co_filename}:{caller_frame.f_lineno} "
         )
         return f"`/{commandName}`"
+
+
+def get_monday_from_week(year: int, week: int) -> dt.datetime:
+    first_day_of_year = dt.datetime(year, 1, 1)
+    days_to_monday = (week - 1) * 7 - first_day_of_year.weekday()
+    monday_of_week = first_day_of_year + dt.timedelta(days=days_to_monday)
+    return monday_of_week.replace(tzinfo=dt.timezone.utc)
+
+
+async def get_calendar_events(
+    filter: Optional[str] = None,
+    year: Optional[int] = None,
+    week_number: Optional[int] = None,
+) -> dict:
+    response = requests.get(settings.SCHEDULE_URL)
+    if response.status_code != 200:
+        log.error("Failed to fetch the calendar file from the provided URL.")
+        return {}
+
+    calendar_data = response.text
+    calendar = Calendar.from_ical(calendar_data)
+
+    today = datetime.now(tz=dt.timezone.utc)
+    today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    if year:
+        year = today.year
+    if week_number is None:
+        week_number = today.isocalendar()[1] + 1
+
+    start_dt = get_monday_from_week(year, week_number)
+    end_dt = start_dt + dt.timedelta(days=7)
+    start_date = start_dt.date()
+    end_date = end_dt.date()
+
+    unsortedEvents = dict()
+
+    for component in calendar.walk("VEVENT"):
+
+        event_start = component.get("DTSTART").dt
+        event_end = component.get("DTEND").dt
+
+        if type(event_start) != type(event_end):
+            log.error("weird event \n" + str(component))
+            continue
+
+        if filter:
+            cat = component.get("CATEGORIES").to_ical().decode()
+            if not filter in cat:
+                continue
+
+        if "RRULE" in component:
+            rrule = rrulestr(
+                component["RRULE"].to_ical().decode("utf-8"),
+                dtstart=component.get("DTSTART").dt,
+            )
+            if not component.get("DTSTART").dt.tzinfo:  #
+                continue
+            occurrences = list(rrule.between(start_dt, end_dt, inc=True))
+            if len(occurrences) > 0:
+                for o in occurrences:
+                    unsortedEvents[o.timestamp()] = [component, o]
+            else:
+                continue
+        else:
+            if not isinstance(event_start, datetime):
+                if not (start_date <= event_start <= end_date) and not (
+                    start_date <= event_end <= end_date
+                ):
+                    continue
+            else:
+                if not (start_dt <= event_start <= end_dt) and not (
+                    start_dt <= event_end <= end_dt
+                ):
+                    continue
+                unsortedEvents[event_start.timestamp()] = component
+    return unsortedEvents
