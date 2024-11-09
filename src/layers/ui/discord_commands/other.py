@@ -338,7 +338,6 @@ class Other(commands.Cog):
 
     @checks.is_team_bot_channel(slash_cmd=True)
     @checks.app_cmd_check_any(
-        checks.is_any_trainer(True),
         checks.is_event_host(True),
         checks.is_white_shirt(True),
     )
