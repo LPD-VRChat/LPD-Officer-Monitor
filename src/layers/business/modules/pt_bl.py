@@ -614,7 +614,7 @@ class PatrolTimeBL(DiscordListenerMixin):
             and get_lpd_member_rank(m) <= settings.ROLE_LADDER.corporal
         ]
         debug_log += f"filtered(staff,still active) = {len(officers_id)}\n"
-        if len(r[0]) < amount_officers:
+        if len(r) < amount_officers:
             return (
                 officers_id,
                 debug_log + ":warning:too little candidate to pick randomly",
