@@ -123,12 +123,8 @@ LOG_PERMISSION_DENIED_LEVEL = 30  # WARNING
 
 
 # Logging ########################################################
-LOGGING_WEBHOOK = "https://discord.com/api/webhooks/913832874883575838/qYRBo1a2WHblyk1wXUpURyUNoL9bp4gLZBiItte31sKDLQFSoXFh8eoeqinQjmuwLNCw"
 _os.environ.setdefault("PYTHONASYNCIODDEBUG", "1")
 _tracemalloc.start()
 
 # Web Manager settings ###########################################
 WEB_MANAGER_HOST = "localhost"
-
-GIT_REPO_PATH = "D:\\dev\\vrc\\LPD-Officer-MonitorV3\\repo"
-GIT_REPO_FILENAME = "allowlist.json"
