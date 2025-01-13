@@ -44,6 +44,7 @@ class Training(enum.Enum):
     LMT = 2
     SLRT = 3
     Watch_officer = 4
+    Filming_crew = 5
 
 
 class Regions(enum.Enum):
@@ -785,6 +786,13 @@ class Time(commands.Cog):
                             f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not a Prison trainer",
                         )
                         return
+                case Training.Filming_crew:
+                    if not has_role_id(interac.user, settings.MEDIA_PRODUCTION_ROLE):
+                        await interaction_reply(
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not in Media Team",
+                        )
+                        return
                 case _:
                     await interaction_reply(interac, ":red_circle: invalid training.")
                     log.error(f"invalid training {training.value}")
@@ -837,9 +845,11 @@ class Time(commands.Cog):
                         f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be corporal or above",
                     )
                     return
+            case Training.Filming_crew:
+                pass  # no requirement
             case _:
                 await interaction_reply(interac, ":red_circle: invalid training.")
-                log.error(f"invalid training {training.value}")
+                log.error(f"req invalid training {training.value}")
                 return
 
         # proceed with role change
@@ -877,9 +887,14 @@ class Time(commands.Cog):
                     discord.Object(settings.WATCH_OFFICER_ROLE),
                     reason="bot trained Watch_officer",
                 )
+            case Training.Filming_crew:
+                await member.add_roles(
+                    discord.Object(settings.FILMING_CREW_ROLE),
+                    reason="bot trained Film crew",
+                )
             case _:
                 await interaction_reply(interac, ":red_circle: invalid training.")
-                log.error(f"invalid training {training.value}")
+                log.error(f"role: invalid training {training.value}")
                 return
         await interaction_reply(
             interac, f"<@{member.id}> is trained for `{training.name}`"
