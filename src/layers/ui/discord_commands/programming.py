@@ -14,6 +14,7 @@ import os
 # Community
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 # Custom
 import src.layers.business.checks as checks
@@ -242,6 +243,46 @@ class Programming(commands.Cog):
         while len(embeds) > 0:
             await ctx.send(None, embeds=embeds[0:10])
             embeds = embeds[10:]
+
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.hybrid_command(
+        name="maintenance", description="send maintenance message on all bot channels"
+    )
+    @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_commands.default_permissions(administrator=True)
+    async def maintenance(
+        self,
+        interac: discord.Interaction,
+        state: bool,
+        estimated_down_time: Optional[int] = None,
+    ):
+        async def send_notif(bot: commands.Bot, txt: str):
+            for cid in settings.ALLOWED_COMMAND_CHANNELS:
+                ch = bot.get_channel(cid)
+                if not ch:
+                    return
+                try:
+                    await ch.send(txt)
+                except:
+                    log.exception(
+                        f"failed to send maintenance notification in channel {cid}"
+                    )
+
+        if state:
+            await send_notif(
+                self.bot,
+                f"""# :traffic_light: :red_circle: Bot in Maintenance :red_circle: :traffic_light:
+Do not send any commands until maintenance period is lifted
+Estimated time : {estimated_down_time}""",
+            )
+        else:
+            await send_notif(
+                self.bot,
+                """# :traffic_light: :green_circle: Maintenance completed :green_circle: :traffic_light:
+You can use the bot's commands
+""",
+            )
 
 
 async def setup(bot):
