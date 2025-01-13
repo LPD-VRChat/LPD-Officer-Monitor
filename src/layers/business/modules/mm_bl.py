@@ -163,14 +163,16 @@ class MemberManagementBL(
         match (officer_before, officer_after):
             case (True, True):
                 # Nothing happened to an LPD Officer
-                log.debug(
-                    "member_join_leave - LPD officer did not do anything interesting"
-                )
+                if settings.CONFIG_LOADED == "dev":
+                    log.debug(
+                        "member_join_leave - LPD officer did not do anything interesting"
+                    )
             case (False, False):
                 # Nothing happened to a regular member
-                log.debug(
-                    "member_join_leave - Regular member did not do anything interesting"
-                )
+                if settings.CONFIG_LOADED == "dev":
+                    log.debug(
+                        "member_join_leave - Regular member did not do anything interesting"
+                    )
             case (False, True):
                 # Member has joined the LPD
                 await self.member_joined_LPD(after)

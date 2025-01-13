@@ -40,6 +40,7 @@ class VRCMemberListBL(DiscordListenerMixin):
         self.check_payments_task.start()
 
     def destroy(self):
+        """hard coded call !!!"""
         self.upload_to_world_task.cancel()
         self.make_payments_task.cancel()
         self.check_payments_task.cancel()
@@ -47,7 +48,6 @@ class VRCMemberListBL(DiscordListenerMixin):
     @tasks.loop(hours=2.0)
     async def upload_to_world_task(self):
         delta = dt.datetime.now(dt.timezone.utc) - self.last_upload_to_world
-        print(delta)
         if delta < dt.timedelta(hours=6.0):
             return
         try:
