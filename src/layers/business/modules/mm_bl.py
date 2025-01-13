@@ -13,7 +13,7 @@ from typing import Dict, Optional
 
 # Community
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 # Custom
 import settings
@@ -66,6 +66,21 @@ class MemberManagementBL(
             Officer.objects.all(deleted_at=None)
         )
         self._lpd_members: Dict[int, Officer] = {o.id: o for o in all_active_officers}
+        self.filming_crew = asyncio.Queue()
+
+    @bl_listen("on_ready")
+    async def on_ready(self):
+        self.filming_crew_cleanup_task.start()
+        film_crew_role = self.bot.get_guild(settings.SERVER_ID).get_role(
+            settings.FILMING_CREW_ROLE
+        )
+        if film_crew_role:
+            for m in film_crew_role.members:
+                self.filming_crew.put_nowait(m)
+
+    @bl_listen()
+    async def on_unload(self):
+        self.filming_crew_cleanup_task.cancel()
 
     # Add/remove members on discord changes
     async def member_joined_LPD(self, member: discord.Member) -> None:
@@ -163,6 +178,12 @@ class MemberManagementBL(
                 # Member has left the LPD
                 await self.member_left_LPD(after.id, after)
 
+        if (
+            before.get_role(settings.FILMING_CREW_ROLE) == None
+            and after.get_role(settings.FILMING_CREW_ROLE) != None
+        ):
+            await self.filming_crew.put(after)
+
     @bl_listen()
     async def on_member_remove(self, member: discord.Member) -> None:
         if is_lpd_member(member) and member.guild.id == settings.SERVER_ID:
@@ -197,3 +218,21 @@ class MemberManagementBL(
     async def get_officer_vrcname_from_id(self, id: int) -> str:
         of = await Officer.objects.get(id=id)
         return of.vrchat_name
+
+    @tasks.loop(minutes=10.0)
+    async def filming_crew_cleanup_task(self):
+        if self.filming_crew.empty():
+            return
+        while True:
+            try:
+                crew = self.filming_crew.get_nowait()
+            except asyncio.QueueEmpty:
+                return
+            try:
+                await crew.remove_roles(
+                    discord.Object(settings.FILMING_CREW_ROLE),
+                    reason="Film crew cleanup",
+                )
+            except:
+                log.exception(f"filming_crew_cleanup_task failed for {crew.id=}")
+            self.filming_crew.task_done()
