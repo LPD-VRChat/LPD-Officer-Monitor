@@ -339,6 +339,19 @@ def is_officer(slash_cmd=False):
         return commands.check(predicate)
 
 
+def is_media_team(slash_cmd=False):
+    def predicate(ctx):
+        return has_role_id(ctx.author, settings.MEDIA_PRODUCTION_ROLE)
+
+    def predicate_interaction(interaction: discord.Interaction) -> bool:
+        return has_role_id(interaction.user, settings.MEDIA_PRODUCTION_ROLE)
+
+    if slash_cmd:
+        return discord.app_commands.check(predicate_interaction)
+    else:
+        return commands.check(predicate)
+
+
 def app_cmd_check_any(*checks: Callable[[T], T]) -> Callable[[T], T]:
     """logical or for app_command
 
