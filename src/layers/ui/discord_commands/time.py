@@ -738,6 +738,7 @@ class Time(commands.Cog):
     @checks.app_cmd_check_any(
         checks.is_any_trainer(True),
         checks.is_white_shirt(True),
+        checks.is_media_team(True),
     )
     @app_cmd.command(
         name="give_trained_role",
