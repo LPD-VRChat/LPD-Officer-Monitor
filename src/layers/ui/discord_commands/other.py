@@ -371,7 +371,7 @@ class Other(commands.Cog):
             type_name = "Events"
             filter = None
 
-        if list_type is not "Off Duty Events":
+        if list_type != "Off Duty Events":
             msg_lines.append(settings.SCHEDULE_TEMPLATE_HEADER_ON_DUTY)
 
         if start_dt.month != end_dt.month:

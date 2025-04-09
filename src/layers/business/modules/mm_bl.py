@@ -70,7 +70,8 @@ class MemberManagementBL(
 
     @bl_listen("on_ready")
     async def on_ready(self):
-        self.filming_crew_cleanup_task.start()
+        if not self.filming_crew_cleanup_task.is_running():
+            self.filming_crew_cleanup_task.start()
         film_crew_role = self.bot.get_guild(settings.SERVER_ID).get_role(
             settings.FILMING_CREW_ROLE
         )

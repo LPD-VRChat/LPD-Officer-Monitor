@@ -561,7 +561,7 @@ class Time(commands.Cog):
         )
 
     @checks.is_chief_bot_channel(True)
-    # @checks.is_deputy_chief_or_higher(True)
+    @checks.is_deputy_chief_or_higher(True)
     @app_cmd.command(
         name="remove_inactive",
         description="YEEET officers with inactive role",
@@ -621,8 +621,8 @@ class Time(commands.Cog):
 
         blocklist = set(
             [
-                # discord.Object(settings.TEAM_LEAD_ROLE),
-                discord.Object(settings.LPDPLUS_ROLE),
+                # settings.TEAM_LEAD_ROLE,
+                settings.LPDPLUS_ROLE,
             ]
         )
         for name, rank in settings.ROLE_LADDER.items():
