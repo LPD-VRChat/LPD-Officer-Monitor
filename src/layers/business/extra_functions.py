@@ -277,7 +277,7 @@ def timedelta_to_nice_string(dt: dt.timedelta) -> str:
         sec -= m * 60  # remaining
     if sec > 0:
         r += f"{sec:02} second{'s' if sec>1 else ''} "
-    return r
+    return len(r) > 0 and r or "0 seconds"
 
 
 def debounce(*, seconds: float):
