@@ -456,6 +456,22 @@ class Other(commands.Cog):
 
         await interaction_send_long(di, "\n\n".join(msg_lines), code_block=True)
 
+    @checks.is_admin_bot_channel(True)
+    @checks.is_white_shirt(True)
+    @app_commands.command(
+        name="member_lookup", description="gives top patrolling times"
+    )
+    @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(search="discord id, username discord/vrchat")
+    async def member_lookup(
+        self,
+        interac: discord.Interaction,
+        search: str,
+    ):
+        result = await self.bl_wrapper.mm_bl.member_lookup(search)
+        await interaction_send_long(interac, result)
+
 
 async def setup(bot):
     await bot.add_cog(Other(bot))
