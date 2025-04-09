@@ -14,16 +14,23 @@ from typing import Dict, Optional
 # Community
 import discord
 from discord.ext import commands, tasks
+from thefuzz.fuzz import partial_token_sort_ratio
 
 # Custom
 import settings
-from src.layers.business.extra_functions import is_lpd_member, now, get_guild
+from src.layers.business.extra_functions import (
+    is_lpd_member,
+    now,
+    get_guild,
+    timedelta_to_nice_string,
+)
 from src.layers.storage.models import Officer
 from src.layers.business.base_bl import (
     DiscordListenerMixin,
     EventSenderMixin,
     bl_listen,
 )
+from src.layers.business.modules.pt_bl import PatrolTimeBL
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -56,9 +63,14 @@ MEMBER_MANAGEMENT_EVENT_TYPE = (
 class MemberManagementBL(
     DiscordListenerMixin, EventSenderMixin[MEMBER_MANAGEMENT_EVENT_TYPE]
 ):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(
+        self,
+        bot: commands.Bot,
+        pt_bl: PatrolTimeBL,
+    ) -> None:
         self.bot = bot
         super().__init__()
+        self.pt_bl = pt_bl
 
         # Initialize the cache
         loop = asyncio.get_event_loop()
@@ -239,3 +251,111 @@ class MemberManagementBL(
             except:
                 log.exception(f"filming_crew_cleanup_task failed for {crew.id=}")
             self.filming_crew.task_done()
+
+    async def member_dump(self, id: int) -> str:
+        of = await Officer.objects.get(id=id)
+        r = f"discordid={of.id} <@{of.id}>\n"
+        r += f"{"started:"+of.started_monitoring.isoformat() if of.started_monitoring else 'invalid_start'}\n"
+        r += f"{"left:"+of.deleted_at.isoformat() if of.deleted_at else 'active'}\n"
+        r += f"vrchat_name=`{of.vrchat_name}`\n"
+        r += f"vrchat_id=`{of.vrchat_id}`\n"
+        to_dt = dt.datetime.now(dt.timezone.utc)
+        from28_dt = to_dt - dt.timedelta(days=28)
+        from90_dt = to_dt - dt.timedelta(days=90)
+        timeDelta28 = await self.pt_bl.get_patrol_time(
+            id, from_dt=from28_dt, to_dt=to_dt
+        )
+        timeDelta90 = await self.pt_bl.get_patrol_time(
+            id, from_dt=from90_dt, to_dt=to_dt
+        )
+        r += f"Patrol 28 days: {timedelta_to_nice_string(timeDelta28)}\n"
+        r += f"Patrol 90 days: {timedelta_to_nice_string(timeDelta90)}\n"
+        return r
+
+    async def expensive_lookup(
+        self,
+        search: str,
+    ) -> str:
+        results = []
+        suggestions = set()
+
+        async for officer in Officer.objects.iterate():
+            if partial_token_sort_ratio(search, officer.vrchat_name) > 80:
+                suggestions.add(officer.id)
+                results.append(
+                    f"vrchat name partial match id=`{officer.id}` vrcname=`{officer.vrchat_name}`"
+                )
+        for member in self.bot.get_guild(settings.SERVER_ID).members:
+            if (
+                partial_token_sort_ratio(search, member.name) > 80
+                or partial_token_sort_ratio(search, member.display_name) > 80
+            ):
+                suggestions.add(member.id)
+                results.append(
+                    f"discord name partial match id=`{member.id}` name=`{member.name}` display_name=`{member.display_name}`"
+                )
+
+        return "\n".join(results)
+
+    async def member_lookup(
+        self,
+        search: str,
+    ) -> str:
+        result = ""
+        found = 0
+        discord_id = None
+        try:
+            discord_id = int(search)
+        except ValueError:
+            pass
+        dumped = set()
+        if discord_id is not None:
+            result += "# discord ID match\n" + await self.member_dump(discord_id) + "\n"
+            found += 1
+            dumped.add(discord_id)
+
+        of = await Officer.objects.get_or_none(vrchat_name=search)
+        if of is not None:
+            if of.id not in dumped:
+                result += (
+                    "# vrchat name exact match\n" + await self.member_dump(of.id) + "\n"
+                )
+                found += 1
+                dumped.add(of.id)
+
+        of = await Officer.objects.get_or_none(vrchat_id=search)
+        if of is not None:
+            if of.id not in dumped:
+                result += "# vrchat ID match\n" + await self.member_dump(of.id) + "\n"
+                found += 1
+                dumped.add(of.id)
+
+        for member in self.bot.get_guild(settings.SERVER_ID).members:
+            if member.name == search:
+                if member.id not in dumped:
+                    result += (
+                        "# discord name exact match\n"
+                        + await self.member_dump(member.id)
+                        + "\n"
+                    )
+                    found += 1
+                    dumped.add(member.id)
+            if member.display_name == search:
+                if member.id not in dumped:
+                    result += (
+                        "# discord display name exact match\n"
+                        + await self.member_dump(member.id)
+                        + "\n"
+                    )
+                    found += 1
+                    dumped.add(member.id)
+
+        if found == 0:
+            result = "# No exact match found\n"
+            er = await self.expensive_lookup(search)
+            if len(er) == 0:
+                result += "# No suggestions found\n"
+            else:
+                result += " Suggestions: (re run the command using the id)\n" + er
+
+        return result
