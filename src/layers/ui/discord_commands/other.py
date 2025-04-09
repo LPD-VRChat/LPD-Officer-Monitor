@@ -401,6 +401,27 @@ class Other(commands.Cog):
             if startOverride:
                 event_end = startOverride + (event_end - event_start)
                 event_start = startOverride
+                new_dt = dt.datetime(
+                    startOverride.year,
+                    startOverride.month,
+                    startOverride.day,
+                    startOverride.hour,
+                    startOverride.minute,
+                    startOverride.second,
+                    tzinfo=ZoneInfo(event_start.tzinfo.zone),
+                )
+
+                original_is_dst = bool(event_start.dst())
+                new_is_dst = bool(new_dt.dst())
+
+                # ical doesn't handle DST correctly, so we need to fix it
+                if original_is_dst != new_is_dst:
+                    dst_diff = event_start.dst() - new_dt.dst()
+                    # logging.debug(f"DST difference detected: {dst_diff}")
+
+                    startOverride = new_dt
+                    event_end = startOverride + (event_end - event_start)
+                    event_start = startOverride
 
             title = ""
             # yeap calendar entries are broken, seems they mostly use description for normal on duty and summary for off
