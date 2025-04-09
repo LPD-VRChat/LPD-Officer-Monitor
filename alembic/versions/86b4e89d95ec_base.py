@@ -1,7 +1,7 @@
 """base
 
 Revision ID: 86b4e89d95ec
-Revises: 
+Revises:
 Create Date: 2023-01-31 00:25:52.376806
 
 """
