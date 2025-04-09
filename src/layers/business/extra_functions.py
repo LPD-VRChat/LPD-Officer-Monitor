@@ -17,7 +17,7 @@ import logging
 # Community
 import discord
 from discord.ext import commands
-import requests
+import aiohttp
 from icalendar import Calendar
 from dateutil.rrule import rrulestr
 
@@ -359,12 +359,15 @@ async def get_calendar_events(
     year: Optional[int] = None,
     week_number: Optional[int] = None,
 ) -> dict:
-    response = requests.get(settings.SCHEDULE_URL)
-    if response.status_code != 200:
-        log.error("Failed to fetch the calendar file from the provided URL.")
-        return {}
 
-    calendar_data = response.text
+    calendar_data = ""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(settings.SCHEDULE_URL) as response:
+            if response.status != 200:
+                log.error("Failed to fetch the calendar file from the provided URL.")
+                return {}
+            calendar_data = await response.text()
+
     calendar = Calendar.from_ical(calendar_data)
 
     today = datetime.now(tz=dt.timezone.utc)
