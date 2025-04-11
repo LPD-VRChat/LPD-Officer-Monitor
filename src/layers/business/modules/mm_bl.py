@@ -255,8 +255,8 @@ class MemberManagementBL(
     async def member_dump(self, id: int) -> str:
         of = await Officer.objects.get(id=id)
         r = f"discordid={of.id} <@{of.id}>\n"
-        r += f"{"started:"+of.started_monitoring.isoformat() if of.started_monitoring else 'invalid_start'}\n"
-        r += f"{"left:"+of.deleted_at.isoformat() if of.deleted_at else 'active'}\n"
+        r += f"started:{of.started_monitoring.isoformat() if of.started_monitoring else 'invalid_start'}\n"
+        r += f"left:{of.deleted_at.isoformat() if of.deleted_at else 'active'}\n"
         r += f"vrchat_name=`{of.vrchat_name}`\n"
         r += f"vrchat_id=`{of.vrchat_id}`\n"
         to_dt = dt.datetime.now(dt.timezone.utc)
