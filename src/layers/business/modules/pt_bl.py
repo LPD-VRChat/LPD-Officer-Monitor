@@ -429,6 +429,7 @@ class PatrolTimeBL(DiscordListenerMixin):
         add_members_from_role(settings.ROLE_LADDER.corporal, officer_ids)
 
         remove_members_from_role(settings.LPDPLUS_ROLE, officer_ids)
+        remove_members_from_role(settings.MODERATOR_ROLE, officer_ids)
         # just in case they have a rank lower than SGT and should still be excluded
         for name, rank in settings.ROLE_LADDER.items():
             if rank >= settings.ROLE_LADDER.sergeant:
