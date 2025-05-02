@@ -405,21 +405,21 @@ class PatrolTimeBL(DiscordListenerMixin):
             log.error(f"guild {settings.SERVER_ID} is not accessible")
             return []
 
-        def add_members_from_role(role: RoleLadderElement, list: set[int]):
+        def add_members_from_role(role: RoleLadderElement, member_list: set[int]):
             discord_role = guild.get_role(role.id)
             if discord_role is None:
                 log.error(f"`{role.name}` role {role.id} is not accessible")
                 return
-            list = list.union([m.id for m in discord_role.members])
+            member_list.update([m.id for m in discord_role.members])
 
-        def remove_members_from_role(role_id: int, list: set[int]):
+        def remove_members_with_role(role_id: int, member_list: set[int]):
             discord_role = guild.get_role(role_id)
             if discord_role is None:
                 log.error(f"rm role {role_id} is not accessible")
                 return
             for m in discord_role.members:
-                if m.id in list:
-                    list.remove(m.id)
+                if m.id in member_list:
+                    member_list.remove(m.id)
                     log.debug(f"of_lt_patrol_t removed {m.id=} {role_id=}")
 
         officer_ids: set[int] = set()
@@ -428,23 +428,34 @@ class PatrolTimeBL(DiscordListenerMixin):
         add_members_from_role(settings.ROLE_LADDER.senior_officer, officer_ids)
         add_members_from_role(settings.ROLE_LADDER.corporal, officer_ids)
 
-        remove_members_from_role(settings.LPDPLUS_ROLE, officer_ids)
-        remove_members_from_role(settings.MODERATOR_ROLE, officer_ids)
+        log.debug(f"mark_inactive officer pool={len(officer_ids)}")
+        if len(officer_ids) == 0:
+            log.error("mark_inactive no officers checked for inactive")
+            return []
+
+        remove_members_with_role(settings.LPDPLUS_ROLE, officer_ids)
+        remove_members_with_role(settings.MODERATOR_ROLE, officer_ids)
         # just in case they have a rank lower than SGT and should still be excluded
         for name, rank in settings.ROLE_LADDER.items():
             if rank >= settings.ROLE_LADDER.sergeant:
-                remove_members_from_role(rank.id, officer_ids)
+                remove_members_with_role(rank.id, officer_ids)
+        log.debug(f"mark_inactive officer pool after cleanup={len(officer_ids)}")
+        if len(officer_ids) == 0:
+            log.error("mark_inactive all officers removed after cleanup")
 
         active = await special_queries.get_active_officers(
             minimum_hours,
             from_date,
             dt.datetime.now(dt.timezone.utc),
         )
+        log.debug(f"mark_inactive active={len(active)}")
 
         officerid_to_yeet_ids: list[int] = []
         for oid in officer_ids:
             if oid not in active:
                 officerid_to_yeet_ids.append(oid)
+
+        log.debug(f"mark_inactive yeet={len(officerid_to_yeet_ids)}")
 
         officers = await models.Officer.objects.filter(
             started_monitoring__lte=from_date,

@@ -530,8 +530,10 @@ class Time(commands.Cog):
         inactives = await self.bl_wrapper.loa_bl.process_inactives(
             officers_bellow_time, loas, renews
         )
+        log.debug(f"{len(officers_bellow_time)=}")
+        log.debug(f"{len(inactives)=}")
 
-        message = "Inactive officers:\n"
+        message = f"Inactive {len(inactives)} officers:\n"
         message += "\n".join([f"<@{o.id}>" for o in inactives])
 
         await interaction_send_long(interac, message)
