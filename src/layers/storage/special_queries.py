@@ -13,7 +13,7 @@ async def get_active_officers(
     minimum_activity: float,
     start: dt.datetime,
     end: dt.datetime,
-) -> list[int]:
+) -> set[int]:
     result = await models.database.fetch_all(
         query="""SELECT `officer`, SUM(TIMESTAMPDIFF(SECOND, start,end)) AS 'patrol_length'
         FROM `patrols`
@@ -26,7 +26,7 @@ async def get_active_officers(
             "startdt": start,
         },
     )
-    return result
+    return {r[0] for r in result}
 
 
 async def get_sum_patrol_time(
