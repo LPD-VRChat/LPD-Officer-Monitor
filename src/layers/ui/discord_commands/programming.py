@@ -83,7 +83,7 @@ class Programming(commands.Cog):
                         if name.startswith("settings"):
                             importlib.reload(module)
                 except Exception as e:
-                    await ctx.send(f"Failed to reload settings")
+                    await ctx.send(f":red_circle: Failed to reload settings")
                     log.exception(f"Failed to reload settings")
                     return
 
@@ -100,7 +100,7 @@ class Programming(commands.Cog):
                         if name.startswith("src.layers.business"):
                             importlib.reload(module)
                 except Exception as e:
-                    await ctx.send(f"Failed to reload business layer")
+                    await ctx.send(f":red_circle: Failed to reload business layer")
                     log.exception(f"Failed to reload business layer")
                     return
 
@@ -112,8 +112,8 @@ class Programming(commands.Cog):
                     try:
                         await self.bot.reload_extension(m)
                     except Exception as e:
-                        await ctx.send(f"Failed to reload `{module_name}`")
-                        log.exception(f"Failed to reload {m.split('.')[-1]}")
+                        await ctx.send(f":red_circle: Failed to reload `{m}`")
+                        log.exception(f"Failed to reload {m}")
                 self.bot.has_been_started = False
                 self.bot.dispatch("connect")
                 self.bot.dispatch("ready")
@@ -131,7 +131,7 @@ class Programming(commands.Cog):
                         f"Could not find a module matching the name `{module_name}`"
                     )
                 except Exception as e:
-                    await ctx.send(f"Failed to reload `{module_name}`")
+                    await ctx.send(f":red_circle: Failed to reload `{module_name}`")
                     log.exception(f"Failed to reload {module_name}")
                 finally:
                     log.warning(
