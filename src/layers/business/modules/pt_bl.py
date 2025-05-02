@@ -457,6 +457,12 @@ class PatrolTimeBL(DiscordListenerMixin):
 
         log.debug(f"mark_inactive yeet={len(officerid_to_yeet_ids)}")
 
+        if len(officerid_to_yeet_ids) + len(active) != len(officer_ids):
+            log.error(
+                f"mark_inactive inconsistent state, {len(officerid_to_yeet_ids)=}, {len(active)=}, {len(officer_ids)=}"
+            )
+            return []
+
         officers = await models.Officer.objects.filter(
             started_monitoring__lte=from_date,
             id__in=officerid_to_yeet_ids,
