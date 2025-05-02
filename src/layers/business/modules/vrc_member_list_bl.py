@@ -36,8 +36,10 @@ class VRCMemberListBL(DiscordListenerMixin):
             log.warning("`upload_to_world_task` won't work because of missing settings")
         else:
             self.upload_to_world_task.start()
-        self.make_payments_task.start()
-        self.check_payments_task.start()
+        if not self.make_payments_task.is_running():
+            self.make_payments_task.start()
+        if not self.check_payments_task.is_running():
+            self.check_payments_task.start()
 
     def destroy(self):
         """hard coded call !!!"""
