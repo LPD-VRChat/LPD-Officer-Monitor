@@ -533,6 +533,13 @@ class Time(commands.Cog):
         log.debug(f"{len(officers_bellow_time)=}")
         log.debug(f"{len(inactives)=}")
 
+        if len(inactives) == 0:
+            await interaction_reply(
+                interac,
+                content="No officers to mark as inactive. Too good to be true....",
+            )
+            return
+
         message = f"Inactive {len(inactives)} officers:\n"
         message += "\n".join([f"<@{o.id}>" for o in inactives])
 
