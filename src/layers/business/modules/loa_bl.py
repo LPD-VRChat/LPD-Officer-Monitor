@@ -257,7 +257,9 @@ class MemberActivityBL(DiscordListenerMixin):
     async def list_loa(self) -> Iterable[models.LOAEntry]:
         now = date.today()
         return await models.LOAEntry.objects.filter(
-            models.LOAEntry.start >= now, models.LOAEntry.deleted_at.isnull(True)
+            models.LOAEntry.start <= now,
+            models.LOAEntry.end >= now,
+            models.LOAEntry.deleted_at.isnull(True),
         ).all()
 
     async def list_renewed(self, date_from: date) -> Iterable[models.TimeRenewal]:
