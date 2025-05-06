@@ -530,7 +530,7 @@ class Time(commands.Cog):
         inactives = await self.bl_wrapper.loa_bl.process_inactives(
             officers_bellow_time, loas, renews
         )
-        log.debug(f"{len(officers_bellow_time)=}")
+        log.debug(f"{len(officers_bellow_time)=} {len(loas)=} {len(renews)=}")
         log.debug(f"{len(inactives)=}")
 
         if len(inactives) == 0:
