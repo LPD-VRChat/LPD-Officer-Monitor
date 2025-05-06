@@ -442,6 +442,7 @@ class PatrolTimeBL(DiscordListenerMixin):
         log.debug(f"mark_inactive officer pool after cleanup={len(officer_ids)}")
         if len(officer_ids) == 0:
             log.error("mark_inactive all officers removed after cleanup")
+            return []
 
         active = await special_queries.get_active_officers(
             minimum_hours,
@@ -449,23 +450,13 @@ class PatrolTimeBL(DiscordListenerMixin):
             dt.datetime.now(dt.timezone.utc),
         )
         log.debug(f"mark_inactive active={len(active)}")
+        officer_ids.difference_update(active)
 
-        officerid_to_yeet_ids: list[int] = []
-        for oid in officer_ids:
-            if oid not in active:
-                officerid_to_yeet_ids.append(oid)
-
-        log.debug(f"mark_inactive yeet={len(officerid_to_yeet_ids)}")
-
-        if len(officerid_to_yeet_ids) + len(active) != len(officer_ids):
-            log.error(
-                f"mark_inactive inconsistent state, {len(officerid_to_yeet_ids)=}, {len(active)=}, {len(officer_ids)=}"
-            )
-            return []
+        log.debug(f"mark_inactive yeet={len(officer_ids)}")
 
         officers = await models.Officer.objects.filter(
             started_monitoring__lte=from_date,
-            id__in=officerid_to_yeet_ids,
+            id__in=officer_ids,
         ).all()
         return officers
 
