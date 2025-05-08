@@ -116,6 +116,7 @@ FILMING_CREW_ROLE = 0
 ON_DUTY_CATEGORIES = [645392700257992728]
 ON_DUTY_IGNORED_CHANNELS: list[int] = []
 BAD_MAIN_CHANNEL_STARTS = ["Dispatch", "At Station", "Training"]
+TRAINING_CATEGORY_IDS: list[int] = []
 
 # Category IDs ###################################################
 IGNORED_CATEGORIES = [

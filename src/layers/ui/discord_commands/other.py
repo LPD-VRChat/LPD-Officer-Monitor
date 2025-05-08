@@ -301,37 +301,53 @@ class Other(commands.Cog):
     ):
         r = self.bl_wrapper.pt_bl.get_patrolling_officers()
 
-        def custom_sort_key(channel_name):
-            if channel_name.startswith("CO"):
-                return (3, channel_name)
-            elif channel_name.startswith("LMT"):
-                return (2, channel_name)
-            elif channel_name.startswith("SLRT"):
-                return (1, channel_name)
-            elif "dispatch" in channel_name.lower():
-                return (-1, channel_name)
+        def custom_sort_key(channel: discord.VoiceChannel):
+            if not isinstance(channel, discord.VoiceChannel):
+                log.error(f"`{channel}` is not a VoiceChannel, was `{type(channel)}`")
+                return (0, "type error")
+            if channel.guild != settings.SERVER_ID:
+                return (6, channel.name)
+            elif channel.name.startswith("Training"):
+                return (5, channel.name)
+            elif channel.name.startswith("Instigators"):
+                return (4, channel.name)
+            elif channel.name.startswith("CO"):
+                return (3, channel.name)
+            elif channel.name.startswith("LMT"):
+                return (2, channel.name)
+            elif channel.name.startswith("SLRT"):
+                return (1, channel.name)
+            elif "dispatch" in channel.name.lower():
+                return (-1, channel.name)
             else:
-                return (0, channel_name)
+                return (0, channel.name)
 
         voice_channels = [self.bot.get_channel(channel_id) for channel_id in r.keys()]
         if list_type != "All":
             for vc in voice_channels.copy():
                 if (
                     list_type == "Patrol"
-                    and "Training" in vc.name
+                    and (
+                        "Training" in vc.name
+                        or vc.category.id in settings.TRAINING_CATEGORY_IDS
+                    )
                     or list_type == "Training"
-                    and "Training" not in vc.name
+                    and (
+                        "Training" not in vc.name
+                        and vc.category.id not in settings.TRAINING_CATEGORY_IDS
+                    )
                 ):
                     voice_channels.remove(vc)
 
-        sorted_channels = sorted(
-            voice_channels, key=lambda item: custom_sort_key(item.name)
-        )
+        sorted_channels = sorted(voice_channels, key=lambda item: custom_sort_key(item))
 
         message = "Template:\n```\nEvent Host:\nDispatch:\nGroup Leads:\n\n"
         for channel in sorted_channels:
             officers = r[channel.id]
-            message += f"\n** {channel.name} **:\n"
+            if channel.guild.id == settings.SERVER_ID:
+                message += f"\n** {channel.name} **:\n"
+            else:
+                message += f"\n** {channel.guild.name} - {channel.name} **:\n"
             message += "".join([f"<@{o}>\n" for o in officers])
         message += "```"
         await interaction_send_long(di, message)

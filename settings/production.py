@@ -119,6 +119,9 @@ IGNORED_CATEGORIES = [
     647218270411292694,
     658094796413599754,
 ]
+TRAINING_CATEGORY_IDS = [
+    1164264368037429258,  # SearchWarrent training
+]
 
 # Database settings ##############################################
 DB_NAME = "LPD_Officer_Monitor"
