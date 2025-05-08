@@ -53,7 +53,7 @@ def setup_logger():
     dh.setFormatter(formatter)
     log.addHandler(sh)
     log.addHandler(dh)
-    fh = logging.FileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
+    fh = logging.handlers.WatchedFileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
     fh.setFormatter(formatter)
     log.addHandler(fh)
 
