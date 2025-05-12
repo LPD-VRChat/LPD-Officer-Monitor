@@ -305,7 +305,7 @@ class Other(commands.Cog):
             if not isinstance(channel, discord.VoiceChannel):
                 log.error(f"`{channel}` is not a VoiceChannel, was `{type(channel)}`")
                 return (0, "type error")
-            if channel.guild != settings.SERVER_ID:
+            if channel.guild.id != settings.SERVER_ID:
                 return (6, channel.name)
             elif channel.name.startswith("Training"):
                 return (5, channel.name)
