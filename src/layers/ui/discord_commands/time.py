@@ -649,7 +649,9 @@ class Time(commands.Cog):
             return
 
         log.info("Starting inactive removal")
-        msg = await interaction_reply(interac, content="Starting inactive removal")
+        reply = await interaction_reply(interac, content="Starting inactive removal")
+        # interaction tokens are limit to 15min, so we need to fetch the message
+        msg = await interac.channel.fetch_message(reply.id)
         total = len(role_inactive.members)
         for i, m in enumerate(role_inactive.members):
             for r in m.roles:
@@ -671,17 +673,7 @@ class Time(commands.Cog):
                     log.error(f"Failed to remove roles from {m.mention} err=`{e}`")
                     if e.text:
                         log.debug(f"rm_inactive err=`{e}` {e.text}")
-            try:
-                msg = await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
-            except discord.HTTPException as httpExcept:
-                if httpExcept.status == 401 and httpExcept.code == 50027:
-                    # Invalid Webhook Token
-                    msg = await interaction_reply(
-                        interac,
-                        content=f"Removing `{i+1:2d}/{total:2d}`...",
-                    )
-                else:
-                    log.warning(f"Failed to edit msg err=`{httpExcept}`")
+            msg = await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
         await msg.edit(content="Done")
 
     @checks.is_admin_bot_channel(True)
