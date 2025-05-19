@@ -671,7 +671,17 @@ class Time(commands.Cog):
                     log.error(f"Failed to remove roles from {m.mention} err=`{e}`")
                     if e.text:
                         log.debug(f"rm_inactive err=`{e}` {e.text}")
-            await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
+            try:
+                msg = await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
+            except discord.HTTPException as httpExcept:
+                if httpExcept.status == 401 and httpExcept.code == 50027:
+                    # Invalid Webhook Token
+                    msg = await interaction_reply(
+                        interac,
+                        content=f"Removing `{i+1:2d}/{total:2d}`...",
+                    )
+                else:
+                    log.warning(f"Failed to edit msg err=`{httpExcept}`")
         await msg.edit(content="Done")
 
     @checks.is_admin_bot_channel(True)
