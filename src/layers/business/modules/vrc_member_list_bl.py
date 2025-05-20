@@ -234,6 +234,8 @@ class VRCMemberListBL(DiscordListenerMixin):
                 "Backroom Access",
                 "Pay Date",
                 "Pay Amount",
+                "Event 1",
+                "Event 2",
             ]
         )
         output_text += "\n"
@@ -278,6 +280,8 @@ class VRCMemberListBL(DiscordListenerMixin):
                 True,  # "Backroom Access",
                 latest_payment.timestamp.timestamp(),
                 officer_payments.get(o.id, 0),
+                has_role_id(member, settings.EVENT_1_ROLE),
+                has_role_id(member, settings.EVENT_2_ROLE),
             ]
             output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
         return output_text
