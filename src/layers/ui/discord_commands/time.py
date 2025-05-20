@@ -619,6 +619,19 @@ class Time(commands.Cog):
             discord.Object(settings.LMT_TRAINER_ROLE),
             discord.Object(settings.PRISON_TRAINER_ROLE),
             discord.Object(settings.INSTIGATOR_TRAINER_ROLE),
+            discord.Object(settings.KOREAN_ROLE),
+            discord.Object(settings.CHINESE_ROLE),
+            discord.Object(settings.JAPANESE_ROLE),
+            discord.Object(settings.LOOKING_4_PATROL_ROLE),
+            discord.Object(settings.STANDBY_ACTOR_ROLE),
+            discord.Object(settings.DETECTIVE_ROLE),
+            discord.Object(settings.STANDBY_LMT_ROLE),
+            discord.Object(settings.STANDBY_SLRT_ROLE),
+            discord.Object(settings.STANDBY_CALL_911_ROLE),
+            discord.Object(settings.AGGRESSOR_ROLE),
+            discord.Object(settings.PENDING_APPROVAL_ROLE),
+            discord.Object(settings.EVENT_1_ROLE),
+            discord.Object(settings.EVENT_2_ROLE),
         ]
         for name, rank in settings.ROLE_LADDER.items():
             if rank < settings.ROLE_LADDER.sergeant:
