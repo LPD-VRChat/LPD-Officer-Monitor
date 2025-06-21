@@ -34,7 +34,7 @@ class VRCMemberListBL(DiscordListenerMixin):
             or settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN is None
         ):
             log.warning("`upload_to_world_task` won't work because of missing settings")
-        else:
+        elif not self.upload_to_world_task.is_running():
             self.upload_to_world_task.start()
         if not self.make_payments_task.is_running():
             self.make_payments_task.start()
