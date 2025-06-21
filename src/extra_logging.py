@@ -102,11 +102,13 @@ class DiscordLoggingHandler(logging.Handler):
         # Only log the message if it's above the minimum level
         if record.levelno >= self._min_log_level:
             # Convert date to datetime
-            iso_time = ",".join(record.asctime.split(",")[0:-1])
-            try:
-                time = dt.datetime.fromisoformat(iso_time)
-            except ValueError:
-                time = dt.datetime.now()
+            time = dt.datetime.now()
+            if hasattr(record, "asctime"):
+                iso_time = ",".join(record.asctime.split(",")[0:-1])
+                try:
+                    time = dt.datetime.fromisoformat(iso_time)
+                except ValueError:
+                    pass
 
             # Add a task to send the error to Discord so that we don't stop the event loop
             # TODO: Account for rate limiting when logging a lot at once
@@ -122,3 +124,33 @@ class DiscordLoggingHandler(logging.Handler):
                     time=time,
                 )
             )
+
+
+class CustomFormatter(logging.Formatter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def format(self, record: logging.LogRecord) -> str:
+        if record.name != "lpd-officer-monitor":
+            record.module = record.name
+        return super().format(record)
+
+
+class DiscordDebugFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name.startswith("discord") and record.levelno <= logging.DEBUG:
+            return False
+        return True
+
+
+class ExternalFilter(logging.Filter):
+    def __init__(self, level: int):
+        self.level = level
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            not record.name.startswith("lpd-officer-monitor")
+            and record.levelno < self.level
+        ):
+            return False
+        return True
