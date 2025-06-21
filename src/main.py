@@ -27,7 +27,12 @@ import src.layers.business.bl_wrapper as bl_wrapper_module
 from src.layers.ui.discord_commands import setup as setup_discord_commands
 
 # from src.layers.ui.server.web_manager import WebManager
-from src.extra_logging import DiscordLoggingHandler
+from src.extra_logging import (
+    DiscordLoggingHandler,
+    CustomFormatter,
+    DiscordDebugFilter,
+    ExternalFilter,
+)
 from src.layers.storage.models import database
 from src.layers.business.extra_functions import interaction_reply
 
@@ -36,20 +41,29 @@ nest_asyncio.apply()
 
 
 def setup_logger():
-    log = logging.getLogger("lpd-officer-monitor")
+    log = logging.getLogger()
     log.propagate = False
     log.setLevel(logging.DEBUG)
     log_folder = os.path.dirname(settings.LOG_FILE_PATH)
     if not os.path.isdir(log_folder):
         os.makedirs(log_folder)
 
-    formatter = logging.Formatter(
-        "%(asctime)s %(levelname).1s %(module).12s | %(message)s",
+    formatter = CustomFormatter(
+        "%(asctime)s %(levelname).1s %(module)-16s| %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S",
     )
+    formatter_no_date = CustomFormatter(
+        "%(levelname).1s|%(module)-16s| %(message)s",
+    )
     sh = logging.StreamHandler()
+    sh.addFilter(DiscordDebugFilter())
     dh = DiscordLoggingHandler(webhook=settings.LOGGING_WEBHOOK)
-    sh.setFormatter(formatter)
+    dh.addFilter(ExternalFilter(logging.WARNING))
+    if settings.CONFIG_LOADED == "dev":
+        sh.setFormatter(formatter)
+    else:
+        sh.setFormatter(formatter_no_date)  # syslog already prepend date
+        sh.addFilter(ExternalFilter(logging.INFO))
     dh.setFormatter(formatter)
     log.addHandler(sh)
     log.addHandler(dh)
