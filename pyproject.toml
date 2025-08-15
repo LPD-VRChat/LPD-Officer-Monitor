@@ -1,0 +1,40 @@
+[project]
+name = "lpd-officer-monitor"
+#version = "3.0.0" #live service, does not change
+description = ""
+authors = [
+]
+readme = "README.md"
+requires-python = "~=3.10.0" # keep same as server
+dependencies = [
+    "discord.py[speed]~=2.0",
+    "mypy>=0.950",  # Support for match statements
+    "black",
+    "nest_asyncio~=1.5.1",
+    "thefuzz~=0.22.1",
+    "ormar[mysql] ~= 0.12.0",
+    "aiomysql>=0.0.21",
+    "mysqlclient>=1.7.4",
+    "alembic>=1.7.4",
+    "icalendar ~= 5.0",
+    "requests ~= 2.0",
+    "python-dateutil ~= 2.0",
+]
+
+[project.optional-dependencies]
+web = [ #discarded project
+    "Hypercorn==0.11.2",
+    "Quart==0.19.7",
+    "Quart_Discord==2.1.4",
+]
+dev = [
+    "pytest>=6.2.5",
+    "pytest-env>=0.6.2",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
