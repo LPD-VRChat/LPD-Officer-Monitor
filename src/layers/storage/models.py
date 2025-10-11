@@ -17,6 +17,8 @@ import discord
 from discord.ext import commands
 
 DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{urllib.parse.quote(settings.DB_PASS)}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+if settings.CONFIG_LOADED == "base_test":
+    DATABASE_URL = "sqlite:///test.sqlite"
 database = databases.Database(DATABASE_URL)
 database.url = databases.DatabaseURL(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
@@ -296,8 +298,10 @@ if settings.CONFIG_LOADED == "base_test":
 
     @pytest.fixture(autouse=True, scope="module")
     def create_db():
-        engine = sqlalchemy.create_engine(DATABASE_URL)
+        URL = "sqlite://test.sqlite"
+        engine = sqlalchemy.create_engine(URL)  # DATABASE_URL)
         metadata.drop_all(engine)
         metadata.create_all(engine)
         yield
         metadata.drop_all(engine)
+        os.remove("test.sqlite")

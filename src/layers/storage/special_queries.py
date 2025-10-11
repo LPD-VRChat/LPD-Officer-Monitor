@@ -14,18 +14,34 @@ async def get_active_officers(
     start: dt.datetime,
     end: dt.datetime,
 ) -> set[int]:
-    result = await models.database.fetch_all(
-        query="""SELECT `officer`, SUM(TIMESTAMPDIFF(SECOND, start,end)) AS 'patrol_length'
-        FROM `patrols`
-        WHERE start < :enddt and end > :startdt
-        GROUP BY `officer`
-        HAVING patrol_length > :min_patrol_len""",
-        values={
-            "min_patrol_len": minimum_activity * 3600,
-            "enddt": end,
-            "startdt": start,
-        },
-    )
+    if models.DATABASE_URL.startswith("sqlite"):
+        result = await models.database.fetch_all(
+            query="""SELECT
+                    officer,
+                    SUM((julianday(end) - julianday(start)) * 86400) AS patrol_length
+                FROM patrols
+                WHERE start < :enddt and end > :startdt
+                GROUP BY officer
+                HAVING patrol_length > :min_patrol_len;""",
+            values={
+                "min_patrol_len": minimum_activity * 3600,
+                "enddt": end,
+                "startdt": start,
+            },
+        )
+    else:
+        result = await models.database.fetch_all(
+            query="""SELECT `officer`, SUM(TIMESTAMPDIFF(SECOND, start,end)) AS 'patrol_length'
+            FROM `patrols`
+            WHERE start < :enddt and end > :startdt
+            GROUP BY `officer`
+            HAVING patrol_length > :min_patrol_len""",
+            values={
+                "min_patrol_len": minimum_activity * 3600,
+                "enddt": end,
+                "startdt": start,
+            },
+        )
     return {r[0] for r in result}
 
 
