@@ -30,6 +30,9 @@ web = [ #discarded project
 dev = [
     "pytest>=6.2.5",
     "pytest-env>=0.6.2",
+    "dpytest~=0.7.0",
+    "pytest-asyncio>=1.1.0",
+    "aiosqlite",
 ]
 
 [build-system]
