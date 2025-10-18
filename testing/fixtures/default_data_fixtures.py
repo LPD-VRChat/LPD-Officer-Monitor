@@ -1,3 +1,4 @@
+from ast import mod
 from enum import Enum
 from _pytest import config
 import discord
@@ -21,12 +22,32 @@ from testing.fixtures.time_fixtures import random_interval_time_between
 URL = "sqlite:///test.sqlite"
 
 
+class OfficerIdRank(Enum):
+    """
+    keep this in sync with the role ladder
+    """
+
+    civilian = 0
+    cadet = 100
+    recruit = 200
+    officer = 300
+    senior_officer = 400
+    corporal = 500
+    sergeant = 600
+    staff_sergeant = 700
+    advisor = 800
+    lieutenant = 900
+    captain = 1000
+    deputy_chief = 1100
+    chief = 1200
+
+
 class OfficerExperiment(Enum):
     inactive = 0
     active = 1
     notenough = 2
     loa = 3
-    # TODO: add renew
+    renew = 4
 
 
 async def destroy_db():
@@ -55,17 +76,19 @@ async def setup_db_data():
             )
             aVc = vc
 
-    for rank_index, rank in enumerate(settings.ROLE_LADDER.__dict__.values()):
+    for rank in OfficerIdRank:
         for experiment in OfficerExperiment:
-            a = (rank_index + 1) * 100 + experiment.value
+            id = rank.value + experiment.value
+            if rank == OfficerIdRank.civilian:
+                continue
             officer = await models.Officer.objects.create(
-                id=(rank_index + 1) * 100 + experiment.value,
+                id=id,
                 started_monitoring=start,
                 vrchat_name=f"{rank.name.replace('LPD ', '')} {experiment.name}",
                 vrchat_id="usr_ffffffff-ffff-ffff-fffffff",
                 deleted_at=None,
             )
-            officer.id = a  # id gets overwritten by the database
+            officer.id = id  # id gets overwritten by sqlite
             await officer.update()
             match experiment:
                 case OfficerExperiment.inactive:
@@ -96,12 +119,20 @@ async def setup_db_data():
                         main_channel=aVc.id,
                     )
                 case OfficerExperiment.loa:
-                    models.LOAEntry.objects.create(
+                    await models.LOAEntry.objects.create(
                         officer=officer,
                         start=end - datetime.timedelta(days=7),
                         end=end + datetime.timedelta(days=10),
                         message_id=1234567890,
                         channel_id=1234567890,
+                        created_at=end,
+                        reason="test",
                     )
-
-    pass
+                case OfficerExperiment.renew:
+                    await models.TimeRenewal.objects.create(
+                        officer=officer,
+                        timestamp=end,
+                        renewer=officer,
+                    )
+                case _:
+                    assert False, f"Unknown experiment: {experiment}"
