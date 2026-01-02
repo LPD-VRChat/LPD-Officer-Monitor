@@ -24,7 +24,13 @@ from pymysql.err import IntegrityError
 # Custom
 import settings
 from settings.classes import RoleLadderElement
-from src.layers.business.base_bl import DiscordListenerMixin, bl_listen
+from src.layers.business.base_bl import (
+    DiscordListenerMixin,
+    EventSenderMixin,
+    bl_listen,
+    MemberManagementEvent,
+    business_event,
+)
 from src.layers.business.extra_functions import (
     is_lpd_member,
     now,
@@ -62,12 +68,23 @@ class PatrolType(enum.Enum):
     Training = 7
 
 
-class PatrolTimeBL(DiscordListenerMixin):
+class PatrolTimeBL(
+    DiscordListenerMixin,
+    EventSenderMixin,
+):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
         self._cache_lock = asyncio.Lock()
         self._patrolling_officers: dict[int, PatrolLog] = {}
+        self._guest_on_duty_channels: set[int] = set[int]()
+        self.clear_guest_task = None
+
+    async def _clear_guest_on_duty_channels(self):
+        await asyncio.sleep(settings.GUESS_CLEAR_ALL_TIMER_MINUTES * 60)
+        log.debug("Clearing guest on duty channels")
+        self._guest_on_duty_channels.clear()
+        asyncio.create_task(self._clear_guest_on_duty_channels)
 
     def _is_on_patrol(self, member: discord.Member) -> bool:
         return member.id in self._patrolling_officers
@@ -162,6 +179,8 @@ class PatrolTimeBL(DiscordListenerMixin):
         before: discord.VoiceState,
         after: discord.VoiceState,
     ):
+        if member.id in self._guest_on_duty_channels:
+            return
         # Make sure we're in the LPD server
         on_patrol = self._is_on_patrol(member)
         to_monitored_channel = self._is_monitored(after.channel)
@@ -215,9 +234,10 @@ class PatrolTimeBL(DiscordListenerMixin):
                     )
                 except IntegrityError as e:
                     if not is_lpd_member(member):
-                        log.warn(f"Non LPD member{member.id} in on-duty-channel")
+                        log.warning(f"Non LPD member{member.id} in on-duty-channel")
+                        self._guest_on_duty_channels.add(member.id)
                     else:
-                        logging.error(f"member={member.id} {e}")
+                        log.exception(f"member={member.id} {e}")
                     return
 
                 # Add the first patrol and voice log to the cache
@@ -313,8 +333,20 @@ class PatrolTimeBL(DiscordListenerMixin):
             log.info(f"Monitored channel deleted {channel.name}(#{channel.id})")
             await self._end_patrol_in_channel(channel.id)
 
+    @business_event(MemberManagementEvent.MemberJoined)
+    async def on_LPD_member_joined(self, event: MemberManagementEvent.MemberJoined):
+        try:
+            self._guest_on_duty_channels.remove(event.officer.id)
+            log.debug(f"on_LPD_member_joined {event.officer.id}, removing from guest")
+        except KeyError:
+            pass
+
     @bl_listen()
     async def on_ready(self):
+        if not self.clear_guest_task:
+            self.clear_guest_task = asyncio.create_task(
+                self._clear_guest_on_duty_channels()
+            )
         curr_time = now()
         channel: discord.VoiceChannel
         for guild in self.bot.guilds:
@@ -328,13 +360,26 @@ class PatrolTimeBL(DiscordListenerMixin):
                         },
                     )
                     for member in channel.members:
-                        patrol = await models.Patrol.objects.create(
-                            officer=member.id,
-                            start=curr_time,
-                            end=curr_time,
-                            event=None,
-                            main_channel=channel.id,
-                        )
+                        try:
+                            patrol = await models.Patrol.objects.create(
+                                officer=member.id,
+                                start=curr_time,
+                                end=curr_time,
+                                event=None,
+                                main_channel=channel.id,
+                            )
+                        except IntegrityError as e:
+                            if not is_lpd_member(member):
+                                log.warning(
+                                    f"Non LPD member{member.id} in on-duty-channel"
+                                )
+                                self._guest_on_duty_channels.add(member.id)
+                            else:
+                                log.exception(f"member={member.id} {e}")
+                            continue
+                        except Exception as e:
+                            log.exception(f"member={member.id} {e}")
+                            continue
                         self._patrolling_officers[member.id] = PatrolLog(
                             patrol,
                             [
@@ -349,6 +394,9 @@ class PatrolTimeBL(DiscordListenerMixin):
 
     @bl_listen()
     async def on_unload(self):
+        if self.clear_guest_task:
+            self.clear_guest_task.cancel()
+            self.clear_guest_task = None
         curr_time = now()
         for officer_id in self._patrolling_officers:
             self._patrolling_officers[officer_id].patrol.end = curr_time

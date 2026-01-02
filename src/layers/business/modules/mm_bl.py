@@ -29,28 +29,11 @@ from src.layers.business.base_bl import (
     DiscordListenerMixin,
     EventSenderMixin,
     bl_listen,
+    MemberManagementEvent,
 )
 from src.layers.business.modules.pt_bl import PatrolTimeBL
 
 log = logging.getLogger("lpd-officer-monitor")
-
-
-# TODO: Try to make this more concise with a single class decorator
-class MemberManagementEvent:
-    @dataclass
-    class MemberJoined:
-        officer: Officer
-        member: discord.Member
-
-    @dataclass
-    class MemberJoinedAfterMaxWait:
-        officer: Officer
-        member: discord.Member
-
-    @dataclass
-    class MemberLeft:
-        member_id: int
-        member: Optional[discord.Member]
 
 
 MEMBER_MANAGEMENT_EVENT_TYPE = (
@@ -61,7 +44,8 @@ MEMBER_MANAGEMENT_EVENT_TYPE = (
 
 
 class MemberManagementBL(
-    DiscordListenerMixin, EventSenderMixin[MEMBER_MANAGEMENT_EVENT_TYPE]
+    DiscordListenerMixin,
+    EventSenderMixin,
 ):
     def __init__(
         self,
@@ -112,21 +96,23 @@ class MemberManagementBL(
                 await officer.update()
 
                 # Let all subscribers know that they may need to remove any data
-                self._notify_all(
+                await self._notify_all(
                     MemberManagementEvent.MemberJoinedAfterMaxWait(officer, member)
                 )
             else:
                 officer.deleted_at = None
                 await officer.update()
                 # The officer can keep their data as they joined back within the grace period
-                self._notify_all(MemberManagementEvent.MemberJoined(officer, member))
+                await self._notify_all(
+                    MemberManagementEvent.MemberJoined(officer, member)
+                )
         else:
             # A new officer needs to be created
             officer = Officer(
                 id=member.id, started_monitoring=now(), vrchat_name="", vrchat_id=""
             )
             await officer.save()
-            self._notify_all(MemberManagementEvent.MemberJoined(officer, member))
+            await self._notify_all(MemberManagementEvent.MemberJoined(officer, member))
 
         # Add the officer to the cache
         self._lpd_members[officer.id] = officer
@@ -158,7 +144,7 @@ class MemberManagementBL(
             log.info(
                 f"vrc:`{officer.vrchat_name}`({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
             )
-        self._notify_all(MemberManagementEvent.MemberLeft(member_id, member))
+        await self._notify_all(MemberManagementEvent.MemberLeft(member_id, member))
 
     @bl_listen()
     async def on_member_update(
