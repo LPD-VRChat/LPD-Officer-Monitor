@@ -284,6 +284,46 @@ class VRCMemberListBL(DiscordListenerMixin):
                 has_role_id(member, settings.EVENT_2_ROLE),
             ]
             output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
+
+        if len(settings.VRC_NAMES_STATIC) > 0:
+            registered_officer_names = set[str](o.vrchat_name for o in officers)
+            for staticName in settings.VRC_NAMES_STATIC:
+                if staticName not in registered_officer_names:
+                    odata = [
+                        staticName,
+                        "Guest",
+                        False,  # white shirt
+                        False,  # SLRT_TRAINED_ROLE
+                        False,  # LMT_TRAINED_ROLE
+                        False,  # WATCH_OFFICER_ROLE
+                        False,  # EVENT_HOST_ROLE
+                        False,  # PROGRAMMING_TEAM_ROLE
+                        False,  # MEDIA_PRODUCTION_ROLE
+                        False,  # CHAT_MODERATOR_ROLE
+                        False,  # INSTIGATOR_ROLE
+                        False,  # TRAINER_ROLE
+                        False,  # SLRT_TRAINER_ROLE
+                        False,  # LMT_TRAINER_ROLE
+                        False,  # PRISON_TRAINER_ROLE
+                        False,  # INSTIGATOR_TRAINER_ROLE
+                        False,  # DEV_TEAM_ROLE
+                        False,  # RECRUITER_ROLE
+                        False,  # TEAM_LEAD_ROLE
+                        False,  # KOREAN_ROLE
+                        False,  # CHINESE_ROLE
+                        False,  # JAPANESE_ROLE
+                        False,  # SUPPORTER_ROLE
+                        False,  # MENTOR_ROLE
+                        False,  # APPROVER_ROLE
+                        "LPD",
+                        True,  # "Backroom Access",
+                        0.0,  # payment timestamp
+                        0,  # payment amount
+                        False,  # EVENT_1_ROLE
+                        False,  # EVENT_2_ROLE
+                    ]
+                    output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
+
         return output_text
 
     async def get_json_str(self) -> str:
