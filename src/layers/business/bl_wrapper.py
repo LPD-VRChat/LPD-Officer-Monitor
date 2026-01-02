@@ -47,8 +47,11 @@ def create(bot) -> BusinessLayerWrapper:
 
 
 def destroy(blwrp: BusinessLayerWrapper):
+    # TODO: very hugly hack, could not find a reliable way, this may be because the lifetime of business classes is longger than it should be
     blwrp.mm_bl.remove_listener()
+    blwrp.mm_bl.remove_business_listeners()
     blwrp.pt_bl.remove_listener()
+    blwrp.pt_bl.remove_business_listeners()
     blwrp.loa_bl.remove_listener()
     # blwrp.vrc.remove_listener()
     blwrp.p.remove_listener()
