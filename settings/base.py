@@ -191,6 +191,7 @@ GIFT_LINK_MAX_CHANNEL_COUNT = 4
 # Give access to station to old friends
 VRC_NAMES_STATIC: list[str] = []
 
+GUESS_CLEAR_ALL_TIMER_MINUTES = 4 * 60
 
 # Auto Station Allowlist #########################################
 STATION_ALLOWLIST_GIST_ID: Optional[str] = None
