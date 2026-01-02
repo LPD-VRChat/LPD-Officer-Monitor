@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+import time
 import traceback
 import signal
 
@@ -19,6 +20,7 @@ assert discord.__version__.startswith(
 ), f"Discord.py wrong version, got {discord.__version__}, expected 2.x"
 import nest_asyncio
 from discord.ext import commands
+import aiohttp.client_exceptions
 
 # Custom Library Imports
 import settings
@@ -187,7 +189,36 @@ def main():
     ### Setup logging ###
     #####################
 
-    log = setup_logger()
+    start = time.time()
+    try:
+        log = setup_logger()
+    except aiohttp.client_exceptions.ClientConnectorError as ex:
+        tries = 4
+        while tries > 0:
+            if (time.time() - start) < 4:
+                loop.run_until_complete(asyncio.sleep(4 * (4 - tries)))
+            start = time.time()
+            try:
+                log = setup_logger()
+            except aiohttp.client_exceptions.ClientConnectorError as ex:
+                tries -= 1
+                logging.error(
+                    f"{type(ex)} : {ex}\nError connecting to Discord, remaining tries: {tries}"
+                )
+                log = None
+            except BaseException as ex:
+                logging.exception("setup logging while first attempt recovery")
+                sys.exit(1)
+            else:
+                break
+        if not log:
+            sys.exit(1)
+    except BaseException as ex:
+        if type(ex).__module__.startswith("aiohttp"):
+            logging.error(f"setup logging, {type(ex)}:{ex}")
+        else:
+            logging.exception("setup logging")
+        sys.exit(1)
 
     ##################################
     ### Start the different layers ###
@@ -196,7 +227,25 @@ def main():
     # Database
     # Make sure the database is started when we start everything else
     if not database.is_connected:
-        loop.run_until_complete(database.connect())
+        tries = 4
+        while tries > 0:
+            try:
+                loop.run_until_complete(database.connect())
+            except Exception as ex:
+                log.error(
+                    f"{type(ex)} : {ex}\nError connecting to database, remaining tries: {tries}"
+                )
+                # time.sleep(2)
+                loop.run_until_complete(asyncio.sleep(4 * (4 - tries)))
+                tries -= 1
+            else:
+                break
+        if not database.is_connected:
+            log.error("Failed to connect to database, shutting down")
+            loop.run_until_complete(asyncio.sleep(2))
+            # this gives enough time for webhook to run and log to discord
+            loop.call_soon_threadsafe(loop.stop)
+            sys.exit(1)
 
     # UI Layers
     bl_wrapper = bl_wrapper_module.create(bot)
@@ -342,6 +391,8 @@ def main():
     @bot.event
     async def on_error(event, *args, **kwargs):
         log.exception(f'Error encountered in event "{event}"')
+        # TODO: maybe shutdown on `pymysql.err.OperationalError: (2003, "Can't connect to MySQL server`
+        # no idea if the same exception can happen for other reason,
 
     #####################
     ### Start the bot ###
