@@ -177,6 +177,7 @@ class MemberManagementEvent:
 
     @dataclass
     class MemberJoinedAfterMaxWait:
+        # TODO: should be an enum in the normal Joined
         officer: Officer
         member: discord.Member
 
@@ -184,3 +185,4 @@ class MemberManagementEvent:
     class MemberLeft:
         member_id: int
         member: Optional[discord.Member]
+        reason: str = "unknown"

@@ -562,27 +562,6 @@ class PatrolTimeBL(
         officers = await models.Officer.objects.filter(id__in=officer_to_yeet_ids).all()
         return officers
 
-    async def remove_cadet(self, officers: list[models.Officer]) -> bool:
-        lpd_role = discord.Object(settings.LPD_ROLE)
-        cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
-        guild = self.bot.get_guild(settings.SERVER_ID)
-        success = True
-        if not guild:
-            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
-        for o in officers:
-            member = guild.get_member(o.id)
-            if not member:
-                log.error(f"Member[{o.id}] not found!")
-                o.delete = dt.datetime.now()
-                o.update()
-                continue
-            try:
-                await member.remove_roles(lpd_role, cadet_role, reason="remove_cadet")
-            except:
-                log.exception("failed to remove cadets roles")
-                success = False
-        return success
-
     async def get_fake_channel_from_patroltype(
         self,
         ptype: PatrolType,
