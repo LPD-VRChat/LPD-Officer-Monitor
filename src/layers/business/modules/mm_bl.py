@@ -17,6 +17,7 @@ from discord.ext import commands, tasks
 from thefuzz.fuzz import partial_token_sort_ratio
 
 # Custom
+from src.layers.storage import models
 import settings
 from src.layers.business.extra_functions import (
     is_lpd_member,
@@ -63,6 +64,7 @@ class MemberManagementBL(
         )
         self._lpd_members: Dict[int, Officer] = {o.id: o for o in all_active_officers}
         self.filming_crew = asyncio.Queue()
+        self.role_update_blocklist = set[int]()
 
     @bl_listen("on_ready")
     async def on_ready(self):
@@ -83,16 +85,31 @@ class MemberManagementBL(
     async def member_joined_LPD(self, member: discord.Member) -> None:
         # Get or create the officer
         officer = await Officer.objects.get_or_none(id=member.id)
+        left_reason = "unknown"
+        if officer and officer.extra and "left_reason" in officer.extra:
+            left_reason = officer.extra["left_reason"]
 
         # Create or update the officer in the database
         if officer is not None:
             last_allowed_return_time = now() - dt.timedelta(days=7)
-            if officer.deleted_at and officer.deleted_at < last_allowed_return_time:
+            outside_grace_period = (
+                officer.deleted_at and officer.deleted_at < last_allowed_return_time
+            )
+            inactive = left_reason.startswith("inactive")
+            if outside_grace_period or inactive:
+                log.info(
+                    f"`{member.display_name}` ({member.id}) reset existing data because {left_reason=} {outside_grace_period=} {inactive=}."
+                )
                 # Reset the needed data on the officer
                 officer.started_monitoring = now()
                 officer.vrchat_name = ""
                 officer.vrchat_id = ""
                 officer.deleted_at = None
+                if officer.extra:
+                    try:
+                        del officer.extra["left_reason"]
+                    except KeyError:
+                        pass
                 await officer.update()
 
                 # Let all subscribers know that they may need to remove any data
@@ -101,6 +118,14 @@ class MemberManagementBL(
                 )
             else:
                 officer.deleted_at = None
+                if officer.extra:
+                    try:
+                        del officer.extra["left_reason"]
+                    except KeyError:
+                        pass
+                log.info(
+                    f"`{member.display_name}` ({member.id}) restored existing data"
+                )
                 await officer.update()
                 # The officer can keep their data as they joined back within the grace period
                 await self._notify_all(
@@ -113,15 +138,18 @@ class MemberManagementBL(
             )
             await officer.save()
             await self._notify_all(MemberManagementEvent.MemberJoined(officer, member))
+            log.info(
+                f"`{member.display_name}` ({member.id}) has been added to the database."
+            )
 
         # Add the officer to the cache
         self._lpd_members[officer.id] = officer
 
-        # Log the event
-        log.info(f"{member.display_name} ({member.id}) has been added to the database.")
-
     async def member_left_LPD(
-        self, member_id: int, member: Optional[discord.Member]
+        self,
+        member_id: int,
+        member: Optional[discord.Member],
+        reason: str = "unknown",
     ) -> None:
         # added id because of find_missing_officers
         # no member when already left
@@ -129,6 +157,9 @@ class MemberManagementBL(
         # Store when they were removed
         officer = await Officer.objects.get(id=member_id)
         officer.deleted_at = now()
+        if not officer.extra:
+            officer.extra = {}
+        officer.extra["left_reason"] = reason
         await officer.update()
 
         # Remove them from the cache
@@ -137,14 +168,20 @@ class MemberManagementBL(
         # Let others know
         if member:
             log.info(
-                f"{member.display_name} ({member.id}) has been removed from the LPD.\n"
+                f"{member.display_name} ({member.id}) has been removed from the LPD {reason=}.\n"
                 "roles= `" + ",".join([str(role.id) for role in member.roles]) + "`"
             )
         else:
             log.info(
-                f"vrc:`{officer.vrchat_name}`({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD."
+                f"vrc:`{officer.vrchat_name}`({officer.vrchat_id})[discordId:{member_id}] has been removed from the LPD {reason=}."
             )
-        await self._notify_all(MemberManagementEvent.MemberLeft(member_id, member))
+        await self._notify_all(
+            MemberManagementEvent.MemberLeft(
+                member_id,
+                member,
+                reason,
+            )
+        )
 
     @bl_listen()
     async def on_member_update(
@@ -156,6 +193,10 @@ class MemberManagementBL(
         # if needed for other server, listen to same event in another module
         if not before.guild.id == settings.SERVER_ID:
             return
+
+        if before.id in self.role_update_blocklist:
+            return
+
         officer_before = before.id in self._lpd_members
         officer_after = is_lpd_member(after)
 
@@ -177,7 +218,7 @@ class MemberManagementBL(
                 await self.member_joined_LPD(after)
             case (True, False):
                 # Member has left the LPD
-                await self.member_left_LPD(after.id, after)
+                await self.member_left_LPD(after.id, after, "role_removed")
 
         if (
             before.get_role(settings.FILMING_CREW_ROLE) == None
@@ -185,10 +226,19 @@ class MemberManagementBL(
         ):
             await self.filming_crew.put(after)
 
+    def add_role_update_blocklist(self, member_id: int) -> None:
+        self.role_update_blocklist.add(member_id)
+
+    def remove_role_update_blocklist(self, member_id: int) -> None:
+        self.role_update_blocklist.remove(member_id)
+
+    def clear_role_update_blocklist(self) -> None:
+        self.role_update_blocklist.clear()
+
     @bl_listen()
     async def on_member_remove(self, member: discord.Member) -> None:
         if is_lpd_member(member) and member.guild.id == settings.SERVER_ID:
-            await self.member_left_LPD(member.id, member)
+            await self.member_left_LPD(member.id, member, "left_server_online")
 
     # Verify members at startup
     @bl_listen("on_ready")
@@ -212,7 +262,11 @@ class MemberManagementBL(
             if not is_lpd_member(member):
                 # The member doesn't have LPD roles but was still in the database
                 # log.warning(f"{officer.id} was in the database but not in the LPD.")
-                tasks.append(loop.create_task(self.member_left_LPD(officer.id, member)))
+                tasks.append(
+                    loop.create_task(
+                        self.member_left_LPD(officer.id, member, "left_server_offline")
+                    )
+                )
 
         await asyncio.gather(*tasks)
 
@@ -345,3 +399,124 @@ class MemberManagementBL(
                 result += " Suggestions: (re run the command using the id)\n" + er
 
         return result
+
+    def get_roles_list_to_remove(self) -> list[discord.Object]:
+        roles_to_remove = [
+            discord.Object(settings.LPD_ROLE),
+            discord.Object(settings.SLRT_TRAINED_ROLE),
+            discord.Object(settings.LMT_TRAINED_ROLE),
+            discord.Object(settings.WATCH_OFFICER_ROLE),
+            discord.Object(settings.PROGRAMMING_TEAM_ROLE),
+            discord.Object(settings.DEV_TEAM_ROLE),
+            discord.Object(settings.TEAM_LEAD_ROLE),
+            discord.Object(settings.EVENT_HOST_ROLE),
+            discord.Object(settings.MEDIA_PRODUCTION_ROLE),
+            discord.Object(settings.RECRUITER_ROLE),
+            discord.Object(settings.INSTIGATOR_ROLE),
+            discord.Object(settings.JANITOR_ROLE),
+            discord.Object(settings.MENTOR_ROLE),
+            discord.Object(settings.APPROVER_ROLE),
+            discord.Object(settings.CHAT_MODERATOR_ROLE),
+            discord.Object(settings.TRAINER_ROLE),
+            discord.Object(settings.SLRT_TRAINER_ROLE),
+            discord.Object(settings.LMT_TRAINER_ROLE),
+            discord.Object(settings.PRISON_TRAINER_ROLE),
+            discord.Object(settings.INSTIGATOR_TRAINER_ROLE),
+            discord.Object(settings.KOREAN_ROLE),
+            discord.Object(settings.CHINESE_ROLE),
+            discord.Object(settings.JAPANESE_ROLE),
+            discord.Object(settings.LOOKING_4_PATROL_ROLE),
+            discord.Object(settings.STANDBY_ACTOR_ROLE),
+            discord.Object(settings.DETECTIVE_ROLE),
+            discord.Object(settings.STANDBY_LMT_ROLE),
+            discord.Object(settings.STANDBY_SLRT_ROLE),
+            discord.Object(settings.STANDBY_CALL_911_ROLE),
+            discord.Object(settings.AGGRESSOR_ROLE),
+            discord.Object(settings.PENDING_APPROVAL_ROLE),
+            discord.Object(settings.EVENT_1_ROLE),
+            discord.Object(settings.EVENT_2_ROLE),
+        ]
+        for name, rank in settings.ROLE_LADDER.items():
+            if rank < settings.ROLE_LADDER.sergeant:
+                roles_to_remove.append(discord.Object(rank.id))
+        # last on purpuse, if atomic and problem happens
+        roles_to_remove.append(discord.Object(settings.INACTIVE_ROLE))
+
+        return roles_to_remove
+
+    def get_role_list_blocking(self) -> set[int]:
+        blocklist = set[int](
+            [
+                # settings.TEAM_LEAD_ROLE,
+                settings.LPDPLUS_ROLE,
+            ]
+        )
+        for name, rank in settings.ROLE_LADDER.items():
+            if rank >= settings.ROLE_LADDER.sergeant:
+                blocklist.add(rank.id)
+        return blocklist
+
+    async def remove_inactive_officers(
+        self,
+        members: list[discord.Member],
+        msg: Optional[discord.Message] = None,
+    ) -> bool:
+        """return True if successful, False if not"""
+        success = True
+
+        roles_to_remove = self.get_roles_list_to_remove()
+
+        blocklist = self.get_role_list_blocking()
+
+        total = len(members)
+        for i, m in enumerate(members):
+            for r in m.roles:
+                if r.id in blocklist:
+                    log.info(
+                        f"prevent inactive_rm for `{m.display_name}` because has `{r.name}`"
+                    )
+                    break
+            else:
+                self.add_role_update_blocklist(m.id)
+                # Atomic=true will do a request per role to remove
+                # Atomic=false will do one request per call but use cached roles
+                await self.member_left_LPD(m.id, m, "inactive")
+                try:
+                    await m.remove_roles(
+                        *roles_to_remove,
+                        reason="inactive",
+                        atomic=True,
+                    )
+                except discord.HTTPException as e:
+                    log.error(f"Failed to remove roles from {m.mention} err=`{e}`")
+                    if e.text:
+                        log.debug(f"rm_inactive err=`{e}` {e.text}")
+                    success = False
+            msg = await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
+        self.clear_role_update_blocklist()
+        return success
+
+    async def remove_cadet(self, officers: list[models.Officer]) -> bool:
+        """return True if successful, False if not"""
+        lpd_role = discord.Object(settings.LPD_ROLE)
+        cadet_role = discord.Object(settings.ROLE_LADDER.cadet.id)
+        guild = self.bot.get_guild(settings.SERVER_ID)
+        success = True
+        if not guild:
+            raise Exception(f"guild {settings.SERVER_ID} is not accessible")
+        for o in officers:
+            member = guild.get_member(o.id)
+            self.add_role_update_blocklist(o.id)
+            await self.member_left_LPD(o.id, member, "inactive_cadet")
+            if not member:
+                # log.error(f"Member[{o.id}] not found!")
+                # o.delete = dt.datetime.now()
+                # o.update()
+                continue
+            try:
+                await member.remove_roles(lpd_role, cadet_role, reason="remove_cadet")
+            except:
+                log.exception("failed to remove cadets roles")
+                success = False
+        self.clear_role_update_blocklist()
+        return success

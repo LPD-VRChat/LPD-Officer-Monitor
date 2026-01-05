@@ -477,7 +477,7 @@ class Time(commands.Cog):
         ):
             return
 
-        r = await self.bl_wrapper.pt_bl.remove_cadet(inactives)
+        r = await self.bl_wrapper.mm_bl.remove_cadet(inactives)
         await interaction_reply(
             interac,
             content=(
@@ -598,59 +598,8 @@ class Time(commands.Cog):
         ):
             return
 
-        roles_to_remove = [
-            discord.Object(settings.LPD_ROLE),
-            discord.Object(settings.SLRT_TRAINED_ROLE),
-            discord.Object(settings.LMT_TRAINED_ROLE),
-            discord.Object(settings.WATCH_OFFICER_ROLE),
-            discord.Object(settings.PROGRAMMING_TEAM_ROLE),
-            discord.Object(settings.DEV_TEAM_ROLE),
-            discord.Object(settings.TEAM_LEAD_ROLE),
-            discord.Object(settings.EVENT_HOST_ROLE),
-            discord.Object(settings.MEDIA_PRODUCTION_ROLE),
-            discord.Object(settings.RECRUITER_ROLE),
-            discord.Object(settings.INSTIGATOR_ROLE),
-            discord.Object(settings.JANITOR_ROLE),
-            discord.Object(settings.MENTOR_ROLE),
-            discord.Object(settings.APPROVER_ROLE),
-            discord.Object(settings.CHAT_MODERATOR_ROLE),
-            discord.Object(settings.TRAINER_ROLE),
-            discord.Object(settings.SLRT_TRAINER_ROLE),
-            discord.Object(settings.LMT_TRAINER_ROLE),
-            discord.Object(settings.PRISON_TRAINER_ROLE),
-            discord.Object(settings.INSTIGATOR_TRAINER_ROLE),
-            discord.Object(settings.KOREAN_ROLE),
-            discord.Object(settings.CHINESE_ROLE),
-            discord.Object(settings.JAPANESE_ROLE),
-            discord.Object(settings.LOOKING_4_PATROL_ROLE),
-            discord.Object(settings.STANDBY_ACTOR_ROLE),
-            discord.Object(settings.DETECTIVE_ROLE),
-            discord.Object(settings.STANDBY_LMT_ROLE),
-            discord.Object(settings.STANDBY_SLRT_ROLE),
-            discord.Object(settings.STANDBY_CALL_911_ROLE),
-            discord.Object(settings.AGGRESSOR_ROLE),
-            discord.Object(settings.PENDING_APPROVAL_ROLE),
-            discord.Object(settings.EVENT_1_ROLE),
-            discord.Object(settings.EVENT_2_ROLE),
-        ]
-        for name, rank in settings.ROLE_LADDER.items():
-            if rank < settings.ROLE_LADDER.sergeant:
-                roles_to_remove.append(discord.Object(rank.id))
-        # last on purpuse, if atomic and problem happens
-        roles_to_remove.append(discord.Object(settings.INACTIVE_ROLE))
-
-        blocklist = set(
-            [
-                # settings.TEAM_LEAD_ROLE,
-                settings.LPDPLUS_ROLE,
-            ]
-        )
-        for name, rank in settings.ROLE_LADDER.items():
-            if rank >= settings.ROLE_LADDER.sergeant:
-                blocklist.add(rank.id)
-
         broken_ids = False
-        for r in roles_to_remove:
+        for r in self.bl_wrapper.mm_bl.get_roles_list_to_remove():
             if not guild.get_role(r.id):
                 log.error(f"Role `{r.id}` is invalid")
                 broken_ids = True
@@ -665,29 +614,14 @@ class Time(commands.Cog):
         reply = await interaction_reply(interac, content="Starting inactive removal")
         # interaction tokens are limit to 15min, so we need to fetch the message
         msg = await interac.channel.fetch_message(reply.id)
-        total = len(role_inactive.members)
-        for i, m in enumerate(role_inactive.members):
-            for r in m.roles:
-                if r.id in blocklist:
-                    log.info(
-                        f"prevent inactive_rm for `{m.display_name}` because has `{r.name}`"
-                    )
-                    break
-            else:
-                # Atomic=true will do a request per role to remove
-                # Atomic=false will do one request per call but use cached roles
-                try:
-                    await m.remove_roles(
-                        *roles_to_remove,
-                        reason="inactive",
-                        atomic=True,
-                    )
-                except discord.HTTPException as e:
-                    log.error(f"Failed to remove roles from {m.mention} err=`{e}`")
-                    if e.text:
-                        log.debug(f"rm_inactive err=`{e}` {e.text}")
-            msg = await msg.edit(content=f"Removing `{i+1:2d}/{total:2d}`...")
-        await msg.edit(content="Done")
+        success = await self.bl_wrapper.mm_bl.remove_inactive_officers(
+            role_inactive.members, msg
+        )
+        await msg.edit(
+            content=(
+                "Done" if success else "Some errors happened, please check the logs!!!"
+            )
+        )
 
     @checks.is_admin_bot_channel(True)
     @checks.is_white_shirt(True)

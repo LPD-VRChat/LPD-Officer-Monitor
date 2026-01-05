@@ -126,6 +126,7 @@ class Officer(User):
         through_reverse_relation_name="badge_id_pending",
     )
     trainings: Optional[List[Training]] = ormar.ManyToMany(Training)
+    extra: pydantic.Json = ormar.JSON(default={})
 
 
 class LOAEntry(ormar.Model):
