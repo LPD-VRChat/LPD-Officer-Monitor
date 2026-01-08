@@ -5,7 +5,7 @@ description = ""
 authors = [
 ]
 readme = "README.md"
-requires-python = "~=3.10.0" # keep same as server
+requires-python = "~=3.11.0" # keep same as server
 dependencies = [
     "discord.py[speed]~=2.0",
     "mypy>=0.950",  # Support for match statements
@@ -33,6 +33,7 @@ dev = [
     "dpytest~=0.7.0",
     "pytest-asyncio>=1.1.0",
     "aiosqlite",
+    "vrchatapi ~= 1.20.7",
 ]
 
 [build-system]
