@@ -9,7 +9,6 @@ requires-python = "~=3.11.0" # keep same as server
 dependencies = [
     "discord.py[speed]~=2.0",
     "mypy>=0.950",  # Support for match statements
-    "black",
     "nest_asyncio~=1.5.1",
     "thefuzz~=0.22.1",
     "ormar[mysql] ~= 0.12.0",
@@ -28,6 +27,7 @@ web = [ #discarded project
     "Quart_Discord==2.1.4",
 ]
 dev = [
+    "black~=25.1.0",
     "pytest>=6.2.5",
     "pytest-env>=0.6.2",
     "dpytest~=0.7.0",
