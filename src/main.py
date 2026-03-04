@@ -71,6 +71,8 @@ def setup_logger():
     log.addHandler(dh)
     fh = logging.handlers.WatchedFileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
     fh.setFormatter(formatter)
+    fh.addFilter(DiscordDebugFilter())
+    fh.addFilter(ExternalFilter(logging.DEBUG))
     log.addHandler(fh)
 
     return log

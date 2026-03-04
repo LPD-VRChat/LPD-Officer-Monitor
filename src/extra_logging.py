@@ -144,13 +144,16 @@ class DiscordDebugFilter(logging.Filter):
 
 
 class ExternalFilter(logging.Filter):
-    def __init__(self, level: int):
-        self.level = level
+    def __init__(self, level_app: int, level_ext: int = logging.INFO):
+        self.level_app = level_app
+        self.level_ext = level_ext
+        if self.level_app > self.level_ext:
+            print(
+                f"Warning: level_app {self.level_app} is greater than level_ext {self.level_ext}"
+            )
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if (
-            not record.name.startswith("lpd-officer-monitor")
-            and record.levelno < self.level
-        ):
-            return False
-        return True
+        if record.name.startswith("lpd-officer-monitor"):
+            return record.levelno >= self.level_app
+        else:
+            return record.levelno >= self.level_ext
