@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: psf/black@25.1.0
+      - uses: psf/black@26.3.0
         with:
           options: "--check --verbose --target-version=py310"
           src: "."
