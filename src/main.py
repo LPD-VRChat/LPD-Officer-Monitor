@@ -33,6 +33,7 @@ from src.extra_logging import (
     DiscordLoggingHandler,
     CustomFormatter,
     DiscordDebugFilter,
+    DiscordResumeFilter,
     ExternalFilter,
 )
 from src.layers.storage.models import database
@@ -59,8 +60,9 @@ def setup_logger():
     )
     sh = logging.StreamHandler()
     sh.addFilter(DiscordDebugFilter())
+    sh.addFilter(DiscordResumeFilter())
     dh = DiscordLoggingHandler(webhook=settings.LOGGING_WEBHOOK)
-    dh.addFilter(ExternalFilter(logging.WARNING))
+    dh.addFilter(ExternalFilter(logging.INFO, logging.WARNING))
     if settings.CONFIG_LOADED == "dev":
         sh.setFormatter(formatter)
     else:
@@ -72,6 +74,7 @@ def setup_logger():
     fh = logging.handlers.WatchedFileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
     fh.setFormatter(formatter)
     fh.addFilter(DiscordDebugFilter())
+    fh.addFilter(DiscordResumeFilter())
     fh.addFilter(ExternalFilter(logging.DEBUG))
     log.addHandler(fh)
 
