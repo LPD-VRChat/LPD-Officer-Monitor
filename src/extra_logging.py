@@ -143,6 +143,14 @@ class DiscordDebugFilter(logging.Filter):
         return True
 
 
+class DiscordResumeFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord):
+        if record.levelno == logging.INFO and record.name.startswith("discord"):
+            if "has successfully RESUMED session" in record.getMessage():
+                return False
+        return True
+
+
 class ExternalFilter(logging.Filter):
     def __init__(self, level_app: int, level_ext: int = logging.INFO):
         self.level_app = level_app
