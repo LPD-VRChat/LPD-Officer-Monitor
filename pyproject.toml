@@ -13,7 +13,7 @@ dependencies = [
     "thefuzz~=0.22.1",
     "ormar[mysql] ~= 0.12.0",
     "aiomysql>=0.0.21",
-    "mysqlclient>=1.7.4",
+    "PyMySQL",
     "alembic>=1.7.4",
     "icalendar ~= 5.0",
     "requests ~= 2.0",
