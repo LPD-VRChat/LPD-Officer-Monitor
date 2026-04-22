@@ -1,31 +1,54 @@
 # syntax=docker/dockerfile:1
 
-#FROM python:latest #1.7GB
-FROM python:3.10-alpine
+
+FROM python:3.11-alpine as base
 USER root
 WORKDIR /app
 
-# RUN apk update
-# RUN apk add --no-cache git gcc g++ musl-dev mariadb-connector-c-dev ffmpeg
+ARG BUILD_TYPE=prod
 
-# # Install requirements
-COPY requirements.txt requirements.txt
-# RUN pip install -r requirements.txt
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
-# #clean up
-# RUN pip cache purge
-# RUN apk del -r git gcc g++ musl-dev mariadb-connector-c-dev
-# RUN rm -rf /var/cache/apk/*
-# RUN rm -rf /root/.cache/pip/*
-
-#doing everything in one command to reduce layer
 RUN apk update && \
-    apk add --no-cache git gcc g++ musl-dev mariadb-connector-c-dev mariadb-connector-c && \
-    pip install -r requirements.txt && \
-    pip cache purge && \
-    apk del -r git gcc g++ musl-dev mariadb-connector-c-dev && \
+    apk add --no-cache git gcc g++ musl-dev && \
     rm -rf /var/cache/apk/* && \
     rm -rf /root/.cache/pip/*
+
+
+#poetry builder
+FROM base as builder
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+RUN apk update && \
+    apk add musl-dev build-base gcc gfortran openblas-dev
+
+WORKDIR /app
+
+RUN pip install poetry
+
+# Install the app
+COPY pyproject.toml poetry.lock ./
+RUN ls /app
+RUN mkdir ${VIRTUAL_ENV}
+RUN if [ "${BUILD_TYPE}" = "dev" ]; then \
+      poetry install --extras dev --no-root -vvv && rm -rf $POETRY_CACHE_DIR; \
+    else \
+      poetry install --no-root -vvv && rm -rf $POETRY_CACHE_DIR; \
+    fi
+
+
+FROM base as runtime
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+#COPY src ./src
+
+WORKDIR /app
 
 #run as user instead of running bot as root
 RUN addgroup -S swuser && \
