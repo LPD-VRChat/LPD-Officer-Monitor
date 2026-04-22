@@ -2,7 +2,11 @@ version: "3.8"
 services:
   lpd-officer-monitor:
     container_name: lpdbot
-    build: ./
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+          BUILD_TYPE: ${LPD_OFFICER_MONITOR_ENVIRONMENT}
     stdin_open: true
     tty: true
     environment:
@@ -12,6 +16,7 @@ services:
       LPD_OFFICER_MONITOR_ENVIRONMENT: "${LPD_OFFICER_MONITOR_ENVIRONMENT}"
     volumes:
       - ".:/app"
+      - /app/.venv
       - "./logs:/logs"
     secrets:
       - mysql_user_password
