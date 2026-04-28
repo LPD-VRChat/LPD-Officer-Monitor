@@ -71,7 +71,19 @@ def setup_logger():
     dh.setFormatter(formatter)
     log.addHandler(sh)
     log.addHandler(dh)
-    fh = logging.handlers.WatchedFileHandler(settings.LOG_FILE_PATH, encoding="utf-8")
+    fh = None
+    if os.environ.get("LPD_OFFICER_MONITOR_DOCKER"):
+        fh = logging.handlers.RotatingFileHandler(
+            settings.LOG_FILE_PATH,
+            encoding="utf-8",
+            maxBytes=50 * 1024 * 1024,
+            backupCount=20,
+        )
+    else:
+        fh = logging.handlers.WatchedFileHandler(
+            settings.LOG_FILE_PATH,
+            encoding="utf-8",
+        )
     fh.setFormatter(formatter)
     fh.addFilter(DiscordDebugFilter())
     fh.addFilter(DiscordResumeFilter())
