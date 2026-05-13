@@ -259,6 +259,9 @@ class Programming(commands.Cog):
     ):
         async def send_notif(bot: commands.Bot, txt: str):
             for cid in settings.ALLOWED_COMMAND_CHANNELS:
+                if cid in [settings.MUGSHOT_CHANNEL, settings.DIAGNOSIS_CHANNEL]:
+                    # in prod: only permission for slash, cannot write message and less important
+                    continue
                 ch = bot.get_channel(cid)
                 if not ch:
                     return
