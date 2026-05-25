@@ -35,6 +35,7 @@ from src.extra_logging import (
     DiscordDebugFilter,
     DiscordResumeFilter,
     ExternalFilter,
+    DiscordRateLimitFilter,
 )
 from src.layers.storage.models import database
 from src.layers.business.extra_functions import interaction_reply
@@ -63,6 +64,7 @@ def setup_logger():
     sh.addFilter(DiscordResumeFilter())
     dh = DiscordLoggingHandler(webhook=settings.LOGGING_WEBHOOK)
     dh.addFilter(ExternalFilter(logging.INFO, logging.WARNING))
+    dh.addFilter(DiscordRateLimitFilter())
     if settings.CONFIG_LOADED == "dev":
         sh.setFormatter(formatter)
     else:
