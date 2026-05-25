@@ -27,6 +27,7 @@ class DiscordLoggingHandler(logging.Handler):
         self._loop = loop or asyncio.get_event_loop()
         self._min_log_level = min_log_level
 
+    def send_ready_message(self):
         ready_embed = discord.Embed(
             title="Discord Logging Online",
             description="From LPD Officer Monitor.",
@@ -55,7 +56,11 @@ class DiscordLoggingHandler(logging.Handler):
         func_name: Optional[str] = None,
         time: Optional[dt.datetime] = None,
     ) -> None:
-        if error_level < logging.ERROR:
+        if len(message) > 1024:
+            message = message[:1024] + "[...]\n:warning::page_with_curl: Log trimed"
+
+        if True or error_level < logging.ERROR:
+            # force use of only text, embed breaks when one category is bigger than 2k char, also doesn't work on notification
             match (error_level):
                 case logging.DEBUG:
                     level_str = ":bug:"
@@ -110,15 +115,20 @@ class DiscordLoggingHandler(logging.Handler):
                 except ValueError:
                     pass
 
+            if record.name == "lpd-officer-monitor" or len(record.name) == 0:
+                fn = record.module
+            else:
+                fn = record.name
+
             # Add a task to send the error to Discord so that we don't stop the event loop
             # TODO: Account for rate limiting when logging a lot at once
             self._loop.create_task(
                 self._send_to_webhook(
                     error_level=record.levelno,
                     error_type=record.levelname,
-                    message=record.msg,
+                    message=record.getMessage(),
                     trace=record.exc_text,
-                    filename=record.filename,
+                    filename=fn,
                     line_num=record.lineno,
                     func_name=record.funcName,
                     time=time,
@@ -150,6 +160,39 @@ class DiscordResumeFilter(logging.Filter):
                 return False
         return True
 
+class DiscordRateLimitFilter(logging.Filter):
+    def __init__(self,
+                name = "",
+                bucket_size = 4,
+                bucket_reset_minute = 20,
+                loop: asyncio.AbstractEventLoop = None,
+    ):
+        self._loop = loop or asyncio.get_event_loop()
+        super().__init__(name)
+        self.bucket_task = None
+        self.bucket_size = bucket_size
+        self.bucket_capacity = 0
+        self.bucket_reset_minute = bucket_reset_minute
+
+    async def reset_bucket(self):
+        await asyncio.sleep(self.bucket_reset_minute*60)
+        logging.log(
+            logging.WARN if self.bucket_capacity >= self.bucket_size else logging.DEBUG,
+            f"Discord rate limited {self.bucket_capacity}/{self.bucket_size} in last {self.bucket_reset_minute} minutes"
+        )
+        self.bucket_capacity = 0
+
+    def handle_bucket(self):
+        self.bucket_capacity +=1
+        if not self.bucket_task or self.bucket_task.done():
+            self.bucket_task = self._loop.create_task(self.reset_bucket())
+
+    def filter(self, record: logging.LogRecord):
+        if record.levelno == logging.WARNING and record.name.startswith("discord.http"):
+            if record.getMessage().startswith("We are being rate limited"):
+                self.handle_bucket()
+                return False
+        return True
 
 class ExternalFilter(logging.Filter):
     def __init__(self, level_app: int, level_ext: int = logging.INFO):
