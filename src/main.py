@@ -379,6 +379,14 @@ def main():
                 f"u={ctx.author.id} `{ctx.invoked_with}` unknown CheckFailure {exception_string}"
             )
             return
+
+        if isinstance(exception, discord.ext.commands.errors.CommandNotFound):
+            await ctx.send(":red_circle: Command not found")
+            log.debug(
+                    f"cmd404 u={ctx.author.id} c={ctx.channel.id} i={ctx.invoked_with} {exception_string}"
+                )
+            return
+
         try:
             if settings.CONFIG_LOADED == "dev":
                 await ctx.send("🛠️dev :red_circle: Error " + exception_string)
