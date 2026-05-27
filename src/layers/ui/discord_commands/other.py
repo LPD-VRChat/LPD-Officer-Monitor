@@ -1,4 +1,5 @@
 # Settings import
+import enum
 import settings
 
 # Standard
@@ -29,6 +30,10 @@ from src.layers.business.extra_functions import (
 
 log = logging.getLogger("lpd-officer-monitor")
 
+class RtvMode(enum.Enum):
+    discord_name = 0
+    discord_id = 1
+    all = 2
 
 class Other(commands.Cog):
     def __init__(self, bot):
@@ -220,14 +225,20 @@ class Other(commands.Cog):
     @app_commands.guilds(discord.Object(id=settings.SERVER_ID))
     @app_commands.default_permissions(administrator=True)
     @app_commands.describe(role="list the members of this role")
-    async def rtv_slash(self, di: discord.Interaction, role: discord.Role):
+    @app_commands.describe(mode="output mode(default: discord_name) discord_name will return the display name on the server, discord_id will return the id of the user, all will return both")
+    async def rtv_slash(self, di: discord.Interaction, role: discord.Role, mode: RtvMode = RtvMode.discord_name):
         try:
             results = self.get_role_members(role)
         except errors.GetRoleMembersError:
             await interaction_reply(di, f"`{role.name}` role has no members")
             return
         member_names = sorted(results, key=lambda m: m.display_name.lower())
-        member_str = "\n".join(member.name for member in member_names)
+        if mode == RtvMode.all:
+            member_str = "\n".join(f"{member.name} ({member.id})" for member in member_names)
+        elif mode == RtvMode.discord_id:
+            member_str = "\n".join(str(member.id) for member in member_names)
+        else:
+            member_str = "\n".join(member.name for member in member_names)
         await interaction_reply(
             di, f"Here are the {len(member_names)} people with `{role.name}`'s role"
         )
