@@ -143,7 +143,7 @@ DB_NAME = "LPD_Officer_Monitor"
 DB_USER = "lpd"
 DB_HOST = "localhost"
 DB_SOCK = "/run/mysqld/mysqld.sock"
-DB_TYPE = "mysql+pymysql"
+DB_TYPE = "mysql+aiomysql"
 DB_PORT = 3306
 
 # The password for the MySQL database

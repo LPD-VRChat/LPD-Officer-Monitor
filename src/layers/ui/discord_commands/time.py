@@ -226,22 +226,18 @@ class Time(commands.Cog):
                     return
             case (True, False):
                 await interaction_reply(
-                    interac, "you forgot `to_date` argument", ephemeral=True
+                    interac, "you forgot `from_date` argument", ephemeral=True
                 )
                 return
             case (False, True):
                 await interaction_reply(
-                    interac, "you forgot `from_date` argument", ephemeral=True
+                    interac, "you forgot `to_date` argument", ephemeral=True
                 )
                 return
 
-        try:
-            leaderboard = await self.bl_wrapper.pt_bl.get_top_patrol_time(
-                from_dt=from_dt, to_dt=to_dt
-            )
-        except Exception as e:
-            print(e)
-            return
+        leaderboard = await self.bl_wrapper.pt_bl.get_top_patrol_time(
+            from_dt=from_dt, to_dt=to_dt
+        )
 
         leaderboard_lines = []
         for k, v in leaderboard.items():
