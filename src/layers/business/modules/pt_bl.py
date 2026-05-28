@@ -152,7 +152,7 @@ class PatrolTimeBL(
                 temp[p.officer.id] += p.duration()
             else:
                 temp[p.officer.id] = p.duration()
-        sortedData = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1])}
+        sortedData = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1], reverse=True)}
         return sortedData
 
     async def get_patrol_voices(
@@ -642,7 +642,7 @@ class PatrolTimeBL(
         guild = self.bot.get_guild(settings.SERVER_ID)
         if not guild:
             raise Exception(f"guild {settings.SERVER_ID} is not accessible")
-        members = [guild.get_member(row[0]) for row in r]
+        members = [guild.get_member(id) for id in r]
         officers_id = [
             m.id
             for m in members

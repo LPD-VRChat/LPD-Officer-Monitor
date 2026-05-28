@@ -18,21 +18,21 @@ from discord.ext import commands
 
 DATABASE_URL = f"{settings.DB_TYPE}://{settings.DB_USER}:{urllib.parse.quote(settings.DB_PASS)}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 if settings.CONFIG_LOADED == "base_test":
-    DATABASE_URL = "sqlite:///test.sqlite"
-database = databases.Database(DATABASE_URL)
-database.url = databases.DatabaseURL(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+    DATABASE_URL = "sqlite+aiosqlite:///test.sqlite"
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+database=ormar.DatabaseConnection(DATABASE_URL)
+_metadata=sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    database=database,
+    metadata=_metadata
+)
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        # tablename = "users"
+    ormar_config = base_ormar_config.copy(
+        tablename="users",
         abstract = True
+    )
 
     id: int = ormar.BigInteger(primary_key=True)
 
@@ -42,16 +42,18 @@ class User(ormar.Model):
 
 
 class BadgeCategory(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "badgecategory"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
 
 
 class Badge(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "badges"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
@@ -71,8 +73,9 @@ class CallTypes(Enum):
 
 
 class TrainingCategory(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "trainingcategories"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     team: str = ormar.String(max_length=255, choices=list(Teams))
@@ -80,8 +83,9 @@ class TrainingCategory(ormar.Model):
 
 
 class Training(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "trainings"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     category: Optional[TrainingCategory] = ormar.ForeignKey(TrainingCategory)
@@ -89,22 +93,25 @@ class Training(ormar.Model):
 
 
 class OfficerBadgeOwned(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "officers_badges_owned"
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class OfficerBadgePrending(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "officers_badges_pending"
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class Officer(User):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "officers"
+    )
 
     started_monitoring: datetime = ormar.DateTime(timezone=True)
     # TODO: Index this column
@@ -130,8 +137,9 @@ class Officer(User):
 
 
 class LOAEntry(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "loaentries"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     officer: Optional[Officer] = ormar.ForeignKey(Officer)
@@ -145,8 +153,9 @@ class LOAEntry(ormar.Model):
 
 
 class TimeRenewal(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "timerenewals"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     officer: Optional[Officer] = ormar.ForeignKey(Officer, related_name="officer")
@@ -155,8 +164,9 @@ class TimeRenewal(ormar.Model):
 
 
 class StrikeEntry(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "strikeentries"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     member_id: int = ormar.BigInteger(min_value=0, index=True)
@@ -166,15 +176,17 @@ class StrikeEntry(ormar.Model):
 
 
 class DetainedUser(User):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "detainedusers"
+    )
 
     role_ids: pydantic.Json = ormar.JSON()
 
 
 class Event(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "events"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     start: datetime = ormar.DateTime(timezone=True)
@@ -183,8 +195,9 @@ class Event(ormar.Model):
 
 
 class SavedVoiceChannel(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "savedvoicechannels"
+    )
 
     id: int = ormar.BigInteger(primary_key=True)
     name: str = ormar.String(max_length=255)
@@ -195,8 +208,9 @@ class SavedVoiceChannel(ormar.Model):
 
 
 class Patrol(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "patrols"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     officer: Optional[Officer] = ormar.ForeignKey(Officer)
@@ -215,8 +229,9 @@ class Patrol(ormar.Model):
 
 
 class PatrolVoice(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "patrolvoices"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     patrol: Optional[Patrol] = ormar.ForeignKey(Patrol)
@@ -235,8 +250,9 @@ class VRCInstanceAccessTypeEnum(Enum):
 
 
 class VRCLocation(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "vrclocations"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     instance_id: int = ormar.Integer(min_value=0)
@@ -252,8 +268,9 @@ class VRCLocation(ormar.Model):
 
 
 class Call(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "calls"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     officers: Optional[List[Officer]] = ormar.ManyToMany(Officer)
@@ -263,16 +280,18 @@ class Call(ormar.Model):
 
 
 class Payment(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "payments"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     timestamp: datetime = ormar.DateTime()
 
 
 class OfficerPayment(ormar.Model):
-    class Meta(BaseMeta):
+    ormar_config = base_ormar_config.copy(
         tablename = "officerpayments"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     amount: int = ormar.Integer()
@@ -297,12 +316,13 @@ async def officer_before_relation_add(
 
 if settings.CONFIG_LOADED == "base_test":
 
+    print(r"TEST")
     @pytest.fixture(autouse=True, scope="module")
     def create_db():
-        URL = "sqlite://test.sqlite"
-        engine = sqlalchemy.create_engine(URL)  # DATABASE_URL)
-        metadata.drop_all(engine)
-        metadata.create_all(engine)
+        import os
+        engine = sqlalchemy.create_engine( DATABASE_URL.replace('+aiosqlite', '+pysqlite'))  # DATABASE_URL)
+        #_metadata.drop_all(engine)
+        _metadata.create_all(engine)
         yield
-        metadata.drop_all(engine)
+        #_metadata.drop_all(engine)
         os.remove("test.sqlite")

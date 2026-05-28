@@ -51,11 +51,11 @@ class OfficerExperiment(Enum):
 
 
 async def destroy_db():
-    assert URL == src.layers.storage.models.DATABASE_URL
+    #assert URL == src.layers.storage.models.DATABASE_URL
 
-    engine = sqlalchemy.create_engine(URL)
-    src.layers.storage.models.metadata.drop_all(engine)
-    src.layers.storage.models.metadata.create_all(engine)
+    engine = sqlalchemy.create_engine(URL.replace('+aiosqlite', '+pysqlite'))
+    src.layers.storage.models._metadata.drop_all(engine)
+    src.layers.storage.models._metadata.create_all(engine)
 
 
 async def setup_db_data():
@@ -121,8 +121,8 @@ async def setup_db_data():
                 case OfficerExperiment.loa:
                     await models.LOAEntry.objects.create(
                         officer=officer,
-                        start=end - datetime.timedelta(days=7),
-                        end=end + datetime.timedelta(days=10),
+                        start= (end - datetime.timedelta(days=7)).date(),
+                        end= (end + datetime.timedelta(days=10)).date(),
                         message_id=1234567890,
                         channel_id=1234567890,
                         created_at=end,

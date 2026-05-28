@@ -9,7 +9,7 @@ import logging
 import pytest_asyncio
 import testing.fixtures.default_data_fixtures
 
-URL = "sqlite:///test.sqlite"
+URL = "sqlite+aiosqlite:///test.sqlite"
 
 
 # @pytest.fixture(scope="module")
@@ -20,15 +20,15 @@ async def create_db():
         os.remove("test.sqlite")
     except FileNotFoundError:
         pass
-    assert URL == src.layers.storage.models.DATABASE_URL
-    engine = sqlalchemy.create_engine(URL)  # DATABASE_URL)
+    #assert URL == src.layers.storage.models.DATABASE_URL
+    engine = sqlalchemy.create_engine(URL.replace('+aiosqlite', '+pysqlite'))  # DATABASE_URL)
     logging.info("Creating database")
 
     # src.layers.storage.models.metadata = sqlalchemy.MetaData()
-    src.layers.storage.models.metadata.drop_all(engine)
-    src.layers.storage.models.metadata.create_all(engine)
+    src.layers.storage.models._metadata.drop_all(engine)
+    src.layers.storage.models._metadata.create_all(engine)
     await src.layers.storage.models.database.connect()
-    await src.layers.storage.models.database.execute("PRAGMA foreign_keys=ON")
+    # await src.layers.storage.models.database.execute("PRAGMA foreign_keys=ON")
     yield
     # database.metadata.drop_all(engine)
     # os.remove("test.sqlite")
