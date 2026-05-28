@@ -71,6 +71,7 @@ async def bot():
     await bot._async_setup_hook()
     dpytest.configure(bot)
     setup_LPD_Discord_main()
+    await testing.fixtures.default_data_fixtures.destroy_db()
     await testing.fixtures.default_data_fixtures.setup_db_data()
 
     async def on_error(event_method: str, /, *args, **kwargs) -> None:
