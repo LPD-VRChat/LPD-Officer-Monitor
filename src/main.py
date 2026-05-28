@@ -383,8 +383,8 @@ def main():
         if isinstance(exception, discord.ext.commands.errors.CommandNotFound):
             await ctx.send(":red_circle: Command not found")
             log.debug(
-                    f"cmd404 u={ctx.author.id} c={ctx.channel.id} i={ctx.invoked_with} {exception_string}"
-                )
+                f"cmd404 u={ctx.author.id} c={ctx.channel.id} i={ctx.invoked_with} {exception_string}"
+            )
             return
 
         try:

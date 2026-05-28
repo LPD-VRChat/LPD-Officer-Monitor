@@ -160,12 +160,14 @@ class DiscordResumeFilter(logging.Filter):
                 return False
         return True
 
+
 class DiscordRateLimitFilter(logging.Filter):
-    def __init__(self,
-                name = "",
-                bucket_size = 4,
-                bucket_reset_minute = 20,
-                loop: asyncio.AbstractEventLoop = None,
+    def __init__(
+        self,
+        name="",
+        bucket_size=4,
+        bucket_reset_minute=20,
+        loop: asyncio.AbstractEventLoop = None,
     ):
         self._loop = loop or asyncio.get_event_loop()
         super().__init__(name)
@@ -175,15 +177,15 @@ class DiscordRateLimitFilter(logging.Filter):
         self.bucket_reset_minute = bucket_reset_minute
 
     async def reset_bucket(self):
-        await asyncio.sleep(self.bucket_reset_minute*60)
+        await asyncio.sleep(self.bucket_reset_minute * 60)
         logging.log(
             logging.WARN if self.bucket_capacity >= self.bucket_size else logging.DEBUG,
-            f"Discord rate limited {self.bucket_capacity}/{self.bucket_size} in last {self.bucket_reset_minute} minutes"
+            f"Discord rate limited {self.bucket_capacity}/{self.bucket_size} in last {self.bucket_reset_minute} minutes",
         )
         self.bucket_capacity = 0
 
     def handle_bucket(self):
-        self.bucket_capacity +=1
+        self.bucket_capacity += 1
         if not self.bucket_task or self.bucket_task.done():
             self.bucket_task = self._loop.create_task(self.reset_bucket())
 
@@ -193,6 +195,7 @@ class DiscordRateLimitFilter(logging.Filter):
                 self.handle_bucket()
                 return False
         return True
+
 
 class ExternalFilter(logging.Filter):
     def __init__(self, level_app: int, level_ext: int = logging.INFO):
