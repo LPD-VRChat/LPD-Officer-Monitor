@@ -20,6 +20,8 @@ async def create_db():
         os.remove("test.sqlite")
     except FileNotFoundError:
         pass
+    except PermissionError:
+        pass #probably a bad idea to suppress this
     #assert URL == src.layers.storage.models.DATABASE_URL
     engine = sqlalchemy.create_engine(URL.replace('+aiosqlite', '+pysqlite'))  # DATABASE_URL)
     logging.info("Creating database")
