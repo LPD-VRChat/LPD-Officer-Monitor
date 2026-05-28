@@ -152,7 +152,10 @@ class PatrolTimeBL(
                 temp[p.officer.id] += p.duration()
             else:
                 temp[p.officer.id] = p.duration()
-        sortedData = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1], reverse=True)}
+        sortedData = {
+            k: v
+            for k, v in sorted(temp.items(), key=lambda item: item[1], reverse=True)
+        }
         return sortedData
 
     async def get_patrol_voices(

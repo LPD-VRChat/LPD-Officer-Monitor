@@ -12,7 +12,7 @@ import datetime as dt
 if models.DATABASE_URL.startswith("sqlite"):
     _PATROL_LEN_SQL_COLUMN = "SUM((unixepoch(end) - unixepoch(start))) AS patrol_length"
 else:
-    #mariaDB
+    # mariaDB
     _PATROL_LEN_SQL_COLUMN = "SUM(TIMESTAMPDIFF(SECOND, start,end)) AS 'patrol_length'"
 
 
@@ -23,13 +23,17 @@ async def get_active_officers(
 ) -> set[int]:
     async with models.database.connection() as conn:
         result = await conn.execute(
-            sqlalchemy.text("""SELECT
+            sqlalchemy.text(
+                """SELECT
                     officer,
-                    """+_PATROL_LEN_SQL_COLUMN+"""
+                    """
+                + _PATROL_LEN_SQL_COLUMN
+                + """
                 FROM patrols
                 WHERE start < :enddt and end > :startdt
                 GROUP BY officer
-                HAVING patrol_length > :min_patrol_len;"""),
+                HAVING patrol_length > :min_patrol_len;"""
+            ),
             {
                 "min_patrol_len": minimum_activity * 3600,
                 "enddt": end,
@@ -47,12 +51,14 @@ async def get_sum_patrol_time(
     """drop in replacement for `pt_bl.get_top_patrol_time`"""
     async with models.database.connection() as conn:
         result = await conn.execute(
-            sqlalchemy.text("""SELECT `officer`,"""
-                +_PATROL_LEN_SQL_COLUMN+
-"""         FROM `patrols`
+            sqlalchemy.text(
+                """SELECT `officer`,"""
+                + _PATROL_LEN_SQL_COLUMN
+                + """         FROM `patrols`
             WHERE start < :enddt and end > :startdt
             GROUP BY `officer`
-            ORDER BY `patrol_length` DESC"""),
+            ORDER BY `patrol_length` DESC"""
+            ),
             {
                 "enddt": to_dt,
                 "startdt": from_dt,
