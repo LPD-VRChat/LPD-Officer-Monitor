@@ -242,14 +242,15 @@ class Other(commands.Cog):
             await interaction_reply(di, f"`{role.name}` role has no members")
             return
         member_names = sorted(results, key=lambda m: m.display_name.lower())
-        if mode == RtvMode.all:
-            member_str = "\n".join(
-                f"{member.name} ({member.id})" for member in member_names
-            )
-        elif mode == RtvMode.discord_id:
-            member_str = "\n".join(str(member.id) for member in member_names)
-        else:
-            member_str = "\n".join(member.name for member in member_names)
+        match mode:
+            case RtvMode.all:
+                member_str = "\n".join(
+                    f"{member.name} ({member.id})" for member in member_names
+                )
+            case RtvMode.discord_id:
+                member_str = "\n".join(str(member.id) for member in member_names)
+            case _:
+                member_str = "\n".join(member.name for member in member_names)
         await interaction_reply(
             di, f"Here are the {len(member_names)} people with `{role.name}`'s role"
         )
