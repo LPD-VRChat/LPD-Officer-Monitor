@@ -32,7 +32,10 @@ dev = [
     "dpytest~=0.7.0",
     "pytest-asyncio>=1.1.0",
     "aiosqlite",
+]
+vrc = [
     "vrchatapi ~= 1.20.7",
+    "pyotp ~= 2.9.0",
 ]
 
 [build-system]

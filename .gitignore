@@ -133,3 +133,4 @@ discord_secret
 discord_token
 mysql_root_password
 mysql_user_password
+/settings/local.ini
