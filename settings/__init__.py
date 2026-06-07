@@ -1,4 +1,5 @@
 import os as _os
+import configparser
 
 
 def _readSecretFile(name: str) -> str:
@@ -50,3 +51,27 @@ else:
         DB_PASS = _readDockerSecret("MYSQL_PASSWORD_FILE")
         DISCORD_TOKEN = _readDockerSecret("DISCORD_TOKEN_FILE")
         LOG_FILE_PATH = "/logs/lpd_officer_monitor.log"
+
+
+## ini land for saving local settings
+iniconfig = configparser.ConfigParser()
+
+_LOCAL_INI_PATH = _os.path.dirname(__file__) + _os.sep + "local.ini"
+
+
+def save_ini():
+    global iniconfig
+    with open(_LOCAL_INI_PATH, "w") as f:
+        iniconfig.write(f)
+
+
+def load_ini():
+    global iniconfig
+    iniconfig.read(_LOCAL_INI_PATH)
+    # Ensure sections exist
+    if "VRC" not in iniconfig:
+        iniconfig["VRC"] = {}
+        save_ini()
+
+
+load_ini()

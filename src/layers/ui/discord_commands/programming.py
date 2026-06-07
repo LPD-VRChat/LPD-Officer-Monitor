@@ -288,5 +288,21 @@ You can use the bot's commands
             )
 
 
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def vrc_status(self, ctx: commands.Context):
+        status = await self.bl_wrapper.vrc.status()
+        await ctx.reply(str(status))
+
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def vrc_enable(self, ctx: commands.Context, state:bool):
+        #TODO fix permission to rahlon or tomato only
+        await self.bl_wrapper.vrc.set_enabled(state)
+        status = await self.bl_wrapper.vrc.status()
+        await ctx.reply(str(status))
+
 async def setup(bot):
     await bot.add_cog(Programming(bot))
