@@ -2062,10 +2062,9 @@ rsa = ["cryptography"]
 name = "pyotp"
 version = "2.9.0"
 description = "Python One Time Password Library"
-optional = true
+optional = false
 python-versions = ">=3.7"
 groups = ["main"]
-markers = "extra == \"vrc\""
 files = [
     {file = "pyotp-2.9.0-py3-none-any.whl", hash = "sha256:81c2e5865b8ac55e825b0358e496e1d9387c811e85bb40e71a3b29b288963612"},
     {file = "pyotp-2.9.0.tar.gz", hash = "sha256:346b6642e0dbdde3b4ff5a930b664ca82abfa116356ed48cc42c7d6590d36f63"},
@@ -2526,10 +2525,9 @@ zstd = ["zstandard (>=0.18.0)"]
 name = "vrchatapi"
 version = "1.20.7"
 description = "VRChat API Library for Python"
-optional = true
+optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "extra == \"vrc\""
 files = [
     {file = "vrchatapi-1.20.7-py3-none-any.whl", hash = "sha256:9cf246b300fb5154a8d7b5cb251255dac5d044ac41d63ca3469c5b680b431c2b"},
     {file = "vrchatapi-1.20.7.tar.gz", hash = "sha256:3dda81427fd99b78800978f5de65c72495dfe94b2a4cacf21349606303627720"},
@@ -2809,10 +2807,9 @@ cffi = ["cffi (>=1.11)"]
 
 [extras]
 dev = ["aiosqlite", "black", "dpytest", "pytest", "pytest-asyncio", "pytest-env"]
-vrc = ["pyotp", "vrchatapi"]
 web = ["Hypercorn", "Quart", "Quart_Discord"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "~=3.11.0"
-content-hash = "98158a3667ec133d66136ea432863217bb0cc09d2bd0f3ddbf96e724af22c9cd"
+content-hash = "ed1acdd81df4b19f8b9a1d06569d65c1ebd5850446037bd995bf9878ca7a50d8"
