@@ -24,7 +24,13 @@ from vrchatapi.models.two_factor_email_code import TwoFactorEmailCode
 
 # Custom
 import settings
-from .base_bl import DiscordListenerMixin, bl_listen
+from .base_bl import (
+    DiscordListenerMixin,
+    MemberManagementEvent,
+    EventSenderMixin,
+    bl_listen,
+    business_event,
+)
 from src.layers.storage import models
 from settings.classes import RoleLadderElement
 from src.layers.business.extra_functions import has_role_id
@@ -158,15 +164,22 @@ class VrcUserRegistrationStatus(enum.Enum):
     GROUPREGISTERED = 5
 
 
-class LinkResult(enum.Enum):
+class LinkSearchResult(enum.Enum):
     OK = 0
     VRCAPI_DOWN = 1
-    INVITE_BORKEN = 2
+    INVITE_BROKEN = 2
+    USER_SEARCH_DISABLED = 3
     ERROR = -1
     INVALID_UUID = -2
 
 
-class VRChatBL(DiscordListenerMixin):
+class LinkInviteResult(enum.Enum):
+    OK = 0
+    ALREADY_INVITED = 1
+    ERROR = -1
+
+
+class VRChatBL(DiscordListenerMixin, EventSenderMixin):
     def __init__(self, bot: commands.bot) -> None:
         self.bot = bot
         super().__init__()
@@ -191,6 +204,8 @@ class VRChatBL(DiscordListenerMixin):
         )
         self.vrc_auth_api = authentication_api.AuthenticationApi(self.api_client)
         self.rate_limiter = RateLimiter(default_rate=60, default_per=60.0)
+        if len(settings.VRC_GROUP_ID) == 0:
+            log.warning(f"vrc group id not set, will be unable to invite")
 
     @bl_listen("on_connect")
     async def start(self):
@@ -202,8 +217,8 @@ class VRChatBL(DiscordListenerMixin):
             await self.login()
         self.enabled = new_state
 
-    async def _log_api_header(self, header:dict):
-        for k,v in header:
+    async def _log_api_header(self, header: dict):
+        for k, v in header:
             if k.startswith("x-vrc-api-"):
                 log.debug(f"{k}: {v}")
 
@@ -226,15 +241,17 @@ class VRChatBL(DiscordListenerMixin):
                 if hasattr(response, "headers"):
                     self._log_api_header(response.headers)
 
-
-
     async def login(self) -> None:
+        if not settings.VRC_ENABLED:
+            log.warning("login not allowed, vrc is disabled in settings")
+            return
         await self.rate_limiter.acquire()
         if self.working:
             log.warning("already logged in")
             return
         try:
-            current_user = self.vrc_auth_api.get_current_user()
+            thread = self.vrc_auth_api.get_current_user(async_req=True)
+            current_user = thread.get()
             self._update_rate_limits_from_response()
         except UnauthorizedException as e:
             if e.status == 200:
@@ -242,27 +259,34 @@ class VRChatBL(DiscordListenerMixin):
                     import pyotp
 
                     totp = pyotp.TOTP(settings.VRC_2FA_SECRET)
-                    r = self.vrc_auth_api.verify2_fa(
-                        two_factor_auth_code=TwoFactorAuthCode(totp.now())
+                    t = self.vrc_auth_api.verify2_fa(
+                        two_factor_auth_code=TwoFactorAuthCode(totp.now()),
+                        async_req=True,
                     )
+                    r = t.get()
                     print("verify2_fa", r)
-                    current_user = self.vrc_auth_api.get_current_user()
+                    thread = self.vrc_auth_api.get_current_user(async_req=True)
+                    current_user = thread.get()
                 else:
                     log.info(f"VRC Login UnauthorizedException: {e.reason}")
                     self.working = False
+                    await self.log_api_version()
                     return
 
             else:
                 log.exception("UnauthorizedException API")
                 self.working = False
                 self._update_rate_limits_from_exception(e)
+                await self.log_api_version()
                 return
         except vrchatapi.ApiException as e:
             log.exception("Exception when calling API")
             self._update_rate_limits_from_exception(e)
+            await self.log_api_version()
             self.working = False
             return
 
+        await self.log_api_version()
         cookie_jar = self.api_client.rest_client.cookie_jar._cookies[
             "api.vrchat.cloud"
         ]["/"]
@@ -278,21 +302,39 @@ class VRChatBL(DiscordListenerMixin):
     async def status(self) -> dict:
         r = {
             "working": self.working,
-            "enabled": self.enabled,
+            "enabled": self.enabled and settings.VRC_ENABLED,
             "logged_in": self.logged_in,
-            "feature_flag":settings.VRC_ENABLED,
+            "feature_vrc_enabled": settings.VRC_ENABLED,
+            "feature_user_search": settings.VRC_FEAT_USER_SEARCH,
+            "feature_display_user_image": settings.VRC_FEAT_DISPLAY_USER_IMAGE,
         }
-        try:
-            await self.rate_limiter.acquire()
-            current_user = self.vrc_auth_api.get_current_user()
-            r["display_name"] = current_user.display_name
-            self._update_rate_limits_from_response()
-        except UnauthorizedException as e:
-            r["error"] = f"Login failed UnauthorizedException `{e.body}` `{e.reason}`"
-            self._update_rate_limits_from_exception(e)
-        except vrchatapi.ApiException as e:
-            r["error"] = f"Login failed ApiException `{e.body}`"
-            self._update_rate_limits_from_exception(e)
+        if self.enabled and self.logged_in:
+            try:
+                await self.rate_limiter.acquire()
+                t = self.vrc_auth_api.get_current_user(async_req=True)
+                current_user = t.get()
+                r["display_name"] = current_user.display_name
+                self._update_rate_limits_from_response()
+            except UnauthorizedException as e:
+                r["error"] = (
+                    f"Login failed UnauthorizedException `{e.body}` `{e.reason}`"
+                )
+                self._update_rate_limits_from_exception(e)
+            except vrchatapi.ApiException as e:
+                r["error"] = f"Login failed ApiException `{e.body}`"
+                self._update_rate_limits_from_exception(e)
+
+            try:
+                self.allowed_to_run()
+                gi = await self.get_group_invites()
+                r["pending_invites"] = len(gi)
+                for i in gi:
+                    print(
+                        f"{i['accepted_by_display_name']} added {i['user']['display_name']}{i['user']['id']}"
+                    )
+            except VrcNotWorking:
+                pass
+
         return r
 
     def _update_rate_limits_from_response(self):
@@ -326,17 +368,24 @@ class VRChatBL(DiscordListenerMixin):
             raise VrcNotWorking()
 
     async def lookup_username(self, username: str) -> list[dict]:
+        if not settings.VRC_FEAT_USER_SEARCH:
+            log.warning("lookup_usr called when disabled")
+            return dict()
         self.allowed_to_run()
         await self.rate_limiter.acquire()
 
         api_instance = vrchatapi.UsersApi(self.api_client)
         try:
-            api_response = api_instance.search_users(search=username, n=5)
-            print(api_response)
+            t = api_instance.search_users(
+                search=username,
+                n=5,
+                async_req=True,
+            )
+            api_response = t.get()
             return api_response
         except vrchatapi.ApiException as e:
-            log.error(f"Exception when calling UsersApi->get_user: %s\n" % e)
-            return None
+            log.exception(f"Exception when calling UsersApi->get_user: %s\n" % e)
+            return dict()
 
     async def lookup_userid(self, user_id: str) -> Optional[vrchatapi.User]:
         self.allowed_to_run()
@@ -344,11 +393,12 @@ class VRChatBL(DiscordListenerMixin):
         api_instance = vrchatapi.UsersApi(self.api_client)
 
         try:
-            api_response = api_instance.get_user(user_id)
-            print(api_response)
+            t = api_instance.get_user(user_id, async_req=True)
+            api_response = t.get()
+            # print(api_response)
             return api_response
         except vrchatapi.ApiException as e:
-            log.error(f"Exception when calling UsersApi->get_user: %s\n" % e)
+            log.exception(f"Exception when calling UsersApi->get_user: %s\n" % e)
             return None
 
     async def _link_old(self, officer: models.Officer, name: str = "", id: str = ""):
@@ -365,33 +415,41 @@ class VRChatBL(DiscordListenerMixin):
 
     async def link_search(
         self, discord_id: int, txt: str
-    ) -> tuple[LinkResult, Optional[list]]:
+    ) -> tuple[LinkSearchResult, Optional[list]]:
         try:
             officer = await models.Officer.objects.get(id=discord_id)
         except ormar.NoMatch:
             log.error(f"officer {discord_id} is not registered")
-            return LinkResult.ERROR, None
+            return LinkSearchResult.ERROR, None
 
         id = ""
         if txt.startswith("https://vrchat.com/home/user/usr_"):
             id = VRC_UUID_USER_PREFIX + uuidhex.match(txt[33:]).string
             if not id:
-                return LinkResult.INVALID_UUID, None
+                return LinkSearchResult.INVALID_UUID, None
         elif txt.startswith(VRC_UUID_USER_PREFIX):
             id = VRC_UUID_USER_PREFIX + uuidhex.match(txt[4:]).string
             if not id:
-                return LinkResult.INVALID_UUID, None
+                return LinkSearchResult.INVALID_UUID, None
         elif uuidhex.match(txt):
             id = VRC_UUID_USER_PREFIX + txt
 
         if len(id):
             await self._link_old(officer, id=id)
-            user = [await self.lookup_userid(id)]
+            try:
+                user = [await self.lookup_userid(id)]
+            except VrcNotWorking:
+                return LinkSearchResult.VRCAPI_DOWN, None
         else:
+            if not settings.VRC_FEAT_USER_SEARCH:
+                return LinkSearchResult.USER_SEARCH_DISABLED, None
             await self._link_old(officer, name=txt)
-            user = await self.lookup_username(txt)
+            try:
+                user = await self.lookup_username(txt)
+            except VrcNotWorking:
+                return LinkSearchResult.VRCAPI_DOWN, []
 
-        return LinkResult.OK, user
+        return LinkSearchResult.OK, user
 
     async def link_vrc(self, discord_id: int, vrc_uuid: str, vrc_display_name: str):
         officer = await models.Officer.objects.get(id=discord_id)
@@ -404,9 +462,36 @@ class VRChatBL(DiscordListenerMixin):
 
     async def link_group_invite(
         self, discord_id: int, vrc_uuid: str, vrc_display_name: str
-    ) -> bool:
+    ) -> LinkInviteResult:
 
-        #TODO invite to group
+        if len(settings.VRC_GROUP_ID) == 0:
+            log.warning(f"vrc group id not set, cannot invite")
+            return LinkInviteResult.ERROR
+
+        # no need to accept existing request, if user already requested and we send invite, vrc accept and user become member directly
+
+        gir = vrchatapi.CreateGroupInviteRequest(user_id=vrc_uuid)
+        group_api = vrchatapi.GroupsApi(self.api_client)
+        try:
+            await self.rate_limiter.acquire()
+            t = group_api.create_group_invite(
+                group_id=settings.VRC_GROUP_ID,
+                create_group_invite_request=gir,
+                async_req=True,
+            )
+            r = t.get()
+            log.debug(f"invite sent {vrc_uuid} {r=}")
+        except vrchatapi.ApiException as e:
+            if e.body and len(e.body):
+                body = json.loads(e.body)
+                if hasattr(body, "error") and hasattr(body["error"], "message"):
+                    if body["error"]["message"].endswith("is already invited․"):
+                        return LinkInviteResult.ALREADY_INVITED
+            log.exception("fail to send invite")
+            return LinkInviteResult.ERROR
+        except:
+            log.exception("fail to send invite")
+            return LinkInviteResult.ERROR
 
         officer = await models.Officer.objects.get(id=discord_id)
         officer.vrchat_name = vrc_display_name
@@ -416,4 +501,161 @@ class VRChatBL(DiscordListenerMixin):
         officer.extra["vrcRegStatus"] = VrcUserRegistrationStatus.GROUPINVITE_SENT.value
         await officer.update()
 
-        return True
+        return LinkInviteResult.OK
+
+    async def get_group_invites(self):
+        group_api = vrchatapi.GroupsApi(self.api_client)
+        pending = []
+        try:
+            current_offset = 0
+            while True:
+                await self.rate_limiter.acquire()
+                t = group_api.get_group_invites(
+                    group_id=settings.VRC_GROUP_ID,
+                    n=60,
+                    offset=current_offset,
+                    async_req=True,
+                )
+                r = t.get()
+                pending.extend(r)
+                if len(r) < 60:
+                    break
+        except:
+            log.exception("fail to retrieve invites")
+        return pending
+
+    async def sync(self, list_unkown: bool = False) -> dict:
+        group_api = vrchatapi.GroupsApi(self.api_client)
+
+        vrcmembers = []
+        try:
+            current_offset = 0
+            while True:
+                await self.rate_limiter.acquire()
+                t = group_api.get_group_members(
+                    group_id=settings.VRC_GROUP_ID,
+                    n=60,
+                    offset=current_offset,
+                    async_req=True,
+                )
+                r = t.get()
+                vrcmembers.extend(r)
+                if len(r) < 60:
+                    break
+        except:
+            log.exception("fail to retrieve invites")
+
+        vrcid_to_member = {m.user.id: i for i, m in enumerate(vrcmembers)}
+        vrcname_to_member = {m.user.display_name: i for i, m in enumerate(vrcmembers)}
+
+        officers = await models.Officer.objects.all(deleted_at=None)
+        officers_synced = dict()
+
+        report = {
+            "migrated": 0,
+            "synced": 0,
+            "newsync": 0,
+            "groupUnk": 0,
+            "notGrouped": 0,
+        }
+
+        for o in officers:
+            if (
+                o.vrchat_name
+                and len(o.vrchat_name)
+                and (not o.vrchat_id or len(o.vrchat_id) == 0)
+            ):
+                if o.vrchat_name in vrcname_to_member:
+                    vrcinfo = vrcmembers[vrcname_to_member[o.vrchat_name]].user
+                    o.vrchat_id = vrcinfo.id
+                    if o.extra is None:
+                        o.extra = {}
+                    o.extra["vrcRegStatus"] = (
+                        VrcUserRegistrationStatus.GROUPREGISTERED.value
+                    )
+                    await o.update()
+                    log.debug(
+                        f"migrate {o.vrchat_name} to `{vrcinfo.display_name}``{vrcinfo.id}`"
+                    )
+                    report["migrated"] += 1
+                    officers_synced[vrcinfo.id] = o.id
+                else:
+                    report["notGrouped"] += 1
+            elif o.vrchat_id and len(o.vrchat_id):
+                vrcidx = vrcid_to_member.get(o.vrchat_id)
+                if vrcidx == None:
+                    report["notGrouped"] += 1
+                else:
+                    vrcinfo = vrcmembers[vrcidx].user
+                    if o.vrchat_name != vrcinfo.display_name:
+                        log.debug(
+                            f"vrc renamed did{o.id} `{o.vrchat_name}`->`{vrcinfo.display_name}`"
+                        )
+                        o.vrchat_name = vrcinfo.display_name
+                        await o.update()
+                    report["synced"] += 1
+                    officers_synced[vrcinfo.id] = o.id
+                    if o.extra is None:
+                        o.extra = {
+                            "vrcRegStatus": VrcUserRegistrationStatus.GROUPREGISTERED.value
+                        }
+                        await o.update()
+                    elif (
+                        o.extra.get(
+                            "vrcRegStatus", VrcUserRegistrationStatus.UNREGISTERED
+                        )
+                        != VrcUserRegistrationStatus.GROUPREGISTERED.value
+                    ):
+                        o.extra["vrcRegStatus"] = (
+                            VrcUserRegistrationStatus.GROUPREGISTERED.value
+                        )
+                        await o.update()
+            else:
+                report["notGrouped"] += 1
+
+        if list_unkown:
+            report["unkown"] = []
+
+        for vrcm in vrcmembers:
+            if vrcm.user.id not in officers_synced:
+                log.debug(
+                    f"unknown user in group {vrcm.user.display_name} {vrcm.user.id}"
+                )
+                report["groupUnk"] += 1
+                if list_unkown:
+                    report["unkown"].append([vrcm.user.display_name, vrcm.user.id])
+
+        return report
+
+    @business_event(MemberManagementEvent.MemberLeft)
+    async def remove_member(self, event: MemberManagementEvent.MemberLeft):
+        if not event.officer:
+            log.error(f"officer object is invalid, of{event.member_id}")
+            return
+        log.debug(f"vrc will remove {event.officer.vrchat_name}")
+
+        group_api = vrchatapi.GroupsApi(self.api_client)
+        try:
+            t = group_api.kick_group_member(
+                group_id=settings.VRC_GROUP_ID,
+                user_id=event.officer.vrchat_id,
+                async_req=True,
+            )
+            r = t.get()
+            log.debug(
+                f"kicked {event.officer.vrchat_name} {event.officer.vrchat_id} {r=}"
+            )
+            if event.officer.extra == None:
+                event.officer.extra = {}
+            event.officer.extra["vrcRegStatus"] = (
+                VrcUserRegistrationStatus.UNREGISTERED.value
+            )
+            await event.officer.update()
+        except vrchatapi.ApiException as e:
+            # log.exception(
+            #     f"unable to kick user did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
+            # )
+            log.error(
+                f"unable to kick did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
+            )
+            log.debug(e.body)

@@ -186,3 +186,4 @@ class MemberManagementEvent:
         member_id: int
         member: Optional[discord.Member]
         reason: str = "unknown"
+        officer: Optional[Officer] = None

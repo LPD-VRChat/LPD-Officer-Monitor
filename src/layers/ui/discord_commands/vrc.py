@@ -22,9 +22,15 @@ from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from src.layers.business.extra_functions import (
     interaction_reply,
     interaction_send_str_as_file,
+    mention_slash_cmd,
     msgbox_confirm,
+    multi_choice_embed,
 )
-from src.layers.business.vrc_name_bl import LinkResult, VrcNotWorking
+from src.layers.business.vrc_name_bl import (
+    LinkSearchResult,
+    VrcNotWorking,
+    LinkInviteResult,
+)
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -102,13 +108,18 @@ class VRC(commands.Cog):
             return
 
         if len(officer.vrchat_name):
-            await interaction_reply(
-                interac, f"Your VRChat name is `{officer.vrchat_name}`"
-            )
+            txt = f"""Your VRChat name is `{officer.vrchat_name}`
+Your id is `{officer.vrchat_id}`"""
+            if settings.CONFIG_LOADED == "dev":
+                if officer.extra:
+                    txt += f"DEVONLY: {officer.extra.get('vrcRegStatus')}"
+                else:
+                    txt += f"DEVONLY: no extra"
+            await interaction_reply(interac, txt)
         else:
             await interaction_reply(
                 interac,
-                f"Your VRChat name is not set.\n Please use `/vrc_link` command to set your username.",
+                f"Your VRChat name is not set.\n Please use {await mention_slash_cmd(self.bot,'vrc_link')} command to set your username.",
             )
 
     @checks.is_general_bot_channel(True)
@@ -121,6 +132,7 @@ class VRC(commands.Cog):
     @app_cmd.default_permissions(administrator=True)
     @app_cmd.describe(name="Vrchat name, URL or UUID")
     async def link(self, interac: discord.Interaction, name: str):
+        result_search, users = LinkSearchResult.ERROR, []
         try:
             result_search, users = await self.bl_wrapper.vrc.link_search(
                 interac.user.id, name
@@ -134,24 +146,32 @@ class VRC(commands.Cog):
             )
             return
         match (result_search):
-            case LinkResult.OK:
+            case LinkSearchResult.OK:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
-            case LinkResult.VRCAPI_DOWN:
+            case LinkSearchResult.VRCAPI_DOWN:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
                 await interaction_reply(
                     interac,
                     ":warning:You are registered, but VRChat api is disabled, we will invite you soon",
                 )
                 return
-            case LinkResult.INVALID_UUID:
+            case LinkSearchResult.INVALID_UUID:
                 await interaction_reply(
                     interac,
                     ":warning:The UUID/URL is invalid. Double check it and try again",
                 )
                 return
-            case LinkResult.ERROR:
+            case LinkSearchResult.ERROR:
                 await interaction_reply(
                     interac, ":red_circle:An error happened, contact staff"
+                )
+                return
+            case LinkSearchResult.USER_SEARCH_DISABLED:
+                await interaction_reply(
+                    interac,
+                    """:warning:User search is disabled.
+Go to ![VRChat website](<https://vrchat.com/home>) and copy the link when hovering your name.
+Or in VRCX, copy `User ID`""",
                 )
                 return
             case _:
@@ -161,81 +181,95 @@ class VRC(commands.Cog):
                 )
                 return
 
-        if users is None or len(users)==0:
+        if users is None or len(users) == 0:
             await interaction_reply(
-                    interac, ":red_circle:An error happened when search user, contact staff"
+                interac, ":red_circle:Could not find any user, use id or URL"
             )
             return
 
-        def vrc_user_2_embed(user_info)->discord.Embed:
+        def vrc_user_2_embed(user_info) -> discord.Embed:
             embed = discord.Embed(
-                title="title",
+                title=f"{user_info.display_name}",
                 description="",
                 # color=color,
             )
             embed.add_field(name="Display Name", value=f"{user_info.display_name}")
-            embed.add_field(name="Pronouns", value=f"{user_info.pronouns}")
-            if user_info.age_verified:
-                embed.add_field(name="Age verified", value=f"{user_info.age_verification_status}")
-            if len(user_info.badges):
+            embed.add_field(name="ID", value=f"{user_info.id}")
+            embed.add_field(name="Last Platform", value=f"{user_info.last_platform}")
+            if user_info.pronouns:
+                embed.add_field(name="Pronouns", value=f"{user_info.pronouns}")
+            if user_info.bio_links and len(user_info.bio_links):
+                embed.add_field(name="Links", value=f"{str(user_info.bio_links)[:500]}")
+            if hasattr(user_info, "age_verified"):
+                embed.add_field(
+                    name="Age verified", value=f"{user_info.age_verification_status}"
+                )
+            if hasattr(user_info, "badges") and len(user_info.badges):
                 embed.add_field(name="badges", value=f"{len(user_info.badges)}")
-            embed.add_field(name="State", value=f"{user_info.state}")
-            embed.add_field(name="Status", value=f"{user_info.status}")
-            embed.set_thumbnail(url=user_info.user_icon if len(user_info.user_icon) else user_info.current_avatar_thumbnail_image_url) #doesn't work in discord because of the redirect
+            if hasattr(user_info, "state"):
+                embed.add_field(name="State", value=f"{user_info.state}")
+                embed.add_field(name="Status", value=f"{user_info.status}")
+            if settings.VRC_FEAT_DISPLAY_USER_IMAGE:
+                embed.set_thumbnail(
+                    url=(
+                        user_info.user_icon
+                        if len(user_info.user_icon)
+                        else user_info.current_avatar_thumbnail_image_url
+                    )
+                )  # doesn't work in discord because of the redirect
             return embed
 
-
-        selected_user=-1
+        selected_user = -1
         if len(users) == 1:
             embed = vrc_user_2_embed(users[0])
-            embed.title="Confirm this is your Vrchat Account"
-            embed.description=""
+            embed.title = "Confirm this is your Vrchat Account"
+            embed.description = ""
 
-            if not await msgbox_confirm(interac, embed = embed):
+            if not await msgbox_confirm(interac, embed=embed, ephemeral=True):
                 return
-            selected_user=0
+            selected_user = 0
         else:
-            #TODO
-            print("multiselect not impl")
-            print(users)
-            return
-
-        await self.bl_wrapper.vrc.link_vrc(interac.user.id, users[selected_user].display_name, users[selected_user].id)
-        result_invite = await self.bl_wrapper.vrc.link_group_invite(
-            interac.user.id, users[selected_user].display_name, users[selected_user].id)
-        if result_invite:
-            await interaction_reply(
+            # print(users)
+            embeds = [vrc_user_2_embed(u) for u in users]
+            r = await multi_choice_embed(
                 interac,
-                ":white_check_mark: You are registered, you should have received an invite for the VRChat group",
+                embeds,
+                "Looks like you missed typed your username and we could not find you.\nPlease Choose one of the users if they correspond to you:",
+                ephemeral=True,
+                button_labels=[u.display_name for u in users],
+                cancel_button=True,
             )
-        else:
-            await interaction_reply(
-                interac,
-                ":warning: You are registered, but invite for the VRChat group failed",
-            )
+            if r == -1:
+                return
+            selected_user = r
 
-        return
-
-        try:
-            officer = await models.Officer.objects.get(id=interac.user.id)
-        except ormar.NoMatch:
-            log.error(f"officer {interac.user.id} is not registered")
-            await interaction_reply(interac, "You are unregistered, contact staff")
-            return
-
-        if settings.NAME_SEPARATOR in name:
-            await interaction_reply(
-                interac,
-                f"A forbidden character is used in the username.\nPlease remove `{settings.NAME_SEPARATOR}` from your username",
-            )
-            return
-
-        officer.vrchat_name = name
-        await officer.update()
-        self.bl_wrapper.member_list.upload_to_world(reason="link")
-        await interaction_reply(
-            interac, f"Your VRChat name is set to `{officer.vrchat_name}`"
+        await self.bl_wrapper.vrc.link_vrc(
+            interac.user.id,
+            users[selected_user].id,
+            users[selected_user].display_name,
         )
+        result_invite = await self.bl_wrapper.vrc.link_group_invite(
+            interac.user.id,
+            users[selected_user].id,
+            users[selected_user].display_name,
+        )
+        match (result_invite):
+            case LinkInviteResult.ok:
+                await interaction_reply(
+                    interac,
+                    ":white_check_mark: You are registered, you should have received an invite for the VRChat group",
+                )
+            case LinkInviteResult.ALREADY_INVITED:
+                await interaction_reply(
+                    interac,
+                    ":white_check_mark: You are registered, you **already** have an invite for the VRChat group",
+                )
+            case LinkInviteResult.ERROR:
+
+                await interaction_reply(
+                    interac,
+                    ":warning: You are registered, but invite for the VRChat group failed",
+                )
 
     @checks.is_general_bot_channel(True)
     @checks.is_officer(True)
