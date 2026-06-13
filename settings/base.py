@@ -210,4 +210,7 @@ https://teamup.com/kstfrjxcezye8yhw87"""
 VRC_USERNAME: str = ""
 VRC_PASSWORD: str = ""
 VRC_2FA_SECRET: str = ""
+VRC_GROUP_ID: str = ""
 VRC_ENABLED: bool = False
+VRC_FEAT_USER_SEARCH: bool = True
+VRC_FEAT_DISPLAY_USER_IMAGE: bool = False

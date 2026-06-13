@@ -180,6 +180,7 @@ class MemberManagementBL(
                 member_id,
                 member,
                 reason,
+                officer,
             )
         )
 

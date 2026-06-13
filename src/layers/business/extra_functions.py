@@ -2,7 +2,7 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 import functools
-from typing import Optional, TypeVar, Union
+from typing import List, Optional, TypeVar, Union
 import discord
 from nest_asyncio import apply
 from io import StringIO, BytesIO
@@ -244,7 +244,10 @@ async def msgbox_confirm(
     ephemeral=False,
     embed: discord.Embed = MISSING,
     embeds: Sequence[discord.Embed] = MISSING,
-):
+) -> Optional[bool]:
+    """
+    returns None on timeout
+    """
     if isinstance(ctx, discord.Interaction):
         user_id = ctx.user.id
     else:
@@ -252,10 +255,21 @@ async def msgbox_confirm(
     view = Confirm(user_id, timeout=timeout)
     if isinstance(ctx, discord.Interaction):
         msg = await interaction_reply(
-            ctx, message, embed=embed, embeds=embeds, view=view
+            ctx,
+            message,
+            embed=embed,
+            embeds=embeds,
+            view=view,
+            ephemeral=ephemeral,
         )
     else:
-        msg = await ctx.send(message, embed=embed, embeds=embeds, view=view)
+        msg = await ctx.send(
+            message,
+            embed=embed,
+            embeds=embeds,
+            view=view,
+            ephemeral=ephemeral,
+        )
     await view.wait()
     if view.value is None:
         await msg.edit(content="Timeout", view=None)
@@ -424,3 +438,105 @@ async def get_calendar_events(
                     continue
                 unsortedEvents[event_start.timestamp()] = component
     return unsortedEvents
+
+
+class EmbedSelectorView(discord.ui.View):
+    def __init__(
+        self,
+        user_id: int,
+        embeds: List[discord.Embed],
+        button_labels: Optional[List[str]] = None,
+        timeout: float = 60,
+        cancel_button: bool = True,
+    ):
+        super().__init__(timeout=timeout)
+        self.user_id = user_id
+        self.embeds = embeds
+        self.selected_index: int = -1
+
+        if button_labels is None:
+            button_labels = [f"Option {i + 1}" for i in range(len(embeds))]
+
+        if len(button_labels) != len(embeds):
+            raise ValueError("button_labels must have the same length as embeds")
+
+        for index, label in enumerate(button_labels):
+            self.add_item(_EmbedSelectButton(label, index))
+        if cancel_button:
+            self.add_item(_EmbedSelectButton("Cancel", -1, discord.ButtonStyle.danger))
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        return self.user_id == interaction.user.id
+
+    def get_selected_index(self) -> Optional[int]:
+        return self.selected_index
+
+
+class _EmbedSelectButton(discord.ui.Button):
+    def __init__(
+        self,
+        label: str,
+        index: int,
+        style: discord.ButtonStyle = discord.ButtonStyle.primary,
+    ):
+        super().__init__(label=label, style=style)
+        self.index = index
+        self.label = label
+
+    async def callback(self, interaction: discord.Interaction):
+        view: EmbedSelectorView = self.view
+
+        view.selected_index = self.index
+
+        # Disable all buttons after selection
+        for item in view.children:
+            item.disabled = True
+
+        await interaction.response.edit_message(
+            content=f"Choosen `{self.label}`", view=None
+        )
+        view.stop()
+
+
+async def multi_choice_embed(
+    ctx: Union[discord.Interaction, commands.Context],
+    embeds: List[discord.Embed],
+    message: str = "Choose one",
+    timeout=30,
+    ephemeral=False,
+    button_labels: Optional[List[str]] = None,
+    cancel_button: bool = True,
+) -> int:
+    """
+    returns -1 on timeout, cancelation
+    """
+    if isinstance(ctx, discord.Interaction):
+        user_id = ctx.user.id
+    else:
+        user_id = ctx.author.id
+    view = EmbedSelectorView(
+        user_id,
+        embeds=embeds,
+        timeout=timeout,
+        button_labels=button_labels,
+        cancel_button=callable,
+    )
+    if isinstance(ctx, discord.Interaction):
+        msg = await interaction_reply(
+            ctx,
+            message,
+            embeds=embeds,
+            view=view,
+            ephemeral=ephemeral,
+        )
+    else:
+        msg = await ctx.send(
+            message,
+            embeds=embeds,
+            view=view,
+            ephemeral=ephemeral,
+        )
+    await view.wait()
+    if view.get_selected_index() is None:
+        await msg.edit(content="Timeout", view=None)
+    return view.get_selected_index()

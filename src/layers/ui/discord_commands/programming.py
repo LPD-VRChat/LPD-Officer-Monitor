@@ -287,7 +287,6 @@ You can use the bot's commands
 """,
             )
 
-
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
@@ -298,11 +297,19 @@ You can use the bot's commands
     @checks.is_team_bot_channel()
     @checks.is_programming_team()
     @commands.command()
-    async def vrc_enable(self, ctx: commands.Context, state:bool):
-        #TODO fix permission to rahlon or tomato only
+    async def vrc_enable(self, ctx: commands.Context, state: bool):
+        # TODO fix permission to rahlon or tomato only
         await self.bl_wrapper.vrc.set_enabled(state)
         status = await self.bl_wrapper.vrc.status()
         await ctx.reply(str(status))
+
+    @checks.is_team_bot_channel()
+    @checks.is_programming_team()
+    @commands.command()
+    async def vrc_sync(self, ctx: commands.Context, list_unkown: bool = False):
+        r = await self.bl_wrapper.vrc.sync(list_unkown)
+        await ctx.reply(str(r))
+
 
 async def setup(bot):
     await bot.add_cog(Programming(bot))
