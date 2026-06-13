@@ -190,7 +190,7 @@ def main():
 
     intents = discord.Intents.default()
     intents.members = True
-    intents.presences = True
+    intents.presences = False
     intents.voice_states = True
     intents.messages = True
     intents.message_content = True
