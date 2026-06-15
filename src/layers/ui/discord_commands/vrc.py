@@ -150,10 +150,12 @@ Your id is `{officer.vrchat_id}`"""
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
             case LinkSearchResult.VRCAPI_DOWN:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
-                await interaction_reply(
-                    interac,
-                    ":warning:You are registered, but VRChat api is disabled, we will invite you soon",
-                )
+                txt = ":warning:You are registered, but VRChat api is disabled"
+                if len(settings.VRC_GROUP_ID):
+                    txt += f", you can [join here](<https://vrchat.com/home/group/{settings.VRC_GROUP_ID}>)"
+                else:
+                    txt += "we will invite you soon"
+                await interaction_reply(interac, txt)
                 return
             case LinkSearchResult.INVALID_UUID:
                 await interaction_reply(
@@ -280,16 +282,7 @@ Or in VRCX, copy `User ID`""",
     @app_cmd.guilds(discord.Object(id=settings.SERVER_ID))
     @app_cmd.default_permissions(administrator=True)
     async def unlink(self, interac: discord.Interaction):
-        try:
-            officer = await models.Officer.objects.get(id=interac.user.id)
-        except ormar.NoMatch:
-            log.error(f"officer {interac.user.id} is not registered")
-            await interaction_reply(interac, "You are unregistered, contact staff")
-            return
-
-        officer.vrchat_name = ""
-        await officer.update()
-
+        await self.bl_wrapper.vrc.unlink(interac.user.id)
         await interaction_reply(
             interac,
             f"Your VRChat username has been unlinked\nPlease use `/vrc_link` command to set your new VRChat username.",
