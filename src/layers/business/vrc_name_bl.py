@@ -14,13 +14,13 @@ import re
 # external
 import discord
 import ormar
-from discord.ext import commands
+from discord.ext import commands, tasks
 import vrchatapi
 from vrchatapi.api import authentication_api
 from vrchatapi.exceptions import UnauthorizedException
 from vrchatapi.models.two_factor_auth_code import TwoFactorAuthCode
 from vrchatapi.models.two_factor_email_code import TwoFactorEmailCode
-
+from urllib3._collections import HTTPHeaderDict
 
 # Custom
 import settings
@@ -203,55 +203,50 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             )
         )
         self.vrc_auth_api = authentication_api.AuthenticationApi(self.api_client)
-        self.rate_limiter = RateLimiter(default_rate=60, default_per=60.0)
+        self.rate_limiter = RateLimiter(default_rate=4, default_per=30.0)
         if len(settings.VRC_GROUP_ID) == 0:
             log.warning(f"vrc group id not set, will be unable to invite")
 
     @bl_listen("on_connect")
     async def start(self):
-        if settings.VRC_ENABLED and not self.logged_in:
-            await self.login()
+        if (
+            settings.VRC_ENABLED
+            and self.enabled
+            and (not self.logged_in or not self.working)
+        ):
+            asyncio.create_task(self.login())
 
     async def set_enabled(self, new_state: bool) -> None:
-        if new_state and not self.enabled and not self.logged_in:
+        if new_state:
             await self.login()
         self.enabled = new_state
 
     async def _log_api_header(self, header: dict):
-        for k, v in header:
+        for k in header:
             if k.startswith("x-vrc-api-"):
-                log.debug(f"{k}: {v}")
+                log.debug(f"{k}: {header[k]}")
 
     async def log_api_version(self, exception=None):
         if exception:
+            if isinstance(exception, HTTPHeaderDict) or isinstance(exception, dict):
+                await self._log_api_header(exception)
             if hasattr(exception, "headers") and exception.headers:
-                self._log_api_header(exception.headers)
+                await self._log_api_header(exception.headers)
             elif hasattr(exception, "response") and exception.response:
-                self._log_api_header(exception.response.headers)
-        else:
-            if hasattr(self.api_client.rest_client, "last_response"):
-                response = self.api_client.rest_client.last_response
-                if response and hasattr(response, "headers"):
-                    self._log_api_header(response.headers)
-            elif (
-                hasattr(self.api_client.rest_client, "response")
-                and self.api_client.rest_client.response
-            ):
-                response = self.api_client.rest_client.response
-                if hasattr(response, "headers"):
-                    self._log_api_header(response.headers)
+                await self._log_api_header(exception.response.headers)
 
     async def login(self) -> None:
         if not settings.VRC_ENABLED:
             log.warning("login not allowed, vrc is disabled in settings")
             return
         await self.rate_limiter.acquire()
-        if self.working:
+        if self.working and self.enabled:
             log.warning("already logged in")
             return
         try:
-            thread = self.vrc_auth_api.get_current_user(async_req=True)
-            current_user = thread.get()
+            # during testing found out you can be blocked by going over rate limit, no real way to check first
+            thread = self.vrc_auth_api.get_current_user_with_http_info(async_req=True)
+            current_user, http_code, responce_header = thread.get()
             self._update_rate_limits_from_response()
         except UnauthorizedException as e:
             if e.status == 200:
@@ -264,29 +259,32 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                         async_req=True,
                     )
                     r = t.get()
-                    print("verify2_fa", r)
+                    log.debug(f"verify2_fa {r=}")
                     thread = self.vrc_auth_api.get_current_user(async_req=True)
                     current_user = thread.get()
                 else:
                     log.info(f"VRC Login UnauthorizedException: {e.reason}")
-                    self.working = False
-                    await self.log_api_version()
+                    self.disable()
+                    await self.log_api_version(e)
                     return
 
             else:
                 log.exception("UnauthorizedException API")
-                self.working = False
+                self.disable()
+                settings.iniconfig.set("VRC", "auth", "")
+                settings.iniconfig.set("VRC", "twoFactorAuth", "")
+                settings.save_ini()
                 self._update_rate_limits_from_exception(e)
-                await self.log_api_version()
+                await self.log_api_version(e)
                 return
         except vrchatapi.ApiException as e:
             log.exception("Exception when calling API")
             self._update_rate_limits_from_exception(e)
-            await self.log_api_version()
-            self.working = False
+            await self.log_api_version(e)
+            self.disable()
             return
 
-        await self.log_api_version()
+        await self.log_api_version(responce_header)
         cookie_jar = self.api_client.rest_client.cookie_jar._cookies[
             "api.vrchat.cloud"
         ]["/"]
@@ -295,14 +293,66 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             "VRC", "twoFactorAuth", cookie_jar["twoFactorAuth"].value
         )
         settings.save_ini()
+        log.debug("VRC Logged in as:" + current_user.display_name)
+        await self.init_check()
         self.working = True
         self.logged_in = True
-        log.debug("VRC Logged in as:" + current_user.display_name)
+        if not self.sync_job.is_running():
+            self.sync_job.start()
+
+    def disable(self):
+        log.error("disabling VRC integration")
+        self.working = False
+        self.sync_job.cancel()
+
+    @bl_listen()
+    async def on_unload(self):
+        self.working = False
+        self.sync_job.cancel()
+
+    async def init_check(self):
+        if settings.VRC_GROUP_ID == "":
+            log.error("Group id not set")
+            self.disable()
+            return
+        api_instance = vrchatapi.GroupsApi(self.api_client)
+        await self.rate_limiter.acquire()
+        try:
+            t = api_instance.get_group(
+                settings.VRC_GROUP_ID, include_roles=True, async_req=True
+            )
+            group: vrchatapi.Group = t.get()
+        except vrchatapi.ApiException as e:
+            log.exception("group fetch failed")
+            self.disable()
+        if group.my_member == None:
+            log.error("not part of this group")
+            self.disable()
+            return
+        needed_permission = set(
+            [
+                "group-members-manage",  # required by the 2 below
+                "group-members-remove",
+                "group-members-viewall",
+                "group-invites-manage",
+            ]
+        )
+        log.debug(f"my perms= {group.my_member.permissions}")
+        for perm in group.my_member.permissions:
+            try:
+                needed_permission.remove(perm)
+            except KeyError:
+                pass
+        if len(needed_permission):
+            log.error(f"group permission missing :{' '.join(needed_permission)}")
+            self.disable()
+        log.debug("group check ok")
 
     async def status(self) -> dict:
         r = {
             "working": self.working,
-            "enabled": self.enabled and settings.VRC_ENABLED,
+            "module enabled": self.enabled,
+            "settings enabled": settings.VRC_ENABLED,
             "logged_in": self.logged_in,
             "feature_vrc_enabled": settings.VRC_ENABLED,
             "feature_user_search": settings.VRC_FEAT_USER_SEARCH,
@@ -311,8 +361,11 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         if self.enabled and self.logged_in:
             try:
                 await self.rate_limiter.acquire()
-                t = self.vrc_auth_api.get_current_user(async_req=True)
-                current_user = t.get()
+                thread = self.vrc_auth_api.get_current_user_with_http_info(
+                    async_req=True
+                )
+                current_user, http_code, responce_header = thread.get()
+                await self.log_api_version(responce_header)
                 r["display_name"] = current_user.display_name
                 self._update_rate_limits_from_response()
             except UnauthorizedException as e:
@@ -320,6 +373,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                     f"Login failed UnauthorizedException `{e.body}` `{e.reason}`"
                 )
                 self._update_rate_limits_from_exception(e)
+                self.disable()
             except vrchatapi.ApiException as e:
                 r["error"] = f"Login failed ApiException `{e.body}`"
                 self._update_rate_limits_from_exception(e)
@@ -524,7 +578,15 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             log.exception("fail to retrieve invites")
         return pending
 
+    @tasks.loop(hours=2.0)
+    async def sync_job(self):
+        await self.sync()
+
     async def sync(self, list_unkown: bool = False) -> dict:
+        try:
+            self.allowed_to_run()
+        except VrcNotWorking:
+            return {}
         group_api = vrchatapi.GroupsApi(self.api_client)
 
         vrcmembers = []
@@ -659,3 +721,16 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 f"unable to kick did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
             )
             log.debug(e.body)
+
+    async def unlink(self, officer_id: int):
+        try:
+            officer = await models.Officer.objects.get(id=officer_id)
+        except ormar.NoMatch:
+            log.error(f"officer {officer_id} is not in DB")
+            return
+        officer.vrchat_name = ""
+        officer.vrchat_id = ""
+        if officer.extra is None:
+            officer.extra = {}
+        officer.extra["vrcRegStatus"] = VrcUserRegistrationStatus.UNREGISTERED.value
+        await officer.update()
