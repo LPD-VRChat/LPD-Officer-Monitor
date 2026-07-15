@@ -36,9 +36,9 @@ COPY pyproject.toml poetry.lock ./
 RUN ls /app
 RUN mkdir ${VIRTUAL_ENV}
 RUN if [ "${BUILD_TYPE}" = "dev" ]; then \
-      poetry install --extras dev --no-root -vvv && rm -rf $POETRY_CACHE_DIR; \
+      poetry install --extras dev --no-root -v && rm -rf $POETRY_CACHE_DIR; \
     else \
-      poetry install --no-root -vvv && rm -rf $POETRY_CACHE_DIR; \
+      poetry install --no-root -v && rm -rf $POETRY_CACHE_DIR; \
     fi
 
 
