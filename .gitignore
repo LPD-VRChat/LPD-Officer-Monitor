@@ -124,6 +124,7 @@ Logs/
 
 #python virtual environement
 .venv/
+.venv_*/
 
 #docker temporary
 keepalive
