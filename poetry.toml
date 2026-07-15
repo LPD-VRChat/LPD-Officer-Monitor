@@ -1,3 +1,5 @@
 [virtualenvs]
 create = true
 in-project = true
+[solver]
+min-release-age = 7
