@@ -141,4 +141,3 @@ VRC_NAMES_STATIC: list[str] = [
 
 
 VRC_GROUP_ID = "grp_60a547b4-1b67-4ba4-957b-2f4f8a27cde9"
-
