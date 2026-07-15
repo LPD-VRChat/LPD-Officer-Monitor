@@ -14,13 +14,12 @@ services:
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
       LPD_OFFICER_MONITOR_ENVIRONMENT: "${LPD_OFFICER_MONITOR_ENVIRONMENT}"
     volumes:
-      - ".:/app"
+      - ".:/app:ro"
       - /app/.venv
-      - "./logs:/logs"
+      - "./logs:/logs:rw"
     secrets:
       - mysql_user_password
       - discord_token
-      - discord_secret
     depends_on:
       - db
     #restart: on-failure:1
@@ -37,7 +36,7 @@ services:
       MYSQL_USER: lpdbot
       TZ: "Etc/UTC"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - db-data:/var/lib/mysql
     secrets:
@@ -54,5 +53,3 @@ secrets:
     file: mysql_user_password
   discord_token:
     file: discord_token
-  discord_secret:
-    file: discord_secret
