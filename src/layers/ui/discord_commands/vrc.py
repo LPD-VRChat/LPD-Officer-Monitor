@@ -154,7 +154,7 @@ Your id is `{officer.vrchat_id}`"""
                 if len(settings.VRC_GROUP_ID):
                     txt += f", you can [join here](<https://vrchat.com/home/group/{settings.VRC_GROUP_ID}>)"
                 else:
-                    txt += "we will invite you soon"
+                    txt += " we will invite you soon"
                 await interaction_reply(interac, txt)
                 return
             case LinkSearchResult.INVALID_UUID:
