@@ -19,7 +19,7 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 import src.layers.storage.models as models
 
-target_metadata = models.metadata
+target_metadata = models._metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -40,7 +40,7 @@ def run_migrations_offline():
 
     """
     # url = config.get_main_option("sqlalchemy.url")
-    url = models.DATABASE_URL.replace("%", "%%")
+    url = models.DATABASE_URL.replace("%", "%%").replace("+aiomysql","+pymysql")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -59,7 +59,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    config.set_main_option("sqlalchemy.url", models.DATABASE_URL.replace("%", "%%"))
+    config.set_main_option("sqlalchemy.url", models.DATABASE_URL.replace("%", "%%").replace("+aiomysql","+pymysql"))
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
