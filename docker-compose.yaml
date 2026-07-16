@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   lpdbot:
     container_name: lpdbot
@@ -17,6 +16,7 @@ services:
       - ".:/app:ro"
       - /app/.venv
       - "./logs:/logs:rw"
+      - "./settings/local.ini:/app/settings/local.ini:rw"
     secrets:
       - mysql_user_password
       - discord_token
