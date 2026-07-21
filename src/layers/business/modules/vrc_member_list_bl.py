@@ -129,7 +129,7 @@ class VRCMemberListBL(DiscordListenerMixin):
                 await models.OfficerPayment.objects.bulk_create(officer_payments)
         log.info(f"Payed {len(officer_payments)} officers")
 
-    @debounce(seconds=60 * 60 * 4)
+    @debounce(seconds=60 * 5)
     async def upload_to_world(self, reason: Optional[str] = "cron") -> None:
         """
         Uploads the member CSV to the gist where the VRChat world can download it.
