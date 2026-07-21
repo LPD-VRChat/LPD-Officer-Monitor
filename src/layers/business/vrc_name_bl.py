@@ -418,6 +418,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             log.debug(f"Could not extract rate limit headers from exception: {e}")
 
     def allowed_to_run(self):
+        """raise `VrcNotWorking`"""
         if not (self.working and self.enabled and self.logged_in):
             raise VrcNotWorking()
 
@@ -696,8 +697,17 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             return
         log.debug(f"vrc will remove {event.officer.vrchat_name}")
 
+        try:
+            self.allowed_to_run()
+        except VrcNotWorking:
+            log.warning(
+                f"remove VRC member NotWorking, you need to manually kick user `{event.officer.vrchat_name}` `{event.officer.vrchat_id}`"
+            )
+            return
+
         group_api = vrchatapi.GroupsApi(self.api_client)
         try:
+            await self.rate_limiter.acquire()
             t = group_api.kick_group_member(
                 group_id=settings.VRC_GROUP_ID,
                 user_id=event.officer.vrchat_id,
