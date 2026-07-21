@@ -167,9 +167,6 @@ class VRCMemberListBL(DiscordListenerMixin):
                 # log.debug(
                 #     f"Data returned from gist edit endpoint: {content_length / 1000}KB"
                 # )
-                for k in response.headers:
-                    if k.startswith("x-ratelimit-"):
-                        print(f"{k}: `{response.headers[k]}`")
 
     async def get_csv_str(self) -> str:
         """
