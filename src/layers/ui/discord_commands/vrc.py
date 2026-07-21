@@ -150,7 +150,7 @@ Your id is `{officer.vrchat_id}`"""
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
             case LinkSearchResult.VRCAPI_DOWN:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
-                txt = f":green_check: Your VRChat name is set to `{name}`\n"
+                txt = f":white_check_mark: Your VRChat name is set to `{name}`\n"
                 if settings.VRC_ENABLED:
                     txt = ":warning: but VRChat api is disabled"
                     if len(settings.VRC_GROUP_ID):
