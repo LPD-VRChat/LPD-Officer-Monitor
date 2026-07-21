@@ -160,17 +160,16 @@ class VRCMemberListBL(DiscordListenerMixin):
                         f"Updating github gist API returned {response.status}:\n"
                         f"{error_msg}"
                     )
-                response_json = await response.json()
-                content_length = response.content.total_bytes
+                # response_json = await response.json()
+                # content_length = response.content.total_bytes
 
-                history = response_json.get("history", None)
-                log.debug(
-                    f"Data returned from gist edit endpoint: {content_length / 1000}KB"
-                )
-                log.debug(
-                    f"Number of items in history: "
-                    f"{0 if history is None else len(history)}"
-                )
+                # history = response_json.get("history", None)
+                # log.debug(
+                #     f"Data returned from gist edit endpoint: {content_length / 1000}KB"
+                # )
+                for k in response.headers:
+                    if k.startswith("x-ratelimit-"):
+                        print(f"{k}: `{response.headers[k]}`")
 
     async def get_csv_str(self) -> str:
         """
