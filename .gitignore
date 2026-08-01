@@ -104,10 +104,11 @@ venv.bak/
 .mypy_cache/
 
 # Ignore the keys and local settings
-keys/dev.py
-keys/production.py
-keys/local.py
-settings/local.py
+/keys/dev.py
+/keys/production.py
+/keys/local.py
+/settings/local.py
+/settings/local.ini
 
 # Visual Studio/VSCode
 .vscode/*
@@ -118,7 +119,6 @@ LPD_database*.csv
 *.sqlite
 .run.loop
 run
-settings/local.py
 Keys/local.py
 Logs/
 
@@ -134,4 +134,4 @@ discord_secret
 discord_token
 mysql_root_password
 mysql_user_password
-/settings/local.ini
+/extra/mariadb/encryption/*

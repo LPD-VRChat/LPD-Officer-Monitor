@@ -1,0 +1,13 @@
+[mariadb]
+plugin_load_add = file_key_management
+file_key_management_filename = /run/secrets/mariadb_keys
+file_key_management_filekey = FILE:/run/secrets/mariadb_keyfile
+file_key_management_encryption_algorithm = AES_CBC
+file_key_management_digest = sha256
+file_key_management_use_pbkdf2 = 20000
+
+innodb_encrypt_tables = ON
+innodb_encrypt_log = ON
+innodb_encrypt_temporary_tables = ON
+aria_encrypt_tables = ON
+encrypt_tmp_disk_tables = ON

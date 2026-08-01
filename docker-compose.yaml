@@ -26,7 +26,8 @@ services:
     restart: unless-stopped #the only way to get autostart
 
   db:
-    image: mariadb:10.6 #LTS
+    #image: mariadb:10.6 #LTS
+    image: mariadb:12.2
     container_name: db
     restart: unless-stopped
     environment:
@@ -39,9 +40,12 @@ services:
       - "127.0.0.1:3306:3306"
     volumes:
       - db-data:/var/lib/mysql
+      - ./extra/mariadb/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     secrets:
       - mysql_root_password
       - mysql_user_password
+      - mariadb_keys
+      - mariadb_keyfile
 
 volumes:
   db-data: null
@@ -53,3 +57,7 @@ secrets:
     file: mysql_user_password
   discord_token:
     file: discord_token
+  mariadb_keys:
+    file: ./extra/mariadb/encryption/keys.enc
+  mariadb_keyfile:
+    file: ./extra/mariadb/encryption/keyfile.key
