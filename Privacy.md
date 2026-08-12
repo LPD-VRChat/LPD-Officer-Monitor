@@ -1,6 +1,4 @@
 # LPD Officer Monitor Privacy Policy
-
-**Effective date:** August 6, 2026  
 **Last updated:** August 6, 2026
 
 ## 1. About this policy
