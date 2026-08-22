@@ -19,7 +19,8 @@ import random
 import discord
 from discord.ext import commands
 import ormar
-from pymysql.err import IntegrityError
+import pymysql.err
+import sqlalchemy.exc
 
 # Custom
 import settings
@@ -235,7 +236,7 @@ class PatrolTimeBL(
                         event=None,
                         main_channel=after.channel.id,
                     )
-                except IntegrityError as e:
+                except (sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError) as e:
                     if not is_lpd_member(member):
                         log.warning(f"Non LPD member{member.id} in on-duty-channel")
                         self._guest_on_duty_channels.add(member.id)
@@ -371,7 +372,10 @@ class PatrolTimeBL(
                                 event=None,
                                 main_channel=channel.id,
                             )
-                        except IntegrityError as e:
+                        except (
+                            sqlalchemy.exc.IntegrityError,
+                            pymysql.err.IntegrityError,
+                        ) as e:
                             if not is_lpd_member(member):
                                 log.warning(
                                     f"Non LPD member{member.id} in on-duty-channel"
