@@ -176,6 +176,7 @@ class LinkSearchResult(enum.Enum):
 class LinkInviteResult(enum.Enum):
     OK = 0
     ALREADY_INVITED = 1
+    ALREADY_IN_GROUP = 2
     ERROR = -1
 
 
@@ -243,6 +244,8 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         if self.working and self.enabled:
             log.warning("already logged in")
             return
+
+        current_user, http_code, responce_header = None, 0, None
         try:
             # during testing found out you can be blocked by going over rate limit, no real way to check first
             thread = self.vrc_auth_api.get_current_user_with_http_info(async_req=True)
@@ -384,7 +387,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 r["pending_invites"] = len(gi)
                 for i in gi:
                     print(
-                        f"{i['accepted_by_display_name']} added {i['user']['display_name']}{i['user']['id']}"
+                        f"{i.accepted_by_display_name} added {i.user.display_name} {i.user.id}"
                     )
             except VrcNotWorking:
                 pass
@@ -471,6 +474,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
     async def link_search(
         self, discord_id: int, txt: str
     ) -> tuple[LinkSearchResult, Optional[list]]:
+        log.debug(f"link_search {discord_id=} {txt=}")
         try:
             officer = await models.Officer.objects.get(id=discord_id)
         except ormar.NoMatch:
@@ -489,10 +493,11 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         elif uuidhex.match(txt):
             id = VRC_UUID_USER_PREFIX + txt
 
+        users: list[vrchatapi.LimitedUserSearch] = []
         if len(id):
             await self._link_old(officer, id=id)
             try:
-                user = [await self.lookup_userid(id)]
+                users = [await self.lookup_userid(id)]
             except VrcNotWorking:
                 return LinkSearchResult.VRCAPI_DOWN, None
         else:
@@ -500,11 +505,18 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 return LinkSearchResult.USER_SEARCH_DISABLED, None
             await self._link_old(officer, name=txt)
             try:
-                user = await self.lookup_username(txt)
+                users = await self.lookup_username(txt)
             except VrcNotWorking:
-                return LinkSearchResult.VRCAPI_DOWN, []
+                return LinkSearchResult.VRCAPI_DOWN, None
+            for u in users:
+                if u.display_name == txt:
+                    users = [u]
+                    log.debug(
+                        f"lnk_s exact match `{discord_id}` `{txt}` `{users[0].id}`"
+                    )
+                    break
 
-        return LinkSearchResult.OK, user
+        return LinkSearchResult.OK, users
 
     async def link_vrc(self, discord_id: int, vrc_uuid: str, vrc_display_name: str):
         officer = await models.Officer.objects.get(id=discord_id)
@@ -539,9 +551,23 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         except vrchatapi.ApiException as e:
             if e.body and len(e.body):
                 body = json.loads(e.body)
-                if hasattr(body, "error") and hasattr(body["error"], "message"):
+                if (
+                    isinstance(body, dict)
+                    and isinstance(body.get("error"), dict)
+                    and "message" in body["error"]
+                ):
                     if body["error"]["message"].endswith("is already invited․"):
                         return LinkInviteResult.ALREADY_INVITED
+                    elif body["error"]["message"].endswith(
+                        "is already a member of this group․"
+                    ):
+                        return LinkInviteResult.ALREADY_IN_GROUP
+                    else:
+                        log.error(
+                            f"invite failed unkown error message `{body['error']['message']}`"
+                        )
+                        log.debug(e.body)
+                        return LinkInviteResult.ERROR
             log.exception("fail to send invite")
             return LinkInviteResult.ERROR
         except:
@@ -579,9 +605,10 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             log.exception("fail to retrieve invites")
         return pending
 
-    @tasks.loop(hours=2.0)
+    @tasks.loop(hours=24.0 * 2)
     async def sync_job(self):
-        await self.sync()
+        # await self.sync()
+        pass
 
     async def sync(self, list_unkown: bool = False) -> dict:
         try:
@@ -589,25 +616,51 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         except VrcNotWorking:
             return {}
         group_api = vrchatapi.GroupsApi(self.api_client)
-
         vrcmembers = []
-        try:
-            current_offset = 0
-            while True:
-                await self.rate_limiter.acquire()
+        CHUNK_SIZE = 50
+        log.debug("starting sync")
+        current_offset = 0
+        while True:
+            log.debug(f"fetch group {current_offset=}")
+            await self.rate_limiter.acquire()
+            try:
                 t = group_api.get_group_members(
                     group_id=settings.VRC_GROUP_ID,
-                    n=60,
+                    n=CHUNK_SIZE,
                     offset=current_offset,
                     async_req=True,
                 )
                 r = t.get()
-                vrcmembers.extend(r)
-                if len(r) < 60:
-                    break
-        except:
-            log.exception("fail to retrieve invites")
+            except vrchatapi.ApiException as e:
+                log.exception(f"vrc group member fetch failed {e}")
+                return {}
+            vrcmembers.extend(r)
+            if len(r) < CHUNK_SIZE:
+                break
+        log.debug(f"group {len(vrcmembers)=}")
 
+        invites = []
+        current_offset = 0
+        while True:
+            log.debug(f"fetch group {current_offset=}")
+            await self.rate_limiter.acquire()
+            try:
+                t = group_api.get_group_invites(
+                    group_id=settings.VRC_GROUP_ID,
+                    n=CHUNK_SIZE,
+                    offset=current_offset,
+                    async_req=True,
+                )
+                r = t.get()
+            except vrchatapi.ApiException as e:
+                log.exception(f"vrc group invites fetch failed {e}")
+                return {}
+            invites.extend(r)
+            if len(r) < CHUNK_SIZE:
+                break
+        log.debug(f"group {len(invites)=}")
+
+        log.debug("sync: reordering member")
         vrcid_to_member = {m.user.id: i for i, m in enumerate(vrcmembers)}
         vrcname_to_member = {m.user.display_name: i for i, m in enumerate(vrcmembers)}
 
@@ -620,7 +673,10 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             "newsync": 0,
             "groupUnk": 0,
             "notGrouped": 0,
+            "invites": len(invites),
         }
+
+        log.debug("sync: resolving officers")
 
         for o in officers:
             if (
@@ -688,6 +744,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 if list_unkown:
                     report["unkown"].append([vrcm.user.display_name, vrcm.user.id])
 
+        log.debug(f"sync: done {report=}")
         return report
 
     @business_event(MemberManagementEvent.MemberLeft)
