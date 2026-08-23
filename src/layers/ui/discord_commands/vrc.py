@@ -137,6 +137,9 @@ Your id is `{officer.vrchat_id}`"""
             result_search, users = await self.bl_wrapper.vrc.link_search(
                 interac.user.id, name
             )
+            log.debug(
+                f"search result did{interac.user.id} `{name}` {result_search.name} {len(users)=}"
+            )
         except BaseException as e:
             log.exception("lookup failed badly")
         except VrcNotWorking:
@@ -230,8 +233,10 @@ Or in VRCX, copy `User ID`""",
             embed.description = ""
 
             if not await msgbox_confirm(interac, embed=embed, ephemeral=True):
+                await interac.delete_original_response()
                 return
             selected_user = 0
+            await interac.delete_original_response()
         else:
             # print(users)
             embeds = [vrc_user_2_embed(u) for u in users]
@@ -258,7 +263,7 @@ Or in VRCX, copy `User ID`""",
             users[selected_user].display_name,
         )
         match (result_invite):
-            case LinkInviteResult.ok:
+            case LinkInviteResult.OK:
                 await interaction_reply(
                     interac,
                     ":white_check_mark: You are registered, you should have received an invite for the VRChat group",
@@ -268,8 +273,12 @@ Or in VRCX, copy `User ID`""",
                     interac,
                     ":white_check_mark: You are registered, you **already** have an invite for the VRChat group",
                 )
+            case LinkInviteResult.ALREADY_IN_GROUP:
+                await interaction_reply(
+                    interac,
+                    ":white_check_mark: You are registered, you **already** in the VRChat group",
+                )
             case LinkInviteResult.ERROR:
-
                 await interaction_reply(
                     interac,
                     ":warning: You are registered, but invite for the VRChat group failed",
