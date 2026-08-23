@@ -492,9 +492,9 @@ class _EmbedSelectButton(discord.ui.Button):
         for item in view.children:
             item.disabled = True
 
-        await interaction.response.edit_message(
-            content=f"Choosen `{self.label}`", view=None
-        )
+        # await interaction.edit_original_response(
+        #     content=f"Choosen `{self.label}`", view=None, embeds=[]
+        # )
         view.stop()
 
 
@@ -508,7 +508,7 @@ async def multi_choice_embed(
     cancel_button: bool = True,
 ) -> int:
     """
-    returns -1 on timeout, cancelation
+    returns -1 on timeout or cancelation
     """
     if isinstance(ctx, discord.Interaction):
         user_id = ctx.user.id
@@ -537,6 +537,10 @@ async def multi_choice_embed(
             ephemeral=ephemeral,
         )
     await view.wait()
-    if view.get_selected_index() is None:
-        await msg.edit(content="Timeout", view=None)
+    if view.get_selected_index() in [-1, None]:
+        await msg.edit(content="Timeout/Canceled", view=None, embeds=[])
+    else:
+        await msg.edit(
+            content=f"Choosed {view.get_selected_index()}", view=None, embeds=[]
+        )
     return view.get_selected_index()
