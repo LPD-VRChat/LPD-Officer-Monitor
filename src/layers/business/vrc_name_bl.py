@@ -587,20 +587,23 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
     async def get_group_invites(self):
         group_api = vrchatapi.GroupsApi(self.api_client)
         pending = []
+        CHUNK_SIZE = 50
         try:
             current_offset = 0
             while True:
                 await self.rate_limiter.acquire()
                 t = group_api.get_group_invites(
                     group_id=settings.VRC_GROUP_ID,
-                    n=60,
+                    n=CHUNK_SIZE,
                     offset=current_offset,
                     async_req=True,
                 )
                 r = t.get()
                 pending.extend(r)
-                if len(r) < 60:
+                if len(r) < CHUNK_SIZE:
                     break
+                else:
+                    current_offset += CHUNK_SIZE
         except:
             log.exception("fail to retrieve invites")
         return pending
@@ -637,28 +640,17 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             vrcmembers.extend(r)
             if len(r) < CHUNK_SIZE:
                 break
+            else:
+                current_offset += CHUNK_SIZE
         log.debug(f"group {len(vrcmembers)=}")
 
-        invites = []
-        current_offset = 0
-        while True:
-            log.debug(f"fetch group {current_offset=}")
-            await self.rate_limiter.acquire()
-            try:
-                t = group_api.get_group_invites(
-                    group_id=settings.VRC_GROUP_ID,
-                    n=CHUNK_SIZE,
-                    offset=current_offset,
-                    async_req=True,
-                )
-                r = t.get()
-            except vrchatapi.ApiException as e:
-                log.exception(f"vrc group invites fetch failed {e}")
-                return {}
-            invites.extend(r)
-            if len(r) < CHUNK_SIZE:
-                break
+        invites: list[vrchatapi.GroupMember] = await self.get_group_invites(self)
+
         log.debug(f"group {len(invites)=}")
+        for i in invites:
+            log.debug(
+                f"{i.accepted_by_display_name} added {i.user.display_name} {i.user.id}"
+            )
 
         log.debug("sync: reordering member")
         vrcid_to_member = {m.user.id: i for i, m in enumerate(vrcmembers)}
