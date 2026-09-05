@@ -12,7 +12,7 @@ dependencies = [
     "nest_asyncio~=1.5.1",
     "thefuzz~=0.22.1",
     "databases",
-    "ormar[mysql] < 0.25.0",
+    "ormar[mysql] ~= 0.26.0",
     "pymysql",
     "aiomysql>=0.0.21",
     "alembic>=1.7.4",
