@@ -30,7 +30,7 @@ web = [ #discarded project
     "Quart_Discord==2.1.4",
 ]
 dev = [
-    "black~=25.1.0",
+    "black~=26.3.0",
     "pytest>=6.2.5",
     "pytest-env>=0.6.2",
     "dpytest~=0.7.0",
@@ -44,3 +44,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 package-mode = false
+
+[tool.black]
+target-version = ["py311"]
