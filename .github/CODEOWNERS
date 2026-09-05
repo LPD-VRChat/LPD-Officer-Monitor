@@ -1,3 +1,6 @@
 /.github/ @50thomatoes50 @hrolfurgylfa
 /poetry.lock @50thomatoes50 @hrolfurgylfa
 /pyproject.toml @50thomatoes50 @hrolfurgylfa
+/docker-compose.yaml @50thomatoes50 @hrolfurgylfa
+/docker-entrypoint.sh @50thomatoes50 @hrolfurgylfa
+/Dockerfile @50thomatoes50 @hrolfurgylfa
