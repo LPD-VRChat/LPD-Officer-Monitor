@@ -9,7 +9,6 @@ from discord.mentions import default
 import settings
 from testing.fixtures import default_data_fixtures
 
-
 """
 All helper functions to run the test and fill the gap for things dpytest doesn't support/implement
 
