@@ -33,7 +33,7 @@ from .base_bl import (
 )
 from src.layers.storage import models
 from settings.classes import RoleLadderElement
-from src.layers.business.extra_functions import has_role_id
+from src.layers.business.extra_functions import get_lpd_member_rank, has_role_id
 
 log = logging.getLogger("lpd-officer-monitor")
 
@@ -460,6 +460,8 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             return None
 
     async def _link_old(self, officer: models.Officer, name: str = "", id: str = ""):
+        log.debug(f"link_vrc did{officer.id} vrcid`{id}` `{name}`")
+
         officer.vrchat_name = name
         officer.vrchat_id = id
         if officer.extra is None:
@@ -470,6 +472,13 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             else VrcUserRegistrationStatus.OLD_NAME_ONLY.value
         )
         await officer.update()
+
+
+    def is_vrc_user_id(self, txt:str):
+        return (txt.startswith("usr_") and uuidhex.match(txt[4:])) or uuidhex.match(txt)
+
+    def is_vrc_user_url(self, txt:str):
+        return txt.startswith("https://vrchat.com/home/user/usr_") and uuidhex.match(txt[33:])
 
     async def link_search(
         self, discord_id: int, txt: str
@@ -519,6 +528,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         return LinkSearchResult.OK, users
 
     async def link_vrc(self, discord_id: int, vrc_uuid: str, vrc_display_name: str):
+        log.debug(f"link_vrc did{discord_id} {vrc_uuid=} {vrc_display_name}")
         officer = await models.Officer.objects.get(id=discord_id)
         officer.vrchat_name = vrc_display_name
         officer.vrchat_id = vrc_uuid
@@ -535,7 +545,11 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             log.warning(f"vrc group id not set, cannot invite")
             return LinkInviteResult.ERROR
 
-        # no need to accept existing request, if user already requested and we send invite, vrc accept and user become member directly
+        log.debug(f"link_group_invite did{discord_id} {vrc_uuid=} `{vrc_display_name}`")
+
+        # no need to accept existing request
+        # if user already requested and we send invite
+        # vrc accept and user become group member directly
 
         gir = vrchatapi.CreateGroupInviteRequest(user_id=vrc_uuid)
         group_api = vrchatapi.GroupsApi(self.api_client)
@@ -585,8 +599,12 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         return LinkInviteResult.OK
 
     async def get_group_invites(self):
+        """
+        Api only gives invites sent by the bot.
+        using rate limiter internally
+        """
         group_api = vrchatapi.GroupsApi(self.api_client)
-        pending = []
+        pending: list[vrchatapi.GroupMember] = []
         CHUNK_SIZE = 50
         try:
             current_offset = 0
@@ -739,6 +757,64 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         log.debug(f"sync: done {report=}")
         return report
 
+    async def is_member_kickable(self, vrc_id: str, discord_member: Optional[discord.Member]):
+        if discord_member:
+            rank = get_lpd_member_rank(discord_member)
+            if rank:
+                if rank.is_admin or rank.is_white_shirt:
+                    log.debug("vrcmember_kickable: NO discord rank")
+                    return False
+
+        if len(vrc_id) == 0:
+            log.debug("vrcmember_kickable: no empty vrc_id")
+            return False
+        group_api = vrchatapi.GroupsApi(self.api_client)
+        try:
+            await self.rate_limiter.acquire()
+            t = group_api.get_group_member(
+                group_id=settings.VRC_GROUP_ID,
+                user_id=vrc_id,
+                async_req=True,
+            )
+            member: vrchatapi.GroupMember = t.get()
+            roles = set(member.role_ids)
+            if roles.intersection(settings.VRC_STAFF_ROLE) or roles.intersection(
+                settings.VRC_GUEST_ROLE
+            ):
+                log.debug("vrcmember_kickable: no vrc staff or guest")
+                return False
+            log.debug("vrcmember_kickable: yes vrc checked")
+            return True
+        except vrchatapi.ApiException as e:
+            log.exception("vrc.is_member_kickable: %s\n" % e)
+            return True
+
+    async def kick_from_group(self, officer):
+        group_api = vrchatapi.GroupsApi(self.api_client)
+        try:
+            await self.rate_limiter.acquire()
+            t = group_api.kick_group_member(
+                group_id=settings.VRC_GROUP_ID,
+                user_id=officer.vrchat_id,
+                async_req=True,
+            )
+            r = t.get()
+            log.debug(f"kicked {officer.vrchat_name} {officer.vrchat_id} {r=}")
+            if officer.extra == None:
+                officer.extra = {}
+            officer.extra["vrcRegStatus"] = VrcUserRegistrationStatus.UNREGISTERED.value
+            await officer.update()
+            return True
+        except vrchatapi.ApiException as e:
+            # log.exception(
+            #     f"unable to kick user did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
+            # )
+            log.warning(
+                f"unable to kick did{officer.id} vrcname`{officer.vrchat_name}`{officer.vrchat_id}"
+            )
+            log.debug(e.body)
+            return False
+
     @business_event(MemberManagementEvent.MemberLeft)
     async def remove_member(self, event: MemberManagementEvent.MemberLeft):
         if not event.officer:
@@ -754,32 +830,27 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             )
             return
 
+        discord_member = event.member if event.member else await self.bot.guild.get_member(event.member_id)
+
+        kickable = await self.is_member_kickable(event.officer.vrchat_id, discord_member)
         group_api = vrchatapi.GroupsApi(self.api_client)
-        try:
-            await self.rate_limiter.acquire()
-            t = group_api.kick_group_member(
-                group_id=settings.VRC_GROUP_ID,
-                user_id=event.officer.vrchat_id,
-                async_req=True,
-            )
-            r = t.get()
-            log.debug(
-                f"kicked {event.officer.vrchat_name} {event.officer.vrchat_id} {r=}"
-            )
-            if event.officer.extra == None:
-                event.officer.extra = {}
-            event.officer.extra["vrcRegStatus"] = (
-                VrcUserRegistrationStatus.UNREGISTERED.value
-            )
-            await event.officer.update()
-        except vrchatapi.ApiException as e:
-            # log.exception(
-            #     f"unable to kick user did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
-            # )
-            log.error(
-                f"unable to kick did{event.officer.id} vrcname`{event.officer.vrchat_name}`{event.officer.vrchat_id}"
-            )
-            log.debug(e.body)
+
+        if kickable and len(event.officer.vrchat_id):
+            r = await self.kick_from_group(event.officer)
+
+            if not r:
+                try:
+                    await self.rate_limiter.acquire()
+                    t = group_api.delete_group_invite(
+                        group_id=settings.VRC_GROUP_ID,
+                        user_id=event.officer.vrchat_id,
+                        async_req=True,
+                    )
+                    responce = t.get()
+                    log.debug("delete invite for event.officer.vrchat_id")
+                except vrchatapi.ApiException as e:
+                    log.warning("delete_group_invite: %s\n" % e)
+                    log.debug(e.body)
 
     async def unlink(self, officer_id: int):
         try:

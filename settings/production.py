@@ -141,3 +141,10 @@ VRC_NAMES_STATIC: list[str] = [
 
 
 VRC_GROUP_ID = "grp_60a547b4-1b67-4ba4-957b-2f4f8a27cde9"
+VRC_STAFF_ROLE = [
+    "grol_51ec99de-8d36-460d-bb17-eeb04fd9d677",  # staff
+    "grol_c51f22fb-cb00-4aec-ba8e-f15e4d956f96",  # admin
+]
+VRC_GUEST_ROLE = [
+    "grol_79ecb480-c905-407b-b252-774f00a7560d",  # guest
+]
