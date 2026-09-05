@@ -637,7 +637,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         except VrcNotWorking:
             return {}
         group_api = vrchatapi.GroupsApi(self.api_client)
-        vrcmembers = []
+        vrcmembers:list[vrchatapi.GroupMember] = []
         CHUNK_SIZE = 50
         log.debug("starting sync")
         current_offset = 0
@@ -662,7 +662,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 current_offset += CHUNK_SIZE
         log.debug(f"group {len(vrcmembers)=}")
 
-        invites: list[vrchatapi.GroupMember] = await self.get_group_invites(self)
+        invites: list[vrchatapi.GroupMember] = await self.get_group_invites()
 
         log.debug(f"group {len(invites)=}")
         for i in invites:
@@ -683,6 +683,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             "newsync": 0,
             "groupUnk": 0,
             "notGrouped": 0,
+            "guest": 0,
             "invites": len(invites),
         }
 
@@ -747,12 +748,18 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
 
         for vrcm in vrcmembers:
             if vrcm.user.id not in officers_synced:
-                log.debug(
-                    f"unknown user in group {vrcm.user.display_name} {vrcm.user.id}"
-                )
-                report["groupUnk"] += 1
-                if list_unkown:
-                    report["unkown"].append([vrcm.user.display_name, vrcm.user.id])
+                roles = set(vrcm.role_ids)
+                if roles.intersection(settings.VRC_STAFF_ROLE) or roles.intersection(
+                    settings.VRC_GUEST_ROLE
+                ):
+                    report["guest"] += 1
+                else:
+                    log.debug(
+                        f"unknown user in group {vrcm.user.display_name} {vrcm.user.id}"
+                    )
+                    report["groupUnk"] += 1
+                    if list_unkown:
+                        report["unkown"].append([vrcm.user.display_name, vrcm.user.id])
 
         log.debug(f"sync: done {report=}")
         return report
