@@ -214,3 +214,5 @@ VRC_GROUP_ID: str = ""
 VRC_ENABLED: bool = False
 VRC_FEAT_USER_SEARCH: bool = True
 VRC_FEAT_DISPLAY_USER_IMAGE: bool = False
+VRC_GUEST_ROLE: list[str] = []
+VRC_STAFF_ROLE: list[str] = []

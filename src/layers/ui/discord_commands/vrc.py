@@ -138,7 +138,7 @@ Your id is `{officer.vrchat_id}`"""
                 interac.user.id, name
             )
             log.debug(
-                f"search result did{interac.user.id} `{name}` {result_search.name} {len(users)=}"
+                f"search result did{interac.user.id} `{name}` {result_search.name} len(users)={len(users) if users is not None else None}"
             )
         except BaseException as e:
             log.exception("lookup failed badly")
@@ -153,13 +153,17 @@ Your id is `{officer.vrchat_id}`"""
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
             case LinkSearchResult.VRCAPI_DOWN:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
-                txt = f":white_check_mark: Your VRChat name is set to `{name}`\n"
-                if settings.VRC_ENABLED:
-                    txt = ":warning: but VRChat api is disabled"
-                    if len(settings.VRC_GROUP_ID):
-                        txt += f", you can [join here](<https://vrchat.com/home/group/{settings.VRC_GROUP_ID}>)"
-                    else:
-                        txt += " we will invite you soon"
+                txt = ""
+                if self.bl_wrapper.vrc.is_vrc_user_id(name) or self.bl_wrapper.vrc.is_vrc_user_url(name):
+                    txt += f":red_circle: Your VRChat name is **NOT** set because VRchat integration is down\nRun the command again with your username\n"
+                else:
+                    txt += f":white_check_mark: Your VRChat name is set to `{name}`\n"
+                    if settings.VRC_ENABLED:
+                        txt = ":warning: but VRChat api is disabled"
+                if len(settings.VRC_GROUP_ID):
+                    txt += f", you can [join here](<https://vrchat.com/home/group/{settings.VRC_GROUP_ID}>)"
+                else:
+                    txt += " we will invite you soon"
                 await interaction_reply(interac, txt)
                 return
             case LinkSearchResult.INVALID_UUID:
@@ -233,10 +237,11 @@ Or in VRCX, copy `User ID`""",
             embed.description = ""
 
             if not await msgbox_confirm(interac, embed=embed, ephemeral=True):
-                await interac.delete_original_response()
+                await interac.edit_original_response(
+                    content="Canceled/Timeout", embeds=[]
+                )
                 return
             selected_user = 0
-            await interac.delete_original_response()
         else:
             # print(users)
             embeds = [vrc_user_2_embed(u) for u in users]
@@ -251,7 +256,9 @@ Or in VRCX, copy `User ID`""",
             if r == -1:
                 return
             selected_user = r
-
+        await interac.edit_original_response(
+            content=f"Confirm username `{users[selected_user].display_name}`", embeds=[]
+        )
         await self.bl_wrapper.vrc.link_vrc(
             interac.user.id,
             users[selected_user].id,
