@@ -10,7 +10,6 @@ from http.cookiejar import Cookie
 import asyncio
 import re
 
-
 # external
 import discord
 import ormar
@@ -473,12 +472,13 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         )
         await officer.update()
 
-
-    def is_vrc_user_id(self, txt:str):
+    def is_vrc_user_id(self, txt: str):
         return (txt.startswith("usr_") and uuidhex.match(txt[4:])) or uuidhex.match(txt)
 
-    def is_vrc_user_url(self, txt:str):
-        return txt.startswith("https://vrchat.com/home/user/usr_") and uuidhex.match(txt[33:])
+    def is_vrc_user_url(self, txt: str):
+        return txt.startswith("https://vrchat.com/home/user/usr_") and uuidhex.match(
+            txt[33:]
+        )
 
     async def link_search(
         self, discord_id: int, txt: str
@@ -637,7 +637,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         except VrcNotWorking:
             return {}
         group_api = vrchatapi.GroupsApi(self.api_client)
-        vrcmembers:list[vrchatapi.GroupMember] = []
+        vrcmembers: list[vrchatapi.GroupMember] = []
         CHUNK_SIZE = 50
         log.debug("starting sync")
         current_offset = 0
@@ -764,7 +764,9 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
         log.debug(f"sync: done {report=}")
         return report
 
-    async def is_member_kickable(self, vrc_id: str, discord_member: Optional[discord.Member]):
+    async def is_member_kickable(
+        self, vrc_id: str, discord_member: Optional[discord.Member]
+    ):
         if discord_member:
             rank = get_lpd_member_rank(discord_member)
             if rank:
@@ -837,9 +839,15 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             )
             return
 
-        discord_member = event.member if event.member else await self.bot.guild.get_member(event.member_id)
+        discord_member = (
+            event.member
+            if event.member
+            else await self.bot.guild.get_member(event.member_id)
+        )
 
-        kickable = await self.is_member_kickable(event.officer.vrchat_id, discord_member)
+        kickable = await self.is_member_kickable(
+            event.officer.vrchat_id, discord_member
+        )
         group_api = vrchatapi.GroupsApi(self.api_client)
 
         if kickable and len(event.officer.vrchat_id):

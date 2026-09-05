@@ -154,7 +154,9 @@ Your id is `{officer.vrchat_id}`"""
             case LinkSearchResult.VRCAPI_DOWN:
                 self.bl_wrapper.member_list.upload_to_world(reason="link")
                 txt = ""
-                if self.bl_wrapper.vrc.is_vrc_user_id(name) or self.bl_wrapper.vrc.is_vrc_user_url(name):
+                if self.bl_wrapper.vrc.is_vrc_user_id(
+                    name
+                ) or self.bl_wrapper.vrc.is_vrc_user_url(name):
                     txt += f":red_circle: Your VRChat name is **NOT** set because VRchat integration is down\nRun the command again with your username\n"
                 else:
                     txt += f":white_check_mark: Your VRChat name is set to `{name}`\n"
