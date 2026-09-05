@@ -7,7 +7,6 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-
 log = logging.getLogger("lpd-officer-monitor")
 
 

@@ -2,7 +2,6 @@ from src.layers.business.bl_wrapper import BusinessLayerWrapper
 from os import listdir
 from discord.ext import commands
 
-
 # Loop through modules at the same level and get their names without a file extention
 _modules = [
     module.replace(".py", "")

@@ -40,7 +40,6 @@ from src.extra_logging import (
 from src.layers.storage.models import database
 from src.layers.business.extra_functions import interaction_reply
 
-
 nest_asyncio.apply()
 
 

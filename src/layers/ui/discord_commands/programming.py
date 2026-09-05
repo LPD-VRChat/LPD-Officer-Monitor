@@ -22,7 +22,6 @@ import src.layers.business.bl_wrapper as bl_wrapper
 from src.layers.business.extra_functions import send_long, msgbox_confirm
 from src.layers import business as bl
 
-
 log = logging.getLogger("lpd-officer-monitor")
 
 
