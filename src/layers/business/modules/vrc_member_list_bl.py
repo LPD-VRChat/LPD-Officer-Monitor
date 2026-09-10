@@ -135,9 +135,17 @@ class VRCMemberListBL(DiscordListenerMixin):
         Uploads the member CSV to the gist where the VRChat world can download it.
         """
         self.last_upload_to_world = dt.datetime.now(dt.timezone.utc)
-        string = await self.get_csv_str()
+        data = await self.get_csv_str()
         gist_id = settings.STATION_ALLOWLIST_GIST_ID
         token = settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN
+        await self._upload_gist(gist_id, token, data, reason)
+        if (
+            settings.STATION_ALLOWLIST_GIST_ID_2
+            and settings.STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN_2
+        ):
+            await self._upload_gist(gist_id, token, data, reason)
+
+    async def _upload_gist(self, gist_id: str, token: str, data: str, reason: str):
         if gist_id is None or token is None or not token.startswith("ghp_"):
             log.warn(
                 "Failed to upload member list to world. Station allowlist settings not "
@@ -145,19 +153,19 @@ class VRCMemberListBL(DiscordListenerMixin):
             )
             return
 
-        log.debug(f"Uploading member list csv to gist. {reason=}")
+        log.debug(f"Uploading member list csv to gist. {gist_id[-4:]} {reason=}")
         async with aiohttp.ClientSession() as session:
             url = f"https://api.github.com/gists/{gist_id}"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "X-GitHub-Api-Version": "2022-11-28",
             }
-            json = {"files": {"station_allowlist.csv": {"content": string}}}
+            json = {"files": {"station_allowlist.csv": {"content": data}}}
             async with session.patch(url, headers=headers, json=json) as response:
                 if response.status != 200:
                     error_msg = response.text()
                     log.error(
-                        f"Updating github gist API returned {response.status}:\n"
+                        f"Updating github gist {gist_id[-4:]} API returned {response.status}:\n"
                         f"{error_msg}"
                     )
                 # response_json = await response.json()
