@@ -45,6 +45,7 @@ class Training(enum.Enum):
     SLRT = 3
     Watch_officer = 4
     Filming_crew = 5
+    LLD = 6
 
 
 class Regions(enum.Enum):
@@ -746,6 +747,13 @@ class Time(commands.Cog):
                             f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not in Media Team",
                         )
                         return
+                case Training.LLD:
+                    if not has_role_id(interac.user, settings.LLD_TRAINER_ROLE):
+                        await interaction_reply(
+                            interac,
+                            f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not a LLD Trainer",
+                        )
+                        return
                 case _:
                     await interaction_reply(interac, ":red_circle: invalid training.")
                     log.error(f"invalid training {training.value}")
@@ -777,7 +785,7 @@ class Time(commands.Cog):
                         f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target isn't an officer",
                     )
                     return
-            case Training.LMT:
+            case Training.LMT | Training.LLD:
                 if member_rank < settings.ROLE_LADDER.officer:
                     await interaction_reply(
                         interac,
@@ -844,6 +852,11 @@ class Time(commands.Cog):
                 await member.add_roles(
                     discord.Object(settings.FILMING_CREW_ROLE),
                     reason="bot trained Film crew",
+                )
+            case Training.LLD:
+                await member.add_roles(
+                    discord.Object(settings.LLD_CERTIFIED_ROLE),
+                    reason="bot trained LLD",
                 )
             case _:
                 await interaction_reply(interac, ":red_circle: invalid training.")
