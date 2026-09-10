@@ -240,6 +240,8 @@ class VRCMemberListBL(DiscordListenerMixin):
                 "Pay Amount",
                 "Event 1",
                 "Event 2",
+                "LLD Trainer",
+                "LLD Certified",
             ]
         )
         output_text += "\n"
@@ -286,6 +288,8 @@ class VRCMemberListBL(DiscordListenerMixin):
                 officer_payments.get(o.id, 0),
                 has_role_id(member, settings.EVENT_1_ROLE),
                 has_role_id(member, settings.EVENT_2_ROLE),
+                has_role_id(member, settings.LLD_TRAINER_ROLE),
+                has_role_id(member, settings.LLD_CERTIFIED_ROLE),
             ]
             output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
 
@@ -325,6 +329,8 @@ class VRCMemberListBL(DiscordListenerMixin):
                         0,  # payment amount
                         False,  # EVENT_1_ROLE
                         False,  # EVENT_2_ROLE
+                        False,  # LLD_TRAINER_ROLE
+                        False,  # LLD_CERTIFIED_ROLE
                     ]
                     output_text += settings.NAME_SEPARATOR.join(map(str, odata)) + "\n"
 
