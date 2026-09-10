@@ -196,6 +196,8 @@ GUESS_CLEAR_ALL_TIMER_MINUTES = 4 * 60
 # Auto Station Allowlist #########################################
 STATION_ALLOWLIST_GIST_ID: Optional[str] = None
 STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN: Optional[str] = None
+STATION_ALLOWLIST_GIST_ID_2: Optional[str] = None
+STATION_ALLOWLIST_PERSONAL_ACCESS_TOKEN_2: Optional[str] = None
 
 # iCal from teamup ###############################################
 SCHEDULE_URL: str = "https://ics.teamup.com/feed/kstfrjxcezye8yhw87/0.ics"
