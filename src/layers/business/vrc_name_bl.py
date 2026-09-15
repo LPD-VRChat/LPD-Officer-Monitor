@@ -280,7 +280,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 await self.log_api_version(e)
                 return
         except vrchatapi.ApiException as e:
-            log.exception("Exception when calling API")
+            log.exception(f"Login: {e.body}")
             self._update_rate_limits_from_exception(e)
             await self.log_api_version(e)
             self.disable()
@@ -325,7 +325,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             )
             group: vrchatapi.Group = t.get()
         except vrchatapi.ApiException as e:
-            log.exception("group fetch failed")
+            log.exception(f"group fetch failed {e.body}")
             self.disable()
         if group.my_member == None:
             log.error("not part of this group")
@@ -441,7 +441,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             api_response = t.get()
             return api_response
         except vrchatapi.ApiException as e:
-            log.exception(f"Exception when calling UsersApi->get_user: %s\n" % e)
+            log.exception(f"Exception when calling UsersApi->get_user: {e.body}")
             return dict()
 
     async def lookup_userid(self, user_id: str) -> Optional[vrchatapi.User]:
@@ -455,7 +455,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             # print(api_response)
             return api_response
         except vrchatapi.ApiException as e:
-            log.exception(f"Exception when calling UsersApi->get_user: %s\n" % e)
+            log.exception(f"Exception when calling UsersApi->get_user: {e.body}")
             return None
 
     async def _link_old(self, officer: models.Officer, name: str = "", id: str = ""):
@@ -653,7 +653,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                 )
                 r = t.get()
             except vrchatapi.ApiException as e:
-                log.exception(f"vrc group member fetch failed {e}")
+                log.exception(f"vrc group member fetch failed {e.body}")
                 return {}
             vrcmembers.extend(r)
             if len(r) < CHUNK_SIZE:
@@ -795,7 +795,7 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
             log.debug("vrcmember_kickable: yes vrc checked")
             return True
         except vrchatapi.ApiException as e:
-            log.exception("vrc.is_member_kickable: %s\n" % e)
+            log.exception(f"vrc.is_member_kickable: {e.body}\n")
             return True
 
     async def kick_from_group(self, officer):
@@ -864,8 +864,25 @@ class VRChatBL(DiscordListenerMixin, EventSenderMixin):
                     responce = t.get()
                     log.debug("delete invite for event.officer.vrchat_id")
                 except vrchatapi.ApiException as e:
-                    log.warning("delete_group_invite: %s\n" % e)
-                    log.debug(e.body)
+                    if e.body:
+                        data = None
+                        try:
+                            data = json.loads(e.body)
+                        except:
+                            pass
+                        if (
+                            isinstance(data, dict)
+                            and isinstance(data.get("error"), dict)
+                            and "message" in data["error"]
+                        ):
+                            if (
+                                data["error"]["message"]
+                                == "You can't uninvite a user who wasn't invited․"
+                            ):
+                                log.debug("no invite")
+                                return
+                    log.warning("delete_group_invite: %s\n" % e.body)
+                    log.debug(e)
 
     async def unlink(self, officer_id: int):
         try:
