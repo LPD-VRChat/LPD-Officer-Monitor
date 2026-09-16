@@ -142,11 +142,11 @@ Your id is `{officer.vrchat_id}`"""
             )
         except BaseException as e:
             log.exception("lookup failed badly")
-        except VrcNotWorking:
-            await interaction_reply(
-                interac,
-                ":warning:You are registered, but VRChat api is disabled, we will invite you soon",
-            )
+        except VrcNotWorking as e:
+            # should not be a path, link_Search should catch it first and use the Result struct
+            log.error(f"lnk VrcNotWorking did{interac.user.id} `{name}`")
+            txt = f":red_circle: Internal error, contact Programming team"
+            await interaction_reply(interac, txt)
             return
         match (result_search):
             case LinkSearchResult.OK:
@@ -157,11 +157,11 @@ Your id is `{officer.vrchat_id}`"""
                 if self.bl_wrapper.vrc.is_vrc_user_id(
                     name
                 ) or self.bl_wrapper.vrc.is_vrc_user_url(name):
-                    txt += f":red_circle: Your VRChat name is **NOT** set because VRchat integration is down\nRun the command again with your username\n"
+                    txt += f":red_circle: Your VRChat name is **NOT** set because VRChat integration is down\nRun the command again with your username\n"
                 else:
                     txt += f":white_check_mark: Your VRChat name is set to `{name}`\n"
                     if settings.VRC_ENABLED:
-                        txt = ":warning: but VRChat api is disabled"
+                        txt += ":warning: Tell the trainer to manually invite you to the VRC group"
                 if len(settings.VRC_GROUP_ID):
                     txt += f", you can [join here](<https://vrchat.com/home/group/{settings.VRC_GROUP_ID}>)"
                 else:
