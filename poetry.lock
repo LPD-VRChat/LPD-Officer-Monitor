@@ -3417,4 +3417,4 @@ web = ["Hypercorn", "Quart", "Quart_Discord"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~=3.11.0"
-content-hash = "f8e53ae0040b0cea11db64e1df8b96d81ab22a19f2dc5b7694b49ce7abd3e89e"
+content-hash = "6edc739bedbecceef8838128cd0a8e8581f6f206359374e4f5e45d6e4adcd18c"
