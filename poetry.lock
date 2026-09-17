@@ -3129,14 +3129,14 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 
 [[package]]
 name = "vrchatapi"
-version = "1.20.9"
+version = "1.21.0"
 description = "VRChat API Library for Python"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "vrchatapi-1.20.9-py3-none-any.whl", hash = "sha256:bd5fb05ff382e803d4baaea46b8e95ef0cd222eda9f8141ba5c56b4365bdb499"},
-    {file = "vrchatapi-1.20.9.tar.gz", hash = "sha256:876ac280a9a9f2ea564d051ae2ebb1725a7af1014523a477939d825712a27167"},
+    {file = "vrchatapi-1.21.0-py3-none-any.whl", hash = "sha256:e98bafffdc3fe06506a41c9d054f69f0d5d8da7a29e172139cdb0f16d8a193d5"},
+    {file = "vrchatapi-1.21.0.tar.gz", hash = "sha256:5bbe6b36c462fa9c32e169464bd3b7c3f19964968e6be58f0a41c423cb6ad6b8"},
 ]
 
 [package.dependencies]
@@ -3417,4 +3417,4 @@ web = ["Hypercorn", "Quart", "Quart_Discord"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~=3.11.0"
-content-hash = "6c2dd9d343a03b3d41c7641ef0efbc643e618464fe7814965768f96afe0fa7bd"
+content-hash = "f8e53ae0040b0cea11db64e1df8b96d81ab22a19f2dc5b7694b49ce7abd3e89e"

@@ -209,26 +209,30 @@ Or in VRCX, copy `User ID`""",
             embed.add_field(name="Display Name", value=f"{user_info.display_name}")
             embed.add_field(name="ID", value=f"{user_info.id}")
             embed.add_field(name="Last Platform", value=f"{user_info.last_platform}")
-            if user_info.pronouns:
-                embed.add_field(name="Pronouns", value=f"{user_info.pronouns}")
-            if user_info.bio_links and len(user_info.bio_links):
-                embed.add_field(name="Links", value=f"{str(user_info.bio_links)[:500]}")
-            if hasattr(user_info, "age_verified"):
+            if getattr(user_info, "pronouns", None):
                 embed.add_field(
-                    name="Age verified", value=f"{user_info.age_verification_status}"
+                    name="Pronouns", value=f"{getattr(user_info, 'pronouns', '')}"
                 )
-            if hasattr(user_info, "badges") and len(user_info.badges):
-                embed.add_field(name="badges", value=f"{len(user_info.badges)}")
-            if hasattr(user_info, "state"):
-                embed.add_field(name="State", value=f"{user_info.state}")
-                embed.add_field(name="Status", value=f"{user_info.status}")
-            if settings.VRC_FEAT_DISPLAY_USER_IMAGE:
+            if getattr(user_info, "bio_links", None):
+                embed.add_field(
+                    name="Links",
+                    value=f"{str(getattr(user_info, 'bio_links', None))[:500]}",
+                )
+            # if hasattr(user_info, "age_verified"): #not available after 2026-09-15
+            #     embed.add_field(
+            #         name="Age verified", value=f"{user_info.age_verification_status}"
+            #     )
+            # if hasattr(user_info, "badges") and len(user_info.badges): #not available after 2026-09-15
+            #     embed.add_field(name="badges", value=f"{len(user_info.badges)}")
+            if hasattr(user_info, "status"):
+                embed.add_field(name="State", value=f"{user_info.status}")
+            if getattr(user_info, "status_description", None):
+                embed.add_field(name="Status", value=f"{user_info.status_description}")
+            if settings.VRC_FEAT_DISPLAY_USER_IMAGE and getattr(
+                user_info, "icon_url", None
+            ):
                 embed.set_thumbnail(
-                    url=(
-                        user_info.user_icon
-                        if len(user_info.user_icon)
-                        else user_info.current_avatar_thumbnail_image_url
-                    )
+                    url=getattr(user_info, "icon_url", "")
                 )  # doesn't work in discord because of the redirect
             return embed
 

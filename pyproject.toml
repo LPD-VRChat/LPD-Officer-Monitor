@@ -19,7 +19,7 @@ dependencies = [
     "icalendar ~= 5.0",
     "requests ~= 2.0",
     "python-dateutil ~= 2.0",
-    "vrchatapi ~= 1.20.7",
+    "vrchatapi>=1.21.*",
     "pyotp ~= 2.9.0",
 ]
 
