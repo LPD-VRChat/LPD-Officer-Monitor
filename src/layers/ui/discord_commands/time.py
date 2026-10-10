@@ -46,6 +46,7 @@ class Training(enum.Enum):
     Watch_officer = 4
     Filming_crew = 5
     LLD = 6
+    AMT = 7
 
 
 class Regions(enum.Enum):
@@ -719,7 +720,7 @@ class Time(commands.Cog):
                             f":red_circle: failed to promote <@{member.id}> for `{training.name}`, you are not a trainer",
                         )
                         return
-                case Training.LMT:
+                case Training.LMT | Training.AMT:
                     if not has_role_id(interac.user, settings.LMT_TRAINER_ROLE):
                         await interaction_reply(
                             interac,
@@ -759,12 +760,15 @@ class Time(commands.Cog):
                     log.error(f"invalid training {training.value}")
                     return
 
+        error_message_start = (
+            f":red_circle: failed to promote <@{member.id}> for `{training.name}`"
+        )
         # check target requirements
         member_rank = get_lpd_member_rank(member)
         if not member_rank:
             await interaction_reply(
                 interac,
-                f":red_circle: failed to promote <@{member.id}> for `{training.name}`, could not get the rank of target",
+                f"{error_message_start}, could not get the rank of target",
             )
             log.warning(
                 f"failed to promote <@{member.id}> for `{training.name}`, could not get the rank of target"
@@ -775,35 +779,48 @@ class Time(commands.Cog):
                 if member_rank != settings.ROLE_LADDER.cadet:
                     await interaction_reply(
                         interac,
-                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target isn't a cadet",
+                        f"{error_message_start}, target isn't a Cadet",
                     )
                     return
             case Training.senior_officer:
                 if member_rank != settings.ROLE_LADDER.officer:
                     await interaction_reply(
                         interac,
-                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target isn't an officer",
+                        f"{error_message_start}, target isn't an Officer",
                     )
                     return
             case Training.LMT | Training.LLD:
                 if member_rank < settings.ROLE_LADDER.officer:
                     await interaction_reply(
                         interac,
-                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be officer or above",
+                        f"{error_message_start}, target rank ({member_rank.name_id}) needs to be Officer or above",
+                    )
+                    return
+            case Training.AMT:
+                if member_rank < settings.ROLE_LADDER.senior_officer:
+                    await interaction_reply(
+                        interac,
+                        f"{error_message_start}, target rank ({member_rank.name_id}) needs to be Senior Officer or above",
+                    )
+                    return
+                if not has_role_id(member, settings.LMT_TRAINED_ROLE):
+                    await interaction_reply(
+                        interac,
+                        f"{error_message_start}, target isn't LMT trained",
                     )
                     return
             case Training.SLRT:
                 if member_rank < settings.ROLE_LADDER.senior_officer:
                     await interaction_reply(
                         interac,
-                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be senior_officer or above",
+                        f"{error_message_start}, target rank ({member_rank.name_id}) needs to be Senior Officer or above",
                     )
                     return
             case Training.Watch_officer:
-                if member_rank < settings.ROLE_LADDER.corporal:
+                if member_rank < settings.ROLE_LADDER.senior_officer:
                     await interaction_reply(
                         interac,
-                        f":red_circle: failed to promote <@{member.id}> for `{training.name}`, target rank ({member_rank.name_id}) needs to be corporal or above",
+                        f"{error_message_start}, target rank ({member_rank.name_id}) needs to be Senior Officer or above",
                     )
                     return
             case Training.Filming_crew:
@@ -857,6 +874,11 @@ class Time(commands.Cog):
                 await member.add_roles(
                     discord.Object(settings.LLD_CERTIFIED_ROLE),
                     reason="bot trained LLD",
+                )
+            case Training.AMT:
+                await member.add_roles(
+                    discord.Object(settings.AMT_CERTIFIED_ROLE),
+                    reason="bot trained AMT",
                 )
             case _:
                 await interaction_reply(interac, ":red_circle: invalid training.")
